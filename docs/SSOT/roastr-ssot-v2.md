@@ -212,13 +212,14 @@ type FeatureFlagKey =
   | 'manual_approval_enabled'
   | 'custom_prompt_enabled'
   | 'sponsor_feature_enabled'
-  | 'original_tone_enabled'
+  | 'personal_tone_enabled'
   | 'nsfw_tone_enabled'
 
   // Shield / seguridad
   | 'kill_switch_autopost'
   | 'enable_shield'
   | 'enable_roast'
+  | 'enable_perspective_fallback_classifier'
 
   // UX / UI
   | 'show_two_roast_variants'
@@ -243,7 +244,7 @@ type FeatureFlagKey =
   - Habilita UI de prompt personalizado (post-MVP, no implementar sin tarea).
 - `sponsor_feature_enabled` (admin):
   - Habilita módulo de sponsors (solo Plus).
-- `original_tone_enabled` (admin):
+- `personal_tone_enabled` (admin):
   - Habilita tono personal (Pro/Plus).
 - `nsfw_tone_enabled` (admin):
   - Solo futuro con modelo dedicado, no usar en v2.
@@ -254,6 +255,9 @@ type FeatureFlagKey =
   - Enciende/apaga Shield para la cuenta.
 - `enable_roast` (user/account):
   - Permite desactivar Roasts y usar solo Shield.
+- `enable_perspective_fallback_classifier` (admin):
+  - Activa el clasificador backup (GPT-4o-mini) cuando Perspective API falla.
+  - Si está OFF → el fallback usa score conservador por defecto.
 
 - `show_two_roast_variants` (admin):
   - ON → 2 variantes de roast.
@@ -352,7 +356,28 @@ type PersonaProfile = {
 
 ## 6. Tonos & Roasting
 
-### 6.1 Tonos oficiales
+### 6.1 Modelos IA Oficiales (SSOT v2)
+
+Los modelos utilizados por cada capacidad del sistema son EXACTAMENTE los siguientes:
+
+| Feature / Capacidad                     | Modelo asignado |
+| --------------------------------------- | --------------- |
+| Comment analysis                        | GPT-4 Turbo     |
+| Analysis gatekeeper                     | GPT-4 Turbo     |
+| Roast Generation (humor)                | GPT-5 mini      |
+| Original tone ingest (detección estilo) | GPT-4 Turbo     |
+| Tono Personal (Personal Tone)           | GPT-5 mini      |
+| Tono Flanders                           | GPT-4 Turbo     |
+| Tono Balanceado                         | GPT-5 mini      |
+| Tono Canalla                            | GPT-5 mini      |
+
+**Reglas**:
+
+- No se permite utilizar ningún otro modelo.
+- Workers y servicios deben obtener el modelo EXCLUSIVAMENTE del SSOT.
+- El SSOT es la única fuente autorizada de modelos.
+
+### 6.2 Tonos oficiales
 
 ```ts
 type RoastTone = 'flanders' | 'balanceado' | 'canalla' | 'personal';
@@ -363,14 +388,25 @@ type RoastTone = 'flanders' | 'balanceado' | 'canalla' | 'personal';
 - `canalla`: humor afilado, ironía, sin degradación.
 - `personal`: derivado rule-based del estilo del usuario (solo Pro/Plus, beta).
 
-### 6.2 Tono NSFW
+### 6.3 roast_tones (SSOT)
+
+```json
+[
+  { "name": "flanders", "model": "GPT-4 Turbo", "prompt_base": "...", "active": true },
+  { "name": "balanceado", "model": "GPT-5 mini", "prompt_base": "...", "active": true },
+  { "name": "canalla", "model": "GPT-5 mini", "prompt_base": "...", "active": true },
+  { "name": "personal", "model": "GPT-5 mini", "prompt_base": "...", "active": true }
+]
+```
+
+### 6.4 Tono NSFW
 
 - Existe como concepto, pero:
   - `nsfw_tone_enabled` = false por defecto.
   - No se usa hasta tener modelo dedicado y legal aprobado.
   - No se debe integrar en UI ni código productivo v2.
 
-### 6.3 Style Validator
+### 6.5 Style Validator
 
 - Rule-based, sin IA.
 - No permite:
@@ -386,7 +422,7 @@ type RoastTone = 'flanders' | 'balanceado' | 'canalla' | 'personal';
   - Debe devolver error claro al usuario.
   - El contenido no se publica.
 
-### 6.4 Disclaimers IA
+### 6.6 Disclaimers IA
 
 - Se aplican **solo** cuando:
   - `autoApprove === true`
@@ -402,7 +438,7 @@ type DisclaimerPool = {
 };
 ```
 
-- El contenido inicial del pool se define en un archivo dedicado: `docs/ssot/disclaimers.yaml`, y nunca se inventa on-the-fly en código.
+- El contenido inicial del pool se define en un archivo dedicado (p.ej. `ssot-disclaimers.yaml`), y nunca se inventa on-the-fly en código.
 
 ---
 

@@ -1,0 +1,817 @@
+metadata:
+  version: 2.0.0
+  created: '2025-12-05T18:31:11.772Z'
+  last_updated: '2025-12-05T19:37:47.846Z'
+  total_nodes: 15
+  critical_nodes: 11
+  high_priority_nodes: 3
+  production_nodes: 15
+  development_nodes: 0
+  pr: null
+  changes: 'Integrity correction: Removed 46 legacy V1 references, recomputed bidirectional dependencies, validated subnodes/filesystem sync - ROA-258'
+  protected: false
+  last_verified: '2025-12-05T19:37:47.846Z'
+  ssot_alignment: true
+  ssot_version: 2.0.0
+  gdd_version: '2.0'
+nodes:
+  roasting-engine:
+    description: Core roast generation system with AI prompts, tone mapping, quality control, and style validation
+    status: production
+    priority: critical
+    owner: Back-end Dev
+    last_updated: '2025-12-05T18:31:11.771Z'
+    coverage: 85
+    depends_on:
+      - analysis-engine
+      - integraciones-redes-sociales
+      - shield-engine
+      - billing
+      - observabilidad
+      - ssot-integration
+    used_by: []
+    required_by:
+      - observabilidad
+      - frontend-user-app
+    related: []
+    docs:
+      - docs/nodes-v2/roasting-engine.md
+    files:
+      - src/services/roastEngine.js
+      - src/services/roastGeneratorEnhanced.js
+      - src/services/roastPromptTemplate.js
+      - src/routes/roast.js
+      - src/services/toneService.js
+      - src/config/tones.js
+    workers:
+      - GenerateRoast
+      - GenerateCorrectiveReply
+    ssot_references:
+      - credit_consumption_rules
+      - plan_limits
+      - roast_tones
+      - style_validator
+      - tone_personal_allowed
+    subnodes:
+      - prompt-architecture
+      - tones
+      - style-validator
+      - corrective-replies
+  analysis-engine:
+    description: Toxicity analysis engine with Perspective API, OpenAI fallback, pattern detection, and user personality (Roastr Persona) configuration with encryption
+    status: production
+    priority: critical
+    owner: Back-end Dev
+    last_updated: '2025-12-05T18:31:11.772Z'
+    coverage: 92
+    depends_on:
+      - billing
+      - observabilidad
+      - ssot-integration
+      - infraestructura
+    used_by: []
+    required_by:
+      - roasting-engine
+      - shield-engine
+      - frontend-user-app
+    related: []
+    docs:
+      - docs/nodes-v2/analysis-engine.md
+    files:
+      - src/services/perspectiveService.js
+      - src/services/AnalysisDepartmentService.js
+      - src/services/gatekeeperService.js
+      - src/services/PersonaService.js
+      - src/routes/persona.js
+      - src/utils/encryption.js
+    workers:
+      - AnalyzeToxicity
+    ssot_references:
+      - analysis_algorithms
+      - analysis_limits
+      - analysis_thresholds
+      - fallback_classifier_mapping
+      - gatekeeper
+      - gatekeeper_detection_rules
+      - persona_encryption
+      - persona_matching_algorithm
+      - persona_matching_thresholds
+      - persona_structure
+      - score_base_formula
+    subnodes:
+      - perspective-api
+      - fallback-classifier
+      - persona-integration
+      - pattern-detection
+      - gatekeeper
+  shield-engine:
+    description: Automated content moderation with escalating actions and decision engine
+    status: production
+    priority: critical
+    owner: Back-end Dev
+    last_updated: 2025-12-05T00:00:00.000Z
+    coverage: 78
+    depends_on:
+      - billing
+      - infraestructura
+      - observabilidad
+      - ssot-integration
+      - analysis-engine
+    used_by: []
+    docs:
+      - docs/nodes-v2/shield-engine.md
+    files:
+      - src/services/shieldService.js
+      - src/services/shieldDecisionEngine.js
+      - src/services/shieldActionExecutor.js
+      - src/routes/shield.js
+    workers:
+      - ShieldAction
+    ssot_references:
+      - shield_decision_rules
+      - shield_decision_tree
+      - shield_thresholds
+      - shield_weights
+      - strike_level_types
+      - strike_system
+    required_by:
+      - roasting-engine
+      - observabilidad
+      - frontend-user-app
+    related: []
+    subnodes:
+      - decision-engine
+      - action-executor
+      - thresholds
+      - weights
+  integraciones-redes-sociales:
+    description: Platform integrations (X/Twitter, YouTube) with platform-specific character limits and style guides - v2 MVP only
+    status: production
+    priority: high
+    owner: Back-end Dev
+    last_updated: '2025-12-05T18:31:11.772Z'
+    coverage: 82
+    depends_on:
+      - infraestructura
+      - billing
+      - observabilidad
+      - ssot-integration
+    used_by: []
+    required_by:
+      - roasting-engine
+      - observabilidad
+      - frontend-user-app
+    related: []
+    docs:
+      - docs/nodes-v2/integraciones-redes-sociales.md
+    files:
+      - src/integrations/twitter/twitterService.js
+      - src/integrations/youtube/youtubeService.js
+      - src/integrations/base/BaseIntegration.js
+      - src/integrations/base/MultiTenantIntegration.js
+      - src/integrations/integrationManager.js
+      - src/services/platformConstraints.js
+      - src/config/platforms.js
+    workers:
+      - FetchComments
+      - SocialPosting
+    ssot_references:
+      - connected_account_structure
+      - connection_status
+      - oauth_cleanup_rules
+      - oauth_pkce_flow
+      - oauth_scopes
+      - oauth_tokens
+      - platform_limits
+      - platform_oauth_config
+      - platform_x_constraints
+      - platform_youtube_constraints
+      - smart_delay_algorithm
+      - supported_platforms
+      - token_refresh_rules
+    api_endpoints: []
+    subnodes:
+      - twitter-integration
+      - youtube-integration
+      - platform-constraints
+      - base-integration
+  billing:
+    description: Polar integration for subscriptions, webhooks, plan management, usage tracking, billing integration, and limit enforcement (v2 - no Stripe)
+    status: production
+    priority: critical
+    owner: Back-end Dev
+    last_updated: '2025-12-05T18:31:11.772Z'
+    coverage: 70
+    depends_on:
+      - infraestructura
+      - observabilidad
+      - ssot-integration
+    used_by: []
+    required_by:
+      - roasting-engine
+      - analysis-engine
+      - shield-engine
+      - integraciones-redes-sociales
+      - observabilidad
+      - frontend-user-app
+      - frontend-admin
+    related: []
+    docs:
+      - docs/nodes-v2/billing.md
+    files:
+      - src/services/billingService.js
+      - src/routes/billing.js
+      - src/routes/polarWebhook.js
+      - src/services/costControl.js
+      - src/services/usageTracker.js
+      - src/services/creditsService.js
+      - src/services/planLimitsService.js
+      - src/services/entitlementsService.js
+    workers:
+      - BillingUpdate
+    ssot_references:
+      - billing_provider
+      - subscription_states
+      - billing_state_machine
+      - plan_limits
+      - credit_consumption_rules
+      - plan_ids
+      - plan_capabilities
+      - plan_trials
+    subnodes:
+      - polar-integration
+      - cost-control
+      - usage-tracking
+      - plan-limits
+      - subscription-states
+  infraestructura:
+    description: Unified Redis/Upstash + Database queue management with DLQ, priority queues, Row Level Security (RLS), and organization isolation
+    status: production
+    priority: critical
+    owner: Back-end Dev
+    last_updated: '2025-12-05T18:31:11.772Z'
+    coverage: 81
+    depends_on:
+      - observabilidad
+    used_by: []
+    required_by:
+      - analysis-engine
+      - shield-engine
+      - integraciones-redes-sociales
+      - billing
+      - observabilidad
+      - workers
+    related: []
+    docs:
+      - docs/nodes-v2/infraestructura.md
+    files:
+      - src/services/queueService.js
+      - src/workers/BaseWorker.js
+      - database/schema.sql
+      - database/migrations/
+      - supabase/migrations/
+    queues:
+      - fetch_comments
+      - analyze_toxicity
+      - generate_roast
+      - generate_corrective_reply
+      - shield_action
+      - social_posting
+      - billing_update
+      - cursor_reconciliation
+      - strike_cleanup
+    ssot_references: []
+    subnodes:
+      - queue-management
+      - database-rls
+      - queue-configuration
+      - base-worker
+      - staging-production-isolation
+      - deploy-pipeline
+      - smoke-tests-pipeline
+      - backups
+      - rate-limits
+  observabilidad:
+    description: Structured logging, correlation tracking, end-to-end request tracing, usage analytics, metrics, and reporting dashboard
+    status: production
+    priority: critical
+    owner: Back-end Dev
+    last_updated: '2025-12-05T18:31:11.772Z'
+    coverage: 60
+    depends_on:
+      - billing
+      - infraestructura
+      - roasting-engine
+      - shield-engine
+      - integraciones-redes-sociales
+    used_by: []
+    required_by:
+      - roasting-engine
+      - analysis-engine
+      - shield-engine
+      - integraciones-redes-sociales
+      - billing
+      - infraestructura
+      - frontend-user-app
+      - workers
+    related: []
+    docs:
+      - docs/nodes-v2/observabilidad.md
+    files:
+      - src/utils/advancedLogger.js
+      - src/workers/BaseWorker.js
+      - src/services/queueService.js
+      - src/services/analyticsService.js
+      - src/routes/analytics.js
+    ssot_references:
+      - gdpr_allowed_log_structure
+      - gdpr_automatic_blocking
+      - gdpr_forbidden_data
+      - worker_logs
+    subnodes:
+      - structured-logging
+      - analytics
+      - correlation-tracking
+      - request-tracing
+      - alertas
+      - error-budget
+  frontend-user-app:
+    description: Main user application including dashboard, settings, account detail, and onboarding flows
+    status: production
+    priority: high
+    owner: Front-end Dev
+    last_updated: '2025-12-05T18:31:11.772Z'
+    coverage: 75
+    depends_on:
+      - roasting-engine
+      - shield-engine
+      - observabilidad
+      - integraciones-redes-sociales
+      - ssot-integration
+      - analysis-engine
+      - billing
+    used_by: []
+    required_by: []
+    related: []
+    docs:
+      - docs/nodes-v2/frontend-user-app.md
+    files:
+      - frontend/src/pages/app/home.tsx
+      - frontend/src/components/app/home/accounts-table.jsx
+      - frontend/src/components/app/home/usage-widgets.jsx
+      - frontend/src/components/app/home/connect-network-card.jsx
+      - frontend/src/pages/settings/AccountSettingsPage.jsx
+      - frontend/src/pages/settings/PreferencesSettingsPage.jsx
+      - frontend/src/pages/settings/BillingSettingsPage.jsx
+      - frontend/src/components/settings/
+      - frontend/src/pages/AccountDetailPage.jsx
+      - frontend/src/pages/onboarding/
+    api_endpoints:
+      - /api/dashboard
+      - /api/analytics
+      - /api/integrations
+      - /api/user
+      - /api/user/roastr-persona
+      - /api/billing
+      - /api/roast
+      - /api/shield
+      - /api/auth
+    subnodes:
+      - dashboard
+      - settings
+      - account-detail
+      - onboarding
+  frontend-admin:
+    description: Admin panel for feature flags, plans, tones, and user management
+    status: production
+    priority: medium
+    owner: Front-end Dev
+    last_updated: 2025-12-05T00:00:00.000Z
+    coverage: 60
+    depends_on:
+      - ssot-integration
+      - billing
+    used_by: []
+    docs:
+      - docs/nodes-v2/frontend-admin.md
+    files:
+      - frontend/src/pages/admin/
+    api_endpoints:
+      - /api/admin
+    required_by: []
+    related: []
+    subnodes:
+      - admin-panel
+  ssot-integration:
+    description: Single Source of Truth for Roastr v2 - defines plans, limits, feature flags, thresholds, weights, tones, disclaimers, platforms
+    status: production
+    priority: critical
+    owner: Product Owner
+    last_updated: 2025-12-05T00:00:00.000Z
+    coverage: 100
+    depends_on: []
+    used_by:
+      - analysis-engine
+      - billing
+      - workers
+      - frontend-admin
+    docs:
+      - docs/nodes-v2/ssot-integration.md
+    files:
+      - docs/SSOT-V2.md
+      - src/config/planConstants.js
+      - src/config/flags.js
+      - src/services/featureFlagService.js
+      - apps/backend-v2/src/lib/loadSettings.ts
+    ssot_references:
+      - plans_and_limits
+      - billing_polar
+      - feature_flags
+      - shield_thresholds
+      - shield_weights
+      - tones_roasting
+      - integrations
+      - workers
+      - gdpr_retention
+      - testing
+    ssot_sections:
+      - plans_and_limits
+      - billing_polar
+      - feature_flags
+      - shield_thresholds
+      - roastr_persona
+      - tones_roasting
+      - integrations
+      - workers
+      - gdpr_retention
+      - infrastructure
+      - testing
+    rule: If SSOT and code/GDD disagree, SSOT wins. If not defined in SSOT, mark as TBD and open task.
+    required_by:
+      - roasting-engine
+      - analysis-engine
+      - shield-engine
+      - integraciones-redes-sociales
+      - billing
+      - frontend-user-app
+      - frontend-admin
+      - settings-loader-and-feature-flags
+    related:
+      - frontend-admin
+    subnodes:
+      - settings-loader
+      - feature-flags
+      - plans-and-limits
+      - shield-thresholds
+      - shield-weights
+      - tones-roasting
+      - billing-polar
+      - workers-config
+      - integrations-config
+      - gdpr-retention
+      - ssot-validator
+      - cache-management
+  workers:
+    description: Official v2 workers as defined in SSOT-V2
+    status: production
+    priority: critical
+    owner: Back-end Dev
+    last_updated: 2025-12-05T00:00:00.000Z
+    coverage: 60
+    depends_on:
+      - infraestructura
+      - observabilidad
+    used_by:
+      - billing
+    docs:
+      - docs/nodes-v2/workers.md
+    files:
+      - src/workers/BaseWorker.js
+      - src/workers/WorkerManager.js
+    official_workers:
+      - name: FetchComments
+        status: production
+        queue: fetch_comments
+        file: src/workers/FetchCommentsWorker.js
+      - name: AnalyzeToxicity
+        status: production
+        queue: analyze_toxicity
+        file: src/workers/AnalyzeToxicityWorker.js
+      - name: GenerateRoast
+        status: production
+        queue: generate_roast
+        file: src/workers/GenerateReplyWorker.js
+        note: Mapped from GenerateReplyWorker - rename pending
+      - name: GenerateCorrectiveReply
+        status: development
+        queue: generate_corrective_reply
+        file: null
+        note: Planned - not yet implemented
+      - name: ShieldAction
+        status: production
+        queue: shield_action
+        file: src/workers/ShieldActionWorker.js
+      - name: SocialPosting
+        status: production
+        queue: social_posting
+        file: src/workers/PublisherWorker.js
+        note: Mapped from PublisherWorker - rename pending
+      - name: BillingUpdate
+        status: production
+        queue: billing_update
+        file: src/workers/BillingWorker.js
+        note: Mapped from BillingWorker - rename pending
+      - name: CursorReconciliation
+        status: development
+        queue: cursor_reconciliation
+        file: null
+        note: Planned - not yet implemented
+      - name: StrikeCleanup
+        status: development
+        queue: strike_cleanup
+        file: null
+        note: Planned - not yet implemented
+    ssot_references:
+      - worker_logs
+      - worker_names
+      - worker_retries
+      - worker_routing
+      - worker_routing_table
+      - worker_tenancy
+    required_by: []
+    related: []
+    subnodes:
+      - fetch-comments
+      - analyze-toxicity
+      - generate-roast
+      - generate-corrective-reply
+      - shield-action
+      - social-posting
+      - billing-update
+      - cursor-reconciliation
+      - strike-cleanup
+      - worker-manager
+  auth:
+    description: 'TODO: Authentication and authorization system'
+    status: production
+    priority: critical
+    owner: Back-end Dev
+    last_updated: '2025-12-05T18:31:11.772Z'
+    coverage: 0
+    depends_on: []
+    used_by: []
+    required_by: []
+    related: []
+    docs:
+      - docs/nodes-v2/auth.md
+    files: []
+    ssot_references:
+      - connection_status
+      - feature_flags
+      - oauth_pkce_flow
+      - oauth_scopes
+      - oauth_tokens
+      - plan_ids
+      - subscription_states
+      - token_refresh_rules
+    subnodes: []
+  settings-loader-and-feature-flags:
+    description: 'TODO: Settings loader and feature flags management system'
+    status: production
+    priority: high
+    owner: Back-end Dev
+    last_updated: '2025-12-05T18:31:11.772Z'
+    coverage: 0
+    depends_on:
+      - ssot-integration
+    used_by: []
+    required_by: []
+    related: []
+    docs:
+      - docs/nodes-v2/settings-loader-and-feature-flags.md
+    files: []
+    ssot_references:
+      - feature_flags
+    subnodes: []
+  gdpr-and-legal:
+    description: 'TODO: GDPR compliance and legal requirements system'
+    status: production
+    priority: critical
+    owner: Product Owner
+    last_updated: '2025-12-05T18:31:11.772Z'
+    coverage: 0
+    depends_on: []
+    used_by: []
+    required_by: []
+    related: []
+    docs:
+      - docs/nodes-v2/gdpr-and-legal.md
+    files: []
+    ssot_references:
+      - gdpr_algorithms
+      - gdpr_allowed_log_structure
+      - gdpr_automatic_blocking
+      - gdpr_cleanup_algorithm
+      - gdpr_forbidden_data
+      - gdpr_retention
+    subnodes:
+      - gdpr-retention
+  testing-v2:
+    description: 'TODO: Comprehensive testing system (unit, integration, E2E)'
+    status: production
+    priority: critical
+    owner: Test Engineer
+    last_updated: '2025-12-05T18:31:11.772Z'
+    coverage: 0
+    depends_on: []
+    used_by: []
+    required_by: []
+    related: []
+    docs:
+      - docs/nodes-v2/testing-v2.md
+    files: []
+    ssot_references: []
+    subnodes:
+      - ci-tests
+      - smoke-tests-specs
+      - e2e-tests
+      - unit-integration-tests
+flows:
+  ingestion:
+    description: Complete ingestion flow from platform to analysis
+    steps:
+      - FetchComments worker fetches comments from X/YouTube
+      - Comments stored in database with multi-tenant isolation
+      - AnalyzeToxicity worker processes comments
+      - Analysis results stored with cost tracking
+    nodes:
+      - FetchComments
+      - AnalyzeToxicity
+  roasting:
+    description: Complete roasting flow from analysis to publication
+    steps:
+      - AnalyzeToxicity determines roast eligibility
+      - GenerateRoast worker creates roast variants
+      - Style validator checks roast quality
+      - User approval (manual or auto-approve)
+      - SocialPosting worker publishes to platform
+    nodes:
+      - AnalyzeToxicity
+      - GenerateRoast
+      - SocialPosting
+  shield:
+    description: Complete Shield moderation flow
+    steps:
+      - AnalyzeToxicity detects toxicity
+      - Shield decision engine evaluates action
+      - ShieldAction worker executes moderation
+      - Actions logged and tracked
+    nodes:
+      - AnalyzeToxicity
+      - ShieldAction
+  billing:
+    description: Complete billing flow with Polar
+    steps:
+      - User subscribes via Polar checkout
+      - Polar webhook received
+      - BillingUpdate worker processes subscription
+      - Billing state machine updates status
+      - Plan features activated
+    nodes:
+      - billing
+      - BillingUpdate
+  onboarding:
+    description: Complete onboarding flow
+    steps:
+      - User signs up
+      - Trial activated (if applicable)
+      - User connects X/YouTube account
+      - Onboarding UI guides setup
+      - Dashboard becomes active
+    nodes:
+      - billing
+  ssot-loader:
+    description: SSOT loading and application flow
+    steps:
+      - Settings loader reads SSOT config
+      - Feature flags loaded from admin_settings
+      - Plan limits applied
+      - Thresholds and weights applied
+      - Cache updated
+    nodes: []
+integrations:
+  polar:
+    description: Polar billing provider (v2 only - no Stripe)
+    status: production
+    type: billing
+    nodes:
+      - billing
+      - BillingUpdate
+    files:
+      - src/routes/polarWebhook.js
+      - src/services/billingService.js
+    ssot_reference: billing_provider
+  supabase:
+    description: Database, Auth, and Storage
+    status: production
+    type: infrastructure
+    nodes: []
+    files:
+      - src/config/supabase.js
+      - database/schema.sql
+  redis_upstash:
+    description: Queue management and rate limiting
+    status: production
+    type: infrastructure
+    nodes: []
+    files:
+      - src/services/queueService.js
+  openai:
+    description: Roast generation and toxicity fallback
+    status: production
+    type: ai
+    nodes:
+      - GenerateRoast
+      - AnalyzeToxicity
+    files:
+      - src/lib/llmClient/
+      - src/services/roastGeneratorEnhanced.js
+  perspective_api:
+    description: Primary toxicity detection
+    status: production
+    type: ai
+    nodes:
+      - analysis-engine
+      - AnalyzeToxicity
+    files:
+      - src/services/perspectiveService.js
+  resend:
+    description: Transactional email (v2 only)
+    status: production
+    type: communication
+    nodes:
+      - billing
+    files:
+      - src/services/emailService.js
+  x_twitter:
+    description: X (Twitter) platform integration
+    status: production
+    type: social_platform
+    nodes:
+      - FetchComments
+      - SocialPosting
+    files:
+      - src/integrations/twitter/twitterService.js
+    ssot_reference: supported_platforms
+  youtube:
+    description: YouTube platform integration
+    status: production
+    type: social_platform
+    nodes:
+      - FetchComments
+      - SocialPosting
+    files:
+      - src/integrations/youtube/youtubeService.js
+    ssot_reference: supported_platforms
+validation:
+  bidirectional_check: true
+  cycle_detection: true
+  orphan_detection: true
+  spec_sync_check: true
+  ssot_alignment_check: true
+  coverage_threshold: 70
+  update_freshness_days: 30
+  legacy_detection: true
+  worker_official_list_check: true
+legacy:
+  billing_providers:
+    - stripe
+  plan_ids:
+    - free
+    - basic
+    - creator_plus
+  workers:
+    - name: GenerateReplyWorker
+      note: Use GenerateRoast instead
+    - name: PublisherWorker
+      note: Use SocialPosting instead
+    - name: BillingWorker
+      note: Use BillingUpdate instead
+  services:
+    - name: stripeService
+      note: Use Polar billing only
+  platforms:
+    - name: instagram
+      note: Not in v2 MVP - planned for future
+    - name: facebook
+      note: Not in v2 MVP - planned for future
+    - name: discord
+      note: Not in v2 MVP - planned for future
+    - name: twitch
+      note: Not in v2 MVP - planned for future
+    - name: reddit
+      note: Not in v2 MVP - planned for future
+    - name: tiktok
+      note: Not in v2 MVP - planned for future
+    - name: bluesky
+      note: Not in v2 MVP - planned for future
