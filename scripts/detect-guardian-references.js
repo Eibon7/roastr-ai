@@ -83,7 +83,8 @@ class GuardianReferenceDetector {
   }
 
   async detectInSystemMap() {
-    const systemMapPath = this.options.systemMap || path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
+    const systemMapPath =
+      this.options.systemMap || path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
 
     try {
       const content = await fs.readFile(systemMapPath, 'utf-8');
