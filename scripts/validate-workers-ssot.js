@@ -7,6 +7,7 @@
  * are official workers defined in SSOT-V2.md.
  *
  * Usage:
+ *   node scripts/validate-workers-ssot.js --ssot=docs/SSOT-V2.md
  *   node scripts/validate-workers-ssot.js --ssot docs/SSOT-V2.md
  *   node scripts/validate-workers-ssot.js --ci
  */
@@ -14,6 +15,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const logger = require('../src/utils/logger');
+const { parseArgs, getOption, hasFlag } = require('./shared/cli-parser');
 
 class WorkersSSOTValidator {
   constructor(options = {}) {
@@ -289,14 +291,16 @@ class WorkersSSOTValidator {
 // CLI
 if (require.main === module) {
   const args = process.argv.slice(2);
+  const parsed = parseArgs(args);
   const options = {
-    ci: args.includes('--ci'),
-    ssot: args.find((arg) => arg.startsWith('--ssot='))?.split('=')[1]
+    ci: hasFlag(parsed, 'ci'),
+    ssot: getOption(parsed, 'ssot')
   };
 
   const validator = new WorkersSSOTValidator(options);
   validator.validate().catch((error) => {
-    console.error('Fatal error:', error);
+    logger.error(`Fatal error: ${error.message}`);
+    logger.error(error.stack);
     process.exit(1);
   });
 }

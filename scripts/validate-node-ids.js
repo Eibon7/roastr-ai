@@ -7,6 +7,7 @@
  * are defined in system-map-v2.yaml. Detects legacy IDs and invalid references.
  *
  * Usage:
+ *   node scripts/validate-node-ids.js --system-map=docs/system-map-v2.yaml
  *   node scripts/validate-node-ids.js --system-map docs/system-map-v2.yaml
  *   node scripts/validate-node-ids.js --ci
  */
@@ -15,6 +16,8 @@ const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
 const logger = require('../src/utils/logger');
+const { LEGACY_IDS } = require('./shared/legacy-ids');
+const { parseArgs, getOption, hasFlag } = require('./shared/cli-parser');
 
 class NodeIDValidator {
   constructor(options = {}) {
@@ -24,22 +27,7 @@ class NodeIDValidator {
     this.errors = [];
     this.warnings = [];
     this.validIds = new Set();
-    this.legacyIds = new Set([
-      'roast',
-      'shield',
-      'social-platforms',
-      'frontend-dashboard',
-      'plan-features',
-      'persona',
-      'billing',
-      'cost-control',
-      'queue-system',
-      'multi-tenant',
-      'observability',
-      'analytics',
-      'trainer',
-      'guardian'
-    ]);
+    this.legacyIds = LEGACY_IDS;
   }
 
   log(message, type = 'info') {
@@ -308,14 +296,16 @@ class NodeIDValidator {
 // CLI
 if (require.main === module) {
   const args = process.argv.slice(2);
+  const parsed = parseArgs(args);
   const options = {
-    ci: args.includes('--ci'),
-    systemMap: args.find((arg) => arg.startsWith('--system-map='))?.split('=')[1]
+    ci: hasFlag(parsed, 'ci'),
+    systemMap: getOption(parsed, 'system-map')
   };
 
   const validator = new NodeIDValidator(options);
   validator.validate().catch((error) => {
-    console.error('Fatal error:', error);
+    logger.error(`Fatal error: ${error.message}`);
+    logger.error(error.stack);
     process.exit(1);
   });
 }

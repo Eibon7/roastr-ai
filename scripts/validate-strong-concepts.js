@@ -7,6 +7,7 @@
  * Ensures Soft Concepts can appear in multiple nodes without duplication.
  *
  * Usage:
+ *   node scripts/validate-strong-concepts.js --system-map=docs/system-map-v2.yaml --nodes=docs/nodes-v2/
  *   node scripts/validate-strong-concepts.js --system-map docs/system-map-v2.yaml --nodes docs/nodes-v2/
  *   node scripts/validate-strong-concepts.js --ci
  */
@@ -15,6 +16,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
 const logger = require('../src/utils/logger');
+const { parseArgs, getOption, hasFlag } = require('./shared/cli-parser');
 
 class StrongConceptsValidator {
   constructor(options = {}) {
@@ -247,15 +249,17 @@ class StrongConceptsValidator {
 // CLI
 if (require.main === module) {
   const args = process.argv.slice(2);
+  const parsed = parseArgs(args);
   const options = {
-    ci: args.includes('--ci'),
-    systemMap: args.find((arg) => arg.startsWith('--system-map='))?.split('=')[1],
-    nodes: args.find((arg) => arg.startsWith('--nodes='))?.split('=')[1]
+    ci: hasFlag(parsed, 'ci'),
+    systemMap: getOption(parsed, 'system-map'),
+    nodes: getOption(parsed, 'nodes')
   };
 
   const validator = new StrongConceptsValidator(options);
   validator.validate().catch((error) => {
-    console.error('Fatal error:', error);
+    logger.error(`Fatal error: ${error.message}`);
+    logger.error(error.stack);
     process.exit(1);
   });
 }

@@ -7,6 +7,7 @@
  * Ensures all values are aligned according to SSOT hierarchy.
  *
  * Usage:
+ *   node scripts/validate-drift.js --ssot=docs/SSOT-V2.md --nodes=docs/nodes-v2/ --system-map=docs/system-map-v2.yaml
  *   node scripts/validate-drift.js --ssot docs/SSOT-V2.md --nodes docs/nodes-v2/ --system-map docs/system-map-v2.yaml
  *   node scripts/validate-drift.js --ci
  */
@@ -15,6 +16,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
 const logger = require('../src/utils/logger');
+const { parseArgs, getOption, hasFlag } = require('./shared/cli-parser');
 
 class DriftValidator {
   constructor(options = {}) {
@@ -275,16 +277,18 @@ class DriftValidator {
 // CLI
 if (require.main === module) {
   const args = process.argv.slice(2);
+  const parsed = parseArgs(args);
   const options = {
-    ci: args.includes('--ci'),
-    ssot: args.find((arg) => arg.startsWith('--ssot='))?.split('=')[1],
-    nodes: args.find((arg) => arg.startsWith('--nodes='))?.split('=')[1],
-    systemMap: args.find((arg) => arg.startsWith('--system-map='))?.split('=')[1]
+    ci: hasFlag(parsed, 'ci'),
+    ssot: getOption(parsed, 'ssot'),
+    nodes: getOption(parsed, 'nodes'),
+    systemMap: getOption(parsed, 'system-map')
   };
 
   const validator = new DriftValidator(options);
   validator.validate().catch((error) => {
-    console.error('Fatal error:', error);
+    logger.error(`Fatal error: ${error.message}`);
+    logger.error(error.stack);
     process.exit(1);
   });
 }

@@ -6,6 +6,7 @@
  * Detects legacy node IDs (v1) that should be migrated to v2 equivalents.
  *
  * Usage:
+ *   node scripts/detect-legacy-ids.js --system-map=docs/system-map-v2.yaml --nodes=docs/nodes-v2/ --code=src/
  *   node scripts/detect-legacy-ids.js --system-map docs/system-map-v2.yaml --nodes docs/nodes-v2/ --code src/
  *   node scripts/detect-legacy-ids.js --ci
  */
@@ -14,28 +15,15 @@ const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
 const logger = require('../src/utils/logger');
+const { getAllMappings, isLegacyId, getV2Equivalent } = require('./shared/legacy-ids');
+const { parseArgs, getOption, hasFlag } = require('./shared/cli-parser');
 
 class LegacyIDDetector {
   constructor(options = {}) {
     this.options = options;
     this.rootDir = path.resolve(__dirname, '..');
     this.isCIMode = options.ci || false;
-    this.legacyIds = new Map([
-      ['roast', 'roast-generation'],
-      ['shield', 'shield-moderation'],
-      ['social-platforms', 'platform-integrations'],
-      ['frontend-dashboard', 'admin-dashboard'],
-      ['plan-features', 'plan-configuration'],
-      ['persona', 'persona-config'],
-      ['billing', 'billing-integration'],
-      ['cost-control', 'cost-management'],
-      ['queue-system', 'queue-management'],
-      ['multi-tenant', 'tenant-management'],
-      ['observability', 'monitoring'],
-      ['analytics', 'analytics-dashboard'],
-      ['trainer', 'model-training'],
-      ['guardian', null] // Deprecated, cannot be recreated
-    ]);
+    this.legacyIds = getAllMappings();
     this.detections = [];
   }
 
@@ -318,16 +306,18 @@ class LegacyIDDetector {
 // CLI
 if (require.main === module) {
   const args = process.argv.slice(2);
+  const parsed = parseArgs(args);
   const options = {
-    ci: args.includes('--ci'),
-    systemMap: args.find((arg) => arg.startsWith('--system-map='))?.split('=')[1],
-    nodes: args.find((arg) => arg.startsWith('--nodes='))?.split('=')[1],
-    code: args.find((arg) => arg.startsWith('--code='))?.split('=')[1]
+    ci: hasFlag(parsed, 'ci'),
+    systemMap: getOption(parsed, 'system-map'),
+    nodes: getOption(parsed, 'nodes'),
+    code: getOption(parsed, 'code')
   };
 
   const detector = new LegacyIDDetector(options);
   detector.detect().catch((error) => {
-    console.error('Fatal error:', error);
+    logger.error(`Fatal error: ${error.message}`);
+    logger.error(error.stack);
     process.exit(1);
   });
 }

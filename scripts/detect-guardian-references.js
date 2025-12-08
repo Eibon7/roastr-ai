@@ -7,6 +7,7 @@
  * The guardian node is permanently removed and cannot be recreated.
  *
  * Usage:
+ *   node scripts/detect-guardian-references.js --system-map=docs/system-map-v2.yaml --nodes=docs/nodes-v2/ --code=src/
  *   node scripts/detect-guardian-references.js --system-map docs/system-map-v2.yaml --nodes docs/nodes-v2/ --code src/
  *   node scripts/detect-guardian-references.js --ci
  */
@@ -15,6 +16,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
 const logger = require('../src/utils/logger');
+const { parseArgs, getOption, hasFlag } = require('./shared/cli-parser');
 
 class GuardianReferenceDetector {
   constructor(options = {}) {
@@ -159,18 +161,18 @@ class GuardianReferenceDetector {
               const subnodePath = path.join(nodeDir, subnodeFile);
               const content = await fs.readFile(subnodePath, 'utf-8');
 
-              if (this.matchesGuardianPattern(content)) {
-                const lineNumber = this.getLineNumber(
-                  content,
-                  content.toLowerCase().indexOf('guardian')
-                );
-                this.detections.push({
-                  type: 'guardian_reference_in_node',
-                  location: `docs/nodes-v2/${entry.name}/${subnodeFile}:${lineNumber}`,
-                  message:
-                    'Guardian reference found in node documentation. Guardian node is deprecated.',
-                  severity: 'error'
-                });
+              // Find all guardian pattern matches for accurate line numbers
+              for (const pattern of this.guardianPatterns) {
+                const matches = this.findPatternMatches(content, pattern);
+                for (const match of matches) {
+                  this.detections.push({
+                    type: 'guardian_reference_in_node',
+                    location: `docs/nodes-v2/${entry.name}/${subnodeFile}:${match.line}`,
+                    message:
+                      'Guardian reference found in node documentation. Guardian node is deprecated.',
+                    severity: 'error'
+                  });
+                }
               }
             }
           }
@@ -201,16 +203,19 @@ class GuardianReferenceDetector {
 
         const content = await fs.readFile(file, 'utf-8');
 
-        if (this.matchesGuardianPattern(content)) {
-          const relativePath = path.relative(this.rootDir, file);
-          const lineNumber = this.getLineNumber(content, content.toLowerCase().indexOf('guardian'));
-          this.detections.push({
-            type: 'guardian_reference_in_code',
-            location: `${relativePath}:${lineNumber}`,
-            message:
-              'Guardian reference found in code. Guardian node is deprecated and cannot be recreated.',
-            severity: 'error'
-          });
+        // Find all guardian pattern matches for accurate line numbers
+        for (const pattern of this.guardianPatterns) {
+          const matches = this.findPatternMatches(content, pattern);
+          for (const match of matches) {
+            const relativePath = path.relative(this.rootDir, file);
+            this.detections.push({
+              type: 'guardian_reference_in_code',
+              location: `${relativePath}:${match.line}`,
+              message:
+                'Guardian reference found in code. Guardian node is deprecated and cannot be recreated.',
+              severity: 'error'
+            });
+          }
         }
       }
     } catch (error) {
@@ -238,15 +243,18 @@ class GuardianReferenceDetector {
 
         const content = await fs.readFile(file, 'utf-8');
 
-        if (this.matchesGuardianPattern(content)) {
-          const relativePath = path.relative(this.rootDir, file);
-          const lineNumber = this.getLineNumber(content, content.toLowerCase().indexOf('guardian'));
-          this.detections.push({
-            type: 'guardian_reference_in_script',
-            location: `${relativePath}:${lineNumber}`,
-            message: 'Guardian reference found in script. Guardian node is deprecated.',
-            severity: 'warning'
-          });
+        // Find all guardian pattern matches for accurate line numbers
+        for (const pattern of this.guardianPatterns) {
+          const matches = this.findPatternMatches(content, pattern);
+          for (const match of matches) {
+            const relativePath = path.relative(this.rootDir, file);
+            this.detections.push({
+              type: 'guardian_reference_in_script',
+              location: `${relativePath}:${match.line}`,
+              message: 'Guardian reference found in script. Guardian node is deprecated.',
+              severity: 'warning'
+            });
+          }
         }
       }
     } catch (error) {
@@ -283,8 +291,29 @@ class GuardianReferenceDetector {
   }
 
   getLineNumber(content, index) {
-    if (index === -1) return 1;
-    return content.substring(0, index).split('\n').length;
+    if (index === -1 || index === undefined) return 1;
+    // Count newlines before the index position
+    const beforeIndex = content.substring(0, index);
+    return beforeIndex.split('\n').length;
+  }
+  
+  findPatternMatches(content, pattern) {
+    const matches = [];
+    let match;
+    // Reset regex lastIndex for global patterns
+    if (pattern.global) {
+      pattern.lastIndex = 0;
+    }
+    const testPattern = pattern.global ? pattern : new RegExp(pattern.source, pattern.flags + 'g');
+    
+    while ((match = testPattern.exec(content)) !== null) {
+      matches.push({
+        index: match.index,
+        match: match[0],
+        line: this.getLineNumber(content, match.index)
+      });
+    }
+    return matches;
   }
 
   printSummary() {
@@ -327,16 +356,18 @@ class GuardianReferenceDetector {
 // CLI
 if (require.main === module) {
   const args = process.argv.slice(2);
+  const parsed = parseArgs(args);
   const options = {
-    ci: args.includes('--ci'),
-    systemMap: args.find((arg) => arg.startsWith('--system-map='))?.split('=')[1],
-    nodes: args.find((arg) => arg.startsWith('--nodes='))?.split('=')[1],
-    code: args.find((arg) => arg.startsWith('--code='))?.split('=')[1]
+    ci: hasFlag(parsed, 'ci'),
+    systemMap: getOption(parsed, 'system-map'),
+    nodes: getOption(parsed, 'nodes'),
+    code: getOption(parsed, 'code')
   };
 
   const detector = new GuardianReferenceDetector(options);
   detector.detect().catch((error) => {
-    console.error('Fatal error:', error);
+    logger.error(`Fatal error: ${error.message}`);
+    logger.error(error.stack);
     process.exit(1);
   });
 }
