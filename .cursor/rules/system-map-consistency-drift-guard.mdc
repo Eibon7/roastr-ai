@@ -1,0 +1,631 @@
+---
+description: System-Map Consistency & Drift Guard v2 - Prevención de inconsistencias y drift entre SSOT, nodes y system-map
+globs:
+  - "docs/system-map-v2.yaml"
+  - "docs/nodes-v2/**/*.md"
+  - "docs/SSOT-V2.md"
+  - "gdd-health-v2.json"
+  - "scripts/**/*system-map*.js"
+  - "scripts/**/*gdd*.js"
+alwaysApply: true
+---
+
+# SYSTEM-MAP CONSISTENCY & DRIFT GUARD (v2)
+
+**Versión:** 2.0  
+**Fecha:** 2025-12-02  
+**Estado:** ✅ Activo  
+**Propósito:** Prevenir inconsistencias y drift entre SSOT-V2, nodes-v2, system-map-v2.yaml y código
+
+---
+
+## 0. Scope
+
+**Esta regla aplica cuando se modifica:**
+
+- ✅ `docs/system-map-v2.yaml`
+- ✅ `docs/nodes-v2/**/*.md`
+- ✅ `docs/SSOT-V2.md`
+- ✅ `gdd-health-v2.json`
+- ✅ Scripts que leen/escriben estos archivos (`scripts/**/*system-map*.js`, `scripts/**/*gdd*.js`)
+- ✅ Archivos listados en `nodes.*.files` del system-map
+
+**También aplica cuando:**
+
+- Se detectan referencias a nodos/workers en código
+- Se crean nuevas dependencias entre nodos
+- Se modifican valores que deben venir de SSOT
+
+---
+
+## 1. Source-of-Truth Hierarchy
+
+### 1.1 Jerarquía de Autoridad
+
+**Orden de precedencia (de mayor a menor):**
+
+1. **SSOT-V2** (`docs/SSOT-V2.md`) → **GANA SIEMPRE**
+2. **nodes-v2** (`docs/nodes-v2/<node>/<subnode>.md`) → Define implementación
+3. **system-map-v2.yaml** → Define estructura y relaciones
+4. **Código/comentarios** → Última fuente, puede estar desactualizado
+
+### 1.2 Regla de Resolución
+
+**Si un valor no existe en SSOT → marcar TBD y STOP:**
+
+```markdown
+## 🚨 STOP — Valor Faltante en SSOT
+
+**Valor solicitado:** [Nombre del valor]  
+**Ubicación:** [Archivo/Sección donde se necesita]  
+**Acción requerida:**
+1. Verificar si existe en SSOT-V2.md
+2. Si NO existe → marcar como TBD
+3. Crear issue para añadir valor a SSOT
+4. NO inventar el valor
+
+**Template de TBD:**
+```typescript
+// TODO: TBD - Falta en SSOT v2
+// Issue: #[XXX] - Añadir [valor] a SSOT
+// Temporal: [valor temporal con justificación]
+const temporalValue = 'temporal'; // ⚠️ REMOVER cuando SSOT se actualice
+```
+
+**No se puede continuar hasta resolver este conflicto.**
+```
+
+### 1.3 Validación de Jerarquía
+
+**Antes de usar cualquier valor, verificar:**
+
+```bash
+# 1. Buscar en SSOT-V2
+grep -r "<valor>" docs/SSOT-V2.md
+
+# 2. Si no existe → STOP y marcar TBD
+# 3. Si existe → usar valor de SSOT
+```
+
+---
+
+## 2. Node & Worker ID Consistency
+
+### 2.1 IDs Válidos
+
+**SOLO usar IDs definidos en `system-map-v2.yaml`:**
+
+```yaml
+# ✅ CORRECTO - IDs válidos en system-map-v2.yaml
+nodes:
+  roast-generation:
+    id: roast-generation
+  shield-moderation:
+    id: shield-moderation
+```
+
+### 2.2 IDs Legacy Prohibidos
+
+**❌ PROHIBIDO usar estos IDs legacy:**
+
+- ❌ `roast` → Usar `roast-generation` o equivalente v2
+- ❌ `shield` → Usar `shield-moderation` o equivalente v2
+- ❌ `social-platforms` → Usar IDs específicos por plataforma v2
+- ❌ `frontend-dashboard` → Usar `admin-dashboard` o equivalente v2
+- ❌ `plan-features` → Usar `plan-configuration` o equivalente v2
+- ❌ `persona` → Usar `persona-config` o equivalente v2
+- ❌ Cualquier ID del `system-map.yaml` legacy (v1)
+
+**Detección de IDs Legacy:**
+
+```bash
+# Buscar IDs legacy prohibidos
+grep -r "\"roast\"\|\"shield\"\|\"social-platforms\"\|\"frontend-dashboard\"\|\"plan-features\"\|\"persona\"" \
+  docs/nodes-v2/ docs/system-map-v2.yaml src/
+
+# Si se encuentra → STOP y mapear a v2
+```
+
+### 2.3 Mapeo de IDs Legacy a v2
+
+**Si se detecta ID legacy → mapear a equivalente v2:**
+
+```markdown
+## ⚠️ ID Legacy Detectado — Mapeo Requerido
+
+**ID Legacy:** `roast`  
+**Ubicación:** [Archivo/Línea]  
+**Mapeo sugerido:** `roast-generation` (verificar en system-map-v2.yaml)
+
+**Acción requerida:**
+1. Verificar ID equivalente en system-map-v2.yaml
+2. Reemplazar ID legacy por ID v2
+3. Actualizar referencias en dependencias
+4. Validar que el nuevo ID existe en system-map-v2.yaml
+```
+
+### 2.4 Workers Oficiales SSOT
+
+**Workers referenciados DEBEN ser oficiales del SSOT:**
+
+```typescript
+// ✅ CORRECTO - Worker oficial del SSOT
+import { v2_FetchCommentsWorker } from '@/workers/v2_fetchComments';
+
+// ❌ INCORRECTO - Worker no oficial
+import { LegacyWorker } from '@/workers/legacy';
+```
+
+**Validación de Workers:**
+
+```bash
+# 1. Verificar workers oficiales en SSOT-V2.md
+grep -A 20 "Workers" docs/SSOT-V2.md
+
+# 2. Verificar que el worker usado está listado
+# 3. Si no está → STOP y usar worker oficial
+```
+
+### 2.5 Flows/Integrations Nodes
+
+**Flows e integraciones DEBEN usar:**
+
+- ✅ IDs de nodos válidos de `system-map-v2.yaml`
+- ✅ Workers oficiales del SSOT
+- ❌ NO IDs legacy
+- ❌ NO workers no oficiales
+
+**Ejemplo:**
+
+```yaml
+# ✅ CORRECTO
+flows:
+  comment-analysis:
+    nodes:
+      - roast-generation  # ID válido en system-map-v2.yaml
+      - shield-moderation  # ID válido en system-map-v2.yaml
+    workers:
+      - v2_FetchCommentsWorker  # Worker oficial SSOT
+
+# ❌ INCORRECTO
+flows:
+  comment-analysis:
+    nodes:
+      - roast  # ID legacy prohibido
+      - shield  # ID legacy prohibido
+    workers:
+      - LegacyWorker  # Worker no oficial
+```
+
+---
+
+## 3. Strong/Soft Concepts (System-Map View)
+
+### 3.1 Strong Concepts en System-Map
+
+**Strong concepts tienen un solo nodo dueño:**
+
+```yaml
+# ✅ CORRECTO - Strong Concept con dueño único
+nodes:
+  persona-config:
+    description: Persona configuration (Strong Concept owner)
+    strong_concept: persona
+    # Solo este nodo puede definir Persona completamente
+
+  roast-generation:
+    description: Uses Persona (references, not redefines)
+    depends_on:
+      - persona-config  # Referencia, no redefinición
+```
+
+**❌ PROHIBIDO:**
+
+```yaml
+# ❌ VIOLACIÓN - Duplicado de Strong Concept
+nodes:
+  persona-config:
+    strong_concept: persona
+
+  persona-settings:  # ❌ NO puede redefinir Persona
+    strong_concept: persona  # Violación
+```
+
+### 3.2 Soft Concepts en System-Map
+
+**Soft concepts pueden aparecer en múltiples nodos sin duplicar contenido:**
+
+```yaml
+# ✅ CORRECTO - Soft Concept dividido por responsabilidad
+nodes:
+  roast-generation:
+    description: Genera roasts (parte del flujo de generación)
+    soft_concepts:
+      - generation-flow
+
+  shield-moderation:
+    description: Modera roasts (parte del flujo de moderación)
+    soft_concepts:
+      - moderation-flow
+    depends_on:
+      - roast-generation  # Referencia sin duplicar contenido
+```
+
+### 3.3 Validación de Concepts
+
+**Antes de crear/modificar un concepto, verificar:**
+
+```bash
+# 1. Verificar si es Strong Concept
+grep -r "strong_concept.*<concept>" docs/system-map-v2.yaml
+
+# 2. Si es Strong y ya tiene dueño → NO redefinir
+# 3. Si es Soft → puede aparecer en múltiples nodos
+# 4. Validar que no hay duplicados de Strong Concepts
+```
+
+---
+
+## 4. Editing Workflow
+
+### 4.1 Before: Pre-Editing Checklist
+
+**ANTES de editar, SIEMPRE:**
+
+1. ✅ **Leer SSOT-V2.md** - Verificar valores y definiciones
+2. ✅ **Leer nodes-v2 relevantes** - Entender implementación actual
+3. ✅ **Leer system-map-v2.yaml** - Verificar estructura y relaciones
+4. ✅ **Verificar que el concepto existe** - No inventar nuevos conceptos sin SSOT
+
+**Comandos:**
+
+```bash
+# 1. Leer SSOT
+cat docs/SSOT-V2.md | grep -A 10 "<sección-relevante>"
+
+# 2. Leer nodos relevantes
+cat docs/nodes-v2/<node>/<subnode>.md
+
+# 3. Leer system-map
+cat docs/system-map-v2.yaml | grep -A 20 "<node>"
+
+# 4. Verificar concepto
+grep -r "<concept>" docs/SSOT-V2.md docs/nodes-v2/ docs/system-map-v2.yaml
+```
+
+### 4.2 During: Reglas Durante la Edición
+
+**DURANTE la edición, mantener:**
+
+1. ✅ **Symmetry `depends_on` / `required_by`**
+   - Si A depende de B → B debe tener A en `required_by`
+   - Si A requiere B → B debe tener A en `depends_on`
+
+2. ✅ **Subnodos existen**
+   - Cada subnodo referenciado debe existir físicamente
+   - Verificar: `ls docs/nodes-v2/<node>/<subnode>.md`
+
+3. ✅ **No valores inventados**
+   - Todos los valores deben venir de SSOT
+   - Si falta → marcar TBD
+
+4. ✅ **Respetar Strong/Soft rules**
+   - No duplicar Strong Concepts
+   - Soft Concepts pueden aparecer en múltiples nodos
+
+5. ✅ **Usar solo IDs válidos**
+   - Solo IDs de system-map-v2.yaml
+   - NO IDs legacy
+
+**Ejemplo de Symmetry:**
+
+```yaml
+# ✅ CORRECTO - Symmetry mantenida
+nodes:
+  roast-generation:
+    depends_on:
+      - persona-config
+    required_by: []  # Se llena automáticamente
+
+  persona-config:
+    depends_on: []
+    required_by:
+      - roast-generation  # Symmetry con roast-generation.depends_on
+```
+
+### 4.3 After: Post-Editing Checklist
+
+**DESPUÉS de editar, validar:**
+
+```markdown
+## ✅ Post-Editing Checklist
+
+- [ ] **No IDs legacy** - Verificado con grep
+- [ ] **Symmetry enforced** - `depends_on` y `required_by` son simétricos
+- [ ] **Subnodos presentes** - Todos los subnodos referenciados existen
+- [ ] **No invenciones** - Todos los valores vienen de SSOT
+- [ ] **TBD para gaps** - Valores faltantes marcados como TBD
+- [ ] **Strong/Soft respetados** - No duplicados de Strong Concepts
+- [ ] **IDs válidos** - Solo IDs de system-map-v2.yaml
+```
+
+**Comandos de validación:**
+
+```bash
+# 1. Verificar IDs legacy
+grep -r "\"roast\"\|\"shield\"\|\"social-platforms\"" docs/nodes-v2/ docs/system-map-v2.yaml
+
+# 2. Verificar symmetry
+node scripts/validate-system-map-symmetry.js
+
+# 3. Verificar subnodos
+node scripts/validate-subnodes-exist.js
+
+# 4. Verificar valores SSOT
+node scripts/validate-ssot-compliance.js
+
+# 5. Verificar Strong Concepts
+node scripts/validate-strong-concepts.js
+```
+
+---
+
+## 5. Drift Handling
+
+### 5.1 Detección de Drift
+
+**Drift ocurre cuando:**
+
+- SSOT define un valor pero nodes/system-map tienen otro
+- Nodes definen comportamiento pero código no lo implementa
+- System-map tiene relaciones pero nodes no las reflejan
+- Código usa valores que no están en SSOT
+
+### 5.2 Regla de Alineación
+
+**Si SSOT define valor → alinear nodes/system-map a SSOT:**
+
+```markdown
+## 🔄 Drift Detectado — Alineación Requerida
+
+**Valor en SSOT:** `plan.starter.analysis_limit = 1000`  
+**Valor en nodes/system-map:** `plan.starter.analysis_limit = 500`  
+**Alineación requerida:** Actualizar nodes/system-map a 1000 (valor de SSOT)
+
+**Acción:**
+1. Actualizar nodes-v2 con valor de SSOT
+2. Actualizar system-map-v2.yaml si es necesario
+3. Actualizar código si usa valor hardcoded
+4. Validar que todo está alineado
+```
+
+### 5.3 Si SSOT No Define Valor
+
+**Si SSOT no define valor → marcar TBD y STOP:**
+
+```markdown
+## 🚨 STOP — Valor Faltante en SSOT
+
+**Valor necesario:** `plan.enterprise.custom_limit`  
+**SSOT actual:** No define `enterprise` plan  
+**Acción requerida:**
+1. Marcar como TBD en código/nodes
+2. Crear issue para añadir a SSOT
+3. NO inventar el valor
+4. Esperar actualización de SSOT antes de continuar
+```
+
+### 5.4 Mapeo de IDs Legacy
+
+**Si aparecen IDs legacy → mapear a equivalente v2:**
+
+```markdown
+## 🔄 Mapeo Legacy → v2
+
+**ID Legacy detectado:** `roast`  
+**Ubicación:** `docs/nodes-v2/roast/generation.md`  
+**Mapeo:** `roast` → `roast-generation` (verificar en system-map-v2.yaml)
+
+**Acción:**
+1. Buscar todas las referencias a `roast`
+2. Reemplazar por `roast-generation`
+3. Actualizar system-map-v2.yaml si es necesario
+4. Validar que `roast-generation` existe en system-map-v2.yaml
+```
+
+**Script de mapeo:**
+
+```bash
+# Mapear IDs legacy a v2
+node scripts/map-legacy-ids-to-v2.js \
+  --input docs/nodes-v2/ \
+  --mapping docs/legacy-id-mapping.json \
+  --output docs/nodes-v2/
+```
+
+---
+
+## 6. Guardian Node
+
+### 6.1 Prohibición Permanente
+
+**⚠️ CRÍTICO: El nodo "guardian" está eliminado permanentemente.**
+
+- ❌ **No puede existir** en system-map-v2.yaml
+- ❌ **No puede referenciarse** en nodes-v2
+- ❌ **No puede recrearse** bajo ningún concepto
+- ❌ **Si aparece referencia** → STOP inmediato
+
+### 6.2 Detección de Referencias
+
+**Buscar referencias a guardian:**
+
+```bash
+# Buscar en system-map-v2.yaml
+grep -r "guardian" docs/system-map-v2.yaml
+
+# Buscar en nodes-v2
+grep -r "guardian" docs/nodes-v2/
+
+# Buscar en código
+grep -r "guardian" src/ --exclude-dir=node_modules
+
+# Si se encuentra → STOP
+```
+
+### 6.3 Mensaje de Aviso
+
+**Si se detecta referencia a guardian:**
+
+```markdown
+## 🚨 STOP — Referencia a Nodo Guardian Detectada
+
+**Ubicación:** [Ruta del archivo]  
+**Tipo:** [Referencia directa / Comportamiento similar / ID legacy]  
+**Acción:** El nodo "guardian" está deprecated y no puede recrearse.
+
+**Mensaje obligatorio:**
+> "guardian node is deprecated and cannot be recreated."
+
+**Alternativa sugerida:**
+- Usar validaciones en otros nodos (ej: `shield-moderation` para moderación)
+- Usar `admin-dashboard` para gobernanza de producto
+- Crear nodo específico si es necesario (con autorización explícita)
+
+**No se puede continuar hasta eliminar la referencia.**
+```
+
+---
+
+## 7. Validaciones Automáticas
+
+### 7.1 Scripts de Validación
+
+**Ejecutar antes de commit:**
+
+```bash
+# 1. Validar consistencia de IDs
+node scripts/validate-node-ids.js --system-map docs/system-map-v2.yaml
+
+# 2. Validar workers oficiales
+node scripts/validate-workers-ssot.js --ssot docs/SSOT-V2.md
+
+# 3. Validar drift
+node scripts/validate-drift.js \
+  --ssot docs/SSOT-V2.md \
+  --nodes docs/nodes-v2/ \
+  --system-map docs/system-map-v2.yaml
+
+# 4. Validar symmetry
+node scripts/validate-symmetry.js --system-map docs/system-map-v2.yaml
+
+# 5. Validar Strong Concepts
+node scripts/validate-strong-concepts.js \
+  --system-map docs/system-map-v2.yaml \
+  --nodes docs/nodes-v2/
+
+# 6. Detectar IDs legacy
+node scripts/detect-legacy-ids.js \
+  --system-map docs/system-map-v2.yaml \
+  --nodes docs/nodes-v2/ \
+  --code src/
+
+# 7. Detectar referencias a guardian
+node scripts/detect-guardian-references.js \
+  --system-map docs/system-map-v2.yaml \
+  --nodes docs/nodes-v2/ \
+  --code src/
+```
+
+### 7.2 Integración con CI
+
+**Estos checks deben ejecutarse en CI:**
+
+```yaml
+# .github/workflows/system-map-consistency.yml
+name: System-Map Consistency Check
+
+on:
+  pull_request:
+    paths:
+      - 'docs/system-map-v2.yaml'
+      - 'docs/nodes-v2/**'
+      - 'docs/SSOT-V2.md'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate System-Map Consistency
+        run: |
+          node scripts/validate-node-ids.js
+          node scripts/validate-workers-ssot.js
+          node scripts/validate-drift.js
+          node scripts/validate-symmetry.js
+          node scripts/validate-strong-concepts.js
+          node scripts/detect-legacy-ids.js
+          node scripts/detect-guardian-references.js
+```
+
+---
+
+## 8. Referencias Obligatorias
+
+### 8.1 Archivos Clave
+
+- **SSOT-V2:** `docs/SSOT-V2.md`
+- **System-map v2:** `docs/system-map-v2.yaml`
+- **Nodes v2:** `docs/nodes-v2/<node>/<subnode>.md`
+- **Health v2:** `gdd-health-v2.json`
+
+### 8.2 Reglas Relacionadas
+
+- **V2 Optimized System:** `.cursor/rules/v2-optimized-system.mdc`
+- **SSOT Scope Enforcement:** `.cursor/rules/ssot-scope-enforcement.mdc`
+
+---
+
+## 9. Resumen Ejecutivo
+
+### 9.1 Antes de Editar
+
+1. ✅ Leer SSOT-V2.md
+2. ✅ Leer nodes-v2 relevantes
+3. ✅ Leer system-map-v2.yaml
+4. ✅ Verificar que el concepto existe
+
+### 9.2 Durante la Edición
+
+1. ✅ Mantener symmetry `depends_on` / `required_by`
+2. ✅ Asegurar que subnodos existen
+3. ✅ No inventar valores (usar SSOT)
+4. ✅ Respetar Strong/Soft rules
+5. ✅ Usar solo IDs válidos (no legacy)
+
+### 9.3 Después de Editar
+
+1. ✅ Verificar no hay IDs legacy
+2. ✅ Verificar symmetry
+3. ✅ Verificar subnodos presentes
+4. ✅ Verificar no hay invenciones
+5. ✅ Marcar TBD para gaps
+6. ✅ Validar con scripts
+
+### 9.4 Si Hay Drift
+
+1. 🔄 Si SSOT define valor → alinear a SSOT
+2. 🚨 Si SSOT no define → marcar TBD y STOP
+3. 🔄 Si hay IDs legacy → mapear a v2
+
+### 9.5 Si Hay Referencia a Guardian
+
+1. 🚨 **STOP inmediato**
+2. 📝 **Eliminar referencia**
+3. ⚠️ **Avisar:** "guardian node is deprecated and cannot be recreated."
+
+---
+
+**Última actualización:** 2025-12-02  
+**Versión:** 2.0  
+**Estado:** ✅ Activo

@@ -1,0 +1,564 @@
+---
+description: Reglas v2 Optimizadas - Sistema de Nodos y Subnodos con Gobernanza Strong/Soft
+globs:
+  - "docs/nodes-v2/**/*"
+  - "docs/system-map-v2.yaml"
+  - "docs/SSOT-V2.md"
+alwaysApply: true
+---
+
+# ⭐ CURSOR RULES — v2 Optimized Edition (Machine-Friendly)
+
+**Versión:** 2.0  
+**Fecha:** 2025-12-02  
+**Estado:** ✅ Activo  
+**Propósito:** Sistema optimizado de nodos y subnodos con gobernanza estricta de Strong/Soft concepts
+
+---
+
+## 0. Terminología
+
+- **Node**: Nodo maestro definido en `system-map-v2.yaml`
+- **Subnode**: Archivo en `docs/nodes-v2/<node>/<subnode>.md`
+- **Strong Concept**: Concepto con dueño único (no se puede duplicar ni redefinir)
+- **Soft Concept**: Concepto repartido entre nodos sin duplicación
+- **Allowed Sources**: Subnodo activo, nodo maestro, SSOT-V2, Spec v2, dependencias de system-map
+
+---
+
+## 1. Activación de Subnodos
+
+### 1.1 Requisitos Obligatorios
+
+Para activar un subnodo, **TODOS** estos requisitos deben cumplirse:
+
+1. ✅ Debe aparecer en `system-map-v2.yaml` → `nodes.<node>.subnodes`
+2. ✅ Debe existir físicamente en `docs/nodes-v2/<node>/<subnode>.md`
+3. ✅ El nodo maestro debe estar declarado en el `system-map-v2.yaml`
+4. ✅ Debe respetar ownership (Strong/Soft concepts)
+
+### 1.2 Workflow de Activación
+
+```bash
+# 1. Verificar existencia en system-map
+grep -A 5 "nodes:" docs/system-map-v2.yaml | grep "<node>"
+
+# 2. Verificar existencia física del subnodo
+ls docs/nodes-v2/<node>/<subnode>.md
+
+# 3. Verificar ownership de Strong Concepts
+# (ver sección 2.1)
+```
+
+### 1.3 Detección de Faltantes
+
+**Si alguno falta → STOP + pedir confirmación al usuario:**
+
+```markdown
+## 🚨 STOP — Subnodo Incompleto
+
+**Subnodo solicitado:** `<node>/<subnode>`  
+**Faltante detectado:**
+- [ ] No existe en system-map-v2.yaml
+- [ ] No existe físicamente en docs/nodes-v2/
+- [ ] Nodo maestro no declarado
+- [ ] Violación de ownership Strong Concept
+
+**Acción requerida:** [Especificar qué falta y cómo resolverlo]
+
+**No se puede continuar hasta resolver este conflicto.**
+```
+
+---
+
+## 2. Gobernanza Strong/Soft
+
+### 2.1 Strong Concepts (Dueño Único)
+
+**No se pueden duplicar ni redefinir.** Solo un nodo/subnodo puede poseerlos.
+
+#### Lista de Strong Concepts
+
+1. **Persona** - Configuración de personalidad del usuario
+2. **Tones** - Definición de tonos de roast (flanders, balanceado, canalla, personal)
+3. **Prompt Architecture** - Estructura y plantillas de prompts de IA
+4. **Workers oficiales SSOT** - Workers v2_* definidos en SSOT
+5. **Shield thresholds & weights** - Valores de umbrales y pesos de moderación
+6. **Billing state machine** - Máquina de estados de facturación
+7. **SSOT loader & feature flags** - Carga de configuración y flags desde SSOT
+8. **Queue system & RLS** - Sistema de colas y Row Level Security
+9. **Platform constraints** - Restricciones específicas por plataforma
+10. **GDPR retention rules** - Reglas de retención de datos GDPR
+
+#### Reglas de Strong Concepts
+
+- ✅ **Solo el dueño puede definir** el concepto completo
+- ✅ **Otros nodos solo pueden referenciar** (no redefinir)
+- ❌ **PROHIBIDO** crear duplicados (ej: `Persona-II`, `Tones-v2`)
+- ❌ **PROHIBIDO** redefinir en otro nodo
+
+#### Ejemplo de Violación
+
+```markdown
+# ❌ VIOLACIÓN
+# En docs/nodes-v2/roast/persona.md
+## Persona Configuration
+[Definición completa de Persona]
+
+# En docs/nodes-v2/settings/persona.md (DUPLICADO)
+## Persona Settings
+[Otra definición de Persona]
+
+# ✅ CORRECTO
+# En docs/nodes-v2/persona/core.md (dueño único)
+## Persona Configuration
+[Definición completa de Persona]
+
+# En docs/nodes-v2/roast/persona-integration.md (referencia)
+## Persona Integration
+See: [Persona Core](../persona/core.md)
+Uses: Persona configuration from persona/core.md
+```
+
+### 2.2 Soft Concepts
+
+- ✅ **Pueden aparecer en varios nodos** sin duplicar contenido
+- ✅ **Si un concepto cae en dos nodos** → dividir por responsabilidad
+- ❌ **Si la división no es obvia** → STOP y pedir aclaración
+
+#### Ejemplo de Soft Concept
+
+```markdown
+# ✅ CORRECTO - Soft Concept dividido por responsabilidad
+
+# docs/nodes-v2/roast/generation.md
+## Roast Generation
+- Genera roasts usando Persona (referencia a persona/core.md)
+- Aplica límites de caracteres según plataforma (referencia a platform-constraints/core.md)
+
+# docs/nodes-v2/shield/moderacion.md
+## Shield Moderation
+- Analiza roasts generados (referencia a roast/generation.md)
+- Aplica thresholds definidos en shield/thresholds.md (Strong Concept)
+```
+
+#### Manejo de División Ambigua
+
+**Si la división no es obvia → STOP:**
+
+```markdown
+## 🚨 STOP — División Ambigua de Soft Concept
+
+**Concepto:** [Nombre del concepto]  
+**Nodos afectados:** `<node1>`, `<node2>`  
+**Problema:** No está claro cómo dividir la responsabilidad
+
+**Opciones:**
+1. Asignar a un solo nodo (convertir en Strong Concept)
+2. Dividir por [criterio específico]
+3. Crear nodo intermedio
+
+**Acción requerida:** Aclaración del usuario sobre cómo proceder
+```
+
+---
+
+## 3. Restricción de Contexto
+
+### 3.1 Allowed Sources (ÚNICAS Fuentes Permitidas)
+
+Cursor **SOLO** puede usar estas fuentes:
+
+1. ✅ **Subnodo activo** - `docs/nodes-v2/<node>/<subnode>.md`
+2. ✅ **Nodo maestro** - Definición en `system-map-v2.yaml`
+3. ✅ **SSOT-V2** - `docs/SSOT-V2.md`
+4. ✅ **Spec v2** - `docs/spec-v2.md` (si existe)
+5. ✅ **Nodos listados en `depends_on`** - Dependencias del system-map
+
+### 3.2 Fuentes Prohibidas
+
+**❌ PROHIBIDO usar:**
+
+- ❌ `docs/nodes/*.md` (nodos legacy v1)
+- ❌ `docs/spec.md` (spec legacy v1)
+- ❌ Cualquier archivo fuera de Allowed Sources
+- ❌ Código fuente como fuente de verdad (solo SSOT/nodos)
+- ❌ Documentación no oficial
+
+### 3.3 Validación de Fuentes
+
+**Antes de usar cualquier fuente, verificar:**
+
+```bash
+# 1. Verificar que el subnodo está en system-map
+grep -r "<subnode>" docs/system-map-v2.yaml
+
+# 2. Verificar que el nodo está en depends_on si se referencia
+grep -A 10 "depends_on:" docs/system-map-v2.yaml | grep "<node>"
+
+# 3. Verificar que SSOT-V2 existe
+test -f docs/SSOT-V2.md && echo "SSOT-V2 exists" || echo "SSOT-V2 missing"
+```
+
+### 3.4 Violación de Restricción
+
+**Si se intenta usar fuente prohibida → STOP:**
+
+```markdown
+## 🚨 STOP — Fuente Prohibida Detectada
+
+**Fuente intentada:** [Ruta del archivo]  
+**Tipo:** [Legacy v1 / Fuera de scope / No autorizada]  
+**Allowed Sources:**
+- Subnodo activo
+- Nodo maestro (system-map-v2.yaml)
+- SSOT-V2
+- Spec v2
+- Dependencias del system-map
+
+**Acción requerida:** Usar solo fuentes permitidas o solicitar actualización del system-map
+```
+
+---
+
+## 4. Prohibiciones
+
+### 4.1 Inventar Contenido
+
+**Si algo no está en Allowed Sources → marcar como TBD + pedir confirmación:**
+
+```markdown
+# ❌ PROHIBIDO
+## Feature X
+[Implementación inventada sin base en SSOT/nodos]
+
+# ✅ CORRECTO
+## Feature X
+<!-- TODO: TBD - Falta en SSOT v2 / Nodos v2 -->
+<!-- Issue: #[XXX] - Añadir Feature X a SSOT/Nodos -->
+<!-- Temporal: [valor temporal con justificación] -->
+const temporalValue = 'temporal'; // ⚠️ REMOVER cuando SSOT/Nodos se actualice
+```
+
+### 4.2 Reorganizar Estructura (PROHIBIDO)
+
+**❌ PROHIBIDO:**
+
+- ❌ Mover subnodos entre nodos
+- ❌ Crear duplicados (ej: `Persona-II`, `Tones-v2`)
+- ❌ Fusionar nodos sin autorización explícita
+- ❌ Cambiar dependencias del system-map sin aprobación
+- ❌ Renombrar nodos/subnodos existentes
+
+**Violación → STOP inmediato:**
+
+```markdown
+## 🚨 STOP — Reorganización No Autorizada
+
+**Acción detectada:** [Mover/Fusionar/Renombrar/Crear duplicado]  
+**Elemento afectado:** `<node>/<subnode>`  
+**Razón:** Reorganización de estructura requiere autorización explícita
+
+**Acción requerida:** 
+1. Obtener autorización explícita del usuario
+2. Actualizar system-map-v2.yaml con aprobación
+3. Documentar cambio en PR/issue
+
+**No se puede continuar sin autorización.**
+```
+
+### 4.3 Eliminación Permanente del Nodo "guardian"
+
+**⚠️ CRÍTICO: El nodo "guardian" está eliminado permanentemente.**
+
+- ❌ **No puede existir** ni recrearse
+- ❌ **Si aparece referencia directa o indirecta** → STOP
+- ❌ **Si un comportamiento lo imita** → Avisar
+
+**Detección de Referencias:**
+
+```bash
+# Buscar referencias a guardian
+grep -r "guardian" docs/nodes-v2/ docs/system-map-v2.yaml
+
+# Si se encuentra → STOP
+```
+
+**Mensaje de Aviso:**
+
+```markdown
+## ⚠️ AVISO — Referencia a Nodo Guardian Detectada
+
+**Ubicación:** [Ruta del archivo]  
+**Tipo:** [Referencia directa / Comportamiento similar]  
+**Acción:** El nodo "guardian" está deprecated y no puede recrearse.
+
+**Alternativa sugerida:** [Proponer alternativa según contexto]
+```
+
+---
+
+## 5. Validaciones Obligatorias
+
+### 5.1 Checklist Pre-Implementación
+
+**ANTES de producir código o documentación, validar SIEMPRE:**
+
+1. ✅ **Subnodo ↔ Nodo maestro**
+   - Subnodo existe en system-map-v2.yaml
+   - Nodo maestro está declarado
+   - Dependencias están listadas
+
+2. ✅ **Nodo maestro ↔ SSOT-V2**
+   - Valores usados están en SSOT-V2
+   - No hay valores hardcoded prohibidos
+   - Feature flags vienen de SSOT
+
+3. ✅ **Nodo maestro ↔ system-map**
+   - Dependencias son correctas
+   - No hay ciclos
+   - Relaciones bidireccionales son consistentes
+
+4. ✅ **Dependencias del nodo**
+   - Todas las dependencias están resueltas
+   - No hay dependencias faltantes
+   - Orden de carga es correcto
+
+5. ✅ **Ownership de Strong Concepts**
+   - No hay duplicados
+   - Solo el dueño define el concepto
+   - Referencias son correctas
+
+### 5.2 Comandos de Validación
+
+```bash
+# 1. Validar estructura de system-map
+node scripts/validate-system-map-v2.js
+
+# 2. Validar subnodos vs system-map
+node scripts/validate-subnodes.js
+
+# 3. Validar Strong Concepts (no duplicados)
+node scripts/validate-strong-concepts.js
+
+# 4. Validar dependencias
+node scripts/validate-dependencies.js
+
+# 5. Validar SSOT compliance
+grep -r "free\|basic\|creator_plus\|stripe\|sendgrid" src/ --exclude-dir=node_modules
+```
+
+### 5.3 Manejo de Contradicciones
+
+**Si hay contradicción → STOP + explicar el conflicto:**
+
+```markdown
+## 🚨 STOP — Contradicción Detectada
+
+**Validación fallida:** [Nombre de la validación]  
+**Conflicto:**
+- [Descripción detallada del conflicto]
+- [Elementos en conflicto]
+
+**Opciones:**
+1. Corregir implementación para alinearse con nodo/SSOT
+2. Actualizar nodo/SSOT con justificación
+3. Crear issue de seguimiento
+
+**No se puede continuar hasta resolver este conflicto.**
+```
+
+---
+
+## 6. Mantenimiento Automático
+
+### 6.1 Actualización de Subnodos
+
+**Cuando un subnodo cambia:**
+
+1. ✅ **Actualizar sección relevante del nodo maestro**
+   - Sincronizar cambios en system-map-v2.yaml
+   - Actualizar metadata (last_updated, coverage, etc.)
+
+2. ✅ **Añadir referencias a system-map si aparecen nuevas dependencias o flujos**
+   - Actualizar `depends_on` si es necesario
+   - Actualizar `used_by` si otros nodos lo usan
+
+3. ⚠️ **Si toca un Strong Concept → SOLO si el usuario lo ordena explícitamente**
+   - No modificar Strong Concepts sin autorización
+   - Documentar cambio en PR/issue
+
+### 6.2 Workflow de Mantenimiento
+
+```bash
+# 1. Detectar cambios en subnodo
+git diff docs/nodes-v2/<node>/<subnode>.md
+
+# 2. Actualizar nodo maestro si es necesario
+# (editar system-map-v2.yaml)
+
+# 3. Validar cambios
+node scripts/validate-system-map-v2.js
+node scripts/validate-strong-concepts.js
+
+# 4. Si toca Strong Concept → Verificar autorización
+# (verificar en PR/issue si hay autorización explícita)
+```
+
+### 6.3 Sincronización Automática
+
+**Después de cambios, ejecutar:**
+
+```bash
+# Sincronizar system-map con subnodos
+node scripts/sync-system-map-v2.js
+
+# Validar coherencia
+node scripts/validate-system-map-v2.js --full
+```
+
+---
+
+## 7. Logging Interno
+
+### 7.1 Registro de Operaciones
+
+**Cada operación debe registrar internamente (no se imprime a menos que el usuario lo pida):**
+
+- ✅ **Nodo maestro activado** - `system-map-v2.yaml → nodes.<node>`
+- ✅ **Subnodo activado** - `docs/nodes-v2/<node>/<subnode>.md`
+- ✅ **Dependencias validadas** - Lista de `depends_on` verificadas
+- ✅ **Secciones SSOT usadas** - Referencias a `docs/SSOT-V2.md`
+- ✅ **Cambios aplicados** - Diff de modificaciones
+
+### 7.2 Formato de Log Interno
+
+```json
+{
+  "timestamp": "2025-12-02T10:30:00Z",
+  "operation": "subnode_activation",
+  "node": "roast",
+  "subnode": "generation",
+  "dependencies_validated": ["persona", "tone", "platform-constraints"],
+  "ssot_sections_used": ["1. Plans and Limits", "3. Feature Flags"],
+  "strong_concepts_referenced": ["Persona", "Tones"],
+  "changes_applied": {
+    "files_modified": ["src/services/roastEngine.js"],
+    "lines_changed": 45
+  }
+}
+```
+
+### 7.3 Acceso al Log
+
+**El log es interno por defecto. Para acceder:**
+
+```bash
+# Ver log de última operación
+node scripts/get-internal-log.js --last
+
+# Ver log de operaciones de un nodo
+node scripts/get-internal-log.js --node=<node>
+
+# Ver log completo (solo si usuario lo solicita)
+node scripts/get-internal-log.js --full
+```
+
+---
+
+## 8. Integración con Reglas Existentes
+
+### 8.1 Compatibilidad con SSOT Enforcement
+
+**Estas reglas se integran con:**
+
+- ✅ `.cursor/rules/ssot-scope-enforcement.mdc` - SSOT compliance
+- ✅ `.cursor/rules/system-map-consistency-drift-guard.mdc` - Consistencia y prevención de drift
+- ✅ `.cursor/rules/v2-development.mdc` - Desarrollo v2 limpio
+- ✅ `.cursor/rules/shadcn-ui-migration.mdc` - Migración UI
+
+### 8.2 Precedencia
+
+**Jerarquía de autoridad (en orden de precedencia):**
+
+1. **SSOT v2** (`docs/SSOT-V2.md`) → GANA SIEMPRE
+2. **System-map v2** (`docs/system-map-v2.yaml`) → Define estructura
+3. **Subnodos activos** (`docs/nodes-v2/<node>/<subnode>.md`) → Define implementación
+4. **Scope de la Issue** → Define QUÉ implementar
+
+### 8.3 Conflictos con Reglas Legacy
+
+**Si hay conflicto entre reglas v2 y legacy:**
+
+- ✅ **Reglas v2 ganan** sobre legacy
+- ✅ **Migrar referencias legacy** a v2 cuando sea posible
+- ❌ **NO mezclar** sistemas v1 y v2
+
+---
+
+## 9. Referencias Obligatorias
+
+### 9.1 Archivos Clave
+
+- **System-map v2:** `docs/system-map-v2.yaml`
+- **Subnodos:** `docs/nodes-v2/<node>/<subnode>.md`
+- **SSOT v2:** `docs/SSOT-V2.md`
+- **Spec v2:** `docs/spec-v2.md` (si existe)
+
+### 9.2 Scripts de Validación
+
+```bash
+# Validar system-map v2
+node scripts/validate-system-map-v2.js
+
+# Validar subnodos
+node scripts/validate-subnodes.js
+
+# Validar Strong Concepts
+node scripts/validate-strong-concepts.js
+
+# Validar dependencias
+node scripts/validate-dependencies.js
+
+# Sincronizar system-map
+node scripts/sync-system-map-v2.js
+```
+
+---
+
+## 10. Resumen Ejecutivo
+
+### 10.1 Antes de Cualquier Operación
+
+1. ✅ Verificar que el subnodo existe en system-map-v2.yaml
+2. ✅ Verificar que el subnodo existe físicamente
+3. ✅ Verificar ownership de Strong Concepts
+4. ✅ Validar dependencias
+5. ✅ Verificar SSOT compliance
+
+### 10.2 Durante la Operación
+
+1. ✅ Usar solo Allowed Sources
+2. ✅ Respetar Strong/Soft concepts
+3. ✅ No inventar contenido (marcar TBD)
+4. ✅ No reorganizar estructura sin autorización
+5. ✅ Registrar operaciones internamente
+
+### 10.3 Después de la Operación
+
+1. ✅ Actualizar nodo maestro si es necesario
+2. ✅ Sincronizar system-map
+3. ✅ Validar cambios
+4. ✅ Documentar en PR/issue si toca Strong Concept
+
+### 10.4 Si Hay Conflicto
+
+1. 🚨 **DETENER** inmediatamente
+2. 📝 **DOCUMENTAR** el conflicto
+3. 🔄 **ESPERAR** resolución del usuario
+
+---
+
+**Última actualización:** 2025-12-02  
+**Versión:** 2.0  
+**Estado:** ✅ Activo

@@ -1,0 +1,317 @@
+#!/usr/bin/env node
+
+/**
+ * Detect Legacy IDs
+ *
+ * Detects legacy node IDs (v1) that should be migrated to v2 equivalents.
+ *
+ * Usage:
+ *   node scripts/detect-legacy-ids.js --system-map docs/system-map-v2.yaml --nodes docs/nodes-v2/ --code src/
+ *   node scripts/detect-legacy-ids.js --ci
+ */
+
+const fs = require('fs').promises;
+const path = require('path');
+const yaml = require('yaml');
+
+class LegacyIDDetector {
+  constructor(options = {}) {
+    this.options = options;
+    this.rootDir = path.resolve(__dirname, '..');
+    this.isCIMode = options.ci || false;
+    this.legacyIds = new Map([
+      ['roast', 'roast-generation'],
+      ['shield', 'shield-moderation'],
+      ['social-platforms', 'platform-integrations'],
+      ['frontend-dashboard', 'admin-dashboard'],
+      ['plan-features', 'plan-configuration'],
+      ['persona', 'persona-config'],
+      ['billing', 'billing-integration'],
+      ['cost-control', 'cost-management'],
+      ['queue-system', 'queue-management'],
+      ['multi-tenant', 'tenant-management'],
+      ['observability', 'monitoring'],
+      ['analytics', 'analytics-dashboard'],
+      ['trainer', 'model-training'],
+      ['guardian', null] // Deprecated, cannot be recreated
+    ]);
+    this.detections = [];
+  }
+
+  log(message, type = 'info') {
+    const prefix = {
+      info: 'ℹ️',
+      success: '✅',
+      warning: '⚠️',
+      error: '❌',
+      step: '📊'
+    }[type] || 'ℹ️';
+
+    if (this.isCIMode && type === 'info') return;
+    console.log(`${prefix} ${message}`);
+  }
+
+  async detect() {
+    try {
+      this.log('🔍 Detecting legacy IDs...', 'step');
+      this.log('');
+
+      // Detect in system-map-v2.yaml
+      await this.detectInSystemMap();
+
+      // Detect in nodes-v2
+      await this.detectInNodesV2();
+
+      // Detect in code
+      await this.detectInCode();
+
+      // Print summary
+      this.printSummary();
+
+      // Exit code for CI
+      if (this.isCIMode && this.detections.length > 0) {
+        process.exit(1);
+      }
+
+      return {
+        found: this.detections.length > 0,
+        detections: this.detections,
+        legacyIds: Array.from(this.legacyIds.keys())
+      };
+    } catch (error) {
+      this.log(`❌ Detection failed: ${error.message}`, 'error');
+      if (this.isCIMode) process.exit(1);
+      throw error;
+    }
+  }
+
+  async detectInSystemMap() {
+    const systemMapPath = path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
+    
+    try {
+      const content = await fs.readFile(systemMapPath, 'utf-8');
+      const map = yaml.parse(content);
+      
+      if (map.nodes) {
+        for (const [nodeId, nodeData] of Object.entries(map.nodes)) {
+          // Check node ID itself
+          if (this.legacyIds.has(nodeId)) {
+            const mapping = this.legacyIds.get(nodeId);
+            this.detections.push({
+              type: 'legacy_node_id',
+              location: `docs/system-map-v2.yaml (node: ${nodeId})`,
+              legacyId: nodeId,
+              suggestedMapping: mapping,
+              message: mapping 
+                ? `Legacy ID "${nodeId}" found. Should use "${mapping}"`
+                : `Legacy ID "${nodeId}" is deprecated and cannot be recreated.`
+            });
+          }
+
+          // Check in depends_on
+          if (nodeData.depends_on) {
+            const deps = Array.isArray(nodeData.depends_on) ? nodeData.depends_on : [nodeData.depends_on];
+            deps.forEach(dep => {
+              if (this.legacyIds.has(dep)) {
+                const mapping = this.legacyIds.get(dep);
+                this.detections.push({
+                  type: 'legacy_id_in_depends_on',
+                  location: `docs/system-map-v2.yaml (node: ${nodeId})`,
+                  legacyId: dep,
+                  suggestedMapping: mapping,
+                  message: mapping
+                    ? `Legacy ID "${dep}" in depends_on. Should use "${mapping}"`
+                    : `Legacy ID "${dep}" is deprecated.`
+                });
+              }
+            });
+          }
+        }
+      }
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        throw error;
+      }
+    }
+  }
+
+  async detectInNodesV2() {
+    const nodesV2Dir = path.join(this.rootDir, 'docs', 'nodes-v2');
+    
+    try {
+      const entries = await fs.readdir(nodesV2Dir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          const nodeId = entry.name;
+          
+          // Check node directory name
+          if (this.legacyIds.has(nodeId)) {
+            const mapping = this.legacyIds.get(nodeId);
+            this.detections.push({
+              type: 'legacy_node_directory',
+              location: `docs/nodes-v2/${nodeId}/`,
+              legacyId: nodeId,
+              suggestedMapping: mapping,
+              message: mapping
+                ? `Legacy node directory "${nodeId}". Should use "${mapping}"`
+                : `Legacy node directory "${nodeId}" is deprecated.`
+            });
+          }
+
+          // Check in subnode files
+          const nodeDir = path.join(nodesV2Dir, nodeId);
+          const subnodes = await fs.readdir(nodeDir);
+          
+          for (const subnodeFile of subnodes) {
+            if (subnodeFile.endsWith('.md')) {
+              const subnodePath = path.join(nodeDir, subnodeFile);
+              const content = await fs.readFile(subnodePath, 'utf-8');
+              
+              // Check for legacy ID references in content
+              this.legacyIds.forEach((mapping, legacyId) => {
+                const pattern = new RegExp(`['"\`]${legacyId}['"\`]`, 'g');
+                if (pattern.test(content)) {
+                  this.detections.push({
+                    type: 'legacy_id_in_content',
+                    location: `docs/nodes-v2/${nodeId}/${subnodeFile}`,
+                    legacyId: legacyId,
+                    suggestedMapping: mapping,
+                    message: mapping
+                      ? `Legacy ID "${legacyId}" referenced. Should use "${mapping}"`
+                      : `Legacy ID "${legacyId}" is deprecated.`
+                  });
+                }
+              });
+            }
+          }
+        }
+      }
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        throw error;
+      }
+    }
+  }
+
+  async detectInCode() {
+    const codeDir = this.options.code || path.join(this.rootDir, 'src');
+    
+    try {
+      const files = await this.getAllFiles(codeDir);
+      
+      for (const file of files) {
+        if (!file.endsWith('.js') && !file.endsWith('.ts') && !file.endsWith('.jsx') && !file.endsWith('.tsx')) {
+          continue;
+        }
+
+        const content = await fs.readFile(file, 'utf-8');
+        const relativePath = path.relative(this.rootDir, file);
+        
+        // Check for legacy IDs in strings
+        this.legacyIds.forEach((mapping, legacyId) => {
+          const pattern = new RegExp(`['"\`]${legacyId}['"\`]`, 'g');
+          if (pattern.test(content)) {
+            const lineNumber = this.getLineNumber(content, content.indexOf(`"${legacyId}"`));
+            this.detections.push({
+              type: 'legacy_id_in_code',
+              location: `${relativePath}:${lineNumber}`,
+              legacyId: legacyId,
+              suggestedMapping: mapping,
+              message: mapping
+                ? `Legacy ID "${legacyId}" in code. Should use "${mapping}"`
+                : `Legacy ID "${legacyId}" is deprecated.`
+            });
+          }
+        });
+      }
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        throw error;
+      }
+    }
+  }
+
+  async getAllFiles(dir) {
+    const files = [];
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      
+      if (entry.name === 'node_modules' || entry.name === '.git') {
+        continue;
+      }
+      
+      if (entry.isDirectory()) {
+        const subFiles = await this.getAllFiles(fullPath);
+        files.push(...subFiles);
+      } else {
+        files.push(fullPath);
+      }
+    }
+    
+    return files;
+  }
+
+  getLineNumber(content, index) {
+    return content.substring(0, index).split('\n').length;
+  }
+
+  printSummary() {
+    this.log('');
+    this.log('📊 Legacy ID Detection Summary', 'step');
+    this.log('');
+    
+    if (this.detections.length === 0) {
+      this.log('✅ No legacy IDs detected!', 'success');
+      return;
+    }
+
+    // Group by type
+    const byType = {};
+    this.detections.forEach(detection => {
+      if (!byType[detection.type]) {
+        byType[detection.type] = [];
+      }
+      byType[detection.type].push(detection);
+    });
+
+    this.log(`❌ Found ${this.detections.length} legacy ID reference(s):`, 'error');
+    this.log('');
+    
+    Object.entries(byType).forEach(([type, detections]) => {
+      this.log(`   ${type} (${detections.length}):`, 'error');
+      detections.forEach((detection, idx) => {
+        this.log(`      ${idx + 1}. ${detection.location}`, 'error');
+        this.log(`         ${detection.message}`, 'error');
+        if (detection.suggestedMapping) {
+          this.log(`         → Suggested: Use "${detection.suggestedMapping}"`, 'info');
+        }
+      });
+      this.log('');
+    });
+
+    this.log('💡 Action required: Migrate legacy IDs to v2 equivalents', 'warning');
+  }
+}
+
+// CLI
+if (require.main === module) {
+  const args = process.argv.slice(2);
+  const options = {
+    ci: args.includes('--ci'),
+    systemMap: args.find(arg => arg.startsWith('--system-map='))?.split('=')[1],
+    nodes: args.find(arg => arg.startsWith('--nodes='))?.split('=')[1],
+    code: args.find(arg => arg.startsWith('--code='))?.split('=')[1]
+  };
+
+  const detector = new LegacyIDDetector(options);
+  detector.detect().catch(error => {
+    console.error('Fatal error:', error);
+    process.exit(1);
+  });
+}
+
+module.exports = { LegacyIDDetector };
+

@@ -1,0 +1,642 @@
+# SSOT + NODE + SCOPE ENFORCEMENT v2
+
+**Versión:** 2.0  
+**Fecha:** 2025-12-02  
+**Estado:** ✅ Activo  
+**Propósito:** Garantizar que cualquier trabajo producido por Cursor/Claude cumple estrictamente con el scope de la issue, los nodos GDD v2 activos, el SSOT v2, y la arquitectura v2.
+
+---
+
+## 🔒 PRINCIPIO DE ORO
+
+**Jerarquía de autoridad (en orden de precedencia):**
+
+1. **SSOT v2** (`docs/SSOT-V2.md`) → GANA SIEMPRE sobre código/GDD
+2. **Scope de la Issue** (Linear/GitHub) → Define QUÉ implementar
+3. **Nodos GDD v2** (`docs/nodes-v2/<node>/<subnode>.md` o `docs/nodes/*.md` legacy) → Define CÓMO debe funcionar
+4. **System-map v2** (`docs/system-map-v2.yaml`) → Define estructura de nodos y subnodos
+5. **Arquitectura v2** → Workers v2_*, SSOT enforcement, GDPR, FeatureFlagService
+
+**Regla de resolución de conflictos:**
+
+- Si SSOT y código/GDD discrepan → **SSOT gana** (detener y corregir)
+- Si Issue y Nodo discrepan → **Issue define scope**, pero sin permitir contradicciones al nodo/SSOT
+- Si Issue está incompleta/ambigua → **NO inventar**, documentar y crear issue de seguimiento
+
+---
+
+## 🔍 SCOPE STRICT ENFORCEMENT (Regla Absoluta)
+
+### 2.1 Workflow Obligatorio Antes de Implementar
+
+**Paso 1: Leer el scope de la issue**
+
+```bash
+# Si es issue de GitHub
+gh issue view <número> --json title,body,labels
+
+# Si es issue de Linear
+# Revisar título, descripción, acceptance criteria (AC)
+```
+
+**Identificar EXACTAMENTE:**
+
+- ✅ Qué se pide (AC específicos)
+- ❌ Qué NO se pide (límites explícitos)
+- 🎯 Límites funcionales (qué módulos toca)
+- 🚫 Partes explícitamente fuera del alcance
+
+**Paso 2: Resolver nodos GDD relevantes**
+
+```bash
+# Auto-detección de nodos desde issue
+node scripts/cursor-agents/auto-gdd-activation.js <issue-number>
+
+# O resolver manualmente
+node scripts/resolve-graph.js <nodos-detectados>
+```
+
+**Paso 3: Leer SOLO nodos resueltos (NUNCA spec.md completo)**
+
+```
+En Cursor Chat: @docs/nodes/roast.md @docs/nodes/shield.md
+```
+
+**Paso 4: Verificar SSOT**
+
+```
+@docs/SSOT-V2.md
+```
+
+### 2.2 Prohibiciones Absolutas
+
+**❌ PROHIBIDO implementar:**
+
+- Features no mencionadas en el scope de la issue
+- Mejoras "evidentes" que no están en AC
+- Completar partes del nodo no incluidas en la issue
+- Añadir coherencia a módulos no involucrados
+- "Lógica" que debería estar pero no está en el scope
+
+**Ejemplo de violación:**
+
+```
+Issue: "Añadir validación de email en formulario de registro"
+❌ MAL: También añadí validación de teléfono (no estaba en scope)
+❌ MAL: También mejoré el diseño del formulario (no estaba en scope)
+✅ BIEN: Solo validación de email como pide la issue
+```
+
+### 2.3 Manejo de Issues Incompletas/Ambiguas
+
+Si la issue está incompleta, ambigua o choca con un nodo:
+
+1. **Documentar en PR** (comentario de bloqueo)
+2. **Proponer alternativas** (con referencias a SSOT/nodos)
+3. **Crear issue de seguimiento** (si es necesario)
+4. **NO inventar comportamiento** (detener y esperar aclaración)
+
+**Template de bloqueo:**
+
+```markdown
+## ⚠️ Scope Conflict Detected
+
+**Issue:** #XXX  
+**Conflicto:** [Descripción del conflicto]  
+**SSOT/Nodo afectado:** [Referencia]  
+**Propuesta:** [Alternativas]  
+**Issue de seguimiento:** #[YYY]
+```
+
+---
+
+## 📘 NODE COMPLIANCE ENFORCEMENT
+
+### 3.1 Verificación de Coherencia con Nodos
+
+**Para cada cambio, verificar:**
+
+```bash
+# 1. Identificar nodos afectados
+node scripts/resolve-graph.js <nodo-principal>
+
+# 2. Leer nodos resueltos
+# 3. Comparar implementación vs nodo
+```
+
+**Si la implementación contradice un nodo:**
+
+- ✅ **Corregir** la implementación para alinearse con el nodo
+- ✅ **O** explicar por qué el nodo debe actualizarse
+- ✅ **Generar** "Nodo Patch" (ver sección 8)
+
+**Ejemplo de contradicción:**
+
+```
+Nodo roast.md dice: "Roasts deben tener máximo 280 caracteres"
+Implementación: Permite 500 caracteres
+→ CORRECCIÓN: Limitar a 280 o actualizar nodo con justificación
+```
+
+### 3.2 Prohibición de "Completar el Nodo"
+
+**Los nodos describen el sistema completo. La issue describe qué toca ahora.**
+
+**❌ PROHIBIDO:**
+
+- Implementar partes del nodo no incluidas en la issue
+- "Completar" funcionalidades mencionadas en el nodo pero no en la issue
+- Añadir features "que deberían estar" según el nodo
+
+**Ejemplo:**
+
+```
+Issue: "Añadir validación de tono en roast generation"
+Nodo roast.md menciona: validación de tono, límites de caracteres, shield integration
+❌ MAL: Implementé todo lo del nodo relacionado con roast
+✅ BIEN: Solo validación de tono como pide la issue
+```
+
+### 3.3 Actualización de "Agentes Relevantes"
+
+**Después de invocar un agente, SIEMPRE actualizar el nodo:**
+
+```markdown
+## Agentes Relevantes
+
+- TestEngineer - Para tests de validación
+- FrontendDev - Para UI de configuración
+- [NUEVO] Guardian - Para validación de seguridad
+```
+
+**Validación:**
+
+```bash
+node scripts/validate-gdd-runtime.js --full
+```
+
+---
+
+## 🔐 SSOT COMPLIANCE ENFORCEMENT
+
+### 4.1 Valores Prohibidos (Lista Exhaustiva)
+
+**❌ PROHIBIDO usar:**
+
+- Valores hardcoded (planes, flags, tonos, estados)
+- Planes legacy: `"free"`, `"basic"`, `"creator_plus"`
+- Features legacy v1 (Stripe, SendGrid, workers v1)
+- Flags fuera de los 15 oficiales (ver `docs/SSOT-V2.md` sección 3)
+- Tonos no definidos (solo: `"flanders"`, `"balanceado"`, `"canalla"`, `"personal"`)
+- Plataformas no soportadas (ver SSOT sección 4)
+- Estados nuevos no incluidos en SSOT (billing, shield, etc.)
+
+**Referencia obligatoria:** `docs/SSOT-V2.md`
+
+### 4.2 Carga de Valores desde SSOT
+
+**Cada valor configurable DEBE venir de:**
+
+```typescript
+// ✅ CORRECTO
+import { SettingsLoader } from '@/services/settingsLoader';
+const settings = await SettingsLoader.load();
+const planLimits = settings.plans[user.plan];
+
+// ❌ INCORRECTO
+const planLimits = { analysis_limit: 1000 }; // Hardcoded
+```
+
+**Si falta un valor en SSOT:**
+
+1. ❌ **NO inventarlo**
+2. ❌ **NO asumirlo**
+3. ✅ **Marcarlo como TBD** en código
+4. ✅ **Crear issue** para actualizar SSOT
+
+**Template de TBD:**
+
+```typescript
+// TODO: TBD - Falta en SSOT v2
+// Issue: #[XXX] - Añadir [valor] a SSOT
+// Temporal: [valor temporal con justificación]
+const temporalValue = 'temporal'; // ⚠️ REMOVER cuando SSOT se actualice
+```
+
+### 4.3 Validación Automática
+
+**Antes de commit, verificar:**
+
+```bash
+# Buscar valores hardcoded prohibidos
+grep -r "free\|basic\|creator_plus" src/ --exclude-dir=node_modules
+grep -r "stripe\|sendgrid" src/ --exclude-dir=node_modules
+
+# Verificar uso de SettingsLoader
+grep -r "SettingsLoader\|settingsLoader" src/
+```
+
+---
+
+## 🔁 CROSS-NODE CONSISTENCY CHECK
+
+### 5.1 Verificación Post-Implementación
+
+**Después de realizar el trabajo, asegurar:**
+
+```bash
+# 1. Validar grafo completo
+node scripts/resolve-graph.js --validate
+
+# 2. Validar runtime GDD
+node scripts/validate-gdd-runtime.js --full
+
+# 3. Verificar health score
+node scripts/score-gdd-health.js --ci  # Debe >=87
+```
+
+**Checklist de consistencia:**
+
+- [ ] No contradice otros nodos
+- [ ] No rompe flujos existentes
+- [ ] No altera comportamientos globales
+- [ ] No introduce dependencias no mencionadas
+
+**Si hay conflicto:**
+
+- ✅ **Corregir** la implementación
+- ✅ **O documentar** en PR con justificación
+- ✅ **Generar** patches de nodos afectados
+
+---
+
+## 🧪 ARCHITECTURE & MIGRATION SAFETY CHECKS
+
+### 6.1 Evitar Reintroducir Lógica v1
+
+**❌ PROHIBIDO:**
+
+- Stripe (usar Polar)
+- SendGrid (usar proveedor v2)
+- Workers v1 (usar workers v2_*)
+- Estados o modelos legacy
+- Cualquier referencia a v1 salvo migración explícita
+
+**Búsqueda de violaciones:**
+
+```bash
+# Buscar referencias legacy
+grep -r "stripe\|sendgrid\|worker.*v1" src/ --exclude-dir=node_modules
+grep -r "free\|basic\|creator_plus" src/ --exclude-dir=node_modules
+```
+
+### 6.2 Verificar Arquitectura v2
+
+**El código DEBE respetar:**
+
+- ✅ Workers v2_* (nombres con prefijo `v2_`)
+- ✅ SSOT enforcement (SettingsLoader)
+- ✅ Logs sin texto crudo (estructurados, GDPR-compliant)
+- ✅ GDPR enforcement (sin datos personales en logs)
+- ✅ FeatureFlagService (flags desde SSOT)
+- ✅ Boundaries hexagonales (separación de capas)
+
+**Referencias:**
+
+- Arquitectura v2: `docs/ARCHITECTURE-V2.md` (si existe)
+- Workers v2: `src/workers/v2_*/`
+- SettingsLoader: `src/services/settingsLoader.ts` (o equivalente)
+
+### 6.3 Manejo de Código Legacy
+
+**Si una parte del sistema aún no se migró:**
+
+- ❌ **NO tocarla** (salvo que la issue lo pida explícitamente)
+- ❌ **NO portarla** parcialmente
+- ❌ **NO adaptarla** sin migración completa
+- ✅ **Crear issue** de migración si la necesitas
+
+**Template de issue de migración:**
+
+```markdown
+## Migración v1 → v2: [Módulo]
+
+**Motivo:** Necesario para [feature actual]  
+**Alcance:** [Qué migrar]  
+**Dependencias:** [Issues relacionadas]  
+**Riesgo:** [Bajo/Medio/Alto]
+```
+
+---
+
+## 📄 WORK REVIEW BEFORE COMPLETION (AUTO-CHECK)
+
+### 7.1 Checklist Obligatorio Pre-Completion
+
+**ANTES de marcar como "complete", ejecutar estos 3 checks:**
+
+#### CHECK 1 — Trabajo vs Scope de la Issue
+
+**Preguntas obligatorias:**
+
+1. ¿He implementado EXACTAMENTE lo que el scope pide?
+2. ¿He añadido algo que no está en el scope? → **Si sí, eliminar**
+3. ¿Falta algo que sí está en el scope? → **Si sí, completar**
+4. ¿Hay tareas que no se pueden resolver ahora? → **Crear issue**
+
+**Comando de verificación:**
+
+```bash
+# Comparar diff con AC de la issue
+gh issue view <número> --json body | grep -A 10 "Acceptance Criteria"
+git diff main...HEAD --stat
+```
+
+#### CHECK 2 — Trabajo vs Nodos del GDD
+
+**Preguntas obligatorias:**
+
+1. ¿El comportamiento respeta totalmente el nodo correspondiente?
+2. ¿Hay contradicciones? → **Si sí, corregir o generar patch**
+3. ¿He ignorado reglas explícitas del nodo? → **Si sí, corregir**
+4. ¿Implementé partes no pedidas por la issue? → **Si sí, revertir**
+
+**Comando de verificación:**
+
+```bash
+# Validar nodos afectados
+node scripts/resolve-graph.js <nodos-afectados>
+node scripts/validate-gdd-runtime.js --full
+```
+
+#### CHECK 3 — Trabajo vs SSOT
+
+**Preguntas obligatorias:**
+
+1. ¿Todos los valores provienen del SSOT?
+2. ¿He usado algún valor hardcoded? → **Si sí, corregir**
+3. ¿Algún plan/flag/tono/estado no autorizado? → **Si sí, corregir**
+4. ¿Alguna plataforma no soportada? → **Si sí, corregir**
+5. ¿Algún worker no listado? → **Si sí, corregir**
+
+**Comando de verificación:**
+
+```bash
+# Buscar violaciones SSOT
+grep -r "free\|basic\|creator_plus\|stripe\|sendgrid" src/ --exclude-dir=node_modules
+```
+
+### 7.2 Integración con Skills
+
+**Este check se integra con:**
+
+- `verification-before-completion-skill` (`.claude/skills/verification-before-completion-skill.md`)
+- `gdd-sync-skill` (`.claude/skills/gdd-sync-skill.md`)
+
+**Ejecución automática:**
+
+Las skills ejecutarán estos checks antes de marcar como "complete".
+
+---
+
+## 📝 DOCUMENTATION & PATCH REQUIREMENTS
+
+### 8.1 Generación de Patches
+
+**Si una issue requiere actualizar:**
+
+- Un nodo GDD
+- El SSOT v2
+- O revela inconsistencia entre nodos/SSOT/código
+
+**DEBES generar:**
+
+#### 8.1.1 Nodo Patch
+
+**Formato:** Markdown, siguiendo estilo del GDD
+
+**Ubicación:** Comentario en PR o `docs/patches/nodo-<nodo>-<issue>.md`
+
+**Template:**
+
+```markdown
+# Nodo Patch: [Nodo] - Issue #[XXX]
+
+## Cambio Propuesto
+
+[Descripción del cambio]
+
+## Justificación
+
+[Por qué es necesario]
+
+## Impacto
+
+- Nodos afectados: [lista]
+- Dependencias: [lista]
+- Breaking changes: [sí/no]
+
+## Código de Referencia
+
+[Links a código relevante]
+
+## Validación
+
+```bash
+node scripts/resolve-graph.js <nodo>
+node scripts/validate-gdd-runtime.js --full
+```
+```
+
+#### 8.1.2 SSOT Patch
+
+**Formato:** Markdown, siguiendo estructura de `docs/SSOT-V2.md`
+
+**Ubicación:** Comentario en PR o `docs/patches/ssot-<issue>.md`
+
+**Template:**
+
+```markdown
+# SSOT Patch - Issue #[XXX]
+
+## Sección Afectada
+
+[Sección del SSOT]
+
+## Cambio Propuesto
+
+```typescript
+// Antes
+type PlanId = "starter" | "pro" | "plus";
+
+// Después
+type PlanId = "starter" | "pro" | "plus" | "enterprise";
+```
+
+## Justificación
+
+[Por qué es necesario]
+
+## Impacto en Código
+
+[Archivos que necesitan actualización]
+```
+
+#### 8.1.3 Issue de Seguimiento
+
+**Si se detecta inconsistencia o necesidad de actualización:**
+
+**Template:**
+
+```markdown
+## [Tipo]: [Título]
+
+**Detectado en:** Issue #[XXX]  
+**Nodo/SSOT afectado:** [Referencia]  
+**Problema:** [Descripción]  
+**Impacto:** [Cómo afecta a futuro]  
+**Prioridad:** [P0/P1/P2]
+
+## Acción Requerida
+
+[Qué se debe hacer]
+```
+
+### 8.2 Añadir Patches a PR
+
+**Los patches DEBEN añadirse como:**
+
+- Comentario final en la PR (si son pequeños)
+- Archivos en `docs/patches/` (si son extensos)
+- Referencia en descripción de PR
+
+---
+
+## 🚫 PROHIBIDO ROTUNDO
+
+**Cursor/Claude NO pueden:**
+
+- ❌ Introducir features nuevas (solo scope de issue)
+- ❌ Modificar el alcance de la issue (ampliar o reducir)
+- ❌ Cambiar comportamiento de módulos no involucrados
+- ❌ Inventar flags, planes, tonos o estados
+- ❌ Alterar SSOT sin emitir patch
+- ❌ Tocar features v1 (salvo migración explícita)
+- ❌ Omitir validaciones de logs/GDPR
+- ❌ Cambiar workers sin actualizar su nodo correspondiente
+- ❌ Cargar spec.md completo (solo nodos resueltos)
+- ❌ Saltar checks de validación pre-completion
+
+---
+
+## 🛡️ MODO DE FALLO
+
+### 10.1 Detección de Conflictos
+
+**Si en algún momento detectas:**
+
+- Falta de claridad en scope
+- Ambigüedad en requirements
+- Contradicción entre Issue/Nodo/SSOT
+- Incompatibilidad con SSOT
+- Información insuficiente
+- Riesgo legal o de seguridad
+
+**DEBES detener la ejecución y emitir:**
+
+```markdown
+## 🚨 STOP — SSOT/Nodo/Scope Conflict Detected
+
+**Issue:** #[XXX]  
+**Conflicto:** [Descripción detallada]  
+**SSOT/Nodo afectado:** [Referencias]  
+**Acción requerida:** [Qué se necesita para continuar]  
+**Riesgo:** [Bajo/Medio/Alto]
+
+### Opciones
+
+1. **Aclaración de scope** → Esperar confirmación
+2. **Actualización de SSOT** → Generar patch y esperar aprobación
+3. **Actualización de nodo** → Generar patch y esperar aprobación
+4. **Crear issue de seguimiento** → Continuar con scope limitado
+
+**No se puede continuar hasta resolver este conflicto.**
+```
+
+### 10.2 Escalación
+
+**Si el conflicto es crítico (seguridad, billing, legal):**
+
+1. Detener inmediatamente
+2. Notificar a Product Owner
+3. Documentar en PR
+4. Esperar resolución antes de continuar
+
+---
+
+## 🔗 REFERENCIAS OBLIGATORIAS
+
+### Archivos Clave
+
+- **SSOT v2:** `docs/SSOT-V2.md`
+- **Nodos GDD:** `docs/nodes/*.md` (legacy v1)
+- **Nodos GDD v2:** `docs/nodes-v2/<node>/<subnode>.md` (v2 optimizado)
+- **System Map:** `docs/system-map.yaml` (legacy v1)
+- **System Map v2:** `docs/system-map-v2.yaml` (v2 optimizado)
+- **GDD Activation Guide:** `docs/GDD-ACTIVATION-GUIDE.md`
+- **SSOT Enforcement (actual):** `.cursor/rules/ssot-enforcement.mdc`
+- **V2 Optimized System:** `.cursor/rules/v2-optimized-system.mdc` (reglas v2 optimizadas)
+- **System-Map Consistency & Drift Guard:** `.cursor/rules/system-map-consistency-drift-guard.mdc` (prevención de drift)
+
+### Scripts de Validación
+
+- **Resolver nodos:** `node scripts/resolve-graph.js <nodos>`
+- **Validar runtime:** `node scripts/validate-gdd-runtime.js --full`
+- **Health score:** `node scripts/score-gdd-health.js --ci` (debe >=87)
+- **Drift prediction:** `node scripts/predict-gdd-drift.js --full` (<60 risk)
+- **Auto-activación GDD:** `node scripts/cursor-agents/auto-gdd-activation.js <issue>`
+
+### Skills Relacionadas
+
+- **GDD Sync:** `.claude/skills/gdd-sync-skill.md`
+- **Verification Before Completion:** `.claude/skills/verification-before-completion-skill.md`
+- **Security Audit:** `.claude/skills/security-audit-skill.md`
+
+---
+
+## ✅ RESUMEN EJECUTIVO
+
+**Antes de cualquier implementación:**
+
+1. ✅ Leer scope de issue (AC específicos)
+2. ✅ Resolver nodos GDD relevantes
+3. ✅ Leer SOLO nodos resueltos (NO spec.md completo)
+4. ✅ Verificar SSOT v2
+5. ✅ Leer `docs/patterns/coderabbit-lessons.md`
+
+**Durante implementación:**
+
+1. ✅ Respetar scope exacto (sin ampliar)
+2. ✅ Alinearse con nodos GDD (sin contradicciones)
+3. ✅ Usar valores desde SSOT (sin hardcode)
+4. ✅ Evitar lógica v1 (solo v2)
+
+**Antes de completar:**
+
+1. ✅ CHECK 1: Scope compliance
+2. ✅ CHECK 2: Node compliance
+3. ✅ CHECK 3: SSOT compliance
+4. ✅ Generar patches si es necesario
+5. ✅ Validar con scripts GDD
+
+**Si hay conflicto:**
+
+1. 🚨 DETENER
+2. 📝 DOCUMENTAR
+3. 🔄 ESPERAR resolución
+
+---
+
+**Última actualización:** 2025-12-02  
+**Versión:** 2.0  
+**Estado:** ✅ Activo
