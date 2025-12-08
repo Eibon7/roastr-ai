@@ -296,7 +296,7 @@ class GuardianReferenceDetector {
     const beforeIndex = content.substring(0, index);
     return beforeIndex.split('\n').length;
   }
-  
+
   findPatternMatches(content, pattern) {
     const matches = [];
     let match;
@@ -305,7 +305,7 @@ class GuardianReferenceDetector {
       pattern.lastIndex = 0;
     }
     const testPattern = pattern.global ? pattern : new RegExp(pattern.source, pattern.flags + 'g');
-    
+
     while ((match = testPattern.exec(content)) !== null) {
       matches.push({
         index: match.index,

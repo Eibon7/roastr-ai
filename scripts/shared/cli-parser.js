@@ -30,7 +30,7 @@ function parseArgs(args) {
     // Handle --flag value form
     if (arg.startsWith('--')) {
       const flagName = arg.replace('--', '').replace(/-/g, '_');
-      
+
       // Check if next arg exists and doesn't start with --
       if (i + 1 < args.length && !args[i + 1].startsWith('--')) {
         options[flagName] = args[i + 1];
@@ -82,4 +82,3 @@ module.exports = {
   getOption,
   hasFlag
 };
-

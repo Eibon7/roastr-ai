@@ -33,13 +33,14 @@ class SystemMapDriftChecker {
   }
 
   log(message, type = 'info') {
-    const prefix = {
-      info: 'ℹ️',
-      success: '✅',
-      warning: '⚠️',
-      error: '❌',
-      step: '📊'
-    }[type] || 'ℹ️';
+    const prefix =
+      {
+        info: 'ℹ️',
+        success: '✅',
+        warning: '⚠️',
+        error: '❌',
+        step: '📊'
+      }[type] || 'ℹ️';
 
     if (this.isCIMode && type === 'info') return;
     console.log(`${prefix} ${message}`);
@@ -117,7 +118,7 @@ class SystemMapDriftChecker {
     const files = new Set();
     try {
       const entries = await fs.readdir(nodesV2Dir, { withFileTypes: true });
-      
+
       for (const entry of entries) {
         if (entry.isFile() && entry.name.endsWith('.md')) {
           // Extract node ID from filename
@@ -128,7 +129,9 @@ class SystemMapDriftChecker {
           files.add(nodeId);
         } else if (entry.isDirectory()) {
           // Handle subdirectories (subnodes)
-          const subFiles = await fs.readdir(path.join(nodesV2Dir, entry.name), { withFileTypes: true });
+          const subFiles = await fs.readdir(path.join(nodesV2Dir, entry.name), {
+            withFileTypes: true
+          });
           for (const subFile of subFiles) {
             if (subFile.isFile() && subFile.name.endsWith('.md')) {
               const nodeId = entry.name; // Directory name is the node ID
@@ -137,7 +140,7 @@ class SystemMapDriftChecker {
           }
         }
       }
-      
+
       return files;
     } catch (error) {
       if (error.code === 'ENOENT') {
@@ -150,7 +153,7 @@ class SystemMapDriftChecker {
 
   async checkNodesV2InSystemMap(nodesV2Files, systemMapNodeIds) {
     this.log('Checking nodes-v2 files exist in system-map...', 'info');
-    
+
     const systemMapSet = new Set(systemMapNodeIds);
     let foundIssues = false;
 
@@ -168,21 +171,23 @@ class SystemMapDriftChecker {
 
   async checkSystemMapNodesInV2(systemMapNodeIds, nodesV2Files, systemMap) {
     this.log('Checking system-map nodes have files in nodes-v2...', 'info');
-    
+
     let foundIssues = false;
 
     for (const nodeId of systemMapNodeIds) {
       const nodeData = systemMap.nodes[nodeId];
       const docs = nodeData?.docs || [];
-      
+
       // Check if node has a doc file in nodes-v2
-      const hasDocInV2 = docs.some(doc => doc.includes('nodes-v2/'));
-      
+      const hasDocInV2 = docs.some((doc) => doc.includes('nodes-v2/'));
+
       // Also check if nodeId exists in nodesV2Files
       const existsInV2 = nodesV2Files.has(nodeId);
-      
+
       if (!hasDocInV2 && !existsInV2) {
-        this.errors.push(`Node "${nodeId}" exists in system-map-v2.yaml but has no file in nodes-v2/`);
+        this.errors.push(
+          `Node "${nodeId}" exists in system-map-v2.yaml but has no file in nodes-v2/`
+        );
         foundIssues = true;
       }
     }
@@ -194,7 +199,7 @@ class SystemMapDriftChecker {
 
   async checkSymmetry(systemMap) {
     this.log('Checking depends_on and required_by symmetry...', 'info');
-    
+
     const nodes = systemMap.nodes || {};
     let foundIssues = false;
 
@@ -213,7 +218,9 @@ class SystemMapDriftChecker {
 
         const depRequiredBy = depNode.required_by || [];
         if (!depRequiredBy.includes(nodeId)) {
-          this.errors.push(`Node "${nodeId}" depends_on "${dep}" but "${dep}" does not have "${nodeId}" in required_by`);
+          this.errors.push(
+            `Node "${nodeId}" depends_on "${dep}" but "${dep}" does not have "${nodeId}" in required_by`
+          );
           foundIssues = true;
         }
       }
@@ -222,14 +229,18 @@ class SystemMapDriftChecker {
       for (const req of requiredBy) {
         const reqNode = nodes[req];
         if (!reqNode) {
-          this.errors.push(`Node "${nodeId}" has "${req}" in required_by but "${req}" does not exist`);
+          this.errors.push(
+            `Node "${nodeId}" has "${req}" in required_by but "${req}" does not exist`
+          );
           foundIssues = true;
           continue;
         }
 
         const reqDependsOn = reqNode.depends_on || [];
         if (!reqDependsOn.includes(nodeId)) {
-          this.errors.push(`Node "${nodeId}" has "${req}" in required_by but "${req}" does not have "${nodeId}" in depends_on`);
+          this.errors.push(
+            `Node "${nodeId}" has "${req}" in required_by but "${req}" does not have "${nodeId}" in depends_on`
+          );
           foundIssues = true;
         }
       }
@@ -242,7 +253,7 @@ class SystemMapDriftChecker {
 
   async checkLegacyNodes(systemMapNodeIds) {
     this.log('Checking for legacy v1 nodes...', 'info');
-    
+
     const legacyIds = new Set([
       'roast',
       'shield',
@@ -276,7 +287,7 @@ class SystemMapDriftChecker {
 
   async checkLegacyWorkers(systemMap) {
     this.log('Checking for legacy workers...', 'info');
-    
+
     const nodes = systemMap.nodes || {};
     const legacyWorkers = new Set([
       'FetchCommentsWorker',
@@ -290,10 +301,12 @@ class SystemMapDriftChecker {
 
     for (const [nodeId, nodeData] of Object.entries(nodes)) {
       const workers = nodeData.workers || [];
-      
+
       for (const worker of workers) {
         if (legacyWorkers.has(worker)) {
-          this.warnings.push(`Node "${nodeId}" uses legacy worker "${worker}" (should use v2_* workers)`);
+          this.warnings.push(
+            `Node "${nodeId}" uses legacy worker "${worker}" (should use v2_* workers)`
+          );
           foundIssues = true;
         }
       }
@@ -306,30 +319,32 @@ class SystemMapDriftChecker {
 
   async checkOrphanedFiles(nodesV2Dir, systemMapNodeIds) {
     this.log('Checking for orphaned .md files...', 'info');
-    
+
     const systemMapSet = new Set(systemMapNodeIds);
     let foundIssues = false;
 
     try {
       const entries = await fs.readdir(nodesV2Dir, { withFileTypes: true });
-      
+
       for (const entry of entries) {
         if (entry.isFile() && entry.name.endsWith('.md')) {
-          const nodeId = entry.name
-            .replace(/^\d+-/, '')
-            .replace(/\.md$/, '');
-          
+          const nodeId = entry.name.replace(/^\d+-/, '').replace(/\.md$/, '');
+
           // Skip README and other non-node files
-          if (nodeId.toLowerCase() === 'readme' || 
-              nodeId.toLowerCase().includes('generation') ||
-              nodeId.toLowerCase().includes('validation') ||
-              nodeId.toLowerCase().includes('checklist') ||
-              nodeId.toLowerCase().includes('corrections')) {
+          if (
+            nodeId.toLowerCase() === 'readme' ||
+            nodeId.toLowerCase().includes('generation') ||
+            nodeId.toLowerCase().includes('validation') ||
+            nodeId.toLowerCase().includes('checklist') ||
+            nodeId.toLowerCase().includes('corrections')
+          ) {
             continue;
           }
-          
+
           if (!systemMapSet.has(nodeId)) {
-            this.warnings.push(`Orphaned file "${entry.name}" in nodes-v2/ (not referenced in system-map-v2.yaml)`);
+            this.warnings.push(
+              `Orphaned file "${entry.name}" in nodes-v2/ (not referenced in system-map-v2.yaml)`
+            );
             foundIssues = true;
           }
         }
@@ -388,4 +403,3 @@ if (require.main === module) {
 }
 
 module.exports = { SystemMapDriftChecker };
-
