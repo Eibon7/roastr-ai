@@ -140,7 +140,6 @@ jobs:
 
       - name: Run v2 validation scripts
         if: steps.check_v2_only.outputs.v2_only == 'true'
-        continue-on-error: true
         id: v2_validation
         run: |
           echo "🔍 Running GDD v2 validation scripts..."
@@ -162,45 +161,61 @@ jobs:
           
           echo "V2_ONLY_FILES=$V2_ONLY_FILES"
           
+          # Track validation failures
+          VALIDATION_FAILED=0
+          
           if [ "$V2_ONLY_FILES" -gt 0 ]; then
             echo "✅ PR modifies v2 documentation files - running v2 validation..."
             
             # Check if scripts exist before running
             if [ -f "scripts/validate-symmetry.js" ] && grep -q "docs/system-map-v2.yaml" changed-files.txt; then
               echo "✅ Validating symmetry..."
-              node scripts/validate-symmetry.js --ci || echo "⚠️ Symmetry validation failed (non-blocking)"
+              if ! node scripts/validate-symmetry.js --ci; then
+                echo "⚠️ Symmetry validation failed"
+                VALIDATION_FAILED=1
+              fi
             fi
             
             if [ -f "scripts/validate-strong-concepts.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
               echo "✅ Validating Strong Concepts..."
-              node scripts/validate-strong-concepts.js --ci || echo "⚠️ Strong Concepts validation failed (non-blocking)"
+              if ! node scripts/validate-strong-concepts.js --ci; then
+                echo "⚠️ Strong Concepts validation failed"
+                VALIDATION_FAILED=1
+              fi
             fi
             
             if [ -f "scripts/validate-drift.js" ] && grep -q "docs/SSOT-V2\.md\|docs/nodes-v2/\|docs/system-map-v2.yaml" changed-files.txt; then
               echo "✅ Detecting drift..."
-              node scripts/validate-drift.js --ci || echo "⚠️ Drift detection failed (non-blocking)"
+              if ! node scripts/validate-drift.js --ci; then
+                echo "⚠️ Drift detection failed"
+                VALIDATION_FAILED=1
+              fi
             fi
             
             if [ -f "scripts/detect-guardian-references.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
               echo "✅ Detecting guardian references..."
-              node scripts/detect-guardian-references.js --ci || echo "⚠️ Guardian references detection failed (non-blocking)"
+              if ! node scripts/detect-guardian-references.js --ci; then
+                echo "⚠️ Guardian references detection failed"
+                VALIDATION_FAILED=1
+              fi
             fi
             
-            echo "✅ GDD v2 validation completed"
-            echo "::notice::This PR only modifies GDD v2 files. v1 validation skipped, v2 validation completed."
-            echo "validation_status=success" >> $GITHUB_OUTPUT
+            if [ "$VALIDATION_FAILED" -eq 0 ]; then
+              echo "✅ GDD v2 validation completed successfully"
+              echo "::notice::This PR only modifies GDD v2 files. v1 validation skipped, v2 validation completed."
+              echo "validation_status=success" >> $GITHUB_OUTPUT
+            else
+              echo "❌ GDD v2 validation completed with errors"
+              echo "::error::v2 validation found issues. Please review and fix."
+              echo "validation_status=failed" >> $GITHUB_OUTPUT
+              exit 1
+            fi
           else
             echo "✅ PR only adds v2 validation scripts/rules - skipping validation of legacy code"
             echo "::notice::This PR adds v2 validation infrastructure. Legacy code validation skipped."
             echo "✅ Workflow completed successfully - v2 infrastructure added"
             echo "validation_status=skipped" >> $GITHUB_OUTPUT
           fi
-
-      - name: Mark v2 validation as successful
-        if: steps.check_v2_only.outputs.v2_only == 'true' && steps.v2_validation.outcome == 'success'
-        run: |
-          echo "✅ v2 validation completed successfully"
-          exit 0
 
       - name: Run health scoring
         if: steps.check_v2_only.outputs.v2_only != 'true'

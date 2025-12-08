@@ -163,7 +163,9 @@ class NodeIDValidator {
               const subnodeName = subnodeFile.replace('.md', '');
               const subnodeId = `${nodeId}/${subnodeName}`;
 
-              if (!this.validIds.has(subnodeId) && !this.validIds.has(nodeId)) {
+              // Warn if subnode is not listed but parent node exists
+              // This ensures we catch cases where a valid node introduces an unlisted subnode
+              if (!this.validIds.has(subnodeId) && this.validIds.has(nodeId)) {
                 this.warnings.push({
                   type: 'subnode_not_in_system_map',
                   location: `docs/nodes-v2/${nodeId}/${subnodeFile}`,
