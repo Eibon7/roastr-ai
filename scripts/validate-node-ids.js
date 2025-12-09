@@ -81,52 +81,9 @@ class NodeIDValidator {
       // Print summary
       this.printSummary();
 
-      // Exit code contract for CI mode:
-      // 0 = no issues
-      // 1 = issues only in src/ (WARN but allow CI to continue for v2 PRs)
-      // 2 = issues in docs/ (FAIL - must be fixed)
+      // Exit code for CI
       if (this.isCIMode && (this.errors.length > 0 || this.warnings.length > 0)) {
-        // Separate errors by location
-        const docsErrors = this.errors.filter(e => 
-          e.file && (
-            e.file.includes('docs/system-map-v2.yaml') ||
-            e.file.includes('docs/nodes-v2/') ||
-            e.file.includes('docs/SSOT-V2.md')
-          )
-        );
-        const srcErrors = this.errors.filter(e => 
-          e.file && e.file.includes('src/')
-        );
-        const otherErrors = this.errors.filter(e => 
-          e.file && !e.file.includes('src/') && 
-          !e.file.includes('docs/system-map-v2.yaml') &&
-          !e.file.includes('docs/nodes-v2/') &&
-          !e.file.includes('docs/SSOT-V2.md')
-        );
-
-        // CRITICAL: Issues in docs/ → exit 2
-        if (docsErrors.length > 0) {
-          this.log(`❌ Found ${docsErrors.length} error(s) in docs (CRITICAL)`, 'error');
-          process.exit(2);
-        }
-
-        // WARN: Issues in src/ only → exit 1 (allowed for v2 PRs)
-        if (srcErrors.length > 0) {
-          this.log(`⚠️ Found ${srcErrors.length} legacy ID(s) in src/ (outside scope - WARN only)`, 'warning');
-          process.exit(1);
-        }
-
-        // UNEXPECTED: Issues in other locations → exit 2
-        if (otherErrors.length > 0) {
-          this.log(`❌ Found ${otherErrors.length} error(s) in unexpected locations`, 'error');
-          process.exit(2);
-        }
-
-        // Only warnings (no errors) → exit 0
-        if (this.warnings.length > 0 && this.errors.length === 0) {
-          this.log(`⚠️ Found ${this.warnings.length} warning(s) (non-fatal)`, 'warning');
-          process.exit(0);
-        }
+        process.exit(1);
       }
 
       return {
