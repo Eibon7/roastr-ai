@@ -22,6 +22,7 @@
 ### system-map-v2-consistency.yml (v2)
 
 **Scripts ejecutados (en orden):**
+
 1. `validate-node-ids.js --ci`
 2. `validate-workers-ssot.js --ci`
 3. `validate-drift.js --ci`
@@ -39,12 +40,14 @@
 ### gdd-validate.yml (v1 + v2 mixto)
 
 **Scripts v2 ejecutados (condicionales):**
+
 - `validate-symmetry.js --ci` (si cambia system-map-v2.yaml)
 - `validate-strong-concepts.js --ci` (si cambia system-map-v2.yaml o nodes-v2/)
 - `validate-drift.js --ci` (si cambia SSOT-V2.md, nodes-v2/, o system-map-v2.yaml)
 - `detect-guardian-references.js --ci` (si cambia system-map-v2.yaml o nodes-v2/)
 
 **Scripts v1 ejecutados (si no es v2-only):**
+
 - `validate-gdd-runtime.js --ci`
 - `score-gdd-health.js --ci` ⚠️ **V1 LEGACY**
 - `predict-gdd-drift.js --ci`
@@ -54,6 +57,7 @@
 ### gdd-telemetry.yml
 
 **Scripts ejecutados:**
+
 - `validate-gdd-runtime.js --ci || true`
 - `score-gdd-health.js --ci || true` ⚠️ **V1 LEGACY**
 - `predict-gdd-drift.js --ci || true`
@@ -63,6 +67,7 @@
 ### gdd-repair.yml
 
 **Scripts ejecutados:**
+
 - `validate-gdd-runtime.js --ci`
 - `score-gdd-health.js --ci` ⚠️ **V1 LEGACY**
 
@@ -71,6 +76,7 @@
 ### gdd-auto-monitor.yml
 
 **Scripts ejecutados:**
+
 - `validate-gdd-runtime.js --ci`
 - `score-gdd-health.js --summary` ⚠️ **V1 LEGACY**
 
@@ -85,23 +91,29 @@
 **Workflows que ejecutan `score-gdd-health.js` (v1):**
 
 1. **gdd-validate.yml:272**
+
    ```yaml
    node scripts/score-gdd-health.js --ci
    ```
+
    - **Problema:** Ejecuta v1 cuando PR no es v2-only
    - **Impacto:** Health score v1 se calcula en lugar de v2
 
 2. **gdd-telemetry.yml:42**
+
    ```yaml
    node scripts/score-gdd-health.js --ci || true
    ```
+
    - **Problema:** Ejecuta v1 (pero no bloquea por `|| true`)
    - **Impacto:** Telemetría usa health v1
 
 3. **gdd-repair.yml:115**
+
    ```yaml
    node scripts/score-gdd-health.js --ci
    ```
+
    - **Problema:** Ejecuta v1 después de reparación
    - **Impacto:** Reparación valida con health v1
 
@@ -109,6 +121,7 @@
    ```yaml
    node scripts/score-gdd-health.js --summary
    ```
+
    - **Problema:** Ejecuta v1 para monitoreo
    - **Impacto:** Monitoreo automático usa health v1
 
@@ -121,6 +134,7 @@
 ### system-map-v2-consistency.yml
 
 **Orden actual:**
+
 1. Validate Node IDs ✅
 2. Validate Workers SSOT ✅
 3. Validate Drift ✅
@@ -135,10 +149,12 @@
 **✅ Orden correcto:** Sí, coincide con el orden esperado
 
 **⚠️ PROBLEMA MENOR:** `check-system-map-drift.js` debería ejecutarse ANTES de `validate-v2-doc-paths.js` porque:
+
 - `check-system-map-drift.js` verifica que archivos existen
 - `validate-v2-doc-paths.js` valida paths específicos
 
 **Orden recomendado:**
+
 1. Validate Node IDs
 2. Validate Workers SSOT
 3. Validate Drift
@@ -157,6 +173,7 @@
 ### system-map-v2-consistency.yml
 
 **Checkout:**
+
 ```yaml
 - name: Checkout code
   uses: actions/checkout@v6
@@ -167,6 +184,7 @@
 **✅ Correcto:** Usa checkout estándar (HEAD de la PR)
 
 **Triggers:**
+
 ```yaml
 on:
   pull_request:
@@ -181,6 +199,7 @@ on:
 ### gdd-validate.yml
 
 **Checkout:**
+
 ```yaml
 - name: Checkout code
   uses: actions/checkout@v6
@@ -189,6 +208,7 @@ on:
 ```
 
 **Comparación de archivos:**
+
 ```bash
 git diff --name-only origin/${{ github.base_ref }}...HEAD > changed-files.txt
 ```
@@ -232,6 +252,7 @@ git diff --name-only origin/${{ github.base_ref }}...HEAD > changed-files.txt
 ### system-map-v2-consistency.yml
 
 **Configuración:**
+
 ```yaml
 - name: Detect Legacy IDs
   id: detect_legacy_ids
@@ -245,16 +266,19 @@ git diff --name-only origin/${{ github.base_ref }}...HEAD > changed-files.txt
 **⚠️ PROBLEMA:** `continue-on-error: false` hace que el workflow FALLE si detecta legacy IDs en `src/`
 
 **Comportamiento esperado:**
+
 - `detect-legacy-ids.js` detecta 43 IDs legacy en código `src/`
 - Estos están fuera del scope de ROA-318
 - El script debería WARN pero no FAIL en CI
 
 **Solución recomendada:**
+
 ```yaml
-continue-on-error: true  # O cambiar a true porque legacy en src/ es esperado
+continue-on-error: true # O cambiar a true porque legacy en src/ es esperado
 ```
 
 **O mejor aún:** Modificar `detect-legacy-ids.js` para que en modo `--ci`:
+
 - Si encuentra legacy IDs solo en `src/` → WARN (exit 0)
 - Si encuentra legacy IDs en `docs/` o `system-map-v2.yaml` → FAIL (exit 1)
 
@@ -265,6 +289,7 @@ continue-on-error: true  # O cambiar a true porque legacy en src/ es esperado
 ### system-map-v2-consistency.yml
 
 **Orden actual:**
+
 1. Validate Node IDs
 2. Validate Workers SSOT
 3. Validate Drift
@@ -278,11 +303,13 @@ continue-on-error: true  # O cambiar a true porque legacy en src/ es esperado
 **⚠️ PROBLEMA:** `check-system-map-drift.js` se ejecuta DESPUÉS de `detect-legacy-ids.js` y `detect-guardian-references.js`
 
 **Razón del problema:**
+
 - `check-system-map-drift.js` verifica que archivos en `nodes-v2/` existen y están referenciados
 - `validate-v2-doc-paths.js` valida paths específicos de cada nodo
 - Si `check-system-map-drift.js` falla, `validate-v2-doc-paths.js` también fallará (redundancia)
 
 **Orden recomendado:**
+
 1. Validate Node IDs
 2. Validate Workers SSOT
 3. Validate Drift
@@ -295,6 +322,7 @@ continue-on-error: true  # O cambiar a true porque legacy en src/ es esperado
 10. Calculate GDD Health v2
 
 **Lógica:**
+
 - Primero verificar estructura (drift)
 - Luego verificar paths específicos
 - Finalmente detectar problemas (legacy, guardian)
@@ -344,6 +372,7 @@ continue-on-error: true  # O cambiar a true porque legacy en src/ es esperado
 **Job:** `system-map-v2-consistency`  
 **Step:** `Detect Legacy IDs`  
 **Razón del fallo:**
+
 - `detect-legacy-ids.js --ci` encuentra 43 IDs legacy en código `src/`
 - `continue-on-error: false` hace que el step falle
 - El workflow completo falla aunque los legacy IDs en `src/` están fuera de scope
@@ -355,6 +384,7 @@ continue-on-error: true  # O cambiar a true porque legacy en src/ es esperado
 **Job:** `validate-gdd`  
 **Step:** `Run GDD validation` (cuando no es v2-only)  
 **Razón del fallo potencial:**
+
 - Ejecuta `score-gdd-health.js` (v1) cuando PR no es v2-only
 - Si health v1 < threshold, el workflow falla
 - Pero debería usar health v2 en su lugar
@@ -387,4 +417,3 @@ continue-on-error: true  # O cambiar a true porque legacy en src/ es esperado
 ---
 
 **Última actualización:** 2025-12-09
-
