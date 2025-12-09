@@ -154,18 +154,74 @@ class SystemMapDriftChecker {
   async checkNodesV2InSystemMap(nodesV2Files, systemMapNodeIds) {
     this.log('Checking nodes-v2 files exist in system-map...', 'info');
 
-    const systemMapSet = new Set(systemMapNodeIds);
+    // Load system-map to check file references
+    const systemMap = await this.loadSystemMap();
+    if (!systemMap) return;
+
+    // Collect all file paths referenced in system-map
+    const referencedFiles = new Set();
+    const nodes = systemMap.nodes || {};
+    for (const [nodeId, nodeData] of Object.entries(nodes)) {
+      const docs = nodeData?.docs || [];
+      for (const doc of docs) {
+        if (doc.includes('nodes-v2/')) {
+          // Extract filename from path
+          const filename = doc.split('/').pop();
+          referencedFiles.add(filename);
+        }
+      }
+    }
+
+    // Check flows and integrations sections too
+    if (systemMap.flows) {
+      for (const flowData of Object.values(systemMap.flows)) {
+        // Flows don't reference files directly, skip
+      }
+    }
+    if (systemMap.integrations) {
+      for (const integrationData of Object.values(systemMap.integrations)) {
+        const files = integrationData?.files || [];
+        for (const file of files) {
+          if (file.includes('nodes-v2/')) {
+            const filename = file.split('/').pop();
+            referencedFiles.add(filename);
+          }
+        }
+      }
+    }
+
+    // Check actual files in nodes-v2 directory
+    const nodesV2Dir = path.join(this.rootDir, 'docs', 'nodes-v2');
     let foundIssues = false;
 
-    for (const nodeId of nodesV2Files) {
-      if (!systemMapSet.has(nodeId)) {
-        this.errors.push(`Node "${nodeId}" exists in nodes-v2/ but not in system-map-v2.yaml`);
-        foundIssues = true;
+    try {
+      const entries = await fs.readdir(nodesV2Dir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isFile() && entry.name.endsWith('.md')) {
+          // Skip README and other non-node files
+          const lowerName = entry.name.toLowerCase();
+          if (lowerName === 'readme.md' || 
+              lowerName.includes('generation') ||
+              lowerName.includes('validation') ||
+              lowerName.includes('checklist') ||
+              lowerName.includes('corrections')) {
+            continue;
+          }
+
+          if (!referencedFiles.has(entry.name)) {
+            this.errors.push(`File "${entry.name}" exists in nodes-v2/ but is not referenced in system-map-v2.yaml`);
+            foundIssues = true;
+          }
+        }
+      }
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        throw error;
       }
     }
 
     if (!foundIssues) {
-      this.log('✅ All nodes-v2 files exist in system-map', 'success');
+      this.log('✅ All nodes-v2 files are referenced in system-map', 'success');
     }
   }
 

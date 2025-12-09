@@ -43,6 +43,7 @@ jobs:
         run: npm run test:unit
 
       - name: Integration Tests
+        if: false  # Disabled until v2 test infrastructure is ready
         run: npm run test:integration || echo "⚠️ test:integration script not yet implemented (v2 pending)"
         continue-on-error: true
 

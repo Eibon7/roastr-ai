@@ -26,12 +26,11 @@ nodes:
       - analysis-engine
       - integraciones-redes-sociales
       - shield-engine
-      - billing
+      - billing-integration
       - observabilidad
       - ssot-integration
     used_by: []
     required_by:
-      - observabilidad
       - frontend-user-app
     related: []
     docs:
@@ -65,7 +64,7 @@ nodes:
     last_updated: '2025-12-05T18:31:11.772Z'
     coverage: 92
     depends_on:
-      - billing
+      - billing-integration
       - observabilidad
       - ssot-integration
       - infraestructura
@@ -112,7 +111,7 @@ nodes:
     last_updated: 2025-12-05T00:00:00.000Z
     coverage: 78
     depends_on:
-      - billing
+      - billing-integration
       - infraestructura
       - observabilidad
       - ssot-integration
@@ -136,7 +135,6 @@ nodes:
       - strike_system
     required_by:
       - roasting-engine
-      - observabilidad
       - frontend-user-app
     related: []
     subnodes:
@@ -153,13 +151,12 @@ nodes:
     coverage: 82
     depends_on:
       - infraestructura
-      - billing
+      - billing-integration
       - observabilidad
       - ssot-integration
     used_by: []
     required_by:
       - roasting-engine
-      - observabilidad
       - frontend-user-app
     related: []
     docs:
@@ -195,7 +192,7 @@ nodes:
       - youtube-integration
       - platform-constraints
       - base-integration
-  billing:
+  billing-integration:
     description: Polar integration for subscriptions, webhooks, plan management, usage tracking, billing integration, and limit enforcement (v2 - no Stripe)
     status: production
     priority: critical
@@ -212,7 +209,6 @@ nodes:
       - analysis-engine
       - shield-engine
       - integraciones-redes-sociales
-      - observabilidad
       - frontend-user-app
       - frontend-admin
     related: []
@@ -230,9 +226,9 @@ nodes:
     workers:
       - BillingUpdate
     ssot_references:
-      - billing_provider
+      - billing-integration_provider
       - subscription_states
-      - billing_state_machine
+      - billing-integration_state_machine
       - plan_limits
       - credit_consumption_rules
       - plan_ids
@@ -251,15 +247,13 @@ nodes:
     owner: Back-end Dev
     last_updated: '2025-12-05T18:31:11.772Z'
     coverage: 81
-    depends_on:
-      - observabilidad
+    depends_on: []
     used_by: []
     required_by:
       - analysis-engine
       - shield-engine
       - integraciones-redes-sociales
-      - billing
-      - observabilidad
+      - billing-integration
       - workers
     related: []
     docs:
@@ -277,7 +271,7 @@ nodes:
       - generate_corrective_reply
       - shield_action
       - social_posting
-      - billing_update
+      - billing-integration_update
       - cursor_reconciliation
       - strike_cleanup
     ssot_references:
@@ -302,22 +296,15 @@ nodes:
     owner: Back-end Dev
     last_updated: '2025-12-05T18:31:11.772Z'
     coverage: 60
-    depends_on:
-      - billing
-      - infraestructura
-      - roasting-engine
-      - shield-engine
-      - integraciones-redes-sociales
+    depends_on: []
     used_by: []
     required_by:
       - roasting-engine
       - analysis-engine
       - shield-engine
       - integraciones-redes-sociales
-      - billing
-      - infraestructura
+      - billing-integration
       - frontend-user-app
-      - workers
     related: []
     docs:
       - docs/nodes-v2/observabilidad.md
@@ -353,7 +340,7 @@ nodes:
       - integraciones-redes-sociales
       - ssot-integration
       - analysis-engine
-      - billing
+      - billing-integration
     used_by: []
     required_by: []
     related: []
@@ -401,7 +388,7 @@ nodes:
     coverage: 60
     depends_on:
       - ssot-integration
-      - billing
+      - billing-integration
     used_by: []
     docs:
       - docs/nodes-v2/10-panel-administracion.md
@@ -428,7 +415,7 @@ nodes:
     depends_on: []
     used_by:
       - analysis-engine
-      - billing
+      - billing-integration
       - workers
       - frontend-admin
     docs:
@@ -441,7 +428,7 @@ nodes:
       - apps/backend-v2/src/lib/loadSettings.ts
     ssot_references:
       - plans_and_limits
-      - billing_polar
+      - billing-integration_polar
       - feature_flags
       - shield_thresholds
       - shield_weights
@@ -454,7 +441,7 @@ nodes:
       - roast_tones
     ssot_sections:
       - plans_and_limits
-      - billing_polar
+      - billing-integration_polar
       - feature_flags
       - shield_thresholds
       - roastr_persona
@@ -470,7 +457,7 @@ nodes:
       - analysis-engine
       - shield-engine
       - integraciones-redes-sociales
-      - billing
+      - billing-integration
       - frontend-user-app
       - frontend-admin
       - settings-loader-and-feature-flags
@@ -483,7 +470,7 @@ nodes:
       - shield-thresholds
       - shield-weights
       - tones-roasting
-      - billing-polar
+      - billing-integration-polar
       - workers-config
       - integrations-config
       - gdpr-retention
@@ -498,9 +485,8 @@ nodes:
     coverage: 60
     depends_on:
       - infraestructura
-      - observabilidad
     used_by:
-      - billing
+      - billing-integration
     docs:
       - docs/nodes-v2/08-workers.md
     files:
@@ -565,7 +551,7 @@ nodes:
       - generate-corrective-reply
       - shield-action
       - social-posting
-      - billing-update
+      - billing-integration-update
       - cursor-reconciliation
       - strike-cleanup
       - worker-manager
@@ -698,7 +684,7 @@ flows:
       - Billing state machine updates status
       - Plan features activated
     nodes:
-      - billing
+      - billing-integration
       - BillingUpdate
   onboarding:
     description: Complete onboarding flow
@@ -709,7 +695,7 @@ flows:
       - Onboarding UI guides setup
       - Dashboard becomes active
     nodes:
-      - billing
+      - billing-integration
   ssot-loader:
     description: SSOT loading and application flow
     steps:
@@ -725,7 +711,7 @@ integrations:
     status: production
     type: billing
     nodes:
-      - billing
+      - billing-integration
       - BillingUpdate
     files:
       - src/routes/polarWebhook.js
@@ -770,7 +756,7 @@ integrations:
     status: production
     type: communication
     nodes:
-      - billing
+      - billing-integration
     files:
       - src/services/emailService.js
   x_twitter:

@@ -116,6 +116,14 @@ jobs:
           echo "✅ System-map drift check completed"
         continue-on-error: false
 
+      - name: Validate v2 Doc Paths
+        id: validate_doc_paths
+        run: |
+          echo "🔍 Validating v2 doc paths..."
+          node scripts/validate-v2-doc-paths.js --ci
+          echo "✅ v2 doc paths validation passed"
+        continue-on-error: false
+
       - name: Calculate GDD Health v2
         id: calculate_health
         if: github.event.inputs.full_validation != 'false' || github.event_name == 'workflow_dispatch'
@@ -137,13 +145,16 @@ jobs:
           
           echo "Health Score: $HEALTH_SCORE/100 ($HEALTH_STATUS)"
           
-          # Check if health score meets threshold (≥95 required for v2)
+          # Check if health score meets threshold (≥95 required, 100 recommended for v2)
           if (( $(echo "$HEALTH_SCORE < 95" | bc -l 2>/dev/null || echo "1") )); then
-            echo "❌ Health score $HEALTH_SCORE is below 95 threshold"
+            echo "❌ Health score $HEALTH_SCORE is below 95 threshold (required for v2)"
             echo "::error::Health score $HEALTH_SCORE/100 is below required threshold of 95"
             exit 1
+          elif (( $(echo "$HEALTH_SCORE < 100" | bc -l 2>/dev/null || echo "0") )); then
+            echo "⚠️ Health score $HEALTH_SCORE meets minimum threshold (≥95) but is below recommended 100"
+            echo "::warning::Health score $HEALTH_SCORE/100 is below recommended threshold of 100"
           else
-            echo "✅ Health score $HEALTH_SCORE meets threshold (≥95)"
+            echo "✅ Health score $HEALTH_SCORE meets recommended threshold (100)"
           fi
         continue-on-error: false
 
@@ -162,6 +173,7 @@ jobs:
           echo "| Legacy IDs | ${{ steps.detect_legacy_ids.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Guardian References | ${{ steps.detect_guardian.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| System Map Drift | ${{ steps.check_system_map_drift.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| v2 Doc Paths | ${{ steps.validate_doc_paths.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ steps.calculate_health.outcome }}" != "skipped" ]; then
             echo "| Health Score | ${{ steps.calculate_health.outputs.score }}/100 (${{ steps.calculate_health.outputs.status }}) |" >> $GITHUB_STEP_SUMMARY
@@ -189,6 +201,7 @@ jobs:
             comment += `| Legacy IDs | ${{ steps.detect_legacy_ids.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |\n`;
             comment += `| Guardian References | ${{ steps.detect_guardian.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |\n`;
             comment += `| System Map Drift | ${{ steps.check_system_map_drift.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |\n`;
+            comment += `| v2 Doc Paths | ${{ steps.validate_doc_paths.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |\n`;
             
             if (fs.existsSync('gdd-health-v2.json')) {
               const health = JSON.parse(fs.readFileSync('gdd-health-v2.json', 'utf8'));
