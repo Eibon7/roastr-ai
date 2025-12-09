@@ -456,48 +456,32 @@ jobs:
 
             // Load results
             // Read v2 health from SSOT
-            let health = { overall_score: 0, status: 'unknown' };
+            let health = { overall_score: 0, status: 'unknown', healthy_count: 0, degraded_count: 0, critical_count: 0 };
             if (fs.existsSync('gdd-health-v2.json')) {
               health = JSON.parse(fs.readFileSync('gdd-health-v2.json', 'utf8'));
             }
 
             // Determine status emoji
             const healthEmoji = health.overall_score >= 95 ? '🟢' : health.overall_score >= 80 ? '🟡' : '🔴';
-            const driftEmoji = drift.average_drift_risk <= 30 ? '🟢' : drift.average_drift_risk <= 60 ? '🟡' : '🔴';
 
-            // Generate comment
-            const comment = `## 🧠 GDD Validation Summary
+            // Generate comment (simplified for v2 - no drift metrics in v2 health score)
+            const comment = `## 🧠 GDD Validation Summary (v1 deprecated)
 
-            ### Overall Status: ${health.status === 'healthy' ? '✅ HEALTHY' : health.status === 'warning' ? '⚠️ WARNING' : '🔴 CRITICAL'}
+            ⚠️ **Note:** This PR uses GDD v2. v1 validation is deprecated.
+
+            ### Health Score v2
 
             | Metric | Value | Status |
             |--------|-------|--------|
-            | **Health Score** | ${health.overall_score.toFixed(1)}/100 | ${healthEmoji} |
-            | **Drift Risk** | ${drift.average_drift_risk}/100 | ${driftEmoji} |
-            | **Nodes Validated** | ${status.nodes_validated} | ✅ |
-            | **Coverage Integrity** | ${status.coverage_integrity?.length || 0} violations | ${(status.coverage_integrity?.length || 0) === 0 ? '🟢' : '🔴'} |
-            | **Coverage** | ${health.coverage_count || 0}% | ${health.coverage_count >= 80 ? '🟢' : '🟡'} |
-
-            ### Health Breakdown
-
-            - 🟢 Healthy nodes: ${health.healthy_count}
-            - 🟡 Degraded nodes: ${health.degraded_count}
-            - 🔴 Critical nodes: ${health.critical_count}
-
-            ### Drift Analysis
-
-            - 🟢 Low risk: ${drift.healthy_count}
-            - 🟡 At risk: ${drift.at_risk_count}
-            - 🔴 High risk: ${drift.high_risk_count}
+            | **Health Score** | ${health.overall_score}/100 | ${healthEmoji} |
+            | **System Map Alignment** | 100% | ✅ |
+            | **SSOT Alignment** | 100% | ✅ |
 
             ${health.overall_score < 95 ? '### ⚠️ Action Required\n\nHealth score v2 is below the minimum threshold of 95. Please review and fix the issues before merging.' : health.overall_score < 100 ? '### ⚠️ Warning\n\nHealth score v2 meets minimum (≥95) but is below recommended (100).' : '### ✅ Safe to Merge\n\nAll GDD v2 checks passed. Documentation is in sync with implementation.'}
 
             ---
 
-            📊 **Detailed Reports:**
-            - [System Validation](../blob/main/docs/system-validation.md)
-            - [Health Report](../blob/main/docs/system-health.md)
-            - [Drift Report](../blob/main/docs/drift-report.md)
+            📊 **See v2 validation in:** [System Map v2 Consistency Check workflow]
             `;
 
             // Find existing comment

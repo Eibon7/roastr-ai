@@ -649,6 +649,45 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 - **Nodos detectados:** 15 de 15
 - **Nodos faltantes:** 0
+- **Última actualización:** 2025-12-09T15:55:18.786Z
+
+### 15.3 Reglas de Actualización
+
+1. **Ningún script puede modificar estos valores automáticamente**
+2. **Solo se actualizan mediante:** `node scripts/compute-health-v2-official.js --update-ssot`
+3. **El SSOT es la única fuente de verdad** - Los scripts de lectura (calculate-gdd-health-v2.js) deben leer desde aquí
+4. **Si hay discrepancia** entre archivos → gana el SSOT
+
+---
+
+
+
+Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
+
+**IMPORTANTE:**  
+Los valores deben ser **dinámicos pero correctos**.  
+NO se permiten valores hardcoded.  
+Únicamente se actualizan cuando un proceso de auditoría v2 lo ordena manualmente mediante:
+
+```bash
+node scripts/compute-health-v2-official.js --update-ssot
+```
+
+### 15.1 Métricas Oficiales
+
+| Métrica | Valor | Descripción |
+|---------|-------|-------------|
+| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
+| **SSOT Alignment** | 100% | % de nodos que usan valores del SSOT correctamente |
+| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
+| **Crosslink Score** | 100% | % de dependencias esperadas que están correctamente referenciadas |
+| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
+| **Health Score Final** | **100/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+
+### 15.2 Detalles de Cálculo
+
+- **Nodos detectados:** 15 de 15
+- **Nodos faltantes:** 0
 - **Última actualización:** 2025-12-09T15:32:18.935Z
 
 ### 15.3 Reglas de Actualización
