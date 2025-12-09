@@ -118,14 +118,24 @@ jobs:
           LEGACY_EXIT=$?
           set -e
           
-          # Legacy IDs in src/ are acceptable (warn only), but fail for docs/
-          if [ "$LEGACY_EXIT" -ne 0 ]; then
-            echo "⚠️ Legacy IDs detected (exit code: $LEGACY_EXIT)"
-            echo "::warning::Legacy IDs detected in codebase. This is acceptable for v2 PRs (legacy code cleanup is separate task)."
-            # Don't fail the workflow for legacy IDs in src/
-            exit 0
-          else
+          # Exit code contract:
+          # 0 = no legacy IDs → OK
+          # 1 = src/ only → WARN, allow CI to continue
+          # 2 = docs/ → FAIL
+          
+          if [ "$LEGACY_EXIT" -eq 0 ]; then
             echo "✅ No legacy IDs detected"
+            exit 0
+          elif [ "$LEGACY_EXIT" -eq 1 ]; then
+            echo "⚠️ Legacy IDs detected in src/ (allowed as warnings for v2 PRs)"
+            echo "::warning::Legacy IDs in src/ will be addressed in separate cleanup task"
+            exit 0
+          elif [ "$LEGACY_EXIT" -eq 2 ]; then
+            echo "::error::Legacy IDs detected in docs/ — must be fixed before merge"
+            exit 1
+          else
+            echo "::error::Unexpected exit code $LEGACY_EXIT from detect-legacy-ids.js"
+            exit 1
           fi
         continue-on-error: false
 

@@ -67,7 +67,10 @@ class LegacyIDDetector {
       // Print summary
       this.printSummary();
 
-      // Exit code for CI
+      // Exit code contract for CI mode:
+      // 0 = no legacy IDs detected
+      // 1 = legacy IDs in src/ only (WARN but allow CI to continue)
+      // 2 = legacy IDs in docs/ (FAIL - must be fixed)
       if (this.isCIMode) {
         // Separate detections by location
         const docsErrors = this.detections.filter(d => 
@@ -87,26 +90,29 @@ class LegacyIDDetector {
           !d.location.includes('docs/SSOT-V2.md')
         );
 
-        // FAIL if errors in docs (critical)
+        // CRITICAL: Legacy IDs in docs/ → exit 2
         if (docsErrors.length > 0) {
           this.log(`❌ Found ${docsErrors.length} legacy ID(s) in docs (CRITICAL)`, 'error');
           this.log(`   Locations: ${docsErrors.map(d => d.location).join(', ')}`, 'error');
-          process.exit(1);
+          process.exit(2); // Exit 2 = docs/ legacy IDs → CI FAIL
         }
 
-        // WARN if errors in src/ (outside scope)
+        // WARN: Legacy IDs in src/ only → exit 1 (allowed for v2 PRs)
         if (srcErrors.length > 0) {
           this.log(`⚠️ Found ${srcErrors.length} legacy ID(s) in src/ (outside scope - WARN only)`, 'warning');
           this.log(`   Locations: ${srcErrors.map(d => d.location).join(', ')}`, 'warning');
-          process.exit(0); // Exit 0 = WARN, not FAIL
+          process.exit(1); // Exit 1 = src/ only → CI continues with warning
         }
 
-        // FAIL if errors in other locations (unexpected)
+        // UNEXPECTED: Legacy IDs in other locations → exit 2
         if (otherErrors.length > 0) {
           this.log(`❌ Found ${otherErrors.length} legacy ID(s) in unexpected locations`, 'error');
           this.log(`   Locations: ${otherErrors.map(d => d.location).join(', ')}`, 'error');
-          process.exit(1);
+          process.exit(2); // Exit 2 = unexpected location → CI FAIL
         }
+
+        // No legacy IDs detected → exit 0
+        process.exit(0);
       }
 
       return {
