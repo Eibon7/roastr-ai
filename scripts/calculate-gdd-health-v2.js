@@ -25,11 +25,12 @@ const OUTPUT_JSON = path.join(ROOT_DIR, 'gdd-health-v2.json');
 const OUTPUT_REPORT = path.join(ROOT_DIR, 'docs/GDD-V2-HEALTH-REPORT.md');
 
 function readMetricsFromSSOT() {
-  if (!fs.existsSync(SSOT_V2_PATH)) {
+  let ssotContent;
+  try {
+    ssotContent = fs.readFileSync(SSOT_V2_PATH, 'utf8');
+  } catch (e) {
     throw new Error(`SSOT-V2.md no encontrado en: ${SSOT_V2_PATH}`);
   }
-
-  const ssotContent = fs.readFileSync(SSOT_V2_PATH, 'utf8');
 
   // Buscar sección 15 - usar índice de string para encontrar desde "## 15" hasta el siguiente "##" o fin de archivo
   const section15Start = ssotContent.indexOf('## 15. GDD Health Score');

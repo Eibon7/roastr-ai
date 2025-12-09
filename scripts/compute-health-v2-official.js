@@ -50,11 +50,17 @@ function extractDependencies(content, systemMap) {
     const docFileName = nodeData?.docs?.[0] ? path.basename(nodeData.docs[0]) : null;
     const docFileNameWithoutExt = docFileName ? docFileName.replace('.md', '') : null;
 
+    // Escapar caracteres especiales para regex
+    const escapedNodeName = nodeName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapedNormalized = normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     const patterns = [
-      new RegExp(`\\[${nodeName}\\]`, 'i'),
-      new RegExp(`\`${nodeName}\``, 'i'),
-      new RegExp(`\\*\\*${nodeName}\\*\\*`, 'i'),
-      new RegExp(`\\b${normalized}\\b`, 'i')
+      new RegExp(`\\[${escapedNodeName}\\]`, 'i'),
+      new RegExp(`\`${escapedNodeName}\``, 'i'),
+      new RegExp(`\\*\\*${escapedNodeName}\\*\\*`, 'i'),
+      // Word boundary matching mejorado: evitar falsos positivos (ej: "auth" vs "authentication")
+      // Solo match si está al inicio/fin de palabra O precedido/seguido por caracteres no-alfanuméricos
+      new RegExp(`(^|[^a-zA-Z0-9_-])${escapedNormalized}([^a-zA-Z0-9_-]|$)`, 'i')
     ];
 
     // Añadir patrones para links markdown
@@ -104,9 +110,8 @@ function loadNodesV2() {
       const docPath = docs[0];
       const filePath = path.isAbsolute(docPath) ? docPath : path.join(ROOT_DIR, docPath);
 
-      if (fs.existsSync(filePath)) {
-        try {
-          const content = fs.readFileSync(filePath, 'utf8');
+      try {
+        const content = fs.readFileSync(filePath, 'utf8');
           const fileName = path.basename(filePath);
           nodeFiles[nodeName] = fileName;
 
@@ -125,17 +130,15 @@ function loadNodesV2() {
             crossReferences: [...new Set([...deps, ...crossRefs])]
           };
         } catch (e) {
-          logger.warn(
-            `Warning: Could not read file for node ${nodeName} at ${filePath}: ${e.message}`
-          );
+          if (e.code === 'ENOENT') {
+            logger.warn(
+              `⚠️  Node file not found: ${nodeName} (declared path: ${docPath}, full path: ${filePath})`
+            );
+          } else {
+            logger.warn(`Warning: Could not read file for node ${nodeName} at ${filePath}: ${e.message}`);
+          }
           missingNodes.push(nodeName);
         }
-      } else {
-        logger.warn(
-          `⚠️  Node file not found: ${nodeName} (declared path: ${docPath}, full path: ${filePath})`
-        );
-        missingNodes.push(nodeName);
-      }
     });
 
     if (missingNodes.length > 0) {
@@ -385,10 +388,7 @@ function main() {
   logger.info(`   Health Score Final: ${metrics.health_score}/100\n`);
 
   // Guardar JSON
-  if (!fs.existsSync(OUTPUT_DIR)) {
-    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-  }
-
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   fs.writeFileSync(OUTPUT_JSON, JSON.stringify(metrics, null, 2), 'utf8');
   logger.info(`✅ JSON guardado en: ${OUTPUT_JSON}\n`);
 
