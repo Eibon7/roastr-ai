@@ -20,6 +20,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
+const logger = require('../src/utils/logger');
 
 class SystemMapDriftChecker {
   constructor(options = {}) {
@@ -43,7 +44,7 @@ class SystemMapDriftChecker {
       }[type] || 'ℹ️';
 
     if (this.isCIMode && type === 'info') return;
-    console.log(`${prefix} ${message}`);
+    logger.info(`${prefix} ${message}`);
   }
 
   async check() {
@@ -453,7 +454,7 @@ if (require.main === module) {
 
   const checker = new SystemMapDriftChecker(options);
   checker.check().catch((error) => {
-    console.error('Fatal error:', error);
+    logger.error('Fatal error:', error);
     process.exit(1);
   });
 }

@@ -112,33 +112,35 @@ function loadNodesV2() {
 
       try {
         const content = fs.readFileSync(filePath, 'utf8');
-          const fileName = path.basename(filePath);
-          nodeFiles[nodeName] = fileName;
+        const fileName = path.basename(filePath);
+        nodeFiles[nodeName] = fileName;
 
-          const deps = extractDependencies(content, systemMap);
-          const crossRefs = extractCrossReferences(content, systemMap);
+        const deps = extractDependencies(content, systemMap);
+        const crossRefs = extractCrossReferences(content, systemMap);
 
-          nodes[nodeName] = {
-            file: fileName,
-            content,
-            hasSSOTRefs: /SSOT|ssot|Single Source of Truth/i.test(content),
-            saysNoneSSOT:
-              /SSOT\s+References?:\s*None|does\s+not\s+(directly\s+)?(use|access)\s+SSOT/i.test(
-                content
-              ),
-            dependencies: deps,
-            crossReferences: [...new Set([...deps, ...crossRefs])]
-          };
-        } catch (e) {
-          if (e.code === 'ENOENT') {
-            logger.warn(
-              `⚠️  Node file not found: ${nodeName} (declared path: ${docPath}, full path: ${filePath})`
-            );
-          } else {
-            logger.warn(`Warning: Could not read file for node ${nodeName} at ${filePath}: ${e.message}`);
-          }
-          missingNodes.push(nodeName);
+        nodes[nodeName] = {
+          file: fileName,
+          content,
+          hasSSOTRefs: /SSOT|ssot|Single Source of Truth/i.test(content),
+          saysNoneSSOT:
+            /SSOT\s+References?:\s*None|does\s+not\s+(directly\s+)?(use|access)\s+SSOT/i.test(
+              content
+            ),
+          dependencies: deps,
+          crossReferences: [...new Set([...deps, ...crossRefs])]
+        };
+      } catch (e) {
+        if (e.code === 'ENOENT') {
+          logger.warn(
+            `⚠️  Node file not found: ${nodeName} (declared path: ${docPath}, full path: ${filePath})`
+          );
+        } else {
+          logger.warn(
+            `Warning: Could not read file for node ${nodeName} at ${filePath}: ${e.message}`
+          );
         }
+        missingNodes.push(nodeName);
+      }
     });
 
     if (missingNodes.length > 0) {

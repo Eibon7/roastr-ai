@@ -129,11 +129,14 @@ jobs:
         if: github.event.inputs.full_validation != 'false' || github.event_name == 'workflow_dispatch'
         run: |
           echo "📊 Calculating GDD Health Score v2..."
-          # Use score-gdd-health.js with v2 paths
-          # Note: This script may need --v2 flag or wrapper
-          # For now, we'll use it and check if it supports v2
-          node scripts/score-gdd-health.js --ci --json > gdd-health-v2.json 2>&1 || {
-            echo "⚠️ Health scoring completed with warnings"
+          # Use compute-health-v2-official.js for v2 health calculation
+          node scripts/compute-health-v2-official.js > /tmp/health-output.txt 2>&1 || {
+            echo "⚠️ Health calculation completed with warnings"
+          }
+          
+          # Read health score from SSOT (sección 15) using calculate-gdd-health-v2.js
+          node scripts/calculate-gdd-health-v2.js --json > gdd-health-v2.json 2>&1 || {
+            echo "⚠️ Health score reading completed with warnings"
             echo '{"overall_score": 0, "status": "unknown"}' > gdd-health-v2.json
           }
           
