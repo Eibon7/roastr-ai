@@ -1,12 +1,12 @@
 {
-  "system_map_alignment": 93.33,
-  "ssot_alignment": 66.67,
+  "system_map_alignment": 100,
+  "ssot_alignment": 100,
   "dependency_density": 100,
-  "crosslink_score": 30,
+  "crosslink_score": 100,
   "narrative_consistency": 100,
-  "health_score": 77.33,
-  "nodes_detected": 14,
+  "health_score": 100,
+  "nodes_detected": 15,
   "nodes_total": 15,
-  "nodes_missing": 1,
-  "timestamp": "2025-12-08T17:07:58.749Z"
+  "nodes_missing": 0,
+  "timestamp": "2025-12-09T21:18:24.955Z"
 }

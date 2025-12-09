@@ -36,11 +36,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run GDD validation (generate fresh data)
+      - name: Calculate GDD Health v2 (generate fresh data)
         run: |
-          node scripts/validate-gdd-runtime.js --ci || true
-          node scripts/score-gdd-health.js --ci || true
-          node scripts/predict-gdd-drift.js --ci || true
+          # Update SSOT with latest metrics
+          node scripts/compute-health-v2-official.js --update-ssot || true
+          # Read health score from SSOT (sección 15)
+          node scripts/calculate-gdd-health-v2.js --json > gdd-health-v2.json 2>&1 || true
 
       - name: Collect telemetry
         id: telemetry
@@ -75,9 +76,8 @@ jobs:
           file_pattern: |
             telemetry/snapshots/gdd-metrics-history.json
             telemetry/reports/*.md
-            gdd-status.json
-            gdd-health.json
-            gdd-drift.json
+            gdd-health-v2.json
+            scripts/outputs/gdd-health-v2-official.json
             docs/drift-report.md
             docs/system-health.md
             docs/system-validation.md

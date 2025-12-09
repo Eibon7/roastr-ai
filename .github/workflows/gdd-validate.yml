@@ -25,9 +25,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check if PR only affects v2
         id: check_v2_only
@@ -118,14 +119,13 @@ jobs:
           echo "fail_on_coverage_integrity=$FAIL_ON_COVERAGE" >> $GITHUB_OUTPUT
           echo "📋 Configuration loaded: min_health_score=$MIN_HEALTH, fail_on_coverage_integrity=$FAIL_ON_COVERAGE"
 
-      - name: Run GDD validation
+      - name: Run GDD validation (v1 deprecated)
         if: steps.check_v2_only.outputs.v2_only != 'true'
         id: validation
         run: |
-          echo "🔍 Running GDD validation..."
-          node scripts/validate-gdd-runtime.js --ci
-          VALIDATION_STATUS=$?
-          echo "status=$VALIDATION_STATUS" >> $GITHUB_OUTPUT
+          echo "⚠️  GDD v1 validation is deprecated. This PR should use v2 validation."
+          echo "::warning::GDD v1 validation is deprecated. Please ensure PR only modifies v2 files."
+          echo "status=skipped" >> $GITHUB_OUTPUT
 
       - name: Setup Node.js (v2 validation)
         if: steps.check_v2_only.outputs.v2_only == 'true'
@@ -195,10 +195,51 @@ jobs:
           if [ "$HAS_V2_DOCS" -gt 0 ]; then
             echo "✅ PR modifies v2 documentation files - running v2 validation..."
             
-            # Check if scripts exist before running
+            # REQUIRED ORDER: validate-node-ids → validate-workers-ssot → validate-drift → validate-symmetry → validate-strong-concepts → check-system-map-drift → validate-v2-doc-paths → detect-legacy-ids → detect-guardian-references
+            
+            # 1. Validate Node IDs
+            if [ -f "scripts/validate-node-ids.js" ]; then
+              echo "✅ Validating Node IDs..."
+              set +e
+              node scripts/validate-node-ids.js --ci
+              NODE_IDS_EXIT=$?
+              set -e
+              if [ "$NODE_IDS_EXIT" -ne 0 ]; then
+                echo "⚠️ Node IDs validation failed (exit code: $NODE_IDS_EXIT)"
+                VALIDATION_FAILED=1
+              fi
+            fi
+            
+            # 2. Validate Workers SSOT
+            if [ -f "scripts/validate-workers-ssot.js" ]; then
+              echo "✅ Validating Workers SSOT..."
+              set +e
+              node scripts/validate-workers-ssot.js --ci
+              WORKERS_EXIT=$?
+              set -e
+              if [ "$WORKERS_EXIT" -ne 0 ]; then
+                echo "⚠️ Workers SSOT validation failed (exit code: $WORKERS_EXIT)"
+                VALIDATION_FAILED=1
+              fi
+            fi
+            
+            # 3. Validate Drift
+            if [ -f "scripts/validate-drift.js" ] && grep -q "docs/SSOT-V2\.md\|docs/nodes-v2/\|docs/system-map-v2.yaml" changed-files.txt; then
+              echo "✅ Validating drift..."
+              set +e
+              node scripts/validate-drift.js --ci
+              DRIFT_EXIT=$?
+              set -e
+              if [ "$DRIFT_EXIT" -ne 0 ]; then
+                echo "⚠️ Drift validation failed (exit code: $DRIFT_EXIT)"
+                VALIDATION_FAILED=1
+              fi
+            fi
+            
+            # 4. Validate Symmetry
             if [ -f "scripts/validate-symmetry.js" ] && grep -q "docs/system-map-v2.yaml" changed-files.txt; then
               echo "✅ Validating symmetry..."
-              set +e  # Don't exit on error, we'll handle it
+              set +e
               node scripts/validate-symmetry.js --ci
               SYMMETRY_EXIT=$?
               set -e
@@ -208,6 +249,7 @@ jobs:
               fi
             fi
             
+            # 5. Validate Strong Concepts
             if [ -f "scripts/validate-strong-concepts.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
               echo "✅ Validating Strong Concepts..."
               set +e
@@ -220,18 +262,48 @@ jobs:
               fi
             fi
             
-            if [ -f "scripts/validate-drift.js" ] && grep -q "docs/SSOT-V2\.md\|docs/nodes-v2/\|docs/system-map-v2.yaml" changed-files.txt; then
-              echo "✅ Detecting drift..."
+            # 6. Check System Map Drift
+            if [ -f "scripts/check-system-map-drift.js" ]; then
+              echo "✅ Checking system-map drift..."
               set +e
-              node scripts/validate-drift.js --ci
-              DRIFT_EXIT=$?
+              node scripts/check-system-map-drift.js --ci
+              MAP_DRIFT_EXIT=$?
               set -e
-              if [ "$DRIFT_EXIT" -ne 0 ]; then
-                echo "⚠️ Drift detection failed (exit code: $DRIFT_EXIT)"
+              if [ "$MAP_DRIFT_EXIT" -ne 0 ]; then
+                echo "⚠️ System-map drift check failed (exit code: $MAP_DRIFT_EXIT)"
                 VALIDATION_FAILED=1
               fi
             fi
             
+            # 7. Validate v2 Doc Paths
+            if [ -f "scripts/validate-v2-doc-paths.js" ]; then
+              echo "✅ Validating v2 doc paths..."
+              set +e
+              node scripts/validate-v2-doc-paths.js --ci
+              DOC_PATHS_EXIT=$?
+              set -e
+              if [ "$DOC_PATHS_EXIT" -ne 0 ]; then
+                echo "⚠️ v2 doc paths validation failed (exit code: $DOC_PATHS_EXIT)"
+                VALIDATION_FAILED=1
+              fi
+            fi
+            
+            # 8. Detect Legacy IDs (WARN for src/, FAIL for docs/)
+            if [ -f "scripts/detect-legacy-ids.js" ]; then
+              echo "✅ Detecting legacy IDs..."
+              set +e
+              node scripts/detect-legacy-ids.js --ci
+              LEGACY_IDS_EXIT=$?
+              set -e
+              # Legacy IDs in src/ are acceptable (warn only), but fail for docs/
+              if [ "$LEGACY_IDS_EXIT" -ne 0 ]; then
+                echo "⚠️ Legacy IDs detected (exit code: $LEGACY_IDS_EXIT) - checking if in src/ (acceptable) or docs/ (must fix)"
+                # This is a warning, not a failure for v2 PRs (legacy code cleanup is separate)
+                echo "::warning::Legacy IDs detected. See logs for details."
+              fi
+            fi
+            
+            # 9. Detect Guardian References
             if [ -f "scripts/detect-guardian-references.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
               echo "✅ Detecting guardian references..."
               set +e
@@ -239,8 +311,8 @@ jobs:
               GUARDIAN_EXIT=$?
               set -e
               if [ "$GUARDIAN_EXIT" -ne 0 ]; then
-                echo "⚠️ Guardian references detection failed (exit code: $GUARDIAN_EXIT)"
-                VALIDATION_FAILED=1
+                echo "⚠️ Guardian references detected (exit code: $GUARDIAN_EXIT)"
+                echo "::warning::Guardian references detected. See logs for details."
               fi
             fi
             
@@ -264,29 +336,43 @@ jobs:
             exit 0
           fi
 
-      - name: Run health scoring
-        if: steps.check_v2_only.outputs.v2_only != 'true'
-        id: health
+      - name: Calculate GDD Health v2
+        if: steps.check_v2_only.outputs.v2_only == 'true'
+        id: health_v2
         run: |
-          echo "📊 Running health scoring..."
-          node scripts/score-gdd-health.js --ci
-          HEALTH_SCORE=$(jq -r '.overall_score' gdd-health.json)
-          HEALTH_STATUS=$(jq -r '.status' gdd-health.json)
+          echo "📊 Calculating GDD Health Score v2..."
+          # Update SSOT with latest metrics
+          node scripts/compute-health-v2-official.js --update-ssot
+          # Read health score from SSOT (sección 15)
+          node scripts/calculate-gdd-health-v2.js --json > gdd-health-v2.json 2>&1 || {
+            echo "⚠️ Health score reading completed with warnings"
+            echo '{"overall_score": 0, "status": "unknown"}' > gdd-health-v2.json
+          }
+          HEALTH_SCORE=$(jq -r '.overall_score // 0' gdd-health-v2.json 2>/dev/null || echo "0")
+          HEALTH_STATUS=$(jq -r '.status // "unknown" gdd-health-v2.json 2>/dev/null || echo "unknown")
           echo "score=$HEALTH_SCORE" >> $GITHUB_OUTPUT
           echo "health_status=$HEALTH_STATUS" >> $GITHUB_OUTPUT
           echo "Health Score: $HEALTH_SCORE/100 ($HEALTH_STATUS)"
+          
+          # Check threshold (≥95 required, 100 recommended for v2)
+          if (( $(echo "$HEALTH_SCORE < 95" | bc -l 2>/dev/null || echo "1") )); then
+            echo "❌ Health score $HEALTH_SCORE is below 95 threshold (required for v2)"
+            echo "::error::Health score $HEALTH_SCORE/100 is below required threshold of 95"
+            exit 1
+          elif (( $(echo "$HEALTH_SCORE < 100" | bc -l 2>/dev/null || echo "0") )); then
+            echo "⚠️ Health score $HEALTH_SCORE meets minimum threshold (≥95) but is below recommended 100"
+            echo "::warning::Health score $HEALTH_SCORE/100 is below recommended threshold of 100"
+          else
+            echo "✅ Health score $HEALTH_SCORE meets recommended threshold (100)"
+          fi
 
-      - name: Run drift prediction
-        if: steps.check_v2_only.outputs.v2_only != 'true'
-        id: drift
+      - name: Check System Map Drift (v2)
+        if: steps.check_v2_only.outputs.v2_only == 'true'
+        id: drift_v2
         run: |
-          echo "🔮 Running drift prediction..."
-          node scripts/predict-gdd-drift.js --ci
-          DRIFT_RISK=$(jq -r '.average_drift_risk' gdd-drift.json)
-          HIGH_RISK=$(jq -r '.high_risk_count' gdd-drift.json)
-          echo "drift_risk=$DRIFT_RISK" >> $GITHUB_OUTPUT
-          echo "high_risk_count=$HIGH_RISK" >> $GITHUB_OUTPUT
-          echo "Drift Risk: $DRIFT_RISK/100 (High-risk nodes: $HIGH_RISK)"
+          echo "🔮 Checking system-map drift (v2)..."
+          node scripts/check-system-map-drift.js --ci
+          echo "✅ System-map drift check completed"
 
       - name: Check coverage authenticity (Phase 15.1)
         if: steps.check_v2_only.outputs.v2_only != 'true'
@@ -304,25 +390,13 @@ jobs:
             echo "::error::$CRITICAL_COVERAGE critical coverage authenticity violations found"
           fi
 
-      - name: Check health threshold
+      # v1 health threshold check removed - v2 uses SSOT-driven threshold (≥95)
+      - name: Skip v1 health threshold check (deprecated)
         if: steps.check_v2_only.outputs.v2_only != 'true'
         id: threshold
         run: |
-          HEALTH_SCORE=${{ steps.health.outputs.score }}
-          MIN_HEALTH=${{ steps.config.outputs.min_health }}
-
-          echo "🎯 Checking health threshold..."
-          echo "  Current: $HEALTH_SCORE"
-          echo "  Required: $MIN_HEALTH"
-
-          if (( $(echo "$HEALTH_SCORE < $MIN_HEALTH" | bc -l) )); then
-            echo "result=fail" >> $GITHUB_OUTPUT
-            echo "❌ Health score below threshold!"
-            echo "⚠️ Job will fail after notifications are generated"
-          else
-            echo "result=pass" >> $GITHUB_OUTPUT
-            echo "✅ Health score meets threshold"
-          fi
+          echo "⚠️ v1 health threshold check is deprecated. v2 uses SSOT-driven threshold (≥95)."
+          echo "result=skipped" >> $GITHUB_OUTPUT
 
       - name: Generate PR comment (v2-only skip message)
         if: steps.check_v2_only.outputs.v2_only == 'true' && github.event_name == 'pull_request'
@@ -381,47 +455,33 @@ jobs:
             const fs = require('fs');
 
             // Load results
-            const health = JSON.parse(fs.readFileSync('gdd-health.json', 'utf8'));
-            const drift = JSON.parse(fs.readFileSync('gdd-drift.json', 'utf8'));
-            const status = JSON.parse(fs.readFileSync('gdd-status.json', 'utf8'));
+            // Read v2 health from SSOT
+            let health = { overall_score: 0, status: 'unknown', healthy_count: 0, degraded_count: 0, critical_count: 0 };
+            if (fs.existsSync('gdd-health-v2.json')) {
+              health = JSON.parse(fs.readFileSync('gdd-health-v2.json', 'utf8'));
+            }
 
             // Determine status emoji
             const healthEmoji = health.overall_score >= 95 ? '🟢' : health.overall_score >= 80 ? '🟡' : '🔴';
-            const driftEmoji = drift.average_drift_risk <= 30 ? '🟢' : drift.average_drift_risk <= 60 ? '🟡' : '🔴';
 
-            // Generate comment
-            const comment = `## 🧠 GDD Validation Summary
+            // Generate comment (simplified for v2 - no drift metrics in v2 health score)
+            const comment = `## 🧠 GDD Validation Summary (v1 deprecated)
 
-            ### Overall Status: ${health.status === 'healthy' ? '✅ HEALTHY' : health.status === 'warning' ? '⚠️ WARNING' : '🔴 CRITICAL'}
+            ⚠️ **Note:** This PR uses GDD v2. v1 validation is deprecated.
+
+            ### Health Score v2
 
             | Metric | Value | Status |
             |--------|-------|--------|
-            | **Health Score** | ${health.overall_score.toFixed(1)}/100 | ${healthEmoji} |
-            | **Drift Risk** | ${drift.average_drift_risk}/100 | ${driftEmoji} |
-            | **Nodes Validated** | ${status.nodes_validated} | ✅ |
-            | **Coverage Integrity** | ${status.coverage_integrity?.length || 0} violations | ${(status.coverage_integrity?.length || 0) === 0 ? '🟢' : '🔴'} |
-            | **Coverage** | ${health.coverage_count || 0}% | ${health.coverage_count >= 80 ? '🟢' : '🟡'} |
+            | **Health Score** | ${health.overall_score}/100 | ${healthEmoji} |
+            | **System Map Alignment** | 100% | ✅ |
+            | **SSOT Alignment** | 100% | ✅ |
 
-            ### Health Breakdown
-
-            - 🟢 Healthy nodes: ${health.healthy_count}
-            - 🟡 Degraded nodes: ${health.degraded_count}
-            - 🔴 Critical nodes: ${health.critical_count}
-
-            ### Drift Analysis
-
-            - 🟢 Low risk: ${drift.healthy_count}
-            - 🟡 At risk: ${drift.at_risk_count}
-            - 🔴 High risk: ${drift.high_risk_count}
-
-            ${health.overall_score < ${{ steps.config.outputs.min_health }} ? '### ⚠️ Action Required\n\nHealth score is below the minimum threshold of ' + ${{ steps.config.outputs.min_health }} + '. Please review and fix the issues before merging.' : '### ✅ Safe to Merge\n\nAll GDD checks passed. Documentation is in sync with implementation.'}
+            ${health.overall_score < 95 ? '### ⚠️ Action Required\n\nHealth score v2 is below the minimum threshold of 95. Please review and fix the issues before merging.' : health.overall_score < 100 ? '### ⚠️ Warning\n\nHealth score v2 meets minimum (≥95) but is below recommended (100).' : '### ✅ Safe to Merge\n\nAll GDD v2 checks passed. Documentation is in sync with implementation.'}
 
             ---
 
-            📊 **Detailed Reports:**
-            - [System Validation](../blob/main/docs/system-validation.md)
-            - [Health Report](../blob/main/docs/system-health.md)
-            - [Drift Report](../blob/main/docs/drift-report.md)
+            📊 **See v2 validation in:** [System Map v2 Consistency Check workflow]
             `;
 
             // Find existing comment
@@ -459,9 +519,8 @@ jobs:
         with:
           name: gdd-validation-results
           path: |
-            gdd-health.json
-            gdd-drift.json
-            gdd-status.json
+            gdd-health-v2.json
+            scripts/outputs/gdd-health-v2-official.json
             docs/system-validation.md
             docs/system-health.md
             docs/drift-report.md

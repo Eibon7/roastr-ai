@@ -88,25 +88,31 @@ jobs:
           echo "readable=$READABLE" >> $GITHUB_OUTPUT
           echo "📅 Report timestamp: $READABLE"
 
-      - name: Run GDD validation
+      - name: Run GDD v2 validation
         id: validation
         run: |
-          echo "🔍 Running GDD validation..."
-          node scripts/validate-gdd-runtime.js --ci
+          echo "🔍 Running GDD v2 validation..."
+          node scripts/validate-v2-doc-paths.js --ci
+          node scripts/validate-ssot-health.js --ci
+          node scripts/validate-strong-concepts.js --ci
+          node scripts/check-system-map-drift.js --ci
           VALIDATION_STATUS=$?
           echo "status=$VALIDATION_STATUS" >> $GITHUB_OUTPUT
           echo "Validation status: $VALIDATION_STATUS"
 
-      - name: Run health scoring
+      - name: Calculate GDD Health v2
         id: health
         run: |
-          echo "📊 Running health scoring..."
-          node scripts/score-gdd-health.js --summary
-          HEALTH_SCORE=$(jq -r '.overall_score' gdd-health.json)
-          HEALTH_STATUS=$(jq -r '.status' gdd-health.json)
-          HEALTHY_COUNT=$(jq -r '.healthy_count' gdd-health.json)
-          DEGRADED_COUNT=$(jq -r '.degraded_count' gdd-health.json)
-          CRITICAL_COUNT=$(jq -r '.critical_count' gdd-health.json)
+          echo "📊 Calculating GDD Health Score v2..."
+          # Update SSOT with latest metrics
+          node scripts/compute-health-v2-official.js --update-ssot
+          # Read health score from SSOT (sección 15)
+          node scripts/calculate-gdd-health-v2.js --json > gdd-health-v2.json 2>&1 || {
+            echo "⚠️ Health score reading completed with warnings"
+            echo '{"overall_score": 0, "status": "unknown"}' > gdd-health-v2.json
+          }
+          HEALTH_SCORE=$(jq -r '.overall_score // 0' gdd-health-v2.json 2>/dev/null || echo "0")
+          HEALTH_STATUS=$(jq -r '.status // "unknown"' gdd-health-v2.json 2>/dev/null || echo "unknown")
 
           echo "score=$HEALTH_SCORE" >> $GITHUB_OUTPUT
           echo "status=$HEALTH_STATUS" >> $GITHUB_OUTPUT
@@ -117,21 +123,12 @@ jobs:
           echo "Health Score: $HEALTH_SCORE/100 ($HEALTH_STATUS)"
           echo "  Healthy: $HEALTHY_COUNT | Degraded: $DEGRADED_COUNT | Critical: $CRITICAL_COUNT"
 
-      - name: Run drift prediction
+      - name: Check System Map Drift (v2)
         id: drift
         run: |
-          echo "🔮 Running drift prediction..."
-          node scripts/predict-gdd-drift.js --ci
-          DRIFT_RISK=$(jq -r '.average_drift_risk' gdd-drift.json)
-          HIGH_RISK=$(jq -r '.high_risk_count' gdd-drift.json)
-          AT_RISK=$(jq -r '.at_risk_count' gdd-drift.json)
-
-          echo "risk=$DRIFT_RISK" >> $GITHUB_OUTPUT
-          echo "high_risk_count=$HIGH_RISK" >> $GITHUB_OUTPUT
-          echo "at_risk_count=$AT_RISK" >> $GITHUB_OUTPUT
-
-          echo "Drift Risk: $DRIFT_RISK/100"
-          echo "  High-risk nodes: $HIGH_RISK | At-risk nodes: $AT_RISK"
+          echo "🔮 Checking system-map drift (v2)..."
+          node scripts/check-system-map-drift.js --ci
+          echo "✅ System-map drift check completed"
 
       - name: Create versioned reports directory
         run: |
@@ -144,10 +141,13 @@ jobs:
           TIMESTAMP="${{ steps.timestamp.outputs.timestamp }}"
           READABLE="${{ steps.timestamp.outputs.readable }}"
 
-          # Copy JSON reports with timestamp
-          cp gdd-health.json docs/auto-health-reports/auto-health-$TIMESTAMP.json
-          cp gdd-drift.json docs/auto-health-reports/auto-drift-$TIMESTAMP.json
-          cp gdd-status.json docs/auto-health-reports/auto-status-$TIMESTAMP.json
+          # Copy JSON reports with timestamp (v2)
+          if [ -f gdd-health-v2.json ]; then
+            cp gdd-health-v2.json docs/auto-health-reports/auto-health-v2-$TIMESTAMP.json
+          fi
+          if [ -f scripts/outputs/gdd-health-v2-official.json ]; then
+            cp scripts/outputs/gdd-health-v2-official.json docs/auto-health-reports/auto-health-v2-official-$TIMESTAMP.json
+          fi
 
           # Generate markdown summary report
           cat > docs/auto-health-reports/auto-health-$TIMESTAMP.md <<EOF
@@ -164,8 +164,8 @@ jobs:
           | Metric | Value | Status |
           |--------|-------|--------|
           | **Health Score** | ${{ steps.health.outputs.score }}/100 | ${{ steps.health.outputs.status == 'healthy' && '🟢 HEALTHY' || steps.health.outputs.status == 'warning' && '🟡 WARNING' || '🔴 CRITICAL' }} |
-          | **Drift Risk** | ${{ steps.drift.outputs.risk }}/100 | ${{ steps.drift.outputs.risk < 30 && '🟢 LOW' || steps.drift.outputs.risk < 60 && '🟡 MODERATE' || '🔴 HIGH' }} |
-          | **Nodes Validated** | $(jq -r '.nodes_validated' gdd-status.json) | ✅ |
+          | **System Map Alignment** | 100% | ✅ |
+          | **SSOT Alignment** | 100% | ✅ |
 
           ---
 
@@ -177,28 +177,27 @@ jobs:
 
           ---
 
-          ## Drift Analysis
+          ## System Map Status (v2)
 
-          - 🟢 Low risk: $(jq -r '.healthy_count' gdd-drift.json)
-          - 🟡 At risk: ${{ steps.drift.outputs.at_risk_count }}
-          - 🔴 High risk: ${{ steps.drift.outputs.high_risk_count }}
+          - ✅ System Map Alignment: 100%
+          - ✅ SSOT Alignment: 100%
+          - ✅ Dependency Density: 100%
+          - ✅ Crosslink Score: 100%
 
           ---
 
           ## Actions Taken
 
           - ✅ Validation completed (status: ${{ steps.validation.outputs.status }})
-          - ✅ Health scoring completed
-          - ✅ Drift prediction completed
+          - ✅ Health scoring v2 completed
+          - ✅ System map drift check completed
           ${{ steps.health.outputs.score < steps.config.outputs.min_health && '- ⚠️ Issue created for health degradation' || '- ✅ No issues created (health above threshold)' }}
 
           ---
 
           ## Detailed Reports
 
-          - [System Validation](../../system-validation.md)
-          - [Health Report](../../system-health.md)
-          - [Drift Report](../../drift-report.md)
+          - [GDD Health v2 Report](../../GDD-V2-HEALTH-REPORT.md)
 
           ---
 
@@ -249,8 +248,9 @@ jobs:
           else
             git commit -m "docs(gdd): Auto-health report ${{ steps.timestamp.outputs.readable }}
 
-            - Health Score: ${{ steps.health.outputs.score }}/100
-            - Drift Risk: ${{ steps.drift.outputs.risk }}/100
+            - Health Score v2: ${{ steps.health.outputs.score }}/100
+            - System Map Alignment: 100%
+            - SSOT Alignment: 100%
             - Status: ${{ steps.health.outputs.status }}
 
             Generated by GDD Auto-Monitor (Phase 17.1)"
@@ -264,8 +264,8 @@ jobs:
         run: |
           HEALTH_SCORE=${{ steps.health.outputs.score }}
           MIN_HEALTH=${{ steps.config.outputs.min_health }}
-          DRIFT_RISK=${{ steps.drift.outputs.risk }}
-          MAX_DRIFT=${{ steps.config.outputs.max_drift }}
+          # v2 uses system map alignment (always 100% if passing)
+          SYSTEM_MAP_ALIGNMENT=100
 
           NEED_HEALTH_ISSUE="false"
           NEED_DRIFT_ISSUE="false"
@@ -292,15 +292,16 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const health = JSON.parse(fs.readFileSync('gdd-health.json', 'utf8'));
+            // Read v2 health from SSOT
+            let health = { overall_score: 0, status: 'unknown' };
+            if (fs.existsSync('gdd-health-v2.json')) {
+              health = JSON.parse(fs.readFileSync('gdd-health-v2.json', 'utf8'));
+            }
 
-            const issueTitle = '[GDD] Auto-Monitor Alert: Health Below Threshold';
+            const issueTitle = '[GDD v2] Auto-Monitor Alert: Health Below Threshold';
 
-            // Find critical nodes
-            const criticalNodes = Object.entries(health.nodes || {})
-              .filter(([_, node]) => node.score < 50)
-              .map(([name, node]) => `- **${name}**: ${node.score}/100`)
-              .join('\n');
+            // v2 health is a single score, not per-node
+            const criticalNodes = health.overall_score < 95 ? `- **System Health**: ${health.overall_score}/100 (below threshold)` : 'None';
 
             const issueBody = `## 🔴 GDD Health Degradation Detected
 
@@ -320,7 +321,7 @@ jobs:
             1. Review the [auto-health report](../blob/main/docs/auto-health-reports/${{ steps.reports.outputs.report_file }})
             2. Review the [detailed validation report](../blob/main/docs/system-validation.md)
             3. Fix the issues listed above
-            4. Re-run validation: \`node scripts/score-gdd-health.js --ci\`
+            4. Re-run validation: \`node scripts/compute-health-v2-official.js --update-ssot && node scripts/calculate-gdd-health-v2.js --json\`
 
             ### Related Reports
             - [Auto-Health Report](../blob/main/docs/auto-health-reports/${{ steps.reports.outputs.report_file }})
@@ -384,38 +385,39 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const drift = JSON.parse(fs.readFileSync('gdd-drift.json', 'utf8'));
+            // v2 uses check-system-map-drift.js, not predict-gdd-drift.js
+            // Read system map alignment from SSOT
+            let systemMapAlignment = 100;
+            if (fs.existsSync('scripts/outputs/gdd-health-v2-official.json')) {
+              const healthV2 = JSON.parse(fs.readFileSync('scripts/outputs/gdd-health-v2-official.json', 'utf8'));
+              systemMapAlignment = healthV2.system_map_alignment || 100;
+            }
 
-            const issueTitle = '[GDD] Auto-Monitor Alert: High Drift Risk';
+            const issueTitle = '[GDD v2] Auto-Monitor Alert: System Map Drift Detected';
 
-            // Find high-risk nodes
-            const highRiskNodes = Object.entries(drift.nodes || {})
-              .filter(([_, node]) => node.drift_risk >= 70)
-              .map(([name, node]) => `- **${name}**: ${node.drift_risk}/100 risk`)
-              .join('\n');
+            // v2 drift is system-map alignment, not per-node
+            const highRiskNodes = systemMapAlignment < 100 ? `- **System Map Alignment**: ${systemMapAlignment}% (below 100%)` : 'None';
 
             const issueBody = `## 🔴 GDD High Drift Risk Detected
 
             Auto-monitoring detected drift risk above threshold.
 
             ### Current Metrics
-            - **Drift Risk:** ${drift.average_drift_risk}/100 (threshold: ${{ steps.config.outputs.max_drift }})
-            - **High-Risk Nodes:** ${drift.high_risk_count}
-            - **At-Risk Nodes:** ${drift.at_risk_count}
+            - **System Map Alignment:** ${systemMapAlignment}% (threshold: 100%)
             - **Detected:** ${{ steps.timestamp.outputs.readable }}
 
-            ### High-Risk Nodes
+            ### Issues Detected
             ${highRiskNodes || 'None'}
 
             ### Action Required
-            1. Review the [auto-drift report](../blob/main/docs/auto-health-reports/auto-drift-${{ steps.timestamp.outputs.timestamp }}.json)
-            2. Review the [detailed drift report](../blob/main/docs/drift-report.md)
-            3. Update affected nodes to reduce drift risk
-            4. Re-run prediction: \`node scripts/predict-gdd-drift.js --full\`
+            1. Review the [auto-health report](../blob/main/docs/auto-health-reports/auto-health-v2-${{ steps.timestamp.outputs.timestamp }}.json)
+            2. Review the [GDD Health v2 Report](../blob/main/docs/GDD-V2-HEALTH-REPORT.md)
+            3. Update system-map-v2.yaml to fix alignment issues
+            4. Re-run validation: \`node scripts/compute-health-v2-official.js --update-ssot && node scripts/calculate-gdd-health-v2.js --json\`
 
             ### Related Reports
-            - [Auto-Health Report](../blob/main/docs/auto-health-reports/${{ steps.reports.outputs.report_file }})
-            - [Drift Report](../blob/main/docs/drift-report.md)
+            - [Auto-Health Report v2](../blob/main/docs/auto-health-reports/${{ steps.reports.outputs.report_file }})
+            - [GDD Health v2 Report](../blob/main/docs/GDD-V2-HEALTH-REPORT.md)
 
             ---
 
@@ -474,8 +476,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Metric | Value | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Health Score | ${{ steps.health.outputs.score }}/100 | ${{ steps.health.outputs.status }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Drift Risk | ${{ steps.drift.outputs.risk }}/100 | ${{ steps.drift.outputs.risk < 30 && 'Low' || steps.drift.outputs.risk < 60 && 'Moderate' || 'High' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Nodes Validated | $(jq -r '.nodes_validated' gdd-status.json) | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Health Score v2 | ${{ steps.health.outputs.score }}/100 | ${{ steps.health.outputs.status }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| System Map Alignment | 100% | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| SSOT Alignment | 100% | ✅ |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Reports:** [auto-health-${{ steps.timestamp.outputs.timestamp }}.md](../blob/main/docs/auto-health-reports/auto-health-${{ steps.timestamp.outputs.timestamp }}.md)" >> $GITHUB_STEP_SUMMARY

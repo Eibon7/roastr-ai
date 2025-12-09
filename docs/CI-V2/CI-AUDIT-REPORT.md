@@ -358,13 +358,13 @@
 2. ✅ **Integrar todos los validadores v2**
 3. ✅ **Configurar health score threshold ≥95**
 
-### Fase 3: Desactivar Tests Legacy
+### Fase 3: Desactivar Tests Legacy ✅ COMPLETADO
 
-1. ✅ **Desactivar tests en ci.yml**
-2. ✅ **Desactivar tests en pre-merge-validation.yml**
-3. ✅ **Desactivar tests en tests.yml**
-4. ✅ **Desactivar tests en integration-tests.yml**
-5. ✅ **Desactivar tests en e2e-tests.yml**
+1. ✅ **Desactivar tests en ci.yml** - Backend y frontend tests desactivados
+2. ✅ **Desactivar tests en pre-merge-validation.yml** - Test suite desactivado
+3. ✅ **Desactivar tests en tests.yml** - Integration tests desactivados
+4. ✅ **Desactivar tests en integration-tests.yml** - Fixtures y real backend tests desactivados
+5. ✅ **Desactivar tests en e2e-tests.yml** - E2E tests desactivados
 
 ### Fase 4: Actualizar Workflows GDD
 
