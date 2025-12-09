@@ -106,22 +106,27 @@ jobs:
           # Pass through the exit code
           exit $EXIT_CODE
 
-      - name: Re-validate after repair
+      - name: Re-validate after repair (v2)
         id: revalidate
         if: steps.repair.outputs.fixes_applied > 0
         run: |
-          echo "🔍 Re-validating after repair..."
-          node scripts/validate-gdd-runtime.js --ci
-          node scripts/score-gdd-health.js --ci
+          echo "🔍 Re-validating after repair (v2)..."
+          # Update SSOT with latest metrics
+          node scripts/compute-health-v2-official.js --update-ssot
+          # Read health score from SSOT (sección 15)
+          node scripts/calculate-gdd-health-v2.js --json > gdd-health-v2.json 2>&1 || {
+            echo "⚠️ Health score reading completed with warnings"
+            echo '{"overall_score": 0, "status": "unknown"}' > gdd-health-v2.json
+          }
 
-          # Guard: Check if gdd-health.json exists
-          if [ -f gdd-health.json ]; then
-            NEW_HEALTH=$(jq -r '.overall_score // 0' gdd-health.json)
+          # Guard: Check if gdd-health-v2.json exists
+          if [ -f gdd-health-v2.json ]; then
+            NEW_HEALTH=$(jq -r '.overall_score // 0' gdd-health-v2.json 2>/dev/null || echo "0")
           else
             NEW_HEALTH=0
           fi
           echo "new_health=$NEW_HEALTH" >> $GITHUB_OUTPUT
-          echo "New health score: $NEW_HEALTH"
+          echo "New health score v2: $NEW_HEALTH"
 
       - name: Commit fixes
         id: commit

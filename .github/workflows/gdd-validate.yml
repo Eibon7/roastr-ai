@@ -264,29 +264,43 @@ jobs:
             exit 0
           fi
 
-      - name: Run health scoring
-        if: steps.check_v2_only.outputs.v2_only != 'true'
-        id: health
+      - name: Calculate GDD Health v2
+        if: steps.check_v2_only.outputs.v2_only == 'true'
+        id: health_v2
         run: |
-          echo "📊 Running health scoring..."
-          node scripts/score-gdd-health.js --ci
-          HEALTH_SCORE=$(jq -r '.overall_score' gdd-health.json)
-          HEALTH_STATUS=$(jq -r '.status' gdd-health.json)
+          echo "📊 Calculating GDD Health Score v2..."
+          # Update SSOT with latest metrics
+          node scripts/compute-health-v2-official.js --update-ssot
+          # Read health score from SSOT (sección 15)
+          node scripts/calculate-gdd-health-v2.js --json > gdd-health-v2.json 2>&1 || {
+            echo "⚠️ Health score reading completed with warnings"
+            echo '{"overall_score": 0, "status": "unknown"}' > gdd-health-v2.json
+          }
+          HEALTH_SCORE=$(jq -r '.overall_score // 0' gdd-health-v2.json 2>/dev/null || echo "0")
+          HEALTH_STATUS=$(jq -r '.status // "unknown" gdd-health-v2.json 2>/dev/null || echo "unknown")
           echo "score=$HEALTH_SCORE" >> $GITHUB_OUTPUT
           echo "health_status=$HEALTH_STATUS" >> $GITHUB_OUTPUT
           echo "Health Score: $HEALTH_SCORE/100 ($HEALTH_STATUS)"
+          
+          # Check threshold (≥95 required, 100 recommended for v2)
+          if (( $(echo "$HEALTH_SCORE < 95" | bc -l 2>/dev/null || echo "1") )); then
+            echo "❌ Health score $HEALTH_SCORE is below 95 threshold (required for v2)"
+            echo "::error::Health score $HEALTH_SCORE/100 is below required threshold of 95"
+            exit 1
+          elif (( $(echo "$HEALTH_SCORE < 100" | bc -l 2>/dev/null || echo "0") )); then
+            echo "⚠️ Health score $HEALTH_SCORE meets minimum threshold (≥95) but is below recommended 100"
+            echo "::warning::Health score $HEALTH_SCORE/100 is below recommended threshold of 100"
+          else
+            echo "✅ Health score $HEALTH_SCORE meets recommended threshold (100)"
+          fi
 
-      - name: Run drift prediction
-        if: steps.check_v2_only.outputs.v2_only != 'true'
-        id: drift
+      - name: Check System Map Drift (v2)
+        if: steps.check_v2_only.outputs.v2_only == 'true'
+        id: drift_v2
         run: |
-          echo "🔮 Running drift prediction..."
-          node scripts/predict-gdd-drift.js --ci
-          DRIFT_RISK=$(jq -r '.average_drift_risk' gdd-drift.json)
-          HIGH_RISK=$(jq -r '.high_risk_count' gdd-drift.json)
-          echo "drift_risk=$DRIFT_RISK" >> $GITHUB_OUTPUT
-          echo "high_risk_count=$HIGH_RISK" >> $GITHUB_OUTPUT
-          echo "Drift Risk: $DRIFT_RISK/100 (High-risk nodes: $HIGH_RISK)"
+          echo "🔮 Checking system-map drift (v2)..."
+          node scripts/check-system-map-drift.js --ci
+          echo "✅ System-map drift check completed"
 
       - name: Check coverage authenticity (Phase 15.1)
         if: steps.check_v2_only.outputs.v2_only != 'true'
@@ -381,9 +395,11 @@ jobs:
             const fs = require('fs');
 
             // Load results
-            const health = JSON.parse(fs.readFileSync('gdd-health.json', 'utf8'));
-            const drift = JSON.parse(fs.readFileSync('gdd-drift.json', 'utf8'));
-            const status = JSON.parse(fs.readFileSync('gdd-status.json', 'utf8'));
+            // Read v2 health from SSOT
+            let health = { overall_score: 0, status: 'unknown' };
+            if (fs.existsSync('gdd-health-v2.json')) {
+              health = JSON.parse(fs.readFileSync('gdd-health-v2.json', 'utf8'));
+            }
 
             // Determine status emoji
             const healthEmoji = health.overall_score >= 95 ? '🟢' : health.overall_score >= 80 ? '🟡' : '🔴';
@@ -414,7 +430,7 @@ jobs:
             - 🟡 At risk: ${drift.at_risk_count}
             - 🔴 High risk: ${drift.high_risk_count}
 
-            ${health.overall_score < ${{ steps.config.outputs.min_health }} ? '### ⚠️ Action Required\n\nHealth score is below the minimum threshold of ' + ${{ steps.config.outputs.min_health }} + '. Please review and fix the issues before merging.' : '### ✅ Safe to Merge\n\nAll GDD checks passed. Documentation is in sync with implementation.'}
+            ${health.overall_score < 95 ? '### ⚠️ Action Required\n\nHealth score v2 is below the minimum threshold of 95. Please review and fix the issues before merging.' : health.overall_score < 100 ? '### ⚠️ Warning\n\nHealth score v2 meets minimum (≥95) but is below recommended (100).' : '### ✅ Safe to Merge\n\nAll GDD v2 checks passed. Documentation is in sync with implementation.'}
 
             ---
 
@@ -459,9 +475,8 @@ jobs:
         with:
           name: gdd-validation-results
           path: |
-            gdd-health.json
-            gdd-drift.json
-            gdd-status.json
+            gdd-health-v2.json
+            scripts/outputs/gdd-health-v2-official.json
             docs/system-validation.md
             docs/system-health.md
             docs/drift-report.md

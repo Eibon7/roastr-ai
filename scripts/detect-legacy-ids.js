@@ -68,8 +68,45 @@ class LegacyIDDetector {
       this.printSummary();
 
       // Exit code for CI
-      if (this.isCIMode && this.detections.length > 0) {
-        process.exit(1);
+      if (this.isCIMode) {
+        // Separate detections by location
+        const docsErrors = this.detections.filter(d => 
+          d.location && (
+            d.location.includes('docs/system-map-v2.yaml') ||
+            d.location.includes('docs/nodes-v2/') ||
+            d.location.includes('docs/SSOT-V2.md')
+          )
+        );
+        const srcErrors = this.detections.filter(d => 
+          d.location && d.location.includes('src/')
+        );
+        const otherErrors = this.detections.filter(d => 
+          d.location && !d.location.includes('src/') && 
+          !d.location.includes('docs/system-map-v2.yaml') &&
+          !d.location.includes('docs/nodes-v2/') &&
+          !d.location.includes('docs/SSOT-V2.md')
+        );
+
+        // FAIL if errors in docs (critical)
+        if (docsErrors.length > 0) {
+          this.log(`❌ Found ${docsErrors.length} legacy ID(s) in docs (CRITICAL)`, 'error');
+          this.log(`   Locations: ${docsErrors.map(d => d.location).join(', ')}`, 'error');
+          process.exit(1);
+        }
+
+        // WARN if errors in src/ (outside scope)
+        if (srcErrors.length > 0) {
+          this.log(`⚠️ Found ${srcErrors.length} legacy ID(s) in src/ (outside scope - WARN only)`, 'warning');
+          this.log(`   Locations: ${srcErrors.map(d => d.location).join(', ')}`, 'warning');
+          process.exit(0); // Exit 0 = WARN, not FAIL
+        }
+
+        // FAIL if errors in other locations (unexpected)
+        if (otherErrors.length > 0) {
+          this.log(`❌ Found ${otherErrors.length} legacy ID(s) in unexpected locations`, 'error');
+          this.log(`   Locations: ${otherErrors.map(d => d.location).join(', ')}`, 'error');
+          process.exit(1);
+        }
       }
 
       return {

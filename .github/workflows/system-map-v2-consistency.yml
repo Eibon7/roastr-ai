@@ -92,22 +92,6 @@ jobs:
           echo "✅ Strong Concepts validation passed"
         continue-on-error: false
 
-      - name: Detect Legacy IDs
-        id: detect_legacy_ids
-        run: |
-          echo "🔍 Detecting legacy IDs..."
-          node scripts/detect-legacy-ids.js --ci
-          echo "✅ Legacy IDs detection completed"
-        continue-on-error: false
-
-      - name: Detect Guardian References
-        id: detect_guardian
-        run: |
-          echo "🔍 Detecting guardian references..."
-          node scripts/detect-guardian-references.js --ci
-          echo "✅ Guardian references detection completed"
-        continue-on-error: false
-
       - name: Check System Map Drift
         id: check_system_map_drift
         run: |
@@ -124,16 +108,37 @@ jobs:
           echo "✅ v2 doc paths validation passed"
         continue-on-error: false
 
-      - name: Calculate GDD Health v2
+      - name: Detect Legacy IDs
+        id: detect_legacy_ids
+        run: |
+          echo "🔍 Detecting legacy IDs..."
+          node scripts/detect-legacy-ids.js --ci
+          echo "✅ Legacy IDs detection completed"
+        continue-on-error: false
+
+      - name: Detect Guardian References
+        id: detect_guardian
+        run: |
+          echo "🔍 Detecting guardian references..."
+          node scripts/detect-guardian-references.js --ci
+          echo "✅ Guardian references detection completed"
+        continue-on-error: false
+
+      - name: Compute GDD Health v2
+        id: compute_health
+        if: github.event.inputs.full_validation != 'false' || github.event_name == 'workflow_dispatch'
+        run: |
+          echo "📊 Computing GDD Health Score v2..."
+          # Update SSOT with latest metrics
+          node scripts/compute-health-v2-official.js --update-ssot || {
+            echo "⚠️ Health calculation completed with warnings"
+          }
+
+      - name: Calculate GDD Health v2 (read from SSOT)
         id: calculate_health
         if: github.event.inputs.full_validation != 'false' || github.event_name == 'workflow_dispatch'
         run: |
-          echo "📊 Calculating GDD Health Score v2..."
-          # Use compute-health-v2-official.js for v2 health calculation
-          node scripts/compute-health-v2-official.js > /tmp/health-output.txt 2>&1 || {
-            echo "⚠️ Health calculation completed with warnings"
-          }
-          
+          echo "📊 Reading GDD Health Score v2 from SSOT..."
           # Read health score from SSOT (sección 15) using calculate-gdd-health-v2.js
           node scripts/calculate-gdd-health-v2.js --json > gdd-health-v2.json 2>&1 || {
             echo "⚠️ Health score reading completed with warnings"
@@ -177,6 +182,8 @@ jobs:
           echo "| Guardian References | ${{ steps.detect_guardian.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| System Map Drift | ${{ steps.check_system_map_drift.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| v2 Doc Paths | ${{ steps.validate_doc_paths.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Legacy IDs | ${{ steps.detect_legacy_ids.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Guardian References | ${{ steps.detect_guardian.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ steps.calculate_health.outcome }}" != "skipped" ]; then
             echo "| Health Score | ${{ steps.calculate_health.outputs.score }}/100 (${{ steps.calculate_health.outputs.status }}) |" >> $GITHUB_STEP_SUMMARY
