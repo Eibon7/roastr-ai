@@ -24,6 +24,29 @@ const SSOT_V2_PATH = path.join(ROOT_DIR, 'docs/SSOT-V2.md');
 const OUTPUT_JSON = path.join(ROOT_DIR, 'gdd-health-v2.json');
 const OUTPUT_REPORT = path.join(ROOT_DIR, 'docs/GDD-V2-HEALTH-REPORT.md');
 
+// Parse command line arguments
+const args = process.argv.slice(2);
+const jsonMode = args.includes('--json');
+
+// Wrapper function to silence logs in JSON mode
+function log(...msg) {
+  if (!jsonMode) {
+    logger.info(...msg);
+  }
+}
+
+function logWarn(...msg) {
+  if (!jsonMode) {
+    logger.warn(...msg);
+  }
+}
+
+function logError(...msg) {
+  if (!jsonMode) {
+    logger.error(...msg);
+  }
+}
+
 function readMetricsFromSSOT() {
   let ssotContent;
   try {
@@ -211,40 +234,63 @@ ${metrics.warnings.length > 0 ? metrics.warnings.map((w) => `- ${w}`).join('\n')
 
 function main() {
   try {
-    logger.info('📖 Leyendo métricas oficiales desde SSOT-V2.md (Sección 15)...\n');
+    log('📖 Leyendo métricas oficiales desde SSOT-V2.md (Sección 15)...\n');
 
     const metrics = readMetricsFromSSOT();
 
+    // Add overall_score and status for compatibility with CI
+    const outputMetrics = {
+      ...metrics,
+      overall_score: metrics.health_score,
+      status: metrics.health_score >= 95 ? 'healthy' : metrics.health_score >= 80 ? 'warning' : 'critical'
+    };
+
+    // In JSON mode, output ONLY JSON and exit
+    if (jsonMode) {
+      console.log(JSON.stringify(outputMetrics, null, 2));
+      return;
+    }
+
     // Guardar JSON
-    fs.writeFileSync(OUTPUT_JSON, JSON.stringify(metrics, null, 2), 'utf8');
-    logger.info('✅ gdd-health-v2.json generado (valores desde SSOT)');
+    fs.writeFileSync(OUTPUT_JSON, JSON.stringify(outputMetrics, null, 2), 'utf8');
+    log('✅ gdd-health-v2.json generado (valores desde SSOT)');
 
     // Generar reporte Markdown
     const report = generateReport(metrics);
     fs.writeFileSync(OUTPUT_REPORT, report, 'utf8');
-    logger.info('✅ docs/GDD-V2-HEALTH-REPORT.md generado (valores desde SSOT)\n');
+    log('✅ docs/GDD-V2-HEALTH-REPORT.md generado (valores desde SSOT)\n');
 
-    logger.info('📊 Métricas Leídas del SSOT:');
-    logger.info(`   Health Score: ${metrics.health_score}/100`);
-    logger.info(`   Nodos detectados: ${metrics.nodes_detected || 'N/A'}`);
-    logger.info(`   Nodos faltantes: ${metrics.nodes_missing || 'N/A'}`);
-    logger.info(`   System Map Alignment: ${metrics.system_map_alignment_score}%`);
-    logger.info(`   SSOT Alignment: ${metrics.ssot_alignment_score}%`);
-    logger.info(`   Dependency Density: ${metrics.dependency_density_score}%`);
-    logger.info(`   Crosslink Score: ${metrics.crosslink_score}%`);
+    log('📊 Métricas Leídas del SSOT:');
+    log(`   Health Score: ${metrics.health_score}/100`);
+    log(`   Nodos detectados: ${metrics.nodes_detected || 'N/A'}`);
+    log(`   Nodos faltantes: ${metrics.nodes_missing || 'N/A'}`);
+    log(`   System Map Alignment: ${metrics.system_map_alignment_score}%`);
+    log(`   SSOT Alignment: ${metrics.ssot_alignment_score}%`);
+    log(`   Dependency Density: ${metrics.dependency_density_score}%`);
+    log(`   Crosslink Score: ${metrics.crosslink_score}%`);
 
     if (metrics.warnings.length > 0) {
-      logger.warn('\n⚠️  Warnings:');
-      metrics.warnings.forEach((w) => logger.warn(`   - ${w}`));
+      logWarn('\n⚠️  Warnings:');
+      metrics.warnings.forEach((w) => logWarn(`   - ${w}`));
     }
 
-    logger.info('\nℹ️  Para actualizar métricas, ejecutar:');
-    logger.info('   node scripts/compute-health-v2-official.js --update-ssot\n');
+    log('\nℹ️  Para actualizar métricas, ejecutar:');
+    log('   node scripts/compute-health-v2-official.js --update-ssot\n');
   } catch (error) {
-    logger.error('❌ Error:', error.message);
-    logger.error('\n💡 Solución: Ejecuta primero:');
-    logger.error('   node scripts/compute-health-v2-official.js --update-ssot\n');
-    process.exit(1);
+    if (jsonMode) {
+      // In JSON mode, output error as JSON
+      console.log(JSON.stringify({
+        error: error.message,
+        overall_score: 0,
+        status: 'error'
+      }, null, 2));
+      process.exit(1);
+    } else {
+      logError('❌ Error:', error.message);
+      logError('\n💡 Solución: Ejecuta primero:');
+      logError('   node scripts/compute-health-v2-official.js --update-ssot\n');
+      process.exit(1);
+    }
   }
 }
 

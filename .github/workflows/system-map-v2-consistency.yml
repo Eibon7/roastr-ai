@@ -201,7 +201,7 @@ jobs:
 
       - name: Compute GDD Health v2
         id: compute_health
-        if: github.event.inputs.full_validation != 'false' || github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'pull_request' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
           echo "📊 Computing GDD Health Score v2..."
           # Update SSOT with latest metrics
@@ -211,11 +211,11 @@ jobs:
 
       - name: Calculate GDD Health v2 (read from SSOT)
         id: calculate_health
-        if: github.event.inputs.full_validation != 'false' || github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'pull_request' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
           echo "📊 Reading GDD Health Score v2 from SSOT..."
           # Read health score from SSOT (sección 15) using calculate-gdd-health-v2.js
-          node scripts/calculate-gdd-health-v2.js --json > gdd-health-v2.json 2>&1 || {
+          node scripts/calculate-gdd-health-v2.js --json > gdd-health-v2.json 2>/dev/null || {
             echo "⚠️ Health score reading completed with warnings"
             echo '{"overall_score": 0, "status": "unknown"}' > gdd-health-v2.json
           }
@@ -294,7 +294,13 @@ jobs:
             comment += `| v2 Doc Paths | ${{ steps.validate_doc_paths.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |\n`;
             
             if (fs.existsSync('gdd-health-v2.json')) {
-              const health = JSON.parse(fs.readFileSync('gdd-health-v2.json', 'utf8'));
+              let health;
+              try {
+                health = JSON.parse(fs.readFileSync('gdd-health-v2.json', 'utf8'));
+              } catch (err) {
+                console.log("⚠️ Could not parse health JSON:", err.message);
+                health = { overall_score: 0, status: "parse_error" };
+              }
               const score = health.overall_score || 0;
               const status = health.status || 'unknown';
               comment += `| Health Score | ${score}/100 (${status}) |\n`;
