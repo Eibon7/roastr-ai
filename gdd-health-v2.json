@@ -1,18 +1,18 @@
 {
-  "version": "2.0",
-  "timestamp": "2025-12-07T21:01:11.664Z",
-  "nodes_detected": 15,
-  "nodes_missing": 0,
-  "nodes_with_broken_dependencies": 0,
-  "dependency_density_score": 100,
-  "crosslink_score": 100,
   "system_map_alignment_score": 100,
   "ssot_alignment_score": 100,
+  "dependency_density_score": 100,
+  "crosslink_score": 100,
   "narrative_consistency_score": 100,
+  "health_score": 100,
+  "nodes_detected": 15,
+  "nodes_total": 15,
+  "nodes_missing": 0,
+  "timestamp": "2025-12-08T20:58:26.888Z",
+  "version": "2.0",
   "orphan_nodes": [],
   "unused_nodes_in_system_map": [],
   "unused_system_map_entries": [],
   "warnings": [],
-  "errors": [],
-  "health_score": 100
+  "errors": []
 }

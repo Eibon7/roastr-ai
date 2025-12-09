@@ -26,8 +26,8 @@ jobs:
             exit 0
           fi
 
-          # Validación flexible: Si tiene referencias a issues, permitir cualquier naming
-          if echo "$TITLE $BODY" | grep -E '(Issue #[0-9]+|#[0-9]+)' > /dev/null 2>&1; then
+          # Validación flexible: Si tiene referencias a issues (Issue #, #, ROA-, Linear), permitir cualquier naming
+          if echo "$TITLE $BODY" | grep -E '(Issue #[0-9]+|#[0-9]+|ROA-[0-9]+|Linear)' > /dev/null 2>&1; then
             echo "✅ Referencias a issues encontradas - rama aceptada"
             exit 0
           fi

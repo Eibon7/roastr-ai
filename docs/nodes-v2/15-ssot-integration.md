@@ -6,193 +6,13 @@
 
 ---
 
-## 1. Summary
+## 1. Dependencies
 
-Sistema de Single Source of Truth (SSOT) que centraliza TODOS los valores configurables de Roastr v2 en `admin_settings`, eliminando valores hardcoded. Incluye planes, límites, thresholds, weights, tonos, prompts, feature flags, disclaimers, cadencias y reglas de comportamiento. Es la autoridad máxima del sistema.
+Este nodo depende de los siguientes nodos:
 
----
-
-## 2. Responsibilities
-
-### Funcionales:
-
-- Centralizar configuración en `admin_settings` (Supabase)
-- Cargar valores en runtime (backend + frontend)
-- Edición desde Admin Panel con efecto inmediato
-- Versionado y rollback de configuraciones
-- Validación de consistencia SSOT
-- Fallback a valores por defecto si carga falla
-- Logs de todos los cambios
-- Enforcement de reglas SSOT (Cursor rule)
-
-### No Funcionales:
-
-- Consistencia: única fuente de verdad
-- Seguridad: solo superadmin edita
-- Performance: cache 5-30s
-- Auditoría: todos los cambios loggeados
+- Ninguna dependencia directa
 
 ---
-
-## 3. Inputs
-
-- Valores de configuración desde Admin Panel
-- Valores por defecto (fallback)
-- Requests de backend/frontend pidiendo configuración
-
----
-
-## 4. Outputs
-
-- Configuración cargada en runtime
-- Cache actualizado
-- Logs de cambios
-- Valores aplicados en sistema
-- Bloqueos cuando hay discrepancias con código
-
----
-
-## 5. Rules
-
-### Regla de Oro:
-
-> **Si el SSOT y el código/GDD discrepan, el SSOT gana.**
->
-> **Si se detecta discrepancia → DETENER y comunicar inmediatamente.**
-
-### Alcance del SSOT:
-
-**Define**:
-
-- Identificadores oficiales (plan IDs, feature flags, tipos, estados)
-- Reglas de comportamiento (no se pueden inventar ni alterar sin actualizar SSOT)
-- Límites funcionales (Starter: 1 cuenta/red, etc.)
-
-**NO contiene**:
-
-- Prompts completos de IA (solo estructura)
-- Copys de marketing
-- Textos legales extensos
-- Códigos de error exhaustivos
-
-### Valores SSOT v2:
-
-**1. Planes y Límites**:
-
-```typescript
-type PlanId = 'starter' | 'pro' | 'plus';
-// ❌ PROHIBIDO: "free", "basic", "creator_plus" (legacy v1)
-```
-
-**2. Feature Flags** (15 oficiales):
-
-- Core (6): autopost_enabled, manual_approval_enabled, custom_prompt_enabled, sponsor_feature_enabled, personal_tone_enabled, nsfw_tone_enabled
-- Shield (4): kill_switch_autopost, enable_shield, enable_roast, enable_perspective_fallback_classifier
-- UX (2): show_two_roast_variants, show_transparency_disclaimer
-- Experimental (3): enable_style_validator, enable_advanced_tones, enable_beta_sponsor_ui
-
-**3. Thresholds Shield**:
-
-```typescript
-interface ShieldThresholds {
-  roastLower: number;
-  shield: number;
-  critical: number;
-}
-// Valores se cargan desde SSOT en runtime
-```
-
-**4. Weights**:
-
-```typescript
-{
-  lineaRoja: 1.15,
-  identidad: 1.10,
-  tolerancia: 0.95,
-  strike1: 1.10,
-  strike2: 1.25,
-  critical: 1.50
-}
-// Ejemplo: los valores reales vienen del SSOT
-```
-
-**5. Tonos**:
-
-```typescript
-['flanders', 'balanceado', 'canalla', 'personal'];
-// ❌ nsfw bloqueado
-```
-
-**6. Plataformas**:
-
-```typescript
-['x', 'youtube'];
-// Futuras (NO legacy): Instagram, Facebook, Discord, Twitch, Reddit, TikTok, Bluesky
-```
-
-**7. Workers** (9 oficiales):
-
-```typescript
-[
-  'FetchComments',
-  'AnalyzeToxicity',
-  'GenerateRoast',
-  'GenerateCorrectiveReply',
-  'ShieldAction',
-  'SocialPosting',
-  'BillingUpdate',
-  'CursorReconciliation',
-  'StrikeCleanup'
-];
-```
-
-**8. Estados Billing**:
-
-```typescript
-[
-  'trialing',
-  'expired_trial_pending_payment',
-  'payment_retry',
-  'active',
-  'canceled_pending',
-  'paused'
-];
-```
-
-### Validación Pre-Implementación:
-
-**ANTES de implementar cualquier feature v2**:
-
-1. ✅ Cargar `docs/SSOT/roastr-ssot-v2.md`
-2. ✅ Identificar secciones relevantes
-3. ✅ Validar que cambio está alineado con SSOT
-4. ✅ Si discrepancia → **STOP + comunicar**
-
-**PROHIBIDO**:
-
-- ❌ Inventar planes, límites, feature flags
-- ❌ Inventar tonos, plataformas, webhooks, workers
-- ❌ Usar elementos legacy v1 (`free`, `basic`, Stripe, SendGrid)
-- ❌ Modificar comportamiento sin actualizar SSOT primero
-
-**Si violación detectada**:
-
-```text
-🚨 DETENCIÓN INMEDIATA
-Esto requiere actualización del SSOT primero.
-
-Discrepancia detectada:
-- SSOT define: [valor del SSOT]
-- Código/tarea propone: [valor propuesto]
-
-¿Qué hacemos?
-1. Actualizar SSOT (si la propuesta es correcta)
-2. Corregir código/tarea (si el SSOT es correcto)
-```
-
----
-
-## 6. Dependencies
 
 ### Servicios:
 
@@ -269,7 +89,24 @@ Discrepancia detectada:
 
 ---
 
-## 8. Acceptance Criteria
+## 8. SSOT References
+
+Este nodo ES el integrador del SSOT, por lo tanto referencia TODAS las secciones principales:
+
+- `plans_and_limits` - Planes y límites de v2
+- `billing_polar` - Configuración de Polar
+- `feature_flags` - Feature flags globales
+- `shield_thresholds` - Umbrales de Shield
+- `shield_weights` - Pesos de Shield
+- `tones_roasting` - Tonos de roasting
+- `integrations` - Configuración de integraciones
+- `workers` - Configuración de workers
+- `gdpr_retention` - Reglas GDPR
+- `testing` - Configuración de testing
+
+---
+
+## 9. Acceptance Criteria
 
 ### Documento SSOT:
 
@@ -447,3 +284,5 @@ export function validateSSOT(config: SSOTConfig): void {
 - Cursor Rule: `.cursor/rules/ssot-enforcement.mdc`
 - Integration Summary: `docs/SSOT-INTEGRATION-SUMMARY.md`
 - CLAUDE.md: Sección "SSOT — MÁXIMA PRIORIDAD"
+
+## 11. Related Nodes

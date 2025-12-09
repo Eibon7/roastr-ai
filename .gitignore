@@ -78,3 +78,8 @@ gdd-write-signatures.json
 
 # GDD activation instructions (local only)
 .gdd-activation-instructions.json
+
+# GDD v2 outputs (generated)
+scripts/outputs/
+changed-files.txt
+roastr-ai-worktrees/

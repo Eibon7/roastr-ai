@@ -6,274 +6,35 @@
 
 ---
 
-## 1. Summary
+## 1. Dependencies
 
-Aplicación frontend completa para usuarios (role=user) con Dashboard, gestión de cuentas sociales, detalle de cuenta, roasts, Shield logs, configuración de Roastr Persona, billing, y settings. Implementada con Next.js App Router, React 19, shadcn/ui y TailwindCSS.
+- [`roasting-engine`](./06-motor-roasting.md)
+- [`shield-engine`](./07-shield.md)
+- [`observabilidad`](./observabilidad.md)
+- [`integraciones-redes-sociales`](./04-integraciones.md)
+- [`ssot-integration`](./15-ssot-integration.md)
+- [`analysis-engine`](./05-motor-analisis.md)
+- [`billing`](./billing.md)
 
----
+- [`roasting-engine`](./06-motor-roasting.md)
+- [`shield-engine`](./07-shield.md)
+- [`observabilidad`](./observabilidad.md)
+- [`integraciones-redes-sociales`](./04-integraciones.md)
+- [`ssot-integration`](./15-ssot-integration.md)
+- [`analysis-engine`](./05-motor-analisis.md)
+- [`billing`](./billing.md)
 
-## 2. Responsibilities
+Este nodo depende de los siguientes nodos:
 
-### Funcionales:
-
-- Dashboard con widgets de uso (análisis, roasts)
-- Tabla de cuentas conectadas
-- Añadir/desconectar cuentas (respetando límites por plan)
-- Detalle de cuenta: roasts, Shield logs, settings
-- Configuración de Roastr Persona
-- Sponsors (solo Plus)
-- Billing: método de pago, plan, cancelación
-- Onboarding wizard multi-paso
-- Tema claro/oscuro/sistema
-
-### No Funcionales:
-
-- Responsive (mobile-first)
-- Accesibilidad (Radix primitives)
-- Performance (React Query)
-- Seguridad: JWT validation, RLS
-
----
-
-## 3. Inputs
-
-- Usuario autenticado (role=user)
-- JWT token de Supabase
-- Datos de backend vía React Query:
-  - Cuentas conectadas
-  - Límites y uso actual
-  - Roasts pendientes/publicados
-  - Shield logs
-  - Configuraciones
-- SSOT (vía backend API)
+- [`roasting-engine`](./06-motor-roasting.md)
+- [`shield-engine`](./07-shield.md)
+- [`observabilidad`](./observabilidad.md)
+- [`integraciones-redes-sociales`](./04-integraciones.md)
+- [`ssot-integration`](./15-ssot-integration.md)
+- [`analysis-engine`](./05-motor-analisis.md)
+- [`billing`](./billing.md)
 
 ---
-
-## 4. Outputs
-
-- UI completa del User App
-- Acciones de usuario:
-  - Conectar/desconectar cuentas
-  - Aprobar/regenerar/descartar roasts
-  - Configurar Roastr Persona
-  - Cambiar tono, auto-approve, Shield aggressiveness
-  - Gestionar billing (upgrade, cancelar)
-- Navegación entre rutas
-
----
-
-## 5. Rules
-
-### Rutas Principales:
-
-```
-/dashboard
-/accounts
-/accounts/:id
-/settings/profile
-/settings/roastr
-/settings/sponsors   (Plus only)
-/settings/billing
-```
-
-### Stack Frontend:
-
-- **Next.js App Router**
-- **React 19**
-- **shadcn/ui** (base UI)
-- **TailwindCSS**
-- **Radix primitives** (accesibilidad)
-- **React Query** (sync con backend)
-
-### Tema:
-
-- Default: **Sistema** (respeta preferencia OS)
-- Alternativas: Claro, Oscuro
-- Persistencia: localStorage
-
-### Dashboard - Widgets:
-
-**1. Widget Análisis**:
-
-- Barra progreso: `{{used}} / {{limit}}`
-- Colores:
-  - Normal → azul
-  - Warning (>80%) → amarillo
-  - Limit reached → rojo
-- Badge: "Análisis agotados"
-- CTA: "Mejorar Plan"
-
-**2. Widget Roasts**:
-
-- Igual que análisis
-- Badge: "Roasts agotados"
-- Nota si roasts agotados pero análisis no: "Shield sigue activo"
-
-**3. Tabla de Cuentas**:
-
-- Columnas: icono red, handle, estado, roasts mes, intercepciones Shield
-- Estados:
-  - 🟢 active
-  - 🟡 paused
-  - 🔴 inactive
-  - ⚫ sin análisis
-- Clic en fila → `/accounts/:id`
-
-### Detalle de Cuenta (`/accounts/:id`):
-
-**Header**:
-
-- Icono red + handle + badge estado
-- Botón "Settings"
-
-**Resumen (widgets)**:
-
-- Análisis usados por cuenta
-- Roasts generados
-- Intercepciones Shield
-- Estado auto-approve
-
-**Tabla Roasts**:
-
-- Columnas: comentario original (truncado), roast generado, estado
-- Estados: publicado, pendiente aprobación, enviado manualmente
-- Acciones: regenerar, enviar, descartar
-- Histórico: máx 90 días (GDPR)
-
-**Shield (acordeón)**:
-
-- Estado Shield
-- Tabla: id anon, link comentario, acción (badge), timestamp
-- Botón "Ver en red" (si plataforma permite)
-
-**Settings (modal)**:
-
-- Auto-approve ON/OFF + texto legal transparencia
-- Pausar cuenta
-- Shield aggressiveness: 90% / 95% / 98% / 100%
-- Selector tono: flanders, balanceado, canalla, personal (Pro/Plus)
-- Preview de tono (roast ejemplo en vivo)
-
-### Añadir Cuenta:
-
-- Cards por red: X, YouTube
-- Botón "Conectar cuenta (1/1)" (Starter) o "(1/2)" (Pro/Plus)
-- Si límite alcanzado → disabled
-
-### Settings Usuario (`/settings/*`):
-
-**Profile**:
-
-- Email
-- Cambiar contraseña
-- Descargar mis datos
-- Logout
-
-**Roastr**:
-
-- Transparencia IA (texto educativo, no editable)
-- Roastr Persona:
-  - Lo que me define
-  - Líneas rojas
-  - Lo que me da igual
-  - Límite: 200 chars cada campo
-  - ❌ NO visible para admins
-  - Sin reset ni borrado
-
-**Sponsors** (Plus only):
-
-- Tabla: nombre, estado, URL, tags, tono, aggressiveness Shield
-- Botón "Añadir Sponsor"
-- Independiente de Roastr Persona
-
-**Billing**:
-
-- Método de pago
-- Plan activo
-- Próximo cobro
-- Si cancelado: "Roastr seguirá activo hasta {{current_period_end}}"
-- Botones: Upgrade, Cancelar, Editar método de pago
-
-### Estados UI:
-
-**Empty states**:
-
-- Sin cuentas → card "Añadir cuenta"
-- Sin roasts → "Aún no hay roasts este mes"
-- Sin Shield events → "Sin intercepciones"
-
-**Loading**: Skeletons shadcn
-
-**Error**: Alert con "Reintentar"
-
-**Pausado**: Badge + explicación
-
-**Inactivo**: Badge + CTA "Reconectar"
-
-### Responsive:
-
-**Escritorio**:
-
-- 2-3 columnas
-- Tablas normales
-- Widgets horizontales
-
-**Móvil**:
-
-- Cards apiladas
-- Tablas → accordions
-- Modales → sheets
-- Navegación simplificada
-
-### Accesibilidad:
-
-- Roles ARIA (Radix)
-- Focus-visible
-- Contraste garantizado
-- Texto legible dark/light
-
-### Onboarding Wizard:
-
-Estados:
-
-```typescript
-type OnboardingState =
-  | 'welcome'
-  | 'select_plan'
-  | 'payment'
-  | 'persona_setup'
-  | 'connect_accounts'
-  | 'done';
-```
-
-Flujo:
-
-1. welcome → Introducción
-2. select_plan → Starter/Pro/Plus
-3. payment → Añadir método de pago
-4. persona_setup → Roastr Persona (recomendado, NO obligatorio)
-   - CTA "Omitir por ahora" disponible
-   - Si se omite → se crea Roastr Persona vacía (sin identidades, sin líneas rojas, sin tolerancias)
-   - El análisis funcionará sin ajustes persona-based (comportamiento más conservador)
-   - El usuario puede configurarlo más tarde desde Settings → Roastr
-5. connect_accounts → X o YouTube
-6. done → Dashboard
-
-Se reanuda donde se quedó.
-
-**Reglas persona_setup**:
-
-- persona_setup es recomendado, pero NO obligatorio
-- El usuario puede saltarlo mediante CTA "Omitir por ahora"
-- Si se omite → se crea una Roastr Persona vacía (sin identidades, sin líneas rojas, sin tolerancias)
-- El análisis funcionará sin ajustes persona-based (comportamiento más conservador)
-- El usuario puede configurarlo más tarde desde Settings → Roastr
-- El flujo del onboarding continúa a connect_accounts aunque persona_setup no se complete
-- El onboarding se considera completado (state="done") una vez se conecta al menos una cuenta o el usuario decide continuar sin conectar ninguna
-
----
-
-## 6. Dependencies
 
 ### Backend API:
 
@@ -517,3 +278,26 @@ export const queryClient = new QueryClient({
 - Spec v2: `docs/spec/roastr-spec-v2.md` (sección 9)
 - SSOT: `docs/SSOT/roastr-ssot-v2.md`
 - shadcn/ui: https://ui.shadcn.com/
+
+## 11. Related Nodes
+
+Este nodo está relacionado con los siguientes nodos:
+
+- Ningún nodo relacionado
+
+---
+
+## 12. SSOT References
+
+Este nodo usa los siguientes valores del SSOT (vía backend API):
+
+- `plan_limits` - Límites de análisis y roasts por plan
+- `plan_capabilities` - Capacidades por plan (cuentas, features)
+- `feature_flags` - Flags de features habilitadas
+- `roast_tones` - Tonos disponibles para roasts
+- `shield_thresholds` - Thresholds de Shield para configuración
+- `subscription_states` - Estados de suscripción para UI
+
+**Nota:** Este nodo no accede directamente al SSOT, lo hace a través del backend API.
+
+---

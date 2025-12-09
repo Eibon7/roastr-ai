@@ -35,7 +35,7 @@ nodes:
       - frontend-user-app
     related: []
     docs:
-      - docs/nodes-v2/roasting-engine.md
+      - docs/nodes-v2/06-motor-roasting.md
     files:
       - src/services/roastEngine.js
       - src/services/roastGeneratorEnhanced.js
@@ -76,7 +76,7 @@ nodes:
       - frontend-user-app
     related: []
     docs:
-      - docs/nodes-v2/analysis-engine.md
+      - docs/nodes-v2/05-motor-analisis.md
     files:
       - src/services/perspectiveService.js
       - src/services/AnalysisDepartmentService.js
@@ -119,7 +119,7 @@ nodes:
       - analysis-engine
     used_by: []
     docs:
-      - docs/nodes-v2/shield-engine.md
+      - docs/nodes-v2/07-shield.md
     files:
       - src/services/shieldService.js
       - src/services/shieldDecisionEngine.js
@@ -163,7 +163,7 @@ nodes:
       - frontend-user-app
     related: []
     docs:
-      - docs/nodes-v2/integraciones-redes-sociales.md
+      - docs/nodes-v2/04-integraciones.md
     files:
       - src/integrations/twitter/twitterService.js
       - src/integrations/youtube/youtubeService.js
@@ -263,7 +263,7 @@ nodes:
       - workers
     related: []
     docs:
-      - docs/nodes-v2/infraestructura.md
+      - docs/nodes-v2/14-infraestructura.md
     files:
       - src/services/queueService.js
       - src/workers/BaseWorker.js
@@ -280,7 +280,11 @@ nodes:
       - billing_update
       - cursor_reconciliation
       - strike_cleanup
-    ssot_references: []
+    ssot_references:
+      - queue_configuration
+      - worker_routing_table
+      - rls_policies
+      - rate_limits
     subnodes:
       - queue-management
       - database-rls
@@ -354,7 +358,7 @@ nodes:
     required_by: []
     related: []
     docs:
-      - docs/nodes-v2/frontend-user-app.md
+      - docs/nodes-v2/09-panel-usuario.md
     files:
       - frontend/src/pages/app/home.tsx
       - frontend/src/components/app/home/accounts-table.jsx
@@ -376,6 +380,13 @@ nodes:
       - /api/roast
       - /api/shield
       - /api/auth
+    ssot_references:
+      - plan_limits
+      - plan_capabilities
+      - feature_flags
+      - roast_tones
+      - shield_thresholds
+      - subscription_states
     subnodes:
       - dashboard
       - settings
@@ -393,11 +404,16 @@ nodes:
       - billing
     used_by: []
     docs:
-      - docs/nodes-v2/frontend-admin.md
+      - docs/nodes-v2/10-panel-administracion.md
     files:
       - frontend/src/pages/admin/
     api_endpoints:
       - /api/admin
+    ssot_references:
+      - feature_flags
+      - plan_limits
+      - roast_tones
+      - shield_thresholds
     required_by: []
     related: []
     subnodes:
@@ -416,7 +432,7 @@ nodes:
       - workers
       - frontend-admin
     docs:
-      - docs/nodes-v2/ssot-integration.md
+      - docs/nodes-v2/15-ssot-integration.md
     files:
       - docs/SSOT-V2.md
       - src/config/planConstants.js
@@ -434,6 +450,8 @@ nodes:
       - workers
       - gdpr_retention
       - testing
+      - plan_limits
+      - roast_tones
     ssot_sections:
       - plans_and_limits
       - billing_polar
@@ -484,7 +502,7 @@ nodes:
     used_by:
       - billing
     docs:
-      - docs/nodes-v2/workers.md
+      - docs/nodes-v2/08-workers.md
     files:
       - src/workers/BaseWorker.js
       - src/workers/WorkerManager.js
@@ -563,7 +581,7 @@ nodes:
     required_by: []
     related: []
     docs:
-      - docs/nodes-v2/auth.md
+      - docs/nodes-v2/02-autenticacion-usuarios.md
     files: []
     ssot_references:
       - connection_status
@@ -588,7 +606,7 @@ nodes:
     required_by: []
     related: []
     docs:
-      - docs/nodes-v2/settings-loader-and-feature-flags.md
+      - docs/nodes-v2/11-feature-flags.md
     files: []
     ssot_references:
       - feature_flags
@@ -605,7 +623,7 @@ nodes:
     required_by: []
     related: []
     docs:
-      - docs/nodes-v2/gdpr-and-legal.md
+      - docs/nodes-v2/12-gdpr-legal.md
     files: []
     ssot_references:
       - gdpr_algorithms
@@ -628,9 +646,11 @@ nodes:
     required_by: []
     related: []
     docs:
-      - docs/nodes-v2/testing-v2.md
+      - docs/nodes-v2/13-testing.md
     files: []
-    ssot_references: []
+    ssot_references:
+      - testing_config
+      - test_coverage_thresholds
     subnodes:
       - ci-tests
       - smoke-tests-specs

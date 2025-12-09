@@ -6,311 +6,20 @@
 
 ---
 
-## 1. Summary
+## 1. Dependencies
 
-Panel completo para superadmins que permite gestionar usuarios, editar SSOT (planes, tonos, flags), impersonar usuarios de forma segura, ver métricas globales (uso y negocio), gestionar DLQ, cursors, y mantener logs administrativos. Es el orquestador central del sistema.
+- [`ssot-integration`](./15-ssot-integration.md)
+- [`billing`](./billing.md)
 
----
+- [`ssot-integration`](./15-ssot-integration.md)
+- [`billing`](./billing.md)
 
-## 2. Responsibilities
+Este nodo depende de los siguientes nodos:
 
-### Funcionales:
-
-- Gestión de usuarios (crear, editar, pausar, eliminar)
-- Impersonación segura (view-only, sin acceso a Persona/sponsors)
-- Edición de SSOT:
-  - Feature flags (ON/OFF)
-  - Planes (límites, capacidades, trials)
-  - Tonos (prompts, modelos)
-  - Thresholds Shield
-  - Disclaimers IA
-- Métricas de uso (análisis, roasts, Shield, engagement)
-- Métricas de negocio (MRR, ARPU, churn, costes)
-- Herramientas de mantenimiento:
-  - DLQ (reintentar/descartar jobs)
-  - Cursors (reset)
-  - Sincronización Polar
-  - Reconteo de uso
-- Logs administrativos (auditoría completa)
-
-### No Funcionales:
-
-- Seguridad: solo role=superadmin
-- Sesión: 24h, logout tras 4h inactividad
-- Auditoría: todos los cambios loggeados
-- Protección: doble confirmación en acciones críticas
+- [`ssot-integration`](./15-ssot-integration.md)
+- [`billing`](./billing.md)
 
 ---
-
-## 3. Inputs
-
-- Admin autenticado (role=superadmin)
-- JWT token con permisos elevados
-- SSOT actual (admin_settings)
-- Métricas globales (backend)
-- DLQ jobs
-- Admin logs
-
----
-
-## 4. Outputs
-
-- SSOT actualizado
-- Usuarios gestionados
-- Flags modificados
-- Planes editados
-- Tonos configurados
-- Jobs DLQ procesados
-- Cursors reseteados
-- Logs administrativos
-
----
-
-## 5. Rules
-
-### Rutas Admin:
-
-```
-/admin/users
-/admin/users/:id
-/admin/settings/feature-flags
-/admin/settings/plans
-/admin/settings/tones
-/admin/metrics/usage
-/admin/metrics/business
-```
-
-### Acceso:
-
-- Solo `role = 'superadmin'`
-- Middleware server-side + RLS
-- Sesión: 24h
-- Inactividad > 4h → logout automático
-- ❌ NO magic link
-
-### Autoridad del Superadmin:
-
-**Principio general**:
-
-- El superadmin puede modificar absolutamente cualquier parte del SSOT, sin excepciones.
-- Los valores críticos (thresholds del Shield, parámetros del Style Validator, flags legales y de seguridad) solo requieren un paso adicional de doble confirmación para evitar cambios accidentales.
-- No existen valores del SSOT que estén bloqueados para el superadmin.
-- El superadmin puede modificar thresholds legales o de seguridad, siempre que pase la doble confirmación obligatoria.
-
-**Aplicación de cambios**:
-
-- Cambios en flags y configuraciones → aplican en caliente (cache 5–30s)
-- Cambios en planes → aplican a ciclos futuros por defecto (con opción "Aplicar inmediatamente")
-- Todos los cambios quedan registrados en `admin_logs` con before/after
-
-### Gestión de Usuarios:
-
-**Vista**:
-
-- Tabla: email, user_id, plan, estado (active/paused), fecha alta
-- Búsqueda: email, user_id
-
-**Acciones**:
-
-- Crear usuario manualmente
-- Editar: plan, estado, flags internos
-- Pausar cuenta (soporte/fraude)
-- Eliminar: soft-delete + retención 30 días → purga
-
-**Restricciones**:
-
-- ❌ NO ver Roastr Persona en texto claro
-- ❌ NO ver sponsors detallados
-- ✅ Solo métricas agregadas
-
-### Impersonación Segura:
-
-**Alcance**:
-
-- Ver UI exactamente como usuario
-- Ejecutar **mismas acciones** que usuario:
-  - Conectar/desconectar cuentas
-  - Cambiar Shield, tono, auto-approve
-  - Pausar cuentas
-  - Gestionar plan desde Billing UI
-  - Cancelar suscripción
-  - Actualizar método de pago (vía Polar)
-- ❌ NO ver: Persona en claro, datos tarjeta, tokens OAuth
-
-**Técnico**:
-
-- Token temporal: 5 min validez
-- Scope: solo rutas User Panel
-- Logs etiquetados: `admin_impersonation_logs`
-
-**Logs impersonación**:
-
-```typescript
-{
-  (id,
-    admin_id,
-    user_id,
-    action, // "impersonation_start" | "click" | "update_setting"
-    route,
-    metadata,
-    timestamp);
-}
-```
-
-### Feature Flags:
-
-**Vista**:
-
-- Tabla: nombre, categoría, descripción, estado (ON/OFF), timestamp activación
-- Cambios → aplican en caliente (cache 5-30s)
-- Logs automáticos en `admin_logs`
-
-**Autoridad del superadmin**:
-
-- Todos los feature flags son editables por el superadmin.
-- Los flags críticos (kill switches, fallback globales, bypasses de seguridad) requieren doble confirmación.
-- Los cambios entran en vigor en caliente (cache 5–30s).
-
-**Flags críticos** (requieren doble confirmación):
-
-- `kill_switch_autopost`
-- Tonos experimentales
-- Fallback IA global
-- Flags que afecten Shield Crítico
-- Flags que afecten Style Validator
-- Flags que afecten restricciones legales (disclaimers IA)
-
-### Gestión de Planes:
-
-**Autoridad del superadmin**:
-
-- El superadmin puede editar límites de plan, capacidades, trial days y activar/desactivar features sin restricciones.
-- Los precios siguen siendo solo lectura, ya que dependen directamente de Polar.
-- Los cambios afectan a ciclos futuros salvo que el superadmin marque explícitamente la opción "Aplicar inmediatamente", que forzará un recálculo del ciclo actual.
-
-**Campos editables por plan**:
-
-- `analysis_per_month`
-- `roasts_per_month`
-- `max_accounts_per_platform`
-- Features: Shield, Persona, Tono Personal, Sponsors (Plus)
-- Trial días: Starter (30), Pro (7), Plus (0)
-- Precio (solo lectura desde Polar)
-
-**Reglas**:
-
-- Cambios impactan **ciclos futuros** por defecto
-- Opción "Aplicar inmediatamente" disponible para superadmin (recalcula ciclo actual)
-- Log en `admin_logs` con before/after
-
-### Gestión de Tonos:
-
-**Autoridad del superadmin**:
-
-- El superadmin puede crear nuevos tonos, editar prompts base, asignar modelos, habilitar o deshabilitar tonos.
-- No hay restricciones excepto aquellas derivadas de las validaciones internas (no insultos, no contenido explícito).
-- Un tono desactivado provoca fallback automático a "balanceado".
-
-**Vista**:
-
-- Tabla: nombre, idioma, prompt base, modelo, estado
-
-**Acciones**:
-
-- Añadir tono
-- Editar prompt base
-- Cambiar modelo IA
-- Desactivar tono
-
-**Validación prompt** (restricciones técnicas internas):
-
-- ❌ NO insultos directos
-- ❌ NO contenido explícito
-- ❌ NO anular disclaimers IA
-- ❌ NO desactivar reglas seguridad
-
-**Fallback**:
-
-- Si tono desactivado → usuarios usan Balanceado
-
-### Métricas de Uso:
-
-- Análisis totales/mes
-- Roasts totales/mes
-- Shield activado (moderado/crítico)
-- Media por usuario y plan
-- Uso por plan (Starter/Pro/Plus)
-- % usuarios con: Persona, Sponsors, Auto-approve
-- % cuentas pausadas
-
-### Métricas de Negocio:
-
-- Usuarios activos por plan
-- Nuevos usuarios/día
-- Churn (mensual)
-- Ingresos proyectados vs reales (Polar)
-- ARPU, MRR
-- Margen por plan:
-  - Análisis usados
-  - Roasts usados
-  - Tokens IA
-  - Coste estimado (SSOT)
-
-### DLQ (Dead Letter Queue):
-
-**Vista**:
-
-- Tabla: job_id, worker, user_id, account_id, reintentos, error, timestamp
-
-**Acciones por job**:
-
-- Ver detalle (payload sin texto sensible)
-- Reintentar → reencola + log `dlq_retry_job`
-- Descartar → marca descartado + log `dlq_discard_job`
-
-### Cursors de Ingestión:
-
-**Vista**:
-
-- Por cuenta: account_id, plataforma, last_cursor, last_fetch, errores
-
-**Acciones**:
-
-- Reset parcial a punto seguro
-- Marcar inactive si errores persistentes
-- Log: `cursor_reset`
-
-### Logs Administrativos:
-
-**Qué se loggea**:
-
-- Cambios límites plan
-- Cambios tonos
-- Feature flags toggle
-- Impersonación
-- Estado usuario modificado
-- Acciones DLQ/cursors
-
-**Estructura**:
-
-```typescript
-{
-  (id,
-    admin_id,
-    action_type, // "plan_limits_update", "feature_flag_toggle", etc.
-    payload, // before/after, ids afectados
-    created_at);
-}
-```
-
-**UI**:
-
-- Listado ordenado desc
-- Filtros: admin_id, tipo acción, fechas
-
----
-
-## 6. Dependencies
 
 ### Backend API:
 
@@ -600,3 +309,24 @@ export default function FeatureFlagsPage() {
 
 - Spec v2: `docs/spec/roastr-spec-v2.md` (sección 10)
 - SSOT: `docs/SSOT/roastr-ssot-v2.md`
+
+## 11. Related Nodes
+
+Este nodo está relacionado con los siguientes nodos:
+
+- Ningún nodo relacionado
+
+---
+
+## 12. SSOT References
+
+Este nodo usa y edita los siguientes valores del SSOT:
+
+- `feature_flags` - Gestión de feature flags (ON/OFF)
+- `plan_limits` - Edición de límites y capacidades de planes
+- `roast_tones` - Edición de tonos (prompts, modelos)
+- `shield_thresholds` - Edición de thresholds de Shield
+
+**Nota:** Este nodo es el único que puede editar el SSOT (requiere role=superadmin).
+
+---

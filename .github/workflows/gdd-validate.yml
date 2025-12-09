@@ -7,10 +7,14 @@ on:
       - develop
     paths:
       - 'docs/nodes/**'
+      - 'docs/nodes-v2/**'
+      - 'docs/system-map-v2.yaml'
+      - 'docs/SSOT-V2.md'
       - 'system-map.yaml'
       - 'spec.md'
       - 'src/**'
       - 'scripts/**'
+      - '.cursor/rules/**'
       - '.gddrc.json'
   workflow_dispatch:
 
@@ -36,7 +40,8 @@ jobs:
           fi
           
           # Count v2 files (explicit v2 paths)
-          V2_FILES=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md|scripts/calculate-gdd-health-v2\.js)' changed-files.txt | wc -l || echo "0")
+          # Include cursor rules v2, validation scripts, and workflows that add v2 support
+          V2_FILES=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md|scripts/calculate-gdd-health-v2\.js|\.cursor/rules/.*v2.*\.mdc|\.cursor/rules/system-map-consistency-drift-guard\.mdc|\.cursor/rules/ssot-scope-enforcement\.mdc|scripts/validate-.*\.js|scripts/detect-.*\.js|\.github/workflows/gdd-validate\.yml)' changed-files.txt | wc -l || echo "0")
           
           # Count v1 files (explicit v1 paths, excluding v2)
           V1_NODES=$(grep -E '^docs/nodes/[^/]+\.md$' changed-files.txt | wc -l || echo "0")
@@ -45,26 +50,34 @@ jobs:
           V1_FILES=$((V1_NODES + V1_SYSTEM_MAP + V1_SPEC))
           
           # Count other scripts (that might affect v1 validation)
-          OTHER_SCRIPTS=$(grep -E '^scripts/' changed-files.txt | grep -vE '(calculate-gdd-health-v2\.js|fix-dynamic-node-counts\.js)' | wc -l || echo "0")
+          # Exclude v2 validation scripts (they're v2 infrastructure)
+          # First filter to scripts/, then exclude v2 validation scripts
+          OTHER_SCRIPTS=$(grep -E '^scripts/' changed-files.txt | grep -vE '(calculate-gdd-health-v2\.js|fix-dynamic-node-counts-v2\.js|validate-node-ids\.js|validate-workers-ssot\.js|validate-drift\.js|validate-symmetry\.js|validate-strong-concepts\.js|detect-legacy-ids\.js|detect-guardian-references\.js|check-system-map-drift\.js)$' | wc -l || echo "0")
+          
+          # GitHub workflows are v2 infrastructure, not v1 scripts (already excluded from OTHER_SCRIPTS)
+          WORKFLOW_FILES=$(grep -E '^\.github/workflows/' changed-files.txt | wc -l || echo "0")
           
           echo "v2_files=$V2_FILES" >> $GITHUB_OUTPUT
           echo "v1_files=$V1_FILES" >> $GITHUB_OUTPUT
           echo "other_scripts=$OTHER_SCRIPTS" >> $GITHUB_OUTPUT
           
-          # If only v2 files are changed (and maybe v2 scripts), skip v1 validation
+          # If only v2 files are changed (and maybe v2 scripts/workflows), skip v1 validation
           # Ignore generated files and docs/ROA-258-* files
-          if [ "$V1_FILES" -eq 0 ] && [ "$OTHER_SCRIPTS" -eq 0 ] && [ "$V2_FILES" -gt 0 ]; then
+          # For v2-only PRs: V1_FILES must be 0, V2_FILES > 0, and no non-v2 scripts
+          if [ "$V1_FILES" -eq 0 ] && [ "$V2_FILES" -gt 0 ] && [ "$OTHER_SCRIPTS" -eq 0 ]; then
             echo "v2_only=true" >> $GITHUB_OUTPUT
             echo "✅ PR only affects GDD v2 - skipping v1 validation"
             echo "   v2 files: $V2_FILES"
             echo "   v1 files: $V1_FILES"
             echo "   other scripts: $OTHER_SCRIPTS"
+            echo "   workflow files: $WORKFLOW_FILES"
           else
             echo "v2_only=false" >> $GITHUB_OUTPUT
             echo "ℹ️  PR affects v1 or mixed - running v1 validation"
             echo "   v2 files: $V2_FILES"
             echo "   v1 files: $V1_FILES (nodes: $V1_NODES, system-map: $V1_SYSTEM_MAP, spec: $V1_SPEC)"
             echo "   other scripts: $OTHER_SCRIPTS"
+            echo "   workflow files: $WORKFLOW_FILES"
           fi
 
       - name: Setup Node.js
@@ -114,11 +127,142 @@ jobs:
           VALIDATION_STATUS=$?
           echo "status=$VALIDATION_STATUS" >> $GITHUB_OUTPUT
 
-      - name: Skip v1 validation (v2-only PR)
+      - name: Setup Node.js (v2 validation)
         if: steps.check_v2_only.outputs.v2_only == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies (v2 validation)
+        if: steps.check_v2_only.outputs.v2_only == 'true'
+        run: npm ci
+
+      - name: Run v2 validation scripts
+        if: steps.check_v2_only.outputs.v2_only == 'true'
+        id: v2_validation
+        continue-on-error: false
         run: |
-          echo "✅ Skipping GDD v1 validation - PR only affects v2"
-          echo "::notice::This PR only modifies GDD v2 files. v1 validation skipped."
+          echo "🔍 Running GDD v2 validation scripts..."
+          
+          # Get list of changed files for this PR
+          set +e  # Don't exit on error for git diff
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            git diff --name-only origin/${{ github.base_ref }}...HEAD > changed-files.txt 2>&1
+            GIT_DIFF_EXIT=$?
+          else
+            git diff --name-only HEAD~1...HEAD > changed-files.txt 2>&1
+            GIT_DIFF_EXIT=$?
+          fi
+          set -e
+          
+          # Show what files were changed for debugging
+          echo "Changed files:"
+          if [ -f changed-files.txt ]; then
+            cat changed-files.txt || echo "No changed files"
+          else
+            echo "No changed files"
+          fi
+          
+          # Only validate v2-specific files (system-map-v2.yaml, nodes-v2/, SSOT-V2.md, cursor rules)
+          # Skip validation of legacy code unless it's being modified
+          set +e  # Don't exit on error for grep/wc
+          if [ -f changed-files.txt ]; then
+            V2_ONLY_FILES=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md|\.cursor/rules/.*v2.*\.mdc)' changed-files.txt 2>/dev/null | wc -l | tr -d ' ')
+            HAS_V2_DOCS=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md)' changed-files.txt 2>/dev/null | wc -l | tr -d ' ')
+          else
+            V2_ONLY_FILES=0
+            HAS_V2_DOCS=0
+          fi
+          
+          # Ensure variables are numeric
+          if [ -z "$V2_ONLY_FILES" ] || [ "$V2_ONLY_FILES" = "" ]; then
+            V2_ONLY_FILES=0
+          fi
+          if [ -z "$HAS_V2_DOCS" ] || [ "$HAS_V2_DOCS" = "" ]; then
+            HAS_V2_DOCS=0
+          fi
+          
+          echo "V2_ONLY_FILES=$V2_ONLY_FILES"
+          echo "HAS_V2_DOCS=$HAS_V2_DOCS"
+          set -e  # Re-enable exit on error
+          
+          # Track validation failures
+          VALIDATION_FAILED=0
+          
+          # Only run validations if v2 documentation files were actually modified
+          # If only scripts/rules were added, skip validations (they would validate legacy code)
+          if [ "$HAS_V2_DOCS" -gt 0 ]; then
+            echo "✅ PR modifies v2 documentation files - running v2 validation..."
+            
+            # Check if scripts exist before running
+            if [ -f "scripts/validate-symmetry.js" ] && grep -q "docs/system-map-v2.yaml" changed-files.txt; then
+              echo "✅ Validating symmetry..."
+              set +e  # Don't exit on error, we'll handle it
+              node scripts/validate-symmetry.js --ci
+              SYMMETRY_EXIT=$?
+              set -e
+              if [ "$SYMMETRY_EXIT" -ne 0 ]; then
+                echo "⚠️ Symmetry validation failed (exit code: $SYMMETRY_EXIT)"
+                VALIDATION_FAILED=1
+              fi
+            fi
+            
+            if [ -f "scripts/validate-strong-concepts.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
+              echo "✅ Validating Strong Concepts..."
+              set +e
+              node scripts/validate-strong-concepts.js --ci
+              STRONG_CONCEPTS_EXIT=$?
+              set -e
+              if [ "$STRONG_CONCEPTS_EXIT" -ne 0 ]; then
+                echo "⚠️ Strong Concepts validation failed (exit code: $STRONG_CONCEPTS_EXIT)"
+                VALIDATION_FAILED=1
+              fi
+            fi
+            
+            if [ -f "scripts/validate-drift.js" ] && grep -q "docs/SSOT-V2\.md\|docs/nodes-v2/\|docs/system-map-v2.yaml" changed-files.txt; then
+              echo "✅ Detecting drift..."
+              set +e
+              node scripts/validate-drift.js --ci
+              DRIFT_EXIT=$?
+              set -e
+              if [ "$DRIFT_EXIT" -ne 0 ]; then
+                echo "⚠️ Drift detection failed (exit code: $DRIFT_EXIT)"
+                VALIDATION_FAILED=1
+              fi
+            fi
+            
+            if [ -f "scripts/detect-guardian-references.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
+              echo "✅ Detecting guardian references..."
+              set +e
+              node scripts/detect-guardian-references.js --ci
+              GUARDIAN_EXIT=$?
+              set -e
+              if [ "$GUARDIAN_EXIT" -ne 0 ]; then
+                echo "⚠️ Guardian references detection failed (exit code: $GUARDIAN_EXIT)"
+                VALIDATION_FAILED=1
+              fi
+            fi
+            
+            if [ "$VALIDATION_FAILED" -eq 0 ]; then
+              echo "✅ GDD v2 validation completed successfully"
+              echo "::notice::This PR only modifies GDD v2 files. v1 validation skipped, v2 validation completed."
+              echo "validation_status=success" >> $GITHUB_OUTPUT
+            else
+              echo "❌ GDD v2 validation completed with errors"
+              echo "::error::v2 validation found issues. Please review and fix."
+              echo "validation_status=failed" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+          else
+            echo "✅ PR only adds v2 validation scripts/rules - skipping validation"
+            echo "::notice::This PR adds v2 validation infrastructure. No v2 documentation files were modified, so validations are skipped."
+            echo "::notice::Validations will run automatically when v2 documentation files are modified in future PRs."
+            echo "✅ Workflow completed successfully - v2 infrastructure added"
+            echo "validation_status=skipped" >> $GITHUB_OUTPUT
+            # Exit successfully when only infrastructure is added
+            exit 0
+          fi
 
       - name: Run health scoring
         if: steps.check_v2_only.outputs.v2_only != 'true'

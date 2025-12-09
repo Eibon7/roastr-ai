@@ -6,171 +6,26 @@
 
 ---
 
-## 1. Summary
+## 1. Dependencies
 
-Integración con X (Twitter) y YouTube para conectar cuentas, ingerir comentarios, publicar respuestas, y ejecutar acciones de Shield (ocultar, reportar, bloquear). Gestiona estados de cuentas (active, paused, inactive), OAuth, health checks, cursors de ingestión, y manejo de errores específicos por plataforma.
+- [`infraestructura`](./14-infraestructura.md)
+- [`billing`](./billing.md)
+- [`observabilidad`](./observabilidad.md)
+- [`ssot-integration`](./15-ssot-integration.md)
 
----
+- [`infraestructura`](./14-infraestructura.md)
+- [`billing`](./billing.md)
+- [`observabilidad`](./observabilidad.md)
+- [`ssot-integration`](./15-ssot-integration.md)
 
-## 2. Responsibilities
+Este nodo depende de los siguientes nodos:
 
-### Funcionales:
-
-- Conexión OAuth con X (PKCE) y YouTube (OAuth2)
-- Ingestión incremental de comentarios
-- Publicación de roasts y respuestas correctivas
-- Acciones de Shield por plataforma
-- Gestión de estados: active, paused, inactive
-- Health monitoring (`ok`, `degraded`, `frozen`, `needs_reconnect`)
-- Manejo de cursors (since_id para X, nextPageToken para YouTube)
-- Smart delays anti-bot
-
-### No Funcionales:
-
-- Rate limiting respetuoso
-- Retries con backoff exponencial
-- Tokens OAuth cifrados
-- Manejo de errores 429/503/401
-- Freeze temporal tras errores consecutivos
+- [`infraestructura`](./14-infraestructura.md)
+- [`billing`](./billing.md)
+- [`observabilidad`](./observabilidad.md)
+- [`ssot-integration`](./15-ssot-integration.md)
 
 ---
-
-## 3. Inputs
-
-- **OAuth**: Redirección desde plataforma con code
-- **Ingestión**: cursor actual, cadencia según plan
-- **Publicación**: texto roast/correctiva, parent comment ref
-- **Shield**: acción (hide/report/block), comment_id, offender_id
-
----
-
-## 4. Outputs
-
-- Cuenta conectada en `accounts` table
-- Comentarios normalizados: `{id, platform, account_id, text, author, timestamp, metadata}`
-- Roast/correctiva publicado con `platform_message_id`
-- Acción de Shield ejecutada
-- Logs de health y errores
-
----
-
-## 5. Rules
-
-### Plataformas MVP v2 (ÚNICAS):
-
-```typescript
-type SupportedPlatform = 'x' | 'youtube';
-```
-
-Estas plataformas no forman parte del MVP v2 y solo deben implementarse cuando exista una tarea explícita:
-
-Instagram, Facebook, Discord, Twitch, Reddit, TikTok, Bluesky
-
-### Límite de Cuentas por Plan:
-
-| Plan    | Cuentas por plataforma | Total (X + YouTube) |
-| ------- | ---------------------- | ------------------- |
-| starter | 1                      | 2                   |
-| pro     | 2                      | 4                   |
-| plus    | 2                      | 4                   |
-
-### Estados de Cuenta:
-
-```typescript
-status: "active" | "paused" | "inactive"
-status_reason:
-  | "user_paused"
-  | "billing_paused"
-  | "oauth_revoked"
-  | "rate_limit_exceeded"
-  | "token_expired"
-  | "too_many_errors"
-  | "network_failures"
-  | null
-```
-
-### Integration Health:
-
-```typescript
-integration_health:
-  | "ok"          // Todo funciona
-  | "degraded"    // Errores ocasionales
-  | "frozen"      // Demasiados errores → 30 min OFF
-  | "needs_reconnect"  // OAuth roto
-```
-
-### Cadencia de Ingestión:
-
-| Plan    | Cadencia | Ingestiones/día por cuenta |
-| ------- | -------- | -------------------------- |
-| starter | 15 min   | 96                         |
-| pro     | 10 min   | 144                        |
-| plus    | 5 min    | 288                        |
-
-### X (Twitter) Específico:
-
-- OAuth2 PKCE
-- Scopes: lectura menciones/respuestas, publicar respuestas, bloquear usuarios
-- Límite: 280 chars
-- Delay publicación: 10-15s entre respuestas
-- Ventana de edición: roast retrasado 30 min si comentario editable
-- **Nota**: La ventana de edición de 30 minutos afecta exclusivamente a la publicación de roasts. El Shield actúa de inmediato aunque el comentario sea editable.
-- Anti-bot: máx 4 respuestas/hora al mismo usuario
-- Errores: 429 (rate limit), 503 (downstream), 401 (token inválido), 403 (permisos)
-
-### YouTube Específico:
-
-- OAuth2 con Google
-- Scopes: leer comentarios, publicar respuestas
-- Cuota diaria estricta (respeta límite Google)
-- Delay publicación: 2-3s entre respuestas
-- Refresh tokens caducan ~6 meses sin uso → requiere reconexión
-- Errores: 429 (quota), 403 (daily quota exceeded), 401 (token)
-
-### Manejo de Errores:
-
-**Backoff Exponencial**:
-
-- Intento 1 → inmediato
-- Intento 2 → 1 min
-- Intento 3 → 5 min
-- Intento 4 → 15 min
-- Intento 5 → DLQ
-
-**Freeze Temporal**:
-
-- Tras 3 fallos graves consecutivos:
-  - `integration_health` = "frozen"
-  - Ingestión OFF 30 min
-  - Logging de severidad alta
-
-**Token Revocado**:
-
-- 401 persistente → `status` = "inactive"
-- `status_reason` = "oauth_revoked"
-- UI → botón "Reconectar"
-
-### Reactivación de Cuenta:
-
-Cuando cuenta pasa a `active` desde `paused`/`inactive`:
-
-1. Reset de cursor
-2. Reset de pipeline interno
-3. Revalidación de límites
-4. `health` = "ok"
-5. Primer fetch de prueba
-6. Reactivación de workers
-
-### GDPR:
-
-- Retención: 90 días tras desconexión
-- `retention_until` = now + 90 días
-- Purga total después
-- Nueva conexión = nueva cuenta
-
----
-
-## 6. Dependencies
 
 ### Servicios Externos:
 
@@ -258,7 +113,27 @@ Cuando cuenta pasa a `active` desde `paused`/`inactive`:
 
 ---
 
-## 8. Acceptance Criteria
+## 8. SSOT References
+
+Este nodo usa los siguientes valores del SSOT:
+
+- `connected_account_structure` - Estructura de cuentas conectadas
+- `connection_status` - Estados de conexión (active, expired, revoked, error)
+- `oauth_cleanup_rules` - Reglas de limpieza de tokens OAuth
+- `oauth_pkce_flow` - Flujo PKCE de OAuth
+- `oauth_scopes` - Scopes requeridos por plataforma
+- `oauth_tokens` - Estructura de tokens OAuth
+- `platform_limits` - Límites por plataforma (cuentas, rate limits)
+- `platform_oauth_config` - Configuración OAuth por plataforma
+- `platform_x_constraints` - Restricciones específicas de X/Twitter
+- `platform_youtube_constraints` - Restricciones específicas de YouTube
+- `smart_delay_algorithm` - Algoritmo de delays inteligentes
+- `supported_platforms` - Plataformas soportadas (x, youtube)
+- `token_refresh_rules` - Reglas de refresh de tokens
+
+---
+
+## 9. Acceptance Criteria
 
 ### Conexión:
 
@@ -431,3 +306,5 @@ export function calculateSmartDelay(
 - SSOT: `docs/SSOT/roastr-ssot-v2.md` (sección 7)
 - X API Docs: https://developer.x.com/en/docs
 - YouTube API Docs: https://developers.google.com/youtube/v3
+
+## 11. Related Nodes
