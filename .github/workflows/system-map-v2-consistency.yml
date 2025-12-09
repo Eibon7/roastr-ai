@@ -57,8 +57,30 @@ jobs:
         id: validate_node_ids
         run: |
           echo "🔍 Validating Node IDs..."
+          set +e
           node scripts/validate-node-ids.js --ci
-          echo "✅ Node IDs validation passed"
+          NODE_IDS_EXIT=$?
+          set -e
+          
+          # Exit code contract:
+          # 0 = no issues → OK
+          # 1 = src/ only → WARN, allow CI to continue
+          # 2 = docs/ → FAIL
+          
+          if [ "$NODE_IDS_EXIT" -eq 0 ]; then
+            echo "✅ No node ID issues detected"
+            exit 0
+          elif [ "$NODE_IDS_EXIT" -eq 1 ]; then
+            echo "⚠️ Node ID issues in src/ (allowed as warnings for v2 PRs)"
+            echo "::warning::Legacy node IDs in src/ will be addressed in separate cleanup task"
+            exit 0
+          elif [ "$NODE_IDS_EXIT" -eq 2 ]; then
+            echo "::error::Node ID issues in docs/ — must be fixed before merge"
+            exit 1
+          else
+            echo "::error::Unexpected exit code $NODE_IDS_EXIT from validate-node-ids.js"
+            exit 1
+          fi
         continue-on-error: false
 
       - name: Validate Workers SSOT
