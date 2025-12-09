@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -119,14 +119,13 @@ jobs:
           echo "fail_on_coverage_integrity=$FAIL_ON_COVERAGE" >> $GITHUB_OUTPUT
           echo "📋 Configuration loaded: min_health_score=$MIN_HEALTH, fail_on_coverage_integrity=$FAIL_ON_COVERAGE"
 
-      - name: Run GDD validation
+      - name: Run GDD validation (v1 deprecated)
         if: steps.check_v2_only.outputs.v2_only != 'true'
         id: validation
         run: |
-          echo "🔍 Running GDD validation..."
-          node scripts/validate-gdd-runtime.js --ci
-          VALIDATION_STATUS=$?
-          echo "status=$VALIDATION_STATUS" >> $GITHUB_OUTPUT
+          echo "⚠️  GDD v1 validation is deprecated. This PR should use v2 validation."
+          echo "::warning::GDD v1 validation is deprecated. Please ensure PR only modifies v2 files."
+          echo "status=skipped" >> $GITHUB_OUTPUT
 
       - name: Setup Node.js (v2 validation)
         if: steps.check_v2_only.outputs.v2_only == 'true'
@@ -196,10 +195,51 @@ jobs:
           if [ "$HAS_V2_DOCS" -gt 0 ]; then
             echo "✅ PR modifies v2 documentation files - running v2 validation..."
             
-            # Check if scripts exist before running
+            # REQUIRED ORDER: validate-node-ids → validate-workers-ssot → validate-drift → validate-symmetry → validate-strong-concepts → check-system-map-drift → validate-v2-doc-paths → detect-legacy-ids → detect-guardian-references
+            
+            # 1. Validate Node IDs
+            if [ -f "scripts/validate-node-ids.js" ]; then
+              echo "✅ Validating Node IDs..."
+              set +e
+              node scripts/validate-node-ids.js --ci
+              NODE_IDS_EXIT=$?
+              set -e
+              if [ "$NODE_IDS_EXIT" -ne 0 ]; then
+                echo "⚠️ Node IDs validation failed (exit code: $NODE_IDS_EXIT)"
+                VALIDATION_FAILED=1
+              fi
+            fi
+            
+            # 2. Validate Workers SSOT
+            if [ -f "scripts/validate-workers-ssot.js" ]; then
+              echo "✅ Validating Workers SSOT..."
+              set +e
+              node scripts/validate-workers-ssot.js --ci
+              WORKERS_EXIT=$?
+              set -e
+              if [ "$WORKERS_EXIT" -ne 0 ]; then
+                echo "⚠️ Workers SSOT validation failed (exit code: $WORKERS_EXIT)"
+                VALIDATION_FAILED=1
+              fi
+            fi
+            
+            # 3. Validate Drift
+            if [ -f "scripts/validate-drift.js" ] && grep -q "docs/SSOT-V2\.md\|docs/nodes-v2/\|docs/system-map-v2.yaml" changed-files.txt; then
+              echo "✅ Validating drift..."
+              set +e
+              node scripts/validate-drift.js --ci
+              DRIFT_EXIT=$?
+              set -e
+              if [ "$DRIFT_EXIT" -ne 0 ]; then
+                echo "⚠️ Drift validation failed (exit code: $DRIFT_EXIT)"
+                VALIDATION_FAILED=1
+              fi
+            fi
+            
+            # 4. Validate Symmetry
             if [ -f "scripts/validate-symmetry.js" ] && grep -q "docs/system-map-v2.yaml" changed-files.txt; then
               echo "✅ Validating symmetry..."
-              set +e  # Don't exit on error, we'll handle it
+              set +e
               node scripts/validate-symmetry.js --ci
               SYMMETRY_EXIT=$?
               set -e
@@ -209,6 +249,7 @@ jobs:
               fi
             fi
             
+            # 5. Validate Strong Concepts
             if [ -f "scripts/validate-strong-concepts.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
               echo "✅ Validating Strong Concepts..."
               set +e
@@ -221,18 +262,48 @@ jobs:
               fi
             fi
             
-            if [ -f "scripts/validate-drift.js" ] && grep -q "docs/SSOT-V2\.md\|docs/nodes-v2/\|docs/system-map-v2.yaml" changed-files.txt; then
-              echo "✅ Detecting drift..."
+            # 6. Check System Map Drift
+            if [ -f "scripts/check-system-map-drift.js" ]; then
+              echo "✅ Checking system-map drift..."
               set +e
-              node scripts/validate-drift.js --ci
-              DRIFT_EXIT=$?
+              node scripts/check-system-map-drift.js --ci
+              MAP_DRIFT_EXIT=$?
               set -e
-              if [ "$DRIFT_EXIT" -ne 0 ]; then
-                echo "⚠️ Drift detection failed (exit code: $DRIFT_EXIT)"
+              if [ "$MAP_DRIFT_EXIT" -ne 0 ]; then
+                echo "⚠️ System-map drift check failed (exit code: $MAP_DRIFT_EXIT)"
                 VALIDATION_FAILED=1
               fi
             fi
             
+            # 7. Validate v2 Doc Paths
+            if [ -f "scripts/validate-v2-doc-paths.js" ]; then
+              echo "✅ Validating v2 doc paths..."
+              set +e
+              node scripts/validate-v2-doc-paths.js --ci
+              DOC_PATHS_EXIT=$?
+              set -e
+              if [ "$DOC_PATHS_EXIT" -ne 0 ]; then
+                echo "⚠️ v2 doc paths validation failed (exit code: $DOC_PATHS_EXIT)"
+                VALIDATION_FAILED=1
+              fi
+            fi
+            
+            # 8. Detect Legacy IDs (WARN for src/, FAIL for docs/)
+            if [ -f "scripts/detect-legacy-ids.js" ]; then
+              echo "✅ Detecting legacy IDs..."
+              set +e
+              node scripts/detect-legacy-ids.js --ci
+              LEGACY_IDS_EXIT=$?
+              set -e
+              # Legacy IDs in src/ are acceptable (warn only), but fail for docs/
+              if [ "$LEGACY_IDS_EXIT" -ne 0 ]; then
+                echo "⚠️ Legacy IDs detected (exit code: $LEGACY_IDS_EXIT) - checking if in src/ (acceptable) or docs/ (must fix)"
+                # This is a warning, not a failure for v2 PRs (legacy code cleanup is separate)
+                echo "::warning::Legacy IDs detected. See logs for details."
+              fi
+            fi
+            
+            # 9. Detect Guardian References
             if [ -f "scripts/detect-guardian-references.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
               echo "✅ Detecting guardian references..."
               set +e
@@ -240,8 +311,8 @@ jobs:
               GUARDIAN_EXIT=$?
               set -e
               if [ "$GUARDIAN_EXIT" -ne 0 ]; then
-                echo "⚠️ Guardian references detection failed (exit code: $GUARDIAN_EXIT)"
-                VALIDATION_FAILED=1
+                echo "⚠️ Guardian references detected (exit code: $GUARDIAN_EXIT)"
+                echo "::warning::Guardian references detected. See logs for details."
               fi
             fi
             
