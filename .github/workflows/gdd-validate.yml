@@ -28,6 +28,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check if PR only affects v2
         id: check_v2_only
@@ -318,25 +319,13 @@ jobs:
             echo "::error::$CRITICAL_COVERAGE critical coverage authenticity violations found"
           fi
 
-      - name: Check health threshold
+      # v1 health threshold check removed - v2 uses SSOT-driven threshold (≥95)
+      - name: Skip v1 health threshold check (deprecated)
         if: steps.check_v2_only.outputs.v2_only != 'true'
         id: threshold
         run: |
-          HEALTH_SCORE=${{ steps.health.outputs.score }}
-          MIN_HEALTH=${{ steps.config.outputs.min_health }}
-
-          echo "🎯 Checking health threshold..."
-          echo "  Current: $HEALTH_SCORE"
-          echo "  Required: $MIN_HEALTH"
-
-          if (( $(echo "$HEALTH_SCORE < $MIN_HEALTH" | bc -l) )); then
-            echo "result=fail" >> $GITHUB_OUTPUT
-            echo "❌ Health score below threshold!"
-            echo "⚠️ Job will fail after notifications are generated"
-          else
-            echo "result=pass" >> $GITHUB_OUTPUT
-            echo "✅ Health score meets threshold"
-          fi
+          echo "⚠️ v1 health threshold check is deprecated. v2 uses SSOT-driven threshold (≥95)."
+          echo "result=skipped" >> $GITHUB_OUTPUT
 
       - name: Generate PR comment (v2-only skip message)
         if: steps.check_v2_only.outputs.v2_only == 'true' && github.event_name == 'pull_request'

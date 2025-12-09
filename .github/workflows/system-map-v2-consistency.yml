@@ -42,6 +42,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -178,8 +179,6 @@ jobs:
           echo "| Drift | ${{ steps.validate_drift.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Symmetry | ${{ steps.validate_symmetry.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Strong Concepts | ${{ steps.validate_strong_concepts.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Legacy IDs | ${{ steps.detect_legacy_ids.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Guardian References | ${{ steps.detect_guardian.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| System Map Drift | ${{ steps.check_system_map_drift.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| v2 Doc Paths | ${{ steps.validate_doc_paths.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Legacy IDs | ${{ steps.detect_legacy_ids.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
