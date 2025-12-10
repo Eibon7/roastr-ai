@@ -1,0 +1,150 @@
+name: SSOT Governance Validation
+
+on:
+  pull_request:
+    paths:
+      - 'apps/backend-v2/**'
+      - 'docs/SSOT/**'
+      - 'docs/spec/**'
+      - 'docs/system-map-v2.yaml'
+      - 'docs/nodes-v2/**'
+      - '.cursor/rules/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/backend-v2/**'
+      - 'docs/SSOT/**'
+
+jobs:
+  validate-ssot-compliance:
+    name: Validate SSOT Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Validate SSOT Compliance
+        run: node scripts/ci/validate-ssot-compliance.js
+        continue-on-error: false
+
+  detect-legacy-v1:
+    name: Detect Legacy v1 References
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Detect Legacy v1
+        run: node scripts/ci/detect-legacy-v1.js
+        continue-on-error: false
+
+  detect-hardcoded-values:
+    name: Detect Hardcoded Values
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Detect Hardcoded Values
+        run: node scripts/ci/detect-hardcoded-values.js
+        continue-on-error: false
+
+  validate-feature-flags:
+    name: Validate Feature Flags
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Validate Feature Flags
+        run: node scripts/ci/validate-feature-flags.js
+        continue-on-error: false
+
+  validate-hexagonal-architecture:
+    name: Validate Hexagonal Architecture
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Validate Hexagonal Architecture
+        run: node scripts/ci/validate-hexagonal-architecture.js
+        continue-on-error: false
+
+  validate-system-map-dependencies:
+    name: Validate System Map Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install js-yaml
+        run: npm install js-yaml --save-dev
+      
+      - name: Validate System Map Dependencies
+        run: node scripts/ci/validate-system-map-dependencies.js
+        continue-on-error: false
+
+  all-validations:
+    name: All SSOT Validations
+    runs-on: ubuntu-latest
+    needs:
+      - validate-ssot-compliance
+      - detect-legacy-v1
+      - detect-hardcoded-values
+      - validate-feature-flags
+      - validate-hexagonal-architecture
+      - validate-system-map-dependencies
+    steps:
+      - name: All validations passed
+        run: echo "✅ All SSOT governance validations passed"
+
