@@ -1,11 +1,39 @@
 const prettierConfig = require('eslint-plugin-prettier');
 const prettierRecommended = require('eslint-config-prettier');
+const babelParser = require('@babel/eslint-parser');
+const reactPlugin = require('eslint-plugin-react');
 
 module.exports = [
+  // Ignore patterns (must be first in flat config)
   {
+    ignores: [
+      'frontend/**',
+      'node_modules/**',
+      '*.config.js',
+      'coverage/**',
+      'build/**',
+      'dist/**',
+      '**/*.min.js',
+      '**/build/**',
+      '**/dist/**',
+      'tests/unit/components/**',
+      'tests/unit/frontend/**',
+      'tests/unit/pages/**'
+    ]
+  },
+  // Main configuration
+  {
+    files: ['**/*.{js,jsx}'],
     languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'module',
+      parser: babelParser,
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: 'module',
+        requireConfigFile: false,
+        ecmaFeatures: {
+          jsx: true
+        }
+      },
       globals: {
         node: true,
         jest: true,
@@ -16,11 +44,14 @@ module.exports = [
         __dirname: true,
         __filename: true,
         global: true,
-        Buffer: true
+        Buffer: true,
+        React: 'readonly',
+        JSX: 'readonly'
       }
     },
     plugins: {
-      prettier: prettierConfig
+      prettier: prettierConfig,
+      react: reactPlugin
     },
     rules: {
       // Disable strict rules that might break CI
@@ -31,21 +62,17 @@ module.exports = [
       // Prettier integration
       'prettier/prettier': 'error',
       
+      // React rules (minimal, just to avoid JSX parsing errors)
+      'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
+      
       // Disable rules that conflict with Prettier
       ...prettierRecommended.rules
     },
-    ignores: [
-      'frontend/',
-      'node_modules/',
-      '*.config.js',
-      'coverage/',
-      'build/',
-      'dist/',
-      '**/*.min.js',
-      '**/build/**',
-      '**/dist/**',
-      'tests/unit/components/**',
-      'tests/unit/frontend/**'
-    ]
+    settings: {
+      react: {
+        version: 'detect'
+      }
+    }
   }
 ];

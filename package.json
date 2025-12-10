@@ -208,6 +208,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@babel/eslint-parser": "^7.28.5",
     "@babel/plugin-proposal-class-properties": "^7.18.6",
     "@babel/plugin-proposal-private-methods": "^7.18.6",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
@@ -229,6 +230,7 @@
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react": "^7.37.5",
     "glob": "^10.3.10",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.0.5",
