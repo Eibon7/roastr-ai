@@ -78,14 +78,15 @@ function extractFeatureFlags(line) {
   
   // Pattern: Only match flag-like patterns (with _enabled, _feature, _flag suffix or explicit flag access)
   const patterns = [
-    /featureFlag\s*[=:]\s*['"]([a-z_]+)['"]/i,
-    /flag\s*[=:]\s*['"]([a-z_]+)['"]/i,
-    /feature_flags\.([a-z_]+)/i,
+    /featureFlag\s*[=:]\s*['"]([a-z_]+)['"]/gi,
+    /flag\s*[=:]\s*['"]([a-z_]+)['"]/gi,
+    /feature_flags\.([a-z_]+)/gi,
     // Only match snake_case strings ending in flag-like suffixes
-    /['"]([a-z_]+_(?:enabled|feature|flag))['"]/i
+    /['"]([a-z_]+_(?:enabled|feature|flag))['"]/gi
   ];
 
   for (const pattern of patterns) {
+    pattern.lastIndex = 0; // Reset before each use to prevent infinite loops
     let match;
     while ((match = pattern.exec(line)) !== null) {
       const flag = match[1] || match[0];

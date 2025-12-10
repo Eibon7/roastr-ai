@@ -23,8 +23,6 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const BACKEND_V2_PATH = path.join(__dirname, '../../apps/backend-v2');
-
 // Prohibitions in domain layer (services/)
 // Source: docs/spec/roastr-spec-v2.md lines 630-637
 const DOMAIN_PROHIBITIONS = [
@@ -61,7 +59,12 @@ let violations = [];
  * Check if file is in services/ (domain layer)
  */
 function isDomainLayer(filePath) {
-  return filePath.includes('apps/backend-v2') && filePath.includes('/services/');
+  // Normalize to POSIX-style separators for robust substring checks
+  const normalized = filePath.split(path.sep).join('/');
+  return (
+    normalized.includes('apps/backend-v2') &&
+    normalized.includes('/services/')
+  );
 }
 
 /**
