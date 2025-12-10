@@ -25,16 +25,13 @@ const yaml = require('js-yaml');
 
 const SYSTEM_MAP_PATH = path.join(__dirname, '../../docs/system-map-v2.yaml');
 
-let violations = [];
-let warnings = [];
-
 /**
  * Load and parse system-map-v2.yaml
+ * @throws {Error} If file not found or parsing fails
  */
 function loadSystemMap() {
   if (!fs.existsSync(SYSTEM_MAP_PATH)) {
-    console.error(`❌ System Map file not found: ${SYSTEM_MAP_PATH}`);
-    process.exit(1);
+    throw new Error(`System Map file not found: ${SYSTEM_MAP_PATH}`);
   }
 
   try {
@@ -42,16 +39,16 @@ function loadSystemMap() {
     return yaml.load(content);
   } catch (error) {
     if (error instanceof yaml.YAMLException) {
-      console.error(`❌ Error parsing system-map-v2.yaml: ${error.message}`);
-    } else {
-      console.error(`❌ Error reading system-map-v2.yaml: ${error.message}`);
+      throw new Error(`Error parsing system-map-v2.yaml: ${error.message}`);
     }
-    process.exit(1);
+    throw new Error(`Error reading system-map-v2.yaml: ${error.message}`);
   }
 }
 
 /**
  * Validate bidirectional dependencies (depends_on ↔ required_by symmetry)
+ * @param {Object} systemMap - Parsed system-map-v2.yaml
+ * @returns {Array} Array of dependency symmetry issues
  */
 function validateDependencySymmetry(systemMap) {
   const nodes = systemMap.nodes || {};
@@ -97,6 +94,8 @@ function validateDependencySymmetry(systemMap) {
 
 /**
  * Validate that referenced nodes exist
+ * @param {Object} systemMap - Parsed system-map-v2.yaml
+ * @returns {Array} Array of node reference issues
  */
 function validateNodeReferences(systemMap) {
   const nodes = systemMap.nodes || {};
@@ -137,6 +136,10 @@ function validateNodeReferences(systemMap) {
  * Main validation
  */
 function main() {
+  // Reset state for each invocation
+  const violations = [];
+  const warnings = [];
+
   const args = process.argv.slice(2);
   const nodeArg = args.find(arg => arg.startsWith('--node='));
   const targetNode = nodeArg ? nodeArg.split('=')[1] : null;
@@ -146,7 +149,13 @@ function main() {
     console.log('🔍 Validating system-map dependencies...\n');
   }
 
-  const systemMap = loadSystemMap();
+  let systemMap;
+  try {
+    systemMap = loadSystemMap();
+  } catch (error) {
+    console.error(`❌ ${error.message}`);
+    process.exit(1);
+  }
 
   // Validate dependency symmetry
   const symmetryIssues = validateDependencySymmetry(systemMap);

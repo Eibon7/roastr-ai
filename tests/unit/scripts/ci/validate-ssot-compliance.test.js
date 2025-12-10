@@ -14,7 +14,7 @@ const { execSync } = require('child_process');
 const os = require('os');
 
 describe('validate-ssot-compliance.js', () => {
-  const scriptPath = path.join(__dirname, '../../scripts/ci/validate-ssot-compliance.js');
+  const scriptPath = path.join(__dirname, '../../../../scripts/ci/validate-ssot-compliance.js');
   const testDir = path.join(os.tmpdir(), 'roastr-ssot-test-' + Date.now());
   
   beforeEach(() => {
@@ -41,16 +41,11 @@ describe('validate-ssot-compliance.js', () => {
       const billing = 'polar'; // Valid SSOT v2 billing
     `);
     
-    try {
-      const result = execSync(`node ${scriptPath} --path=${testDir}`, {
-        encoding: 'utf8',
-        stdio: 'pipe'
-      });
-      expect(result).toContain('✅');
-    } catch (error) {
-      // If exit code is 0, execSync doesn't throw
-      expect(error.status).toBeUndefined();
-    }
+    const result = execSync(`node ${scriptPath} --path=${testDir}`, {
+      encoding: 'utf8',
+      stdio: 'pipe'
+    });
+    expect(result).toContain('✅');
   });
   
   test('should exit with code 1 when SSOT violation is detected (Stripe)', () => {
@@ -80,16 +75,11 @@ describe('validate-ssot-compliance.js', () => {
     const emptyFile = path.join(testDir, 'empty.js');
     fs.writeFileSync(emptyFile, '// No SSOT-related content');
     
-    try {
-      const result = execSync(`node ${scriptPath} --path=${testDir}`, {
-        encoding: 'utf8',
-        stdio: 'pipe'
-      });
-      expect(result).toContain('✅');
-    } catch (error) {
-      // Should not fail for files with no SSOT-related content
-      expect(error.status).toBeUndefined();
-    }
+    const result = execSync(`node ${scriptPath} --path=${testDir}`, {
+      encoding: 'utf8',
+      stdio: 'pipe'
+    });
+    expect(result).toContain('✅');
   });
   
   test('should detect legacy plan violation', () => {

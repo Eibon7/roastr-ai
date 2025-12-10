@@ -34,7 +34,6 @@ jobs:
       
       - name: Validate SSOT Compliance
         run: node scripts/ci/validate-ssot-compliance.js
-        continue-on-error: false
 
   detect-legacy-v1:
     name: Detect Legacy v1 References
@@ -53,7 +52,6 @@ jobs:
       
       - name: Detect Legacy v1
         run: node scripts/ci/detect-legacy-v1.js
-        continue-on-error: false
 
   detect-hardcoded-values:
     name: Detect Hardcoded Values
@@ -72,7 +70,6 @@ jobs:
       
       - name: Detect Hardcoded Values
         run: node scripts/ci/detect-hardcoded-values.js
-        continue-on-error: false
 
   validate-feature-flags:
     name: Validate Feature Flags
@@ -91,7 +88,6 @@ jobs:
       
       - name: Validate Feature Flags
         run: node scripts/ci/validate-feature-flags.js
-        continue-on-error: false
 
   validate-hexagonal-architecture:
     name: Validate Hexagonal Architecture
@@ -110,7 +106,6 @@ jobs:
       
       - name: Validate Hexagonal Architecture
         run: node scripts/ci/validate-hexagonal-architecture.js
-        continue-on-error: false
 
   validate-system-map-dependencies:
     name: Validate System Map Dependencies
@@ -126,9 +121,6 @@ jobs:
       
       - name: Install dependencies
         run: npm ci
-      
-      - name: Install js-yaml
-        run: npm install js-yaml --save-dev
       
       - name: Validate System Map Dependencies
         run: node scripts/ci/validate-system-map-dependencies.js

@@ -14,7 +14,7 @@ const { execSync } = require('child_process');
 const os = require('os');
 
 describe('detect-legacy-v1.js', () => {
-  const scriptPath = path.join(__dirname, '../../scripts/ci/detect-legacy-v1.js');
+  const scriptPath = path.join(__dirname, '../../../../scripts/ci/detect-legacy-v1.js');
   const testDir = path.join(os.tmpdir(), 'roastr-legacy-test-' + Date.now());
   
   beforeEach(() => {
@@ -110,15 +110,11 @@ describe('detect-legacy-v1.js', () => {
       const billing = 'polar'; // Valid SSOT v2 billing
     `);
     
-    try {
-      const result = execSync(`node ${scriptPath} --path=${testDir}`, {
-        encoding: 'utf8',
-        stdio: 'pipe'
-      });
-      expect(result).toContain('✅');
-    } catch (error) {
-      expect(error.status).toBeUndefined();
-    }
+    const result = execSync(`node ${scriptPath} --path=${testDir}`, {
+      encoding: 'utf8',
+      stdio: 'pipe'
+    });
+    expect(result).toContain('✅');
   });
 });
 

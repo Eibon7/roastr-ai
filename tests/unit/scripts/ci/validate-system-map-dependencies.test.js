@@ -38,15 +38,20 @@ describe('validate-system-map-dependencies.js', () => {
   test('should fail when dependencies are broken (if system-map is invalid)', () => {
     // This test documents that the validator will fail on broken deps
     // The actual validation happens against real system-map-v2.yaml
-    const result = execSync(`node ${scriptPath}`, {
-      encoding: 'utf8',
-      stdio: 'pipe',
-      cwd: path.join(__dirname, '../..')
-    });
-    
-    // Either passes (no broken deps) or fails (broken deps exist)
-    // Both outcomes are valid - the test documents behavior
-    expect(result).toBeDefined();
+    try {
+      const result = execSync(`node ${scriptPath}`, {
+        encoding: 'utf8',
+        stdio: 'pipe',
+        cwd: path.join(__dirname, '../../../../')
+      });
+      // If it passes, no broken dependencies
+      expect(result).toContain('✅');
+    } catch (error) {
+      // If it fails, broken dependencies exist
+      expect(error.status).toBe(1);
+      const output = (error.stdout || '') + (error.stderr || '');
+      expect(output).toContain('violation');
+    }
   });
   
   test('should validate node IDs exist in system-map', () => {

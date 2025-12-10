@@ -14,7 +14,7 @@ const { execSync } = require('child_process');
 const os = require('os');
 
 describe('detect-hardcoded-values.js', () => {
-  const scriptPath = path.join(__dirname, '../../scripts/ci/detect-hardcoded-values.js');
+  const scriptPath = path.join(__dirname, '../../../../scripts/ci/detect-hardcoded-values.js');
   const testDir = path.join(os.tmpdir(), 'roastr-hardcoded-test-' + Date.now());
   
   beforeEach(() => {
@@ -74,16 +74,11 @@ describe('detect-hardcoded-values.js', () => {
       const localVar = 123;
     `);
     
-    try {
-      const result = execSync(`node ${scriptPath} --path=${testDir}`, {
-        encoding: 'utf8',
-        stdio: 'pipe'
-      });
-      expect(result).toContain('✅');
-    } catch (error) {
-      // Should not fail for non-SSOT constants
-      expect(error.status).toBeUndefined();
-    }
+    const result = execSync(`node ${scriptPath} --path=${testDir}`, {
+      encoding: 'utf8',
+      stdio: 'pipe'
+    });
+    expect(result).toContain('✅');
   });
   
   test('should pass when no hardcoded SSOT values detected', () => {
@@ -96,15 +91,11 @@ describe('detect-hardcoded-values.js', () => {
       const threshold = getThresholdFromConfig();
     `);
     
-    try {
-      const result = execSync(`node ${scriptPath} --path=${testDir}`, {
-        encoding: 'utf8',
-        stdio: 'pipe'
-      });
-      expect(result).toContain('✅');
-    } catch (error) {
-      expect(error.status).toBeUndefined();
-    }
+    const result = execSync(`node ${scriptPath} --path=${testDir}`, {
+      encoding: 'utf8',
+      stdio: 'pipe'
+    });
+    expect(result).toContain('✅');
   });
 });
 

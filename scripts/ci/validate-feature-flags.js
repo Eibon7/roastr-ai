@@ -23,8 +23,6 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const SSOT_PATH = path.join(__dirname, '../../docs/SSOT/roastr-ssot-v2.md');
-
 // Authorized feature flags from SSOT v2
 // Source: docs/SSOT/roastr-ssot-v2.md lines 208-232
 const AUTHORIZED_FLAGS = [
@@ -45,8 +43,6 @@ const AUTHORIZED_FLAGS = [
   'enable_beta_sponsor_ui'
 ];
 
-let violations = [];
-
 /**
  * Check if file is in backend-v2
  */
@@ -62,6 +58,8 @@ function isCommentOrTest(line, filePath) {
   return (
     trimmed.startsWith('//') ||
     trimmed.startsWith('*') ||
+    trimmed.startsWith('/*') ||
+    trimmed.startsWith('*/') ||
     trimmed.startsWith('#') ||
     filePath.includes('.test.') ||
     filePath.includes('.spec.') ||
@@ -102,7 +100,7 @@ function extractFeatureFlags(line) {
 /**
  * Scan file for unauthorized feature flags
  */
-function scanFile(filePath) {
+function scanFile(filePath, violations) {
   if (!fs.existsSync(filePath)) {
     return;
   }
@@ -175,6 +173,9 @@ function getChangedFiles() {
  * Main validation
  */
 function main() {
+  // Reset state for each invocation
+  const violations = [];
+
   const args = process.argv.slice(2);
   const pathArg = args.find(arg => arg.startsWith('--path='));
   const targetPath = pathArg ? pathArg.split('=')[1] : null;
@@ -188,7 +189,7 @@ function main() {
 
   if (targetPath) {
     // Normalize path to prevent path traversal issues
-    const normalizedPath = path.normalize(targetPath);
+    const normalizedPath = path.normalize(targetPath).replace(/\\/g, '/');
     const fullPath = path.resolve(normalizedPath);
     
     let stats;
@@ -205,11 +206,11 @@ function main() {
         const files = [];
         const entries = fs.readdirSync(dir, { withFileTypes: true });
         for (const entry of entries) {
-          const fullPath = path.join(dir, entry.name);
+          const entryPath = path.join(dir, entry.name);
           if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
-            files.push(...findFiles(fullPath));
+            files.push(...findFiles(entryPath));
           } else if (entry.isFile() && /\.(js|ts|jsx|tsx)$/.test(entry.name)) {
-            files.push(fullPath);
+            files.push(entryPath);
           }
         }
         return files;
@@ -221,9 +222,12 @@ function main() {
   } else {
     // Check changed files in backend-v2
     const changedFiles = getChangedFiles();
-    filesToCheck = changedFiles
-      .filter(f => f.includes('apps/backend-v2'))
-      .map(f => path.resolve(path.normalize(f)));
+      filesToCheck = changedFiles
+        .filter(f => f.includes('apps/backend-v2'))
+        .map(f => {
+          const normalized = path.normalize(f).replace(/\\/g, '/');
+          return path.resolve(normalized);
+        });
   }
 
   if (filesToCheck.length === 0) {
@@ -238,7 +242,7 @@ function main() {
   }
 
   for (const file of filesToCheck) {
-    scanFile(file);
+    scanFile(file, violations);
   }
 
   // Report results

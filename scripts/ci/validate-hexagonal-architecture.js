@@ -53,8 +53,6 @@ const DOMAIN_PROHIBITIONS = [
   }
 ];
 
-let violations = [];
-
 /**
  * Check if file is in services/ (domain layer)
  */
@@ -75,6 +73,8 @@ function isCommentOrTest(line, filePath) {
   return (
     trimmed.startsWith('//') ||
     trimmed.startsWith('*') ||
+    trimmed.startsWith('/*') ||
+    trimmed.startsWith('*/') ||
     trimmed.startsWith('#') ||
     filePath.includes('.test.') ||
     filePath.includes('.spec.') ||
@@ -94,7 +94,7 @@ function isTypeOnlyImport(line) {
 /**
  * Scan file for architecture violations
  */
-function scanFile(filePath) {
+function scanFile(filePath, violations) {
   if (!fs.existsSync(filePath)) {
     return;
   }
@@ -117,15 +117,15 @@ function scanFile(filePath) {
     const line = lines[i];
     const lineNum = i + 1;
 
-    // Skip comments and tests
-    if (isCommentOrTest(line, filePath)) {
-      continue;
-    }
+  // Skip comments and tests
+  if (isCommentOrTest(line, filePath)) {
+    continue;
+  }
 
-    // Skip type-only imports
-    if (isTypeOnlyImport(line)) {
-      continue;
-    }
+  // Skip type-only imports
+  if (isTypeOnlyImport(line)) {
+    continue;
+  }
 
     // Check each prohibition
     for (const prohibition of DOMAIN_PROHIBITIONS) {
@@ -162,6 +162,9 @@ function getChangedFiles() {
  * Main validation
  */
 function main() {
+  // Reset state for each invocation
+  const violations = [];
+
   const args = process.argv.slice(2);
   const pathArg = args.find(arg => arg.startsWith('--path='));
   const targetPath = pathArg ? pathArg.split('=')[1] : null;
@@ -175,7 +178,7 @@ function main() {
 
   if (targetPath) {
     // Normalize path to prevent path traversal issues
-    const normalizedPath = path.normalize(targetPath);
+    const normalizedPath = path.normalize(targetPath).replace(/\\/g, '/');
     const fullPath = path.resolve(normalizedPath);
     
     let stats;
@@ -192,11 +195,12 @@ function main() {
         const files = [];
         const entries = fs.readdirSync(dir, { withFileTypes: true });
         for (const entry of entries) {
-          const fullPath = path.join(dir, entry.name);
+          const entryPath = path.join(dir, entry.name);
+          const normalizedPath = entryPath.replace(/\\/g, '/');
           if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
-            files.push(...findFiles(fullPath));
+            files.push(...findFiles(entryPath));
           } else if (entry.isFile() && /\.(js|ts|jsx|tsx)$/.test(entry.name)) {
-            files.push(fullPath);
+            files.push(normalizedPath);
           }
         }
         return files;
@@ -208,9 +212,12 @@ function main() {
   } else {
     // Check changed files in backend-v2 services/
     const changedFiles = getChangedFiles();
-    filesToCheck = changedFiles
-      .filter(f => f.includes('apps/backend-v2') && f.includes('/services/'))
-      .map(f => path.resolve(path.normalize(f)));
+      filesToCheck = changedFiles
+        .filter(f => f.includes('apps/backend-v2') && f.includes('/services/'))
+        .map(f => {
+          const normalized = path.normalize(f).replace(/\\/g, '/');
+          return path.resolve(normalized);
+        });
   }
 
   if (filesToCheck.length === 0) {
@@ -225,7 +232,7 @@ function main() {
   }
 
   for (const file of filesToCheck) {
-    scanFile(file);
+    scanFile(file, violations);
   }
 
   // Report results

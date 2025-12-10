@@ -26,8 +26,23 @@ const { execSync } = require('child_process');
 const SSOT_PATH = path.join(__dirname, '../../docs/SSOT/roastr-ssot-v2.md');
 const BACKEND_V2_PATH = path.join(__dirname, '../../apps/backend-v2');
 
-let violations = [];
-let warnings = [];
+/**
+ * Recursively find all JS/TS files in a directory
+ */
+function findFiles(dir) {
+  const files = [];
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const entryPath = path.join(dir, entry.name);
+    const normalizedPath = entryPath.replace(/\\/g, '/');
+    if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+      files.push(...findFiles(entryPath));
+    } else if (entry.isFile() && /\.(js|ts|jsx|tsx)$/.test(entry.name)) {
+      files.push(normalizedPath);
+    }
+  }
+  return files;
+}
 
 /**
  * Read and parse SSOT v2 document
@@ -65,20 +80,8 @@ function getValidPlans(ssotContent) {
  * Source: docs/SSOT/roastr-ssot-v2.md lines 42-44
  */
 function getLegacyPlans(ssotContent) {
-  // Extract from: "free", "basic", "creator_plus"
-  // Source: docs/SSOT/roastr-ssot-v2.md lines 42-44
-  // Try to extract from SSOT documentation
-  const legacyMatch = ssotContent.match(/legacy.*?['"](free|basic|creator_plus)['"]|['"](free|basic|creator_plus)['"].*?legacy/i);
-  if (legacyMatch) {
-    // Extract unique legacy plans found
-    const found = [...new Set([legacyMatch[1] || legacyMatch[2], legacyMatch[3] || legacyMatch[4], legacyMatch[5] || legacyMatch[6]].filter(Boolean))];
-    if (found.length >= 3) {
-      return ['free', 'basic', 'creator_plus'];
-    }
-  }
-  // If not found in SSOT, fail validation - legacy plans must be documented
-  // For now, use documented values from SSOT lines 42-44
-  // Note: This is a known limitation - ideally should parse from SSOT structure
+  // Legacy plans from SSOT v2 lines 42-44
+  // These are prohibited plan IDs that should not appear in backend-v2 code
   return ['free', 'basic', 'creator_plus'];
 }
 
@@ -111,7 +114,7 @@ function isBackendV2File(filePath) {
 /**
  * Scan file for SSOT violations
  */
-function scanFile(filePath, ssotContent) {
+function scanFile(filePath, ssotContent, violations) {
   if (!fs.existsSync(filePath)) {
     return;
   }
@@ -148,7 +151,7 @@ function scanFile(filePath, ssotContent) {
 
   // Check for Stripe references (only in backend-v2)
   if (isBackendV2File(filePath)) {
-    const stripeRegex = /stripe|Stripe|STRIPE/i;
+    const stripeRegex = /stripe/i;
     if (stripeRegex.test(content)) {
       violations.push({
         file: filePath,
@@ -201,6 +204,10 @@ function getChangedFiles() {
  * Main validation
  */
 function main() {
+  // Reset state for each invocation
+  const violations = [];
+  const warnings = [];
+
   const args = process.argv.slice(2);
   const pathArg = args.find(arg => arg.startsWith('--path='));
   const targetPath = pathArg ? pathArg.split('=')[1] : null;
@@ -216,7 +223,7 @@ function main() {
 
   if (targetPath) {
     // Normalize path to prevent path traversal issues
-    const normalizedPath = path.normalize(targetPath);
+    const normalizedPath = path.normalize(targetPath).replace(/\\/g, '/');
     const fullPath = path.resolve(normalizedPath);
     
     let stats;
@@ -228,20 +235,6 @@ function main() {
     }
     
     if (stats.isDirectory()) {
-      // Recursively find all JS/TS files
-      function findFiles(dir) {
-        const files = [];
-        const entries = fs.readdirSync(dir, { withFileTypes: true });
-        for (const entry of entries) {
-          const fullPath = path.join(dir, entry.name);
-          if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
-            files.push(...findFiles(fullPath));
-          } else if (entry.isFile() && /\.(js|ts|jsx|tsx)$/.test(entry.name)) {
-            files.push(fullPath);
-          }
-        }
-        return files;
-      }
       filesToCheck = findFiles(fullPath);
     } else {
       filesToCheck = [fullPath];
@@ -257,19 +250,6 @@ function main() {
       }
       const backendV2Path = path.join(__dirname, '../../apps/backend-v2');
       if (fs.existsSync(backendV2Path)) {
-        function findFiles(dir) {
-          const files = [];
-          const entries = fs.readdirSync(dir, { withFileTypes: true });
-          for (const entry of entries) {
-            const fullPath = path.join(dir, entry.name);
-            if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
-              files.push(...findFiles(fullPath));
-            } else if (entry.isFile() && /\.(js|ts|jsx|tsx)$/.test(entry.name)) {
-              files.push(fullPath);
-            }
-          }
-          return files;
-        }
         filesToCheck = findFiles(backendV2Path);
       } else {
         if (!ciMode) {
@@ -280,7 +260,10 @@ function main() {
     } else {
       filesToCheck = changedFiles
         .filter(f => f.includes('apps/backend-v2'))
-        .map(f => path.resolve(path.normalize(f)));
+        .map(f => {
+          const normalized = path.normalize(f).replace(/\\/g, '/');
+          return path.resolve(normalized);
+        });
     }
   }
 
@@ -296,7 +279,7 @@ function main() {
   }
 
   for (const file of filesToCheck) {
-    scanFile(file, ssotContent);
+    scanFile(file, ssotContent, violations);
   }
 
   // Report results

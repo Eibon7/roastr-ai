@@ -14,7 +14,7 @@ const { execSync } = require('child_process');
 const os = require('os');
 
 describe('validate-hexagonal-architecture.js', () => {
-  const scriptPath = path.join(__dirname, '../../scripts/ci/validate-hexagonal-architecture.js');
+  const scriptPath = path.join(__dirname, '../../../../scripts/ci/validate-hexagonal-architecture.js');
   const testDir = path.join(os.tmpdir(), 'roastr-arch-test-' + Date.now());
   const servicesDir = path.join(testDir, 'apps', 'backend-v2', 'src', 'services');
   
@@ -135,21 +135,11 @@ describe('validate-hexagonal-architecture.js', () => {
       }
     `);
     
-    try {
-      const result = execSync(`node ${scriptPath} --path=${servicesDir}`, {
-        encoding: 'utf8',
-        stdio: 'pipe'
-      });
-      expect(result).toContain('✅');
-    } catch (error) {
-      // If validator fails, it may be detecting false positives
-      // Accept both outcomes - test documents expected behavior
-      if (error.status === 1) {
-        const output = (error.stdout || '') + (error.stderr || '');
-        console.log('Validator output:', output);
-      }
-      expect([0, 1]).toContain(error.status || 0);
-    }
+    const result = execSync(`node ${scriptPath} --path=${servicesDir}`, {
+      encoding: 'utf8',
+      stdio: 'pipe'
+    });
+    expect(result).toContain('✅');
   });
 });
 

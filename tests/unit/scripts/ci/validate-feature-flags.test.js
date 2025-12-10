@@ -14,7 +14,7 @@ const { execSync } = require('child_process');
 const os = require('os');
 
 describe('validate-feature-flags.js', () => {
-  const scriptPath = path.join(__dirname, '../../scripts/ci/validate-feature-flags.js');
+  const scriptPath = path.join(__dirname, '../../../../scripts/ci/validate-feature-flags.js');
   const testDir = path.join(os.tmpdir(), 'roastr-flags-test-' + Date.now());
   
   beforeEach(() => {
@@ -32,30 +32,25 @@ describe('validate-feature-flags.js', () => {
   test('should accept valid SSOT-authorized flags', () => {
     // Valid flags from SSOT v2: autopost_enabled, manual_approval_enabled, etc.
     // Must use pattern that matches validator: featureFlag('name') or flag = 'name'
-    const validFile = path.join(testDir, 'valid-flag.js');
+    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
+    fs.mkdirSync(backendV2Dir, { recursive: true });
+    const validFile = path.join(backendV2Dir, 'valid-flag.js');
     fs.writeFileSync(validFile, `
       featureFlag('autopost_enabled'); // Valid SSOT flag
       const flag = 'manual_approval_enabled'; // Valid SSOT flag
     `);
     
-    try {
-      const result = execSync(`node ${scriptPath} --path=${testDir}`, {
-        encoding: 'utf8',
-        stdio: 'pipe'
-      });
-      expect(result).toContain('✅');
-    } catch (error) {
-      // If it fails, check if it's because of pattern matching
-      if (error.status === 1) {
-        console.log('Validator output:', error.stdout);
-      }
-      // Accept both outcomes - test documents expected behavior
-      expect([0, 1]).toContain(error.status || 0);
-    }
+    const result = execSync(`node ${scriptPath} --path=${testDir}`, {
+      encoding: 'utf8',
+      stdio: 'pipe'
+    });
+    expect(result).toContain('✅');
   });
   
   test('should fail with unauthorized flag', () => {
-    const invalidFile = path.join(testDir, 'invalid-flag.js');
+    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
+    fs.mkdirSync(backendV2Dir, { recursive: true });
+    const invalidFile = path.join(backendV2Dir, 'invalid-flag.js');
     fs.writeFileSync(invalidFile, `
       const flag = 'unauthorized_flag_name'; // Not in SSOT v2
     `);
@@ -72,44 +67,37 @@ describe('validate-feature-flags.js', () => {
   });
   
   test('should ignore comments', () => {
-    const validFile = path.join(testDir, 'comments.js');
+    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
+    fs.mkdirSync(backendV2Dir, { recursive: true });
+    const validFile = path.join(backendV2Dir, 'comments.js');
     fs.writeFileSync(validFile, `
       // This is a comment about 'some_flag'
       /* Another comment with 'another_flag' */
       featureFlag('autopost_enabled'); // Valid flag
     `);
     
-    try {
-      const result = execSync(`node ${scriptPath} --path=${testDir}`, {
-        encoding: 'utf8',
-        stdio: 'pipe'
-      });
-      expect(result).toContain('✅');
-    } catch (error) {
-      // Comments should be ignored, but validator may still check patterns
-      // Accept both outcomes - test documents expected behavior
-      expect([0, 1]).toContain(error.status || 0);
-    }
+    const result = execSync(`node ${scriptPath} --path=${testDir}`, {
+      encoding: 'utf8',
+      stdio: 'pipe'
+    });
+    expect(result).toContain('✅');
   });
   
   test('should accept multiple valid flags', () => {
-    const validFile = path.join(testDir, 'multiple-flags.js');
+    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
+    fs.mkdirSync(backendV2Dir, { recursive: true });
+    const validFile = path.join(backendV2Dir, 'multiple-flags.js');
     fs.writeFileSync(validFile, `
       featureFlag('autopost_enabled');
       featureFlag('manual_approval_enabled');
       featureFlag('enable_shield');
     `);
     
-    try {
-      const result = execSync(`node ${scriptPath} --path=${testDir}`, {
-        encoding: 'utf8',
-        stdio: 'pipe'
-      });
-      expect(result).toContain('✅');
-    } catch (error) {
-      // Accept both outcomes - test documents expected behavior
-      expect([0, 1]).toContain(error.status || 0);
-    }
+    const result = execSync(`node ${scriptPath} --path=${testDir}`, {
+      encoding: 'utf8',
+      stdio: 'pipe'
+    });
+    expect(result).toContain('✅');
   });
 });
 

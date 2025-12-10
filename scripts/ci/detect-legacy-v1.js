@@ -24,8 +24,6 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const BACKEND_V2_PATH = path.join(__dirname, '../../apps/backend-v2');
-
 // Legacy plans from SSOT v2
 // Source: docs/SSOT/roastr-ssot-v2.md lines 42-44
 const LEGACY_PLANS = ['free', 'basic', 'creator_plus'];
@@ -46,8 +44,13 @@ function isBackendV2File(filePath) {
 /**
  * Scan file for legacy v1 references
  */
-function scanFile(filePath) {
+function scanFile(filePath, violations) {
   if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  // Only check backend-v2 files
+  if (!isBackendV2File(filePath)) {
     return;
   }
 
@@ -59,11 +62,6 @@ function scanFile(filePath) {
     return;
   }
   const lines = content.split('\n');
-
-  // Only check backend-v2 files
-  if (!isBackendV2File(filePath)) {
-    return;
-  }
 
   // Check for legacy plans
   for (let i = 0; i < lines.length; i++) {
@@ -80,7 +78,7 @@ function scanFile(filePath) {
           file: filePath,
           line: lineNum,
           type: 'legacy_plan',
-          message: `Legacy plan "${legacyPlan}" detected. SSOT v2 only allows: starter, pro, plus (no starter_trial in SSOT v2)`,
+          message: `Legacy plan "${legacyPlan}" detected. SSOT v2 only allows: starter_trial, starter, pro, plus`,
           source: 'docs/SSOT/roastr-ssot-v2.md:39-46',
           code: line.trim()
         });
@@ -122,6 +120,9 @@ function getChangedFiles() {
  * Main detection
  */
 function main() {
+  // Reset state for each invocation
+  const violations = [];
+
   const args = process.argv.slice(2);
   const pathArg = args.find(arg => arg.startsWith('--path='));
   const targetPath = pathArg ? pathArg.split('=')[1] : null;
@@ -135,7 +136,7 @@ function main() {
 
   if (targetPath) {
     // Normalize path to prevent path traversal issues
-    const normalizedPath = path.normalize(targetPath);
+    const normalizedPath = path.normalize(targetPath).replace(/\\/g, '/');
     const fullPath = path.resolve(normalizedPath);
     
     let stats;
@@ -152,11 +153,12 @@ function main() {
         const files = [];
         const entries = fs.readdirSync(dir, { withFileTypes: true });
         for (const entry of entries) {
-          const fullPath = path.join(dir, entry.name);
+          const entryPath = path.join(dir, entry.name);
+          const normalizedPath = entryPath.replace(/\\/g, '/');
           if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
-            files.push(...findFiles(fullPath));
+            files.push(...findFiles(entryPath));
           } else if (entry.isFile() && /\.(js|ts|jsx|tsx)$/.test(entry.name)) {
-            files.push(fullPath);
+            files.push(normalizedPath);
           }
         }
         return files;
@@ -168,9 +170,12 @@ function main() {
   } else {
     // Check changed files in backend-v2
     const changedFiles = getChangedFiles();
-    filesToCheck = changedFiles
-      .filter(f => f.includes('apps/backend-v2'))
-      .map(f => path.resolve(path.normalize(f)));
+      filesToCheck = changedFiles
+        .filter(f => f.includes('apps/backend-v2'))
+        .map(f => {
+          const normalized = path.normalize(f).replace(/\\/g, '/');
+          return path.resolve(normalized);
+        });
   }
 
   if (filesToCheck.length === 0) {
@@ -185,7 +190,7 @@ function main() {
   }
 
   for (const file of filesToCheck) {
-    scanFile(file);
+    scanFile(file, violations);
   }
 
   // Report results

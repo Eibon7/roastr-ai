@@ -67,8 +67,6 @@ const SSOT_DEFINED_VALUES = {
   }
 };
 
-let violations = [];
-
 /**
  * Check if file is in backend-v2
  */
@@ -102,7 +100,7 @@ function isCommentOrTest(line, filePath) {
 /**
  * Scan file for hardcoded values
  */
-function scanFile(filePath) {
+function scanFile(filePath, violations) {
   if (!fs.existsSync(filePath)) {
     return;
   }
@@ -172,6 +170,9 @@ function getChangedFiles() {
  * Main detection
  */
 function main() {
+  // Reset state for each invocation
+  const violations = [];
+
   const args = process.argv.slice(2);
   const pathArg = args.find(arg => arg.startsWith('--path='));
   const targetPath = pathArg ? pathArg.split('=')[1] : null;
@@ -185,7 +186,7 @@ function main() {
 
   if (targetPath) {
     // Normalize path to prevent path traversal issues
-    const normalizedPath = path.normalize(targetPath);
+    const normalizedPath = path.normalize(targetPath).replace(/\\/g, '/');
     const fullPath = path.resolve(normalizedPath);
     
     let stats;
@@ -202,11 +203,12 @@ function main() {
         const files = [];
         const entries = fs.readdirSync(dir, { withFileTypes: true });
         for (const entry of entries) {
-          const fullPath = path.join(dir, entry.name);
+          const entryPath = path.join(dir, entry.name);
+          const normalizedPath = entryPath.replace(/\\/g, '/');
           if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
-            files.push(...findFiles(fullPath));
+            files.push(...findFiles(entryPath));
           } else if (entry.isFile() && /\.(js|ts|jsx|tsx)$/.test(entry.name)) {
-            files.push(fullPath);
+            files.push(normalizedPath);
           }
         }
         return files;
@@ -218,9 +220,12 @@ function main() {
   } else {
     // Check changed files in backend-v2
     const changedFiles = getChangedFiles();
-    filesToCheck = changedFiles
-      .filter(f => f.includes('apps/backend-v2'))
-      .map(f => path.resolve(path.normalize(f)));
+      filesToCheck = changedFiles
+        .filter(f => f.includes('apps/backend-v2'))
+        .map(f => {
+          const normalized = path.normalize(f).replace(/\\/g, '/');
+          return path.resolve(normalized);
+        });
   }
 
   if (filesToCheck.length === 0) {
@@ -235,7 +240,7 @@ function main() {
   }
 
   for (const file of filesToCheck) {
-    scanFile(file);
+    scanFile(file, violations);
   }
 
   // Report results

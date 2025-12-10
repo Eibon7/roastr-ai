@@ -28,18 +28,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-npm-${{ hashFiles('frontend/package.json') }}
+          key: ${{ runner.os }}-npm-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-npm-
 
-      - name: Remove lockfile if inconsistent
+      - name: Install frontend deps (lockfile-first with fallback)
         working-directory: ./frontend
         run: |
-          rm -f package-lock.json
-
-      - name: Install frontend deps
-        working-directory: ./frontend
-        run: npm install
+          npm ci || (echo "⚠️ npm ci failed, falling back to npm install for diagnostics" && npm install && exit 1)
 
       - name: Ensure Rollup native dependencies
         working-directory: ./frontend
@@ -184,7 +180,7 @@ jobs:
         working-directory: ./frontend
         run: |
           echo "🔍 Running frontend ESLint checks..."
-          npx eslint src/ --ext .js,.jsx,.ts,.tsx --max-warnings 0 || echo "⚠️ ESLint warnings found but not blocking CI"
+          npx eslint src/ --ext .js,.jsx,.ts,.tsx --max-warnings 0
         continue-on-error: false
 
       - name: Run frontend tests (allow failures in Phase 1)
