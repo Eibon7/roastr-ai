@@ -11,13 +11,13 @@
 
 ### ✅ Todas las Tareas Completadas
 
-| Tarea | Estado | Resultado |
-|-------|--------|-----------|
-| **1. Migración de IDs legacy** | ✅ | Mapeo generado, system-map actualizado |
-| **2. Resolver nodos huérfanos** | ✅ | 7 archivos clasificados y movidos |
-| **3. Resolver nodo legacy en system-map** | ✅ | `billing` → `billing-integration` |
-| **4. Endurecimiento validadores** | ✅ | CI FAIL en detecciones, threshold ≥95 |
-| **5. Validación final** | ✅ | Health Score = 100/100, SSOT Alignment = 100% |
+| Tarea                                     | Estado | Resultado                                     |
+| ----------------------------------------- | ------ | --------------------------------------------- |
+| **1. Migración de IDs legacy**            | ✅     | Mapeo generado, system-map actualizado        |
+| **2. Resolver nodos huérfanos**           | ✅     | 7 archivos clasificados y movidos             |
+| **3. Resolver nodo legacy en system-map** | ✅     | `billing` → `billing-integration`             |
+| **4. Endurecimiento validadores**         | ✅     | CI FAIL en detecciones, threshold ≥95         |
+| **5. Validación final**                   | ✅     | Health Score = 100/100, SSOT Alignment = 100% |
 
 ---
 
@@ -27,13 +27,13 @@
 
 ✅ **`docs/CI-V2/LEGACY-TO-V2-MAPPING.md`**
 
-| Legacy ID | v2 ID | Estado |
-|-----------|-------|--------|
-| `billing` | `billing-integration` | ✅ Migrado en system-map |
-| `roast` | `roast-generation` | ⚠️ En código (43 refs - NO modificado) |
-| `shield` | `shield-moderation` | ⚠️ En código (10 refs - NO modificado) |
-| `analytics` | `analytics-dashboard` | ⚠️ En código (1 ref - NO modificado) |
-| `persona` | `persona-config` | ⚠️ En código (1 ref - NO modificado) |
+| Legacy ID   | v2 ID                 | Estado                                 |
+| ----------- | --------------------- | -------------------------------------- |
+| `billing`   | `billing-integration` | ✅ Migrado en system-map               |
+| `roast`     | `roast-generation`    | ⚠️ En código (43 refs - NO modificado) |
+| `shield`    | `shield-moderation`   | ⚠️ En código (10 refs - NO modificado) |
+| `analytics` | `analytics-dashboard` | ⚠️ En código (1 ref - NO modificado)   |
+| `persona`   | `persona-config`      | ⚠️ En código (1 ref - NO modificado)   |
 
 ### Acciones Realizadas
 
@@ -56,15 +56,15 @@
 
 ### Archivos Clasificados y Movidos
 
-| Archivo | Clasificación | Destino | Razón |
-|---------|---------------|---------|-------|
-| `01-arquitectura-general.md` | B) Auxiliar | `docs/architecture/` | Documentación de arquitectura |
-| `03-billing-polar.md` | B) Auxiliar | `docs/architecture/` | Documentación adicional billing |
-| `README.md` | B) Auxiliar | `docs/architecture/nodes-v2-README.md` | README del directorio |
-| `ARQUITECTURA-NODE-CORRECTIONS-APPLIED.md` | C) Legacy | `docs/legacy/` | Documento de correcciones |
-| `GENERATION-COMPLETE.md` | C) Legacy | `docs/legacy/` | Documento de generación |
-| `SHIELD-NODE-CORRECTIONS-APPLIED.md` | C) Legacy | `docs/legacy/` | Documento de correcciones |
-| `VALIDATION-CHECKLIST.md` | C) Legacy | `docs/legacy/` | Checklist de validación |
+| Archivo                                    | Clasificación | Destino                                | Razón                           |
+| ------------------------------------------ | ------------- | -------------------------------------- | ------------------------------- |
+| `01-arquitectura-general.md`               | B) Auxiliar   | `docs/architecture/`                   | Documentación de arquitectura   |
+| `03-billing-polar.md`                      | B) Auxiliar   | `docs/architecture/`                   | Documentación adicional billing |
+| `README.md`                                | B) Auxiliar   | `docs/architecture/nodes-v2-README.md` | README del directorio           |
+| `ARQUITECTURA-NODE-CORRECTIONS-APPLIED.md` | C) Legacy     | `docs/legacy/`                         | Documento de correcciones       |
+| `GENERATION-COMPLETE.md`                   | C) Legacy     | `docs/legacy/`                         | Documento de generación         |
+| `SHIELD-NODE-CORRECTIONS-APPLIED.md`       | C) Legacy     | `docs/legacy/`                         | Documento de correcciones       |
+| `VALIDATION-CHECKLIST.md`                  | C) Legacy     | `docs/legacy/`                         | Checklist de validación         |
 
 ### Archivos Referenciados (NO huérfanos)
 
@@ -95,12 +95,14 @@
 ✅ **Nodo `billing` migrado a `billing-integration`:**
 
 **Cambios en system-map-v2.yaml:**
+
 - ID del nodo: `billing` → `billing-integration`
 - Descripción: Mantenida (Polar integration v2)
 - Archivo: `docs/nodes-v2/billing.md` (mantenido)
 - Referencias actualizadas: 16 referencias en `depends_on`
 
 **Nodos afectados (dependencias actualizadas):**
+
 - `roasting-engine`
 - `analysis-engine`
 - `shield-engine`
@@ -110,6 +112,7 @@
 - `frontend-admin`
 
 **Flows e Integrations:**
+
 - Flow `billing` mantenido (nombre de flow, no nodo)
 - Integration `polar` actualizada a usar `billing-integration`
 
@@ -139,14 +142,17 @@
 ✅ **`.github/workflows/system-map-v2-consistency.yml`:**
 
 **Nuevos steps agregados:**
+
 - `Validate v2 Doc Paths` - Valida paths en system-map
 
 **Health Score threshold:**
+
 - Mínimo: ≥95 (requerido)
 - Recomendado: 100
 - Warning si < 100 pero ≥ 95
 
 **Todos los validadores configurados con:**
+
 - `continue-on-error: false` - CI FAIL en errores
 - Exit code 1 en detecciones
 
@@ -157,6 +163,7 @@
 ### Scripts Ejecutados
 
 1. ✅ **`compute-health-v2-official.js --update-ssot`:**
+
    ```
    Health Score Final: 100/100
    System Map Alignment: 100%
@@ -165,9 +172,11 @@
    Crosslink Score: 100%
    Narrative Consistency: 100%
    ```
+
    - ✅ SSOT actualizado con métricas oficiales
 
 2. ✅ **`validate-v2-doc-paths.js --ci`:**
+
    ```
    Total paths declarados: 15
    Paths existentes: 15
@@ -236,6 +245,7 @@
 **Acción requerida:** Migración de código (fuera de scope de esta tarea)
 
 **Impacto en CI:**
+
 - `detect-legacy-ids.js` fallará en CI hasta que se migre el código
 - Esto es esperado y correcto según instrucciones
 
@@ -293,17 +303,20 @@
 ## 📝 Archivos Modificados
 
 ### Creados
+
 - `docs/CI-V2/LEGACY-TO-V2-MAPPING.md`
 - `docs/CI-V2/LEGACY-CLEANUP-FINAL-REPORT.md` (este archivo)
 - `docs/legacy/` (directorio con 4 archivos)
 - `docs/architecture/` (directorio con 3 archivos)
 
 ### Modificados
+
 - `docs/system-map-v2.yaml` (billing → billing-integration)
 - `scripts/check-system-map-drift.js` (corregida lógica de verificación)
 - `.github/workflows/system-map-v2-consistency.yml` (agregado validate-v2-doc-paths)
 
 ### Movidos
+
 - `docs/nodes-v2/01-arquitectura-general.md` → `docs/architecture/`
 - `docs/nodes-v2/03-billing-polar.md` → `docs/architecture/`
 - `docs/nodes-v2/README.md` → `docs/architecture/nodes-v2-README.md`
@@ -341,4 +354,3 @@
 **✅ Limpieza Legacy Fase 2 COMPLETADA**
 
 **Última actualización:** 2025-12-09
-

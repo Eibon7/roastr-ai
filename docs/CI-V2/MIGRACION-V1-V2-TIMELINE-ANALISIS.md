@@ -29,6 +29,7 @@ La migración es **técnicamente viable en 10-12 días** con IA trabajando a tie
 ### ✅ Ya Completado (ROA-318)
 
 **Documentación v2:**
+
 - ✅ System-map-v2.yaml creado y validado (15 nodos)
 - ✅ SSOT-V2.md como fuente única de verdad
 - ✅ 16 nodos en docs/nodes-v2/ (14 funcionando + observabilidad + billing)
@@ -37,6 +38,7 @@ La migración es **técnicamente viable en 10-12 días** con IA trabajando a tie
 - ✅ Workflow system-map-v2-consistency.yml activo
 
 **Infrastructure v2:**
+
 - ✅ compute-health-v2-official.js - Cálculo dinámico desde system-map
 - ✅ calculate-gdd-health-v2.js - Lectura desde SSOT (no calcula)
 - ✅ validate-v2-doc-paths.js - Validación de paths
@@ -46,6 +48,7 @@ La migración es **técnicamente viable en 10-12 días** con IA trabajando a tie
 - ✅ detect-guardian-references.js - Prevención de nodo deprecated
 
 **Rules v2:**
+
 - ✅ `.cursor/rules/v2-optimized-system.mdc` - Reglas de nodos/subnodos
 - ✅ `.cursor/rules/system-map-consistency-drift-guard.mdc` - Consistencia
 - ✅ `.cursor/rules/v2-development.mdc` - Desarrollo limpio v2
@@ -56,14 +59,15 @@ La migración es **técnicamente viable en 10-12 días** con IA trabajando a tie
 
 **CRÍTICO:** 4 workflows ejecutan `score-gdd-health.js` (v1 legacy):
 
-| Workflow                    | Script v1              | Impacto                        | Líneas Afectadas |
-| --------------------------- | ---------------------- | ------------------------------ | ---------------- |
-| `gdd-validate.yml`          | `score-gdd-health.js`  | Health v1 en PRs no-v2-only    | 272              |
-| `gdd-telemetry.yml`         | `score-gdd-health.js`  | Telemetría usa health v1       | 42               |
-| `gdd-repair.yml`            | `score-gdd-health.js`  | Reparación valida con health v1| 115              |
-| `gdd-auto-monitor.yml`      | `score-gdd-health.js`  | Monitoreo usa health v1        | 104              |
+| Workflow               | Script v1             | Impacto                         | Líneas Afectadas |
+| ---------------------- | --------------------- | ------------------------------- | ---------------- |
+| `gdd-validate.yml`     | `score-gdd-health.js` | Health v1 en PRs no-v2-only     | 272              |
+| `gdd-telemetry.yml`    | `score-gdd-health.js` | Telemetría usa health v1        | 42               |
+| `gdd-repair.yml`       | `score-gdd-health.js` | Reparación valida con health v1 | 115              |
+| `gdd-auto-monitor.yml` | `score-gdd-health.js` | Monitoreo usa health v1         | 104              |
 
 **Adicionalmente:**
+
 - `validate-gdd-runtime.js` (v1) - Usado en 3 workflows
 - `predict-gdd-drift.js` (v1) - Usado en 2 workflows
 - `auto-repair-gdd.js` (v1) - Usado en 1 workflow
@@ -71,6 +75,7 @@ La migración es **técnicamente viable en 10-12 días** con IA trabajando a tie
 **2. Código src/ con IDs legacy**
 
 Según `detect-legacy-ids.js`:
+
 - **43 IDs legacy detectados** en código `src/`
 - Incluye referencias a: `roast`, `shield`, `social-platforms`, `frontend-dashboard`, `plan-features`, `persona`
 - Fuera de scope de ROA-318 pero debe migrarse para completar v2
@@ -78,11 +83,13 @@ Según `detect-legacy-ids.js`:
 **3. Sistema GDD v1 completo**
 
 **Legacy docs pendientes:**
+
 - `docs/nodes/*.md` (18 nodos v1) → Migrar a `docs/nodes-v2/`
 - `docs/spec.md` (v1) → Deprecar o migrar a `docs/spec-v2.md`
 - `docs/GDD-*.md` (v1) → Revisar si deben migrarse
 
 **Legacy scripts pendientes:**
+
 - `scripts/validate-gdd-runtime.js` → Equivalente v2 necesario
 - `scripts/score-gdd-health.js` → **Usar compute-health-v2-official.js**
 - `scripts/predict-gdd-drift.js` → Equivalente v2 necesario o deprecar
@@ -112,6 +119,7 @@ Según `detect-legacy-ids.js`:
 **2. Crear equivalentes v2 para scripts core** - **16 horas**
 
 Scripts prioritarios:
+
 - `validate-gdd-runtime-v2.js` - Validación de runtime v2 (8h)
 - `predict-gdd-drift-v2.js` - O deprecar si no aplica (4h)
 - `auto-repair-gdd-v2.js` - O deprecar si no aplica (4h)
@@ -133,7 +141,7 @@ Scripts prioritarios:
 
 ### Prioridad P1 - Documentación y Validación (2-3 días)
 
-**5. Migrar docs/nodes/*.md a docs/nodes-v2/** - **12 horas**
+**5. Migrar docs/nodes/\*.md a docs/nodes-v2/** - **12 horas**
 
 - 18 nodos v1 → Revisar si aplican a v2
 - Algunos pueden fusionarse o deprecarse
@@ -149,6 +157,7 @@ Scripts prioritarios:
 **7. Completar SSOT Alignment al 100%** - **4 horas**
 
 Añadir secciones "SSOT References" a 10 nodos:
+
 - roasting-engine, analysis-engine, shield-engine
 - integraciones-redes-sociales, billing, infraestructura
 - ssot-integration, auth, settings-loader-and-feature-flags
@@ -211,14 +220,17 @@ Añadir secciones "SSOT References" a 10 nodos:
 ### Días 1-4: Bloqueadores Críticos (P0)
 
 **Día 1:**
+
 - [ ] Migrar workflows a scripts v2 (12h)
 - [ ] Ajustar detect-legacy-ids.js (2h)
 
 **Día 2:**
+
 - [ ] Crear validate-gdd-runtime-v2.js (8h)
 - [ ] Evaluar si predict/auto-repair aplican a v2 (4h)
 
 **Día 3-4:**
+
 - [ ] Migrar IDs legacy en src/ (20h)
 - [ ] Testing exhaustivo post-migración (4h)
 
@@ -227,15 +239,18 @@ Añadir secciones "SSOT References" a 10 nodos:
 ### Días 5-7: Documentación (P1)
 
 **Día 5:**
+
 - [ ] Migrar docs/nodes/ prioritarios a nodes-v2/ (8h)
 - [ ] Decidir estrategia spec-v2.md (4h)
 
 **Día 6:**
+
 - [ ] Completar migración de nodos (4h)
 - [ ] Completar SSOT Alignment al 100% (4h)
 - [ ] Crear spec-v2.md o deprecar spec.md (4h)
 
 **Día 7:**
+
 - [ ] Validación de crosslinks y dependencias (4h)
 - [ ] Health score v2 al 100% (verificación) (2h)
 - [ ] Buffer para issues inesperados (6h)
@@ -245,9 +260,11 @@ Añadir secciones "SSOT References" a 10 nodos:
 ### Días 8-10: Features Parciales (P2)
 
 **Día 8-9:**
+
 - [ ] Completar Shield Phase 2 (16h)
 
 **Día 10:**
+
 - [ ] Activar Credits v2 en staging (8h)
 - [ ] Aplicar kill switch migration (2h)
 - [ ] Testing de features activadas (2h)
@@ -257,11 +274,13 @@ Añadir secciones "SSOT References" a 10 nodos:
 ### Días 11-12: Cleanup y Buffer (P3)
 
 **Día 11:**
+
 - [ ] Deprecar scripts v1 legacy (4h)
 - [ ] Limpiar archivos legacy (4h)
 - [ ] Validación E2E completa (4h)
 
 **Día 12:**
+
 - [ ] Buffer para issues inesperados (8h)
 - [ ] Documentación final (2h)
 - [ ] Merge a main (2h)
@@ -432,11 +451,13 @@ Añadir secciones "SSOT References" a 10 nodos:
 **Veredicto:** ✅ **VIABLE en 12 días con Opción B**
 
 **Timeline recomendado:**
+
 - ✅ **10 días:** Posible pero arriesgado (solo P0+P1)
 - ✅ **12 días:** Recomendado (P0+P1+P2 con buffer)
 - ✅ **15 días:** Muy seguro (P0+P1+P2+P3 completo)
 
 **Keys to Success:**
+
 1. **Scope freeze absoluto** - Zero deviations
 2. **Testing continuo** - No accumular deuda
 3. **Feature flags everywhere** - Rollback instantáneo
@@ -444,6 +465,7 @@ Añadir secciones "SSOT References" a 10 nodos:
 5. **Buffer days respetados** - No comprimir timeline
 
 **Next Steps:**
+
 1. Aprobar timeline y scope
 2. Crear branch `feature/complete-v2-migration`
 3. Ejecutar Día 1: Migrar workflows (12h)
@@ -454,4 +476,3 @@ Añadir secciones "SSOT References" a 10 nodos:
 **Última actualización:** 2025-12-09  
 **Timeline target:** 12 días (2025-12-09 → 2025-12-21)  
 **Estado:** ✅ READY TO START
-

@@ -10,6 +10,7 @@
 ## 📊 Estado Actual
 
 ### Jobs Passing ✅
+
 - Build Check
 - CodeRabbit
 - Completion Validation Required
@@ -22,6 +23,7 @@
 - validate-gdd
 
 ### Jobs Failing ❌
+
 - **System Map v2 Consistency** (2 runs failing)
   - Run 20078860447 (1m47s) - Health score 0/100
   - Run 20078861665 (37s) - JSON parse error
@@ -36,6 +38,7 @@
 El script `scripts/calculate-gdd-health-v2.js` NO implementa un modo `--json` silencioso. Siempre outputea logs usando `logger.info()`, `logger.warn()`, etc., independientemente de los flags.
 
 **Evidencia:**
+
 ```bash
 # Cuando se ejecuta con --json, el output incluye logs:
 $ node scripts/calculate-gdd-health-v2.js --json
@@ -46,6 +49,7 @@ $ node scripts/calculate-gdd-health-v2.js --json
 ```
 
 **Impacto:**
+
 - El workflow redirige stdout + stderr a `gdd-health-v2.json`:
   ```bash
   node scripts/calculate-gdd-health-v2.js --json > gdd-health-v2.json 2>&1
@@ -56,6 +60,7 @@ $ node scripts/calculate-gdd-health-v2.js --json
 - CI falla porque 0 < 95
 
 **Código problemático:**
+
 ```javascript
 // scripts/calculate-gdd-health-v2.js:212-243
 function main() {
@@ -75,21 +80,24 @@ function main() {
 El workflow se dispara en eventos `push` a ramas `feature/**`, NO solo en `pull_request`.
 
 **Evidencia:**
+
 ```yaml
 # .github/workflows/system-map-v2-consistency.yml:14-21
 on:
   pull_request:
     branches: [main]
   push:
-    branches: ['feature/**']  # ← Se ejecuta en push a feature branches
+    branches: ['feature/**'] # ← Se ejecuta en push a feature branches
 ```
 
 **Impacto:**
+
 - Cada push a la rama dispara el workflow
 - En modo "push" (línea 234), el check de health falla con `exit 1` si score < 95
 - No hay tolerancia como en modo "pull_request" (que solo genera warnings)
 
 **Código problemático:**
+
 ```yaml
 # Línea 233-242
 if (( $(echo "$HEALTH_SCORE < 95" | bc -l 2>/dev/null || echo "1") )); then
@@ -111,6 +119,7 @@ fi
 El step "Comment PR with results" (línea 275-340) intenta parsear el JSON usando `JSON.parse()` en Node.js, pero el archivo contiene logs + JSON.
 
 **Evidencia:**
+
 ```
 Run 20078861665:
 SyntaxError: Expected ',' or '}' after property value in JSON at position 101 (line 4 column 32)
@@ -119,11 +128,13 @@ SyntaxError: Expected ',' or '}' after property value in JSON at position 101 (l
 ```
 
 **Impacto:**
+
 - El step falla al intentar leer `gdd-health-v2.json`
 - No se puede generar el comentario en el PR
 - El workflow completo falla
 
 **Código problemático:**
+
 ```javascript
 // Línea 296-300
 if (fs.existsSync('gdd-health-v2.json')) {
@@ -140,6 +151,7 @@ if (fs.existsSync('gdd-health-v2.json')) {
 Cuando el script falla o el JSON es inválido, el workflow genera un fallback con score=0 y status="unknown".
 
 **Evidencia:**
+
 ```yaml
 # Línea 218-221
 node scripts/calculate-gdd-health-v2.js --json > gdd-health-v2.json 2>&1 || {
@@ -149,6 +161,7 @@ node scripts/calculate-gdd-health-v2.js --json > gdd-health-v2.json 2>&1 || {
 ```
 
 **Impacto:**
+
 - El score 0 siempre falla el threshold check (0 < 95)
 - No hay distinción entre "error de parsing" y "health realmente 0"
 - Mensajes engañosos: "Health score 0 is below 95 threshold"
@@ -286,6 +299,7 @@ if: github.event.inputs.full_validation != 'false' || github.event_name == 'work
 3. **Condición de full_validation** → Steps se skipean en push, pero "Comment PR" ejecuta siempre
 
 **Resultado:**
+
 - En eventos "push": Health check se skipea, pero "Comment PR" intenta leer JSON inexistente
 - En eventos "pull_request": Health check ejecuta, genera JSON inválido, "Comment PR" falla al parsear
 
@@ -368,6 +382,7 @@ if (fs.existsSync('gdd-health-v2.json')) {
 4. ⚠️ **Solución 2** (opcional): Mejorar redirección (ya no necesario si #1 funciona)
 
 **Esto garantiza:**
+
 - JSON limpio y válido ✅
 - Health check ejecuta en todos los eventos ✅
 - Errores de parsing no rompen workflow ✅

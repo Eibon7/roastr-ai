@@ -201,16 +201,20 @@ class SystemMapDriftChecker {
         if (entry.isFile() && entry.name.endsWith('.md')) {
           // Skip README and other non-node files
           const lowerName = entry.name.toLowerCase();
-          if (lowerName === 'readme.md' || 
-              lowerName.includes('generation') ||
-              lowerName.includes('validation') ||
-              lowerName.includes('checklist') ||
-              lowerName.includes('corrections')) {
+          if (
+            lowerName === 'readme.md' ||
+            lowerName.includes('generation') ||
+            lowerName.includes('validation') ||
+            lowerName.includes('checklist') ||
+            lowerName.includes('corrections')
+          ) {
             continue;
           }
 
           if (!referencedFiles.has(entry.name)) {
-            this.errors.push(`File "${entry.name}" exists in nodes-v2/ but is not referenced in system-map-v2.yaml`);
+            this.errors.push(
+              `File "${entry.name}" exists in nodes-v2/ but is not referenced in system-map-v2.yaml`
+            );
             foundIssues = true;
           }
         }

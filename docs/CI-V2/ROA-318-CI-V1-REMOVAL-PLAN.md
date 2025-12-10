@@ -12,12 +12,14 @@
 ### Estado Actual
 
 **Workflows con v1:**
+
 1. `gdd-validate.yml` - Ejecuta `score-gdd-health.js` cuando no es v2-only
 2. `gdd-telemetry.yml` - Ejecuta `score-gdd-health.js`, `validate-gdd-runtime.js`, `predict-gdd-drift.js`
 3. `gdd-repair.yml` - Ejecuta `score-gdd-health.js`, `validate-gdd-runtime.js`
 4. `gdd-auto-monitor.yml` - Ejecuta `score-gdd-health.js`, `validate-gdd-runtime.js`
 
 **Issues detectados:**
+
 - `detect-legacy-ids.js` falla por código src/ (43 IDs legacy)
 - Orden de steps incorrecto en `system-map-v2-consistency.yml`
 
@@ -28,6 +30,7 @@
 ### 1.1 gdd-validate.yml
 
 **Cambios requeridos:**
+
 - Eliminar: `node scripts/score-gdd-health.js --ci` (línea 272)
 - Eliminar: `node scripts/validate-gdd-runtime.js --ci` (línea 126)
 - Eliminar: `node scripts/predict-gdd-drift.js --ci` (línea 284)
@@ -36,12 +39,14 @@
   - `node scripts/calculate-gdd-health-v2.js --json` (para leer health desde SSOT)
 
 **Estrategia:**
+
 - Si PR es v2-only → usar solo scripts v2
 - Si PR es mixto → usar scripts v2 para validación v2, mantener v1 solo si es necesario para v1
 
 ### 1.2 gdd-telemetry.yml
 
 **Cambios requeridos:**
+
 - Eliminar: `node scripts/score-gdd-health.js --ci || true` (línea 42)
 - Eliminar: `node scripts/validate-gdd-runtime.js --ci || true` (línea 41)
 - Eliminar: `node scripts/predict-gdd-drift.js --ci || true` (línea 43)
@@ -54,6 +59,7 @@
 ### 1.3 gdd-repair.yml
 
 **Cambios requeridos:**
+
 - Eliminar: `node scripts/score-gdd-health.js --ci` (línea 115)
 - Eliminar: `node scripts/validate-gdd-runtime.js --ci` (línea 114)
 - Reemplazar por:
@@ -63,6 +69,7 @@
 ### 1.4 gdd-auto-monitor.yml
 
 **Cambios requeridos:**
+
 - Eliminar: `node scripts/score-gdd-health.js --summary` (línea 104)
 - Eliminar: `node scripts/validate-gdd-runtime.js --ci` (línea 95)
 - Reemplazar por:
@@ -79,6 +86,7 @@
 **Archivo:** `scripts/detect-legacy-ids.js`
 
 **Cambios requeridos:**
+
 - Añadir lógica para distinguir entre:
   - Legacy IDs en `docs/system-map-v2.yaml` → FAIL
   - Legacy IDs en `docs/nodes-v2/**/*.md` → FAIL
@@ -86,16 +94,18 @@
   - Legacy IDs en `src/**` → WARN (exit 0 en modo --ci)
 
 **Implementación:**
+
 ```javascript
 // En modo --ci:
 if (isCIMode) {
-  const docsErrors = errors.filter(e => 
-    e.file.includes('docs/system-map-v2.yaml') ||
-    e.file.includes('docs/nodes-v2/') ||
-    e.file.includes('docs/SSOT-V2.md')
+  const docsErrors = errors.filter(
+    (e) =>
+      e.file.includes('docs/system-map-v2.yaml') ||
+      e.file.includes('docs/nodes-v2/') ||
+      e.file.includes('docs/SSOT-V2.md')
   );
-  const srcErrors = errors.filter(e => e.file.includes('src/'));
-  
+  const srcErrors = errors.filter((e) => e.file.includes('src/'));
+
   if (docsErrors.length > 0) {
     // FAIL si hay errores en docs
     process.exit(1);
@@ -113,6 +123,7 @@ if (isCIMode) {
 **Archivo:** `.github/workflows/system-map-v2-consistency.yml`
 
 **Cambios requeridos:**
+
 - Mantener `continue-on-error: false` (el script ahora maneja src/ correctamente)
 - O cambiar a `continue-on-error: true` si el script no se modifica
 
@@ -147,6 +158,7 @@ if (isCIMode) {
 10. **Calculate GDD Health v2** (separar en compute + calculate)
 
 **Cambios específicos:**
+
 - Mover step "Check System Map Drift" después de "Validate Strong Concepts"
 - Separar "Calculate GDD Health v2" en dos steps:
   - `compute-health-v2-official.js` (cálculo)
@@ -159,6 +171,7 @@ if (isCIMode) {
 ### 4.1 Scripts de Validación
 
 Ejecutar en orden:
+
 1. `node scripts/validate-v2-doc-paths.js --ci`
 2. `node scripts/validate-ssot-health.js --ci`
 3. `node scripts/validate-strong-concepts.js --ci`
@@ -201,7 +214,7 @@ Ejecutar en orden:
 
 ## ⚠️ Reglas Críticas
 
-- NO tocar: system-map-v2.yaml, SSOT-V2.md (excepto sección 15), nodes-v2/*, compute-health-v2-official.js (salvo necesario), calculate-gdd-health-v2.js
+- NO tocar: system-map-v2.yaml, SSOT-V2.md (excepto sección 15), nodes-v2/\*, compute-health-v2-official.js (salvo necesario), calculate-gdd-health-v2.js
 - NO hacer push
 - Solo modificar workflows y scripts de validación
 - Mantener health score 100/100 desde SSOT
@@ -210,4 +223,3 @@ Ejecutar en orden:
 
 **Plan generado:** 2025-12-09  
 **Estado:** READY FOR EXECUTION
-

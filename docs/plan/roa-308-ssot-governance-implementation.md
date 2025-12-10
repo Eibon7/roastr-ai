@@ -31,10 +31,12 @@ Esta implementación se basa exclusivamente en:
 #### 1.1 `scripts/ci/validate-ssot-compliance.js`
 
 **Fuentes:**
+
 - `docs/SSOT/roastr-ssot-v2.md` (líneas 5-10, 39-46, 95-96, 208-232, 646-658)
 - `docs/nodes-v2/15-ssot-integration.md` (línea 138)
 
 **Funcionalidad:**
+
 - Valida que código cumple reglas SSOT v2
 - Detecta planes legacy v1
 - Detecta referencias a Stripe
@@ -43,10 +45,12 @@ Esta implementación se basa exclusivamente en:
 #### 1.2 `scripts/ci/detect-legacy-v1.js`
 
 **Fuentes:**
+
 - `docs/SSOT/roastr-ssot-v2.md` (líneas 39-46, 95-96)
 - `docs/nodes-v2/15-ssot-integration.md` (líneas 78-80)
 
 **Funcionalidad:**
+
 - Detecta referencias a planes legacy (`free`, `basic`, `creator_plus`)
 - Detecta referencias a Stripe
 - Solo verifica archivos en `apps/backend-v2/`
@@ -54,10 +58,12 @@ Esta implementación se basa exclusivamente en:
 #### 1.3 `scripts/ci/detect-hardcoded-values.js`
 
 **Fuentes:**
+
 - `docs/nodes-v2/15-ssot-integration.md` (línea 132)
 - `docs/spec/roastr-spec-v2.md` (líneas 151-160)
 
 **Funcionalidad:**
+
 - Detecta valores hardcoded que deberían venir de SSOT
 - Verifica planes, feature flags, thresholds, weights
 - Excluye settings loaders (permitidos)
@@ -65,9 +71,11 @@ Esta implementación se basa exclusivamente en:
 #### 1.4 `scripts/ci/validate-feature-flags.js`
 
 **Fuentes:**
+
 - `docs/SSOT/roastr-ssot-v2.md` (líneas 208-236)
 
 **Funcionalidad:**
+
 - Valida que solo se usen feature flags autorizados
 - Lista de 15 flags autorizados del SSOT
 - Rechaza flags no autorizados
@@ -75,9 +83,11 @@ Esta implementación se basa exclusivamente en:
 #### 1.5 `scripts/ci/validate-hexagonal-architecture.js`
 
 **Fuentes:**
+
 - `docs/spec/roastr-spec-v2.md` (líneas 600-637)
 
 **Funcionalidad:**
+
 - Valida arquitectura hexagonal en capa de dominio (`/services/`)
 - Detecta violaciones: HTTP calls, DB directa, Express, workers, serialización
 - Solo verifica archivos en `apps/backend-v2/src/services/`
@@ -85,9 +95,11 @@ Esta implementación se basa exclusivamente en:
 #### 1.6 `scripts/ci/validate-system-map-dependencies.js`
 
 **Fuentes:**
+
 - `docs/system-map-v2.yaml`
 
 **Funcionalidad:**
+
 - Valida simetría de dependencias (`depends_on` ↔ `required_by`)
 - Verifica que todos los nodos referenciados existan
 - Valida bidireccionalidad de relaciones
@@ -97,14 +109,17 @@ Esta implementación se basa exclusivamente en:
 #### 2.1 `.github/workflows/ssot-governance-validation.yml`
 
 **Fuentes:**
+
 - `docs/nodes-v2/15-ssot-integration.md` (líneas 136-141)
 
 **Funcionalidad:**
+
 - Ejecuta todos los validadores SSOT en CI
 - Se activa en PRs que modifican `apps/backend-v2/**`, `docs/SSOT/**`, `docs/spec/**`, etc.
 - Todos los jobs son bloqueantes (`continue-on-error: false`)
 
 **Jobs:**
+
 1. `validate-ssot-compliance` - Validación general SSOT
 2. `detect-legacy-v1` - Detección de legacy v1
 3. `detect-hardcoded-values` - Detección de valores hardcoded
@@ -120,10 +135,12 @@ Esta implementación se basa exclusivamente en:
 **Estado:** ✅ Ya instalada (v3.0)
 
 **Fuentes:**
+
 - Regla definida por usuario en ROA-308
 - Basada en SSOT v2, Spec v2, System Map v2, Nodos v2
 
 **Funcionalidad:**
+
 - Define fuentes permitidas
 - Establece prohibiciones absolutas
 - Define jerarquía de precedencia
@@ -135,6 +152,7 @@ Esta implementación se basa exclusivamente en:
 ## Checklist de Implementación
 
 ### Scripts CI
+
 - [x] `scripts/ci/validate-ssot-compliance.js` creado
 - [x] `scripts/ci/detect-legacy-v1.js` creado
 - [x] `scripts/ci/detect-hardcoded-values.js` creado
@@ -143,14 +161,17 @@ Esta implementación se basa exclusivamente en:
 - [x] `scripts/ci/validate-system-map-dependencies.js` creado
 
 ### Workflow CI
+
 - [x] `.github/workflows/ssot-governance-validation.yml` creado
 - [x] Todos los jobs configurados como bloqueantes
 - [x] Triggers configurados correctamente
 
 ### Documentación
+
 - [x] `docs/plan/roa-308-ssot-governance-implementation.md` creado
 
 ### Regla Cursor
+
 - [x] `.cursor/rules/ssot-strict-governance.mdc` verificado (ya existía v3.0)
 
 ---
@@ -217,4 +238,3 @@ Cada componente implementado está trazado a sus fuentes:
 **Última actualización:** 2025-12-05  
 **Implementado por:** FASE 3 de ROA-308  
 **Estado:** ✅ Completo
-

@@ -133,7 +133,11 @@ function scanFile(filePath, violations) {
       for (const pattern of config.patterns) {
         if (pattern.test(line)) {
           // Check if it's loading from SSOT (acceptable)
-          if (line.includes('loadSettings') || line.includes('getSetting') || line.includes('SSOT')) {
+          if (
+            line.includes('loadSettings') ||
+            line.includes('getSetting') ||
+            line.includes('SSOT')
+          ) {
             continue;
           }
 
@@ -156,11 +160,17 @@ function scanFile(filePath, violations) {
  */
 function getChangedFiles() {
   try {
-    const output = execSync('git diff --name-only HEAD origin/main 2>/dev/null || git diff --name-only HEAD~1 HEAD 2>/dev/null || echo ""', {
-      encoding: 'utf8',
-      stdio: 'pipe'
-    });
-    return output.trim().split('\n').filter(f => f && f.length > 0);
+    const output = execSync(
+      'git diff --name-only HEAD origin/main 2>/dev/null || git diff --name-only HEAD~1 HEAD 2>/dev/null || echo ""',
+      {
+        encoding: 'utf8',
+        stdio: 'pipe'
+      }
+    );
+    return output
+      .trim()
+      .split('\n')
+      .filter((f) => f && f.length > 0);
   } catch (error) {
     return [];
   }
@@ -174,7 +184,7 @@ function main() {
   const violations = [];
 
   const args = process.argv.slice(2);
-  const pathArg = args.find(arg => arg.startsWith('--path='));
+  const pathArg = args.find((arg) => arg.startsWith('--path='));
   const targetPath = pathArg ? pathArg.split('=')[1] : null;
   const ciMode = args.includes('--ci');
 
@@ -188,7 +198,7 @@ function main() {
     // Normalize path to prevent path traversal issues
     const normalizedPath = path.normalize(targetPath).replace(/\\/g, '/');
     const fullPath = path.resolve(normalizedPath);
-    
+
     let stats;
     try {
       stats = fs.statSync(fullPath);
@@ -196,7 +206,7 @@ function main() {
       console.error(`❌ Error accessing path: ${error.message}`);
       process.exit(1);
     }
-    
+
     if (stats.isDirectory()) {
       // Recursively find all JS/TS files
       function findFiles(dir) {
@@ -220,12 +230,12 @@ function main() {
   } else {
     // Check changed files in backend-v2
     const changedFiles = getChangedFiles();
-      filesToCheck = changedFiles
-        .filter(f => f.includes('apps/backend-v2'))
-        .map(f => {
-          const normalized = path.normalize(f).replace(/\\/g, '/');
-          return path.resolve(normalized);
-        });
+    filesToCheck = changedFiles
+      .filter((f) => f.includes('apps/backend-v2'))
+      .map((f) => {
+        const normalized = path.normalize(f).replace(/\\/g, '/');
+        return path.resolve(normalized);
+      });
   }
 
   if (filesToCheck.length === 0) {
@@ -271,4 +281,3 @@ if (require.main === module) {
 }
 
 module.exports = { main, scanFile, SSOT_DEFINED_VALUES };
-

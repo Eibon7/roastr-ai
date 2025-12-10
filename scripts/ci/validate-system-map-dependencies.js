@@ -141,7 +141,7 @@ function main() {
   const warnings = [];
 
   const args = process.argv.slice(2);
-  const nodeArg = args.find(arg => arg.startsWith('--node='));
+  const nodeArg = args.find((arg) => arg.startsWith('--node='));
   const targetNode = nodeArg ? nodeArg.split('=')[1] : null;
   const ciMode = args.includes('--ci');
 
@@ -159,7 +159,11 @@ function main() {
 
   // Validate dependency symmetry
   const symmetryIssues = validateDependencySymmetry(systemMap);
-  violations.push(...symmetryIssues.filter(i => i.type === 'missing_required_by' || i.type === 'missing_depends_on'));
+  violations.push(
+    ...symmetryIssues.filter(
+      (i) => i.type === 'missing_required_by' || i.type === 'missing_depends_on'
+    )
+  );
 
   // Validate node references
   const referenceIssues = validateNodeReferences(systemMap);
@@ -167,7 +171,9 @@ function main() {
 
   // Filter by target node if specified
   if (targetNode) {
-    violations = violations.filter(v => v.node === targetNode || v.reference === targetNode || v.depends_on === targetNode);
+    violations = violations.filter(
+      (v) => v.node === targetNode || v.reference === targetNode || v.depends_on === targetNode
+    );
   }
 
   // Report results
@@ -203,4 +209,3 @@ if (require.main === module) {
 }
 
 module.exports = { main, loadSystemMap, validateDependencySymmetry, validateNodeReferences };
-

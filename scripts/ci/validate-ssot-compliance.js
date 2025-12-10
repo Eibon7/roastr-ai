@@ -67,12 +67,16 @@ function readSSOT() {
 function getValidPlans(ssotContent) {
   // Extract from: type PlanId = 'starter' | 'pro' | 'plus';
   // Source: docs/SSOT/roastr-ssot-v2.md lines 35-36
-  const planMatch = ssotContent.match(/type PlanId = ['"]([^'"]+)['"] \| ['"]([^'"]+)['"] \| ['"]([^'"]+)['"]/);
+  const planMatch = ssotContent.match(
+    /type PlanId = ['"]([^'"]+)['"] \| ['"]([^'"]+)['"] \| ['"]([^'"]+)['"]/
+  );
   if (planMatch) {
     return [planMatch[1], planMatch[2], planMatch[3]];
   }
   // If parsing fails, this is a validation error - SSOT format may have changed
-  throw new Error('Failed to parse valid plan IDs from SSOT v2. SSOT may be malformed. Expected: type PlanId = \'starter\' | \'pro\' | \'plus\'');
+  throw new Error(
+    "Failed to parse valid plan IDs from SSOT v2. SSOT may be malformed. Expected: type PlanId = 'starter' | 'pro' | 'plus'"
+  );
 }
 
 /**
@@ -194,7 +198,10 @@ function getChangedFiles() {
         output = '';
       }
     }
-    return output.trim().split('\n').filter(f => f && f.length > 0);
+    return output
+      .trim()
+      .split('\n')
+      .filter((f) => f && f.length > 0);
   } catch (error) {
     return [];
   }
@@ -209,7 +216,7 @@ function main() {
   const warnings = [];
 
   const args = process.argv.slice(2);
-  const pathArg = args.find(arg => arg.startsWith('--path='));
+  const pathArg = args.find((arg) => arg.startsWith('--path='));
   const targetPath = pathArg ? pathArg.split('=')[1] : null;
   const ciMode = args.includes('--ci');
 
@@ -225,7 +232,7 @@ function main() {
     // Normalize path to prevent path traversal issues
     const normalizedPath = path.normalize(targetPath).replace(/\\/g, '/');
     const fullPath = path.resolve(normalizedPath);
-    
+
     let stats;
     try {
       stats = fs.statSync(fullPath);
@@ -233,7 +240,7 @@ function main() {
       console.error(`❌ Error accessing path: ${error.message}`);
       process.exit(1);
     }
-    
+
     if (stats.isDirectory()) {
       filesToCheck = findFiles(fullPath);
     } else {
@@ -246,7 +253,9 @@ function main() {
       // In shallow clones, if no changed files detected, check all backend-v2 files
       // This is a fallback - ideally CI should use fetch-depth: 0
       if (!ciMode) {
-        console.log('⚠️  No changed files detected (shallow clone?). Checking all backend-v2 files...');
+        console.log(
+          '⚠️  No changed files detected (shallow clone?). Checking all backend-v2 files...'
+        );
       }
       const backendV2Path = path.join(__dirname, '../../apps/backend-v2');
       if (fs.existsSync(backendV2Path)) {
@@ -259,8 +268,8 @@ function main() {
       }
     } else {
       filesToCheck = changedFiles
-        .filter(f => f.includes('apps/backend-v2'))
-        .map(f => {
+        .filter((f) => f.includes('apps/backend-v2'))
+        .map((f) => {
           const normalized = path.normalize(f).replace(/\\/g, '/');
           return path.resolve(normalized);
         });
@@ -311,4 +320,3 @@ if (require.main === module) {
 }
 
 module.exports = { main, scanFile, getValidPlans, getLegacyPlans, getValidFeatureFlags };
-

@@ -15,6 +15,7 @@ Este reporte refleja las métricas oficiales leídas desde **docs/SSOT-V2.md (Se
 Este script NO calcula métricas, solo las lee del SSOT.
 
 Para actualizar métricas, ejecutar:
+
 ```bash
 node scripts/compute-health-v2-official.js --update-ssot
 ```
@@ -23,14 +24,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ## 📈 Puntuaciones Detalladas
 
-| Métrica                   | Puntuación  | Peso | Contribución | Estado       |
-| ------------------------- | ----------- | ---- | ------------ | ------------ |
-| **System Map Alignment**  | 100%      | 30%  | 30.00        | 🟢 |
-| **Dependency Density**    | 100%      | 20%  | 20.00        | 🟢 |
-| **Crosslink Score**       | 100%      | 20%  | 20.00         | 🟢 |
-| **SSOT Alignment**        | 100%      | 20%  | 20.00        | 🟢 |
-| **Narrative Consistency** | 100%     | 10%  | 10.00        | ✅ Placeholder   |
-| **HEALTH SCORE FINAL**    | **100/100** | -    | -            | 🟢 HEALTHY |
+| Métrica                   | Puntuación  | Peso | Contribución | Estado         |
+| ------------------------- | ----------- | ---- | ------------ | -------------- |
+| **System Map Alignment**  | 100%        | 30%  | 30.00        | 🟢             |
+| **Dependency Density**    | 100%        | 20%  | 20.00        | 🟢             |
+| **Crosslink Score**       | 100%        | 20%  | 20.00        | 🟢             |
+| **SSOT Alignment**        | 100%        | 20%  | 20.00        | 🟢             |
+| **Narrative Consistency** | 100%        | 10%  | 10.00        | ✅ Placeholder |
+| **HEALTH SCORE FINAL**    | **100/100** | -    | -            | 🟢 HEALTHY     |
 
 **Cálculo:** (100 × 0.30) + (100 × 0.20) + (100 × 0.20) + (100 × 0.20) + (100 × 0.10) = 100
 

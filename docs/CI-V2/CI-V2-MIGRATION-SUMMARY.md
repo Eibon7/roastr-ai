@@ -20,13 +20,13 @@
 
 ### 📈 Métricas
 
-| Métrica | Antes | Después | Mejora |
-|---------|-------|---------|--------|
-| **Workflows totales** | 25 | 16 | -36% |
-| **Workflows obsoletos** | 11 | 0 | -100% |
-| **Tests legacy activos** | 7 | 0 | -100% |
-| **Scripts v2 integrados** | 0 | 8 | +∞ |
-| **Validaciones v2** | 0 | 9 | +∞ |
+| Métrica                   | Antes | Después | Mejora |
+| ------------------------- | ----- | ------- | ------ |
+| **Workflows totales**     | 25    | 16      | -36%   |
+| **Workflows obsoletos**   | 11    | 0       | -100%  |
+| **Tests legacy activos**  | 7     | 0       | -100%  |
+| **Scripts v2 integrados** | 0     | 8       | +∞     |
+| **Validaciones v2**       | 0     | 9       | +∞     |
 
 ---
 
@@ -62,6 +62,7 @@
 ### 4. Optimizaciones
 
 ✅ **11 workflows eliminados:**
+
 - Duplicados (4)
 - Mantenimiento manual (1)
 - Demos (1)
@@ -71,6 +72,7 @@
 - Code review automático (1)
 
 ✅ **5 workflows modificados:**
+
 - Tests legacy desactivados
 - Preparados para activación v2
 
@@ -153,6 +155,7 @@
 ## 📝 Archivos Modificados
 
 ### Creados (7)
+
 - `.github/workflows/system-map-v2-consistency.yml`
 - `scripts/check-system-map-drift.js`
 - `docs/CI-V2/CI-AUDIT-REPORT.md`
@@ -162,6 +165,7 @@
 - `docs/CI-V2/CI-V2-MIGRATION-SUMMARY.md` (este archivo)
 
 ### Modificados (5)
+
 - `.github/workflows/ci.yml` (tests desactivados)
 - `.github/workflows/pre-merge-validation.yml` (tests desactivados)
 - `.github/workflows/tests.yml` (tests desactivados)
@@ -169,6 +173,7 @@
 - `.github/workflows/e2e-tests.yml` (tests desactivados)
 
 ### Eliminados (11)
+
 - `.github/workflows/agent-receipts.yml`
 - `.github/workflows/auto-format.yml`
 - `.github/workflows/ci-pr-validation.yml`
@@ -224,4 +229,3 @@ El CI ha sido completamente migrado y optimizado para v2:
 **✅ CI v2 está listo para producción**
 
 **Última actualización:** 2025-12-02
-

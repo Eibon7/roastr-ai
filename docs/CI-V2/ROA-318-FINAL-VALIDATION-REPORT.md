@@ -73,16 +73,16 @@ Paths faltantes: 0
 
 ### 3. Validadores v2 (CI-Critical)
 
-| Validador | Exit Code | Estado | Notas |
-|-----------|-----------|--------|-------|
-| **validate-v2-doc-paths.js** | 0 | ✅ PASS | Todos los paths existen |
-| **validate-ssot-health.js** | 0 | ✅ PASS | Health Score 100/100 |
-| **validate-strong-concepts.js** | 0 | ✅ PASS | Sin duplicados |
-| **validate-node-ids.js** | 1 | ⚠️ EXPECTED | IDs legacy en src/ (fuera de scope) |
-| **validate-symmetry.js** | 0 | ✅ PASS | Relaciones simétricas |
-| **detect-guardian-references.js** | 1 | ⚠️ EXPECTED | Referencias guardian en código src/ (fuera de scope ROA-318) |
-| **detect-legacy-ids.js** | 1 | ⚠️ EXPECTED | 43 IDs legacy en src/ (fuera de scope) |
-| **check-system-map-drift.js** | 0 | ✅ PASS | Sin drift detectado |
+| Validador                         | Exit Code | Estado      | Notas                                                        |
+| --------------------------------- | --------- | ----------- | ------------------------------------------------------------ |
+| **validate-v2-doc-paths.js**      | 0         | ✅ PASS     | Todos los paths existen                                      |
+| **validate-ssot-health.js**       | 0         | ✅ PASS     | Health Score 100/100                                         |
+| **validate-strong-concepts.js**   | 0         | ✅ PASS     | Sin duplicados                                               |
+| **validate-node-ids.js**          | 1         | ⚠️ EXPECTED | IDs legacy en src/ (fuera de scope)                          |
+| **validate-symmetry.js**          | 0         | ✅ PASS     | Relaciones simétricas                                        |
+| **detect-guardian-references.js** | 1         | ⚠️ EXPECTED | Referencias guardian en código src/ (fuera de scope ROA-318) |
+| **detect-legacy-ids.js**          | 1         | ⚠️ EXPECTED | 43 IDs legacy en src/ (fuera de scope)                       |
+| **check-system-map-drift.js**     | 0         | ✅ PASS     | Sin drift detectado                                          |
 
 **Resumen:** 5/8 validadores pasando (3 esperados fallando: IDs legacy y guardian references en código src/, fuera de scope ROA-318)
 
@@ -102,6 +102,7 @@ Paths faltantes: 0
 - **Health Score Final:** 100/100 ✅
 
 **Validaciones:**
+
 - ✅ Lee únicamente desde SSOT sección 15
 - ✅ Sin cálculos dinámicos
 - ✅ Sin hardcodes
@@ -200,17 +201,17 @@ Paths faltantes: 0
 
 ### 📊 Métricas Finales
 
-| Métrica | Valor | Estado |
-|---------|-------|--------|
-| **System Map Cycles** | 0 | ✅ |
-| **Doc Paths Validator** | PASS | ✅ |
-| **SSOT Alignment** | 100% | ✅ |
-| **Health Score** | 100/100 | ✅ |
-| **Strong Concepts** | PASS | ✅ |
-| **Legacy IDs (código)** | ≈43 | ⚠️ Expected |
+| Métrica                 | Valor          | Estado                       |
+| ----------------------- | -------------- | ---------------------------- |
+| **System Map Cycles**   | 0              | ✅                           |
+| **Doc Paths Validator** | PASS           | ✅                           |
+| **SSOT Alignment**      | 100%           | ✅                           |
+| **Health Score**        | 100/100        | ✅                           |
+| **Strong Concepts**     | PASS           | ✅                           |
+| **Legacy IDs (código)** | ≈43            | ⚠️ Expected                  |
 | **Guardian References** | En código src/ | ⚠️ Expected (fuera de scope) |
-| **Drift** | 0 | ✅ |
-| **Files Outside Scope** | 0 | ✅ |
+| **Drift**               | 0              | ✅                           |
+| **Files Outside Scope** | 0              | ✅                           |
 
 ---
 
@@ -226,4 +227,3 @@ El system map está acyclic, todas las relaciones son simétricas, el health sco
 
 **Última actualización:** 2025-12-09  
 **Validado por:** Validación estricta READ-ONLY
-

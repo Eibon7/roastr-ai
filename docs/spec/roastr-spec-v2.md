@@ -224,15 +224,12 @@ Es **la narrativa única e inmutable de cómo funciona Roastr v2**.
 # **0.7 Agents & Skills (v2) — Versión Extendida e Integrada**
 
 > Objetivo:
-> 
 
 > Establecer claramente cómo Agents y Skills de Cursor
-> 
-> 
+>
 > **pueden**
-> 
+>
 > **no pueden**
-> 
 
 ---
 
@@ -449,14 +446,14 @@ No permite code sin tests adecuados.
 
 # **0.7.7 Roles y límites por área de Roastr**
 
-| **Módulo** | **Puede** | **No puede** |
-| --- | --- | --- |
-| Backend hexagonal | Orchestrator + Explore + TestEngineer | saltar SSOT |
-| Frontend shadcn | FrontendDev + UIDesigner | cambiar billing logic |
-| Workers | Orchestrator + TestEngineer | generar prompts |
-| Billing | Guardian + TestEngineer | que FrontendDev modifique billing |
-| Prompting | Explore + FrontendDev | tocar datos encriptados |
-| SSOT | Guardian | nadie más modifica |
+| **Módulo**        | **Puede**                             | **No puede**                      |
+| ----------------- | ------------------------------------- | --------------------------------- |
+| Backend hexagonal | Orchestrator + Explore + TestEngineer | saltar SSOT                       |
+| Frontend shadcn   | FrontendDev + UIDesigner              | cambiar billing logic             |
+| Workers           | Orchestrator + TestEngineer           | generar prompts                   |
+| Billing           | Guardian + TestEngineer               | que FrontendDev modifique billing |
+| Prompting         | Explore + FrontendDev                 | tocar datos encriptados           |
+| SSOT              | Guardian                              | nadie más modifica                |
 
 ---
 
@@ -562,7 +559,7 @@ Roastr v2 se implementa como un **monorepo** con tres aplicaciones:
 - TypeScript estricto
 - shadcn/ui + Tailwind
 - React Query
-- Arquitectura modular por capas (ver sección *1.3*)
+- Arquitectura modular por capas (ver sección _1.3_)
 - Tema claro, oscuro y automático
 - Totalmente responsive (móvil es caso prioritario)
 
@@ -577,7 +574,7 @@ Consume únicamente:
 
 - Node + TypeScript
 - Express 5 (solo capa de rutas)
-- **Arquitectura hexagonal estricta** (ver *1.2*)
+- **Arquitectura hexagonal estricta** (ver _1.2_)
 - Workers asíncronos desacoplados
 - Supabase como DB
 - Polar para suscripciones
@@ -603,7 +600,7 @@ El backend sigue estrictamente puertos y adaptadores:
 
 ### **🔹 Adaptadores de Entrada (Primary ports)**
 
-/routes/*
+/routes/\*
 
 - Validación
 - Coordinación de casos de uso
@@ -615,17 +612,17 @@ No contienen lógica de negocio.
 
 ### **🔹 Dominio (Núcleo del sistema)**
 
-/services/*
+/services/\*
 
 El dominio implementa:
 
-- Motor de análisis → *ver sección 5*
-- Motor de Shield → *ver sección 7*
-- Motor de Roasting → *ver sección 6*
-- Billing / límites de plan → *ver sección 3*
-- Sponsors (plan Plus) → *ver sección 9.6*
-- Impersonación segura → *ver sección 10.2*
-- Fórmulas y reglas cargadas desde SSOT → *ver sección 1.12*
+- Motor de análisis → _ver sección 5_
+- Motor de Shield → _ver sección 7_
+- Motor de Roasting → _ver sección 6_
+- Billing / límites de plan → _ver sección 3_
+- Sponsors (plan Plus) → _ver sección 9.6_
+- Impersonación segura → _ver sección 10.2_
+- Fórmulas y reglas cargadas desde SSOT → _ver sección 1.12_
 
 **Prohibiciones absolutas dentro del dominio:**
 
@@ -640,7 +637,7 @@ El dominio implementa:
 
 ### **🔹 Adaptadores de Salida (Secondary ports)**
 
-/integrations/* y /lib/db/*
+/integrations/_ y /lib/db/_
 
 Encapsulan proveedores externos:
 
@@ -656,7 +653,7 @@ El dominio solo conoce interfaces.
 
 ### **🔹 Workers Asíncronos**
 
-/workers/*
+/workers/\*
 
 Cada worker implementa un único caso de uso:
 
@@ -726,9 +723,9 @@ El frontend v2 replica la filosofía hexagonal:
 Workers v2 procesan acciones críticas de forma asíncrona:
 
 - ingestión programada de comentarios
-- análisis de toxicidad + Persona → *ver sección 5*
-- clasificación del Shield → *ver sección 7*
-- generación de roasts → *ver sección 6*
+- análisis de toxicidad + Persona → _ver sección 5_
+- clasificación del Shield → _ver sección 7_
+- generación de roasts → _ver sección 6_
 - acciones automáticas en redes
 - actualizaciones de billing
 - envío de emails
@@ -739,7 +736,7 @@ Características:
 - Idempotentes
 - Retries con backoff
 - Métricas en cada ejecución
-- Colas prefijadas v2_*
+- Colas prefijadas v2\_\*
 - Ninguna lógica del dominio dentro
 
 ---
@@ -764,7 +761,7 @@ Roastr v2 utiliza Supabase exclusivamente para:
 
 RLS está activado por defecto y auditado.
 
-Ver sección *5*, *7*, *9*, *10*, *11*, *14* para subsistemas dependientes.
+Ver sección _5_, _7_, _9_, _10_, _11_, _14_ para subsistemas dependientes.
 
 ---
 
@@ -876,7 +873,7 @@ Roastr v2 elimina el plan Free y adopta trials directos por plan.
 
 **Y MUY IMPORTANTE:**
 
-➡️ *Si un usuario cancela durante el trial, el trial termina inmediatamente*.
+➡️ _Si un usuario cancela durante el trial, el trial termina inmediatamente_.
 
 La cuenta pasa a **paused**, y Roastr deja de operar.
 
@@ -989,20 +986,18 @@ El objetivo es mantener un sistema **seguro, simple, moderno y coherente**, evit
 Flujo completo:
 
 1. El usuario proporciona:
-    - email
-    - contraseña
-    - plan seleccionado (Starter, Pro o Plus)
+   - email
+   - contraseña
+   - plan seleccionado (Starter, Pro o Plus)
 2. Antes de activar el trial:
-    - Se valida método de pago
-    - Si la tarjeta falla → se crea la cuenta igualmente,
-        
-        pero el onboarding queda bloqueado en el paso “Configura tu método de pago”.
-        
+   - Se valida método de pago
+   - Si la tarjeta falla → se crea la cuenta igualmente,
+     pero el onboarding queda bloqueado en el paso “Configura tu método de pago”.
 3. Una vez el método de pago es válido:
-    - Se crea el usuario en users
-    - Se crea el perfil en profiles
-    - Se activa el trial correspondiente (ver sección 1.9)
-    - Se inicia el onboarding wizard
+   - Se crea el usuario en users
+   - Se crea el perfil en profiles
+   - Se activa el trial correspondiente (ver sección 1.9)
+   - Se inicia el onboarding wizard
 
 ### **Tablas relacionadas**
 
@@ -1120,8 +1115,8 @@ Permisos extra:
 ### **Seguridad:**
 
 - Mismas reglas de sesión que admin:
-    - Sesión: 24h
-    - Logout tras **4 horas** de inactividad
+  - Sesión: 24h
+  - Logout tras **4 horas** de inactividad
 - Acciones críticas → requieren password + confirmación adicional
 - No tiene acceso a magic link
 
@@ -1145,20 +1140,14 @@ language_preference
 
 # **2.5 Roastr Persona (configuración personal)**
 
-El *Roastr Persona* permite personalizar la sensibilidad y estilo del análisis. Consta de tres elementos:
+El _Roastr Persona_ permite personalizar la sensibilidad y estilo del análisis. Consta de tres elementos:
 
 - **Lo que me define**
-    
-    Identidades personales relevantes del usuario.
-    
+  Identidades personales relevantes del usuario.
 - **Lo que no tolero**
-    
-    Tópicos o ataques que siempre deben escalar a Shield.
-    
+  Tópicos o ataques que siempre deben escalar a Shield.
 - **Lo que me da igual**
-    
-    Temas que podrían ser ofensivos para otros, pero para él no.
-    
+  Temas que podrían ser ofensivos para otros, pero para él no.
 
 El contenido se almacena siempre **cifrado**.
 
@@ -1180,13 +1169,13 @@ Supabase aporta:
 
 - Sin password = sin acceso (para admin/superadmin)
 - Admin y superadmin:
-    - No magic link
-    - No sesión persistente
+  - No magic link
+  - No sesión persistente
 - Logout en cascada cuando:
-    - el email cambia
-    - la contraseña cambia
-    - se degrada el rol
-    - se reactiva cuenta pausada
+  - el email cambia
+  - la contraseña cambia
+  - se degrada el rol
+  - se reactiva cuenta pausada
 
 ### **Usos de tokens especiales:**
 
@@ -1266,13 +1255,13 @@ Esto evita gasto computacional innecesario en usuarios que rechazan explícitame
 
 # **2.10 Reglas de Acceso según Estado de Suscripción**
 
-| **Estado** | **Acceso permitido** | **Acceso restringido** |
-| --- | --- | --- |
-| **trialing** | Full acceso del plan | — |
-| **active** | Full acceso según plan | — |
-| **paused** | Solo login + billing | Shield/Roasts/Integraciones |
-| **canceled** | Solo login + billing | Toda funcionalidad |
-| **past_due** | Igual que paused | Igual que paused |
+| **Estado**   | **Acceso permitido**   | **Acceso restringido**      |
+| ------------ | ---------------------- | --------------------------- |
+| **trialing** | Full acceso del plan   | —                           |
+| **active**   | Full acceso según plan | —                           |
+| **paused**   | Solo login + billing   | Shield/Roasts/Integraciones |
+| **canceled** | Solo login + billing   | Toda funcionalidad          |
+| **past_due** | Igual que paused       | Igual que paused            |
 
 ---
 
@@ -1283,9 +1272,9 @@ Esto evita gasto computacional innecesario en usuarios que rechazan explícitame
 - Los tokens caducados son rechazados automáticamente por Supabase
 - No se permite ninguna llamada al backend sin JWT válido
 - El Admin Panel se protege con:
-    - rutas separadas
-    - protección por rol
-    - validación adicional en acciones críticas
+  - rutas separadas
+  - protección por rol
+  - validación adicional en acciones críticas
 
 ---
 
@@ -1349,9 +1338,9 @@ Roastr ofrece **tres** planes:
 
 - **Trial:** 30 días
 - **Límites / mes:**
-    - 1.000 análisis
-    - 5 roasts
-    - 1 cuenta por red social
+  - 1.000 análisis
+  - 5 roasts
+  - 1 cuenta por red social
 - **Incluye:** Shield básico, tonos estándar, Roastr Persona
 - **No incluye:** tono personal, sponsors
 
@@ -1361,9 +1350,9 @@ Roastr ofrece **tres** planes:
 
 - **Trial:** **7 días**
 - **Límites / mes:**
-    - 10.000 análisis
-    - 1.000 roasts
-    - 2 cuentas por red social
+  - 10.000 análisis
+  - 1.000 roasts
+  - 2 cuentas por red social
 - **Incluye:** Shield completo, tono personal, multi-cuenta, Roastr Persona
 - **No incluye:** sponsors
 
@@ -1373,9 +1362,9 @@ Roastr ofrece **tres** planes:
 
 - **Sin trial**
 - **Límites / mes:**
-    - 100.000 análisis
-    - 5.000 roasts
-    - 2 cuentas por red social
+  - 100.000 análisis
+  - 5.000 roasts
+  - 2 cuentas por red social
 - **Incluye:** todo Pro + Sponsors + prioridad en colas (opcional)
 
 ---
@@ -1385,10 +1374,10 @@ Roastr ofrece **tres** planes:
 ## **Trial por plan**
 
 | **Plan** | **Trial** | **Duración** |
-| --- | --- | --- |
-| Starter | Sí | 30 días |
-| Pro | Sí | **7 días** |
-| Plus | ❌ No | — |
+| -------- | --------- | ------------ |
+| Starter  | Sí        | 30 días      |
+| Pro      | Sí        | **7 días**   |
+| Plus     | ❌ No     | —            |
 
 ---
 
@@ -1447,7 +1436,7 @@ Roastr ofrece **tres** planes:
 - Pago inmediato
 - Límites de Plus activados al instante
 
-*(Polar gestiona prorrateos.)*
+_(Polar gestiona prorrateos.)_
 
 ---
 
@@ -1493,11 +1482,11 @@ La suscripción queda como **canceled_pending**.
 - La suscripción pasa a **canceled**
 - La cuenta pasa a **paused**
 - Todo Roastr queda desactivado:
-    - ❌ Shield
-    - ❌ Roasts
-    - ❌ Ingestión
-    - ❌ Workers
-    - ❌ Integraciones
+  - ❌ Shield
+  - ❌ Roasts
+  - ❌ Ingestión
+  - ❌ Workers
+  - ❌ Integraciones
 
 ---
 
@@ -1575,10 +1564,8 @@ Cuando el usuario llega a 0 análisis:
 Lo único que ocurre:
 
 - La UI SEGUIRÁ MOSTRANDO comentarios desde la API de las redes sociales.
-    - Es decir: **seguimos listando comentarios**,
-        
-        pero **no los procesamos**.
-        
+  - Es decir: **seguimos listando comentarios**,
+    pero **no los procesamos**.
 
 El usuario puede:
 
@@ -1744,7 +1731,7 @@ Esta es la redacción limpia para meter en el Spec File, sección **3.6 Estado d
 
 ### **3.X State Machine de Suscripciones (v2)**
 
-*(Versión precisa, alineada con Polar y reglas del producto)*
+_(Versión precisa, alineada con Polar y reglas del producto)_
 
 El sistema de billing de Roastr v2 se modela como una **máquina de estados determinista**, que representa exactamente cómo evoluciona una suscripción en función de:
 
@@ -1785,9 +1772,7 @@ El sistema permite:
 - shield
 - límites del plan correspondiente
 - upgrades instantáneos sin entrar en nuevos trials
-    
-    (Starter → Pro no reinicia un trial)
-    
+  (Starter → Pro no reinicia un trial)
 
 ---
 
@@ -1891,11 +1876,8 @@ El plan Plus entra **directamente** aquí:
 ### **Upgrade durante trial**
 
 - Starter → Pro:
-    
-    → NO inicia trial Pro.
-    
-    → Sale del trial y pasa a active Pro.
-    
+  → NO inicia trial Pro.
+  → Sale del trial y pasa a active Pro.
 
 ### **Upgrade a Plus**
 
@@ -1913,7 +1895,7 @@ El plan Plus entra **directamente** aquí:
 - No hay servicio
 - No hay cobro futuro
 
-*(Esta es tu decisión explícita → “no regalamos días si cancela”.)*
+_(Esta es tu decisión explícita → “no regalamos días si cancela”.)_
 
 ---
 
@@ -1952,22 +1934,20 @@ Caso 2: Después del fin de ciclo
 ### **workers**
 
 - suspended states = no se procesan colas
-    
-    (fetching, shield, roasting)
-    
+  (fetching, shield, roasting)
 
 ### **Polar webhooks**
 
 Mapeo directo:
 
-| **Polar Webhook** | **Transición** |
-| --- | --- |
-| subscription_created | → trialing o → active |
-| subscription_active | → active |
-| subscription_canceled | → canceled_pending |
-| invoice_payment_failed | → payment_retry |
-| invoice_payment_succeeded | → active |
-| subscription_updated | upgrade/downgrade |
+| **Polar Webhook**         | **Transición**        |
+| ------------------------- | --------------------- |
+| subscription_created      | → trialing o → active |
+| subscription_active       | → active              |
+| subscription_canceled     | → canceled_pending    |
+| invoice_payment_failed    | → payment_retry       |
+| invoice_payment_succeeded | → active              |
+| subscription_updated      | upgrade/downgrade     |
 
 ---
 
@@ -1979,7 +1959,7 @@ Mapeo directo:
 
 # **4. Conexión con Redes Sociales (v2)**
 
-*(Versión final — alineada con arquitectura, billing, workers y GDPR)*
+_(Versión final — alineada con arquitectura, billing, workers y GDPR)_
 
 Roastr v2 soporta inicialmente **dos plataformas**:
 
@@ -2006,15 +1986,15 @@ Cada plataforma opera con workers independientes, cursors propios, health checks
 # **4.1 Límite de cuentas por plan**
 
 | **Plan** | **Cuentas por plataforma** | **Plataformas v2** | **Total** |
-| --- | --- | --- | --- |
-| Starter | 1 | X + YouTube | 2 |
-| Pro | 2 | X + YouTube | 4 |
-| Plus | 2 | X + YouTube | 4 |
+| -------- | -------------------------- | ------------------ | --------- |
+| Starter  | 1                          | X + YouTube        | 2         |
+| Pro      | 2                          | X + YouTube        | 4         |
+| Plus     | 2                          | X + YouTube        | 4         |
 
 ### **Reglas:**
 
 - “Cuentas por plataforma” significa **por red**, no en total.
-- Si se alcanza el máximo → botón *Añadir cuenta* queda deshabilitado.
+- Si se alcanza el máximo → botón _Añadir cuenta_ queda deshabilitado.
 - El backend valida igualmente (hard limit).
 - Si billing está **paused**, todas las cuentas pasan a **paused**.
 
@@ -2118,14 +2098,14 @@ Efectos:
 1. Usuario pulsa **Conectar cuenta de X**
 2. Frontend → backend: solicitar URL de OAuth2 PKCE
 3. Backend genera:
-    - state
-    - code_verifier
+   - state
+   - code_verifier
 4. Usuario autoriza
 5. Callback → /oauth/callback/x
 6. Backend intercambia code por:
-    - access_token
-    - refresh_token
-    - expires_in
+   - access_token
+   - refresh_token
+   - expires_in
 7. Se crea la cuenta:
 
 ```
@@ -2169,8 +2149,8 @@ Si se requieren permisos adicionales → UI pide reconectar.
 1. Usuario pulsa **Conectar YouTube**
 2. OAuth2 estándar con Google
 3. Scopes:
-    - leer comentarios
-    - publicar respuestas
+   - leer comentarios
+   - publicar respuestas
 4. Backend guarda la cuenta
 5. Workers se inicializan
 
@@ -2221,10 +2201,10 @@ Nueva conexión = nueva cuenta.
 ## **4.5.1 Cadencia por plan**
 
 | **Plan** | **Cadencia** | **Ingestiones/día por cuenta** |
-| --- | --- | --- |
-| Starter | 15 min | 96 |
-| Pro | 10 min | 144 |
-| Plus | 5 min | 288 |
+| -------- | ------------ | ------------------------------ |
+| Starter  | 15 min       | 96                             |
+| Pro      | 10 min       | 144                            |
+| Plus     | 5 min        | 288                            |
 
 **Cada cuenta → su propio worker con cadencia independiente.**
 
@@ -2295,8 +2275,8 @@ Manejo:
 
 - backoff exponencial (1m → 5m → 15m)
 - freezer temporal tras 3 fallos graves:
-    - integration_health = “frozen”
-    - ingestion OFF 30 min
+  - integration_health = “frozen”
+  - ingestion OFF 30 min
 - detección de token revocado
 - logging de severidad alta
 - si persiste → status=inactive
@@ -2322,14 +2302,14 @@ Manejo:
 
 # **4.7 Estados con Health Interno**
 
-Cada estado ahora incorpora un *health overlay*:
+Cada estado ahora incorpora un _health overlay_:
 
-| **health** | **Significado** |
-| --- | --- |
-| ok | todo funciona |
-| degraded | errores ocasionales |
-| frozen | demasiados errores → 30 min OFF |
-| needs_reconnect | OAuth roto |
+| **health**      | **Significado**                 |
+| --------------- | ------------------------------- |
+| ok              | todo funciona                   |
+| degraded        | errores ocasionales             |
+| frozen          | demasiados errores → 30 min OFF |
+| needs_reconnect | OAuth roto                      |
 
 Esto permite UI y workers más inteligentes.
 
@@ -2567,10 +2547,8 @@ tolerancia: 0.95   // solo si score_base < τ_shield
 Regla de tolerancias (tuya):
 
 > Tolerancias solo reducen score
-> 
-> 
+>
 > **si aún no estamos en zona de shield**
-> 
 
 Aplicación:
 
@@ -2608,10 +2586,8 @@ critical: 1.50
 Regla acordada:
 
 > Si strike_level ≥ 2
-> 
-> 
+>
 > **y**
-> 
 
 ---
 
@@ -2670,7 +2646,7 @@ Acciones:
 
 ## **3️⃣ Zona Correctiva (Strike 1)**
 
-*(tu solución preferida, ahora formalizada)*
+_(tu solución preferida, ahora formalizada)_
 
 Condición:
 
@@ -2683,24 +2659,15 @@ AND has_initial_insult_with_argument
 Ejemplo de patrón:
 
 > “Mira imbécil, pero tienes razón…”
-> 
 
 Acción:
 
 - Se genera **Respuesta Correctiva** (no usa tonos configurados)
 - El contenido es estándar, serio y firme:
-    
-    > “Apreciamos el debate sin insultos.
-    > 
-    
-    > Si quieres continuar hablando, hazlo con respeto.
-    > 
-    
-    > Roastr.ai usa un sistema de strikes para este tipo de comentarios; avisamos antes de silenciar.
-    > 
-    
-    > Este es tu Strike 1.
-    > 
+  > “Apreciamos el debate sin insultos.
+  > Si quieres continuar hablando, hazlo con respeto.
+  > Roastr.ai usa un sistema de strikes para este tipo de comentarios; avisamos antes de silenciar.
+  > Este es tu Strike 1.
 - strike_level = 1
 - No usa el motor de Roasts
 
@@ -2967,13 +2934,10 @@ Publicar --> [*]
 # **✅ Motor de Análisis v2 — Versión Contractual**
 
 > Objetivo
-> 
 
 > Dado un comentario normalizado y un contexto de usuario, producir
-> 
-> 
+>
 > **una decisión determinista**
-> 
 
 ```
 "publicar" | "correctiva" | "roast" | "shield_moderado" | "shield_critico"
@@ -3136,9 +3100,9 @@ if (remainingAnalysis <= 0)
 
 ```
 
-*(En v2: si no hay análisis → no hay ingestión.*
+_(En v2: si no hay análisis → no hay ingestión._
 
-*Pero a nivel de motor: sin análisis, el motor no actúa.)*
+_Pero a nivel de motor: sin análisis, el motor no actúa.)_
 
 ---
 
@@ -3305,12 +3269,12 @@ Sin IO, sin HTTP, sin DB.
 ## **Aplicación (services)**
 
 - commentAnalysisService:
-    - llama a Perspective
-    - extrae match persona
-    - carga offender
-    - ejecuta reducer
-    - devuelve decisión
-    - despacha a pipeline adecuado
+  - llama a Perspective
+  - extrae match persona
+  - carga offender
+  - ejecuta reducer
+  - devuelve decisión
+  - despacha a pipeline adecuado
 
 ---
 
@@ -3355,24 +3319,23 @@ Sin IO, sin HTTP, sin DB.
 
 # **6. Motor de Roasting (v2)**
 
-*(Versión Final para Spec v2 – Contratual, implementable, completa)*
+_(Versión Final para Spec v2 – Contratual, implementable, completa)_
 
 El **Motor de Roasting** genera respuestas inteligentes y seguras cuando un comentario entra en la **zona roasteable** (ver Motor de Análisis).
 
 Opera bajo tres principios:
 
 1. **Seguridad**
-    
-    Nunca cruza líneas rojas, no insulta, respeta reglas de plataforma y legislación.
-    
+
+   Nunca cruza líneas rojas, no insulta, respeta reglas de plataforma y legislación.
+
 2. **Consistencia**
-    
-    Misma calidad en todos los tonos y plataformas.
-    
+
+   Misma calidad en todos los tonos y plataformas.
+
 3. **Auditoría**
-    
-    Cada decisión, score y acción son trazables y reproducibles.
-    
+
+   Cada decisión, score y acción son trazables y reproducibles.
 
 El motor incluye:
 
@@ -3404,15 +3367,15 @@ Se usa cuando:
 
 1. Worker recibe solicitud de generación.
 2. Genera **1 o 2 versiones** según SSOT:
-    - multi_version_enabled = true → 2 versiones
-    - false → 1 versión
+   - multi_version_enabled = true → 2 versiones
+   - false → 1 versión
 3. Manda las versiones al usuario.
 4. El usuario puede:
-    - **Enviar roast**
-    - **Regenerar** (consume 1 crédito)
-    - **Descartar**
+   - **Enviar roast**
+   - **Regenerar** (consume 1 crédito)
+   - **Descartar**
 5. Antes de publicar:
-    - pasa por **Style Validator**
+   - pasa por **Style Validator**
 6. Si OK → se publica.
 
 ---
@@ -3436,7 +3399,7 @@ Flujo:
 
 ## **6.1.3 Respuesta Correctiva (Strike 1)**
 
-*(Este flujo NO es un roast. Es un mensaje correctivo.)*
+_(Este flujo NO es un roast. Es un mensaje correctivo.)_
 
 Condiciones:
 
@@ -3454,10 +3417,8 @@ Reglas:
 Ejemplo estandarizado:
 
 > “Apreciamos el debate, pero evita insultos personales.
-> 
 
 > Este es tu Strike 1 según la política de respeto de Roastr.ai.”
-> 
 
 ---
 
@@ -3509,11 +3470,11 @@ Reglas:
 
 - generado rule-based, sin embeddings ni análisis psicológicos
 - basado en:
-    - longitud típica
-    - sarcasmo usual
-    - emojis
-    - expresiones comunes
-    - formalidad
+  - longitud típica
+  - sarcasmo usual
+  - emojis
+  - expresiones comunes
+  - formalidad
 - cifrado
 - no visible
 - **Badge “Beta”**
@@ -3599,9 +3560,9 @@ Objetivo: **no permitir contenido ilegal, ofensivo o inapropiado**.
 2. ataques identitarios → NO
 3. contenido explícito → NO
 4. spam → NO
-    - 200+ caracteres repetidos
-    - 50+ emojis seguidos
-    - 200+ “ja” seguidos
+   - 200+ caracteres repetidos
+   - 50+ emojis seguidos
+   - 200+ “ja” seguidos
 5. longitud > límite de plataforma → NO
 6. lenguaje incoherente con tono elegido (excepto Tono Personal Beta)
 7. falsos disclaimers → NO
@@ -3627,7 +3588,7 @@ Todo configurable vía SSOT.
 - delay obligatorio 10–15s entre respuestas
 - ventana de edición → autopost retrasado 30 min
 - anti-bot:
-    - máx 4 respuestas por hora al mismo usuario
+  - máx 4 respuestas por hora al mismo usuario
 - 429 / 503 → retry con backoff
 - bloqueos / reportes → throttling
 
@@ -3701,7 +3662,7 @@ CreditsCounter
 # **6.8 Edge Cases (v2)**
 
 1. Edición del comentario original (X):
-    - autopost se retrasa 30 min
+   - autopost se retrasa 30 min
 2. Edición del roast con insultos → bloqueado
 3. Spam → bloqueado
 4. Tono personal produce resultados irregulares → fallback
@@ -3727,20 +3688,20 @@ CreditsCounter
 - “Publicado automáticamente con ayuda de IA”
 - “Generado automáticamente por IA”
 
-*(pool ampliable en futuro)*
+_(pool ampliable en futuro)_
 
 ---
 
 # **6.10 Consumo de créditos**
 
-| **Acción** | **Crédito** |
-| --- | --- |
-| Análisis | 1 analysis |
-| Roast generado | 1 roast |
-| Regenerar roast | 1 roast |
-| Respuesta correctiva | 1 roast |
-| Validación estilo | 0 |
-| Publicación | 0 |
+| **Acción**           | **Crédito** |
+| -------------------- | ----------- |
+| Análisis             | 1 analysis  |
+| Roast generado       | 1 roast     |
+| Regenerar roast      | 1 roast     |
+| Respuesta correctiva | 1 roast     |
+| Validación estilo    | 0           |
+| Publicación          | 0           |
 
 ---
 
@@ -3808,7 +3769,7 @@ Correctiva --> Blocked: "Correctiva fallida"
 
 # **7. SHIELD — Sistema de Protección Antitrolls (v2)**
 
-*(Versión limpia, final y contractual)*
+_(Versión limpia, final y contractual)_
 
 El Shield es el sistema encargado de **proteger al usuario** eliminando comentarios ofensivos, agresivos o peligrosos antes de que lleguen a su experiencia real en redes sociales.
 
@@ -3821,20 +3782,20 @@ Opera después del Motor de Análisis y nunca genera texto por sí mismo salvo e
 Para cada comentario recibido:
 
 1. El **Motor de Análisis** calcula:
-    - Toxicidad base (Perspective)
-    - Ajuste por Roastr Persona
-    - Factor de reincidencia (solo Strike 1 → Strike 2)
-    - Resultado final **severity_score**
+   - Toxicidad base (Perspective)
+   - Ajuste por Roastr Persona
+   - Factor de reincidencia (solo Strike 1 → Strike 2)
+   - Resultado final **severity_score**
 2. El Shield compara ese severity_score con los thresholds definidos en SSOT:
-    - **τ_roast_lower**
-    - **τ_shield**
-    - **τ_critical**
+   - **τ_roast_lower**
+   - **τ_shield**
+   - **τ_critical**
 3. Con esa información decide una de cinco acciones:
-    - Publicar normal
-    - Respuesta correctiva (Strike 1)
-    - Generar roast (si es roasteable)
-    - Shield Moderado
-    - Shield Crítico
+   - Publicar normal
+   - Respuesta correctiva (Strike 1)
+   - Generar roast (si es roasteable)
+   - Shield Moderado
+   - Shield Crítico
 4. Registra un **shield_log** (sin texto del comentario).
 
 ---
@@ -3872,10 +3833,10 @@ Se aplica cuando:
 
 - severity_score ≥ τ_critical
 - O detectamos:
-    - amenaza (“te voy a…”)
-    - ataque explícito a identidad
-    - slurs graves
-    - línea roja severa
+  - amenaza (“te voy a…”)
+  - ataque explícito a identidad
+  - slurs graves
+  - línea roja severa
 - O reincidencia agravada (Strike 2 + contenido más ofensivo)
 
 **Acciones:**
@@ -3901,18 +3862,16 @@ El Roastr Persona define tres componentes:
 ### **✔ Línea Roja → Escalada directa**
 
 - Si el comentario coincide con una línea roja:
-    - Toxicidad baja → Shield Moderado
-    - Toxicidad media → Shield Crítico
-    - Toxicidad alta → Shield Crítico
-        
-        *(independientemente de Perspective)*
-        
+  - Toxicidad baja → Shield Moderado
+  - Toxicidad media → Shield Crítico
+  - Toxicidad alta → Shield Crítico
+    _(independientemente de Perspective)_
 
 ### **✔ Identidades → Más sensibilidad**
 
 Baja ligeramente los thresholds del Shield.
 
-*(Implementado en el Motor de Análisis → no hace falta duplicarlo aquí.)*
+_(Implementado en el Motor de Análisis → no hace falta duplicarlo aquí.)_
 
 ### **✔ Tolerancias → Menos sensibilidad**
 
@@ -3935,10 +3894,10 @@ PERO con límites absolutos:
 - Acción primaria en Shield Moderado y Crítico.
 - Si la red NO lo permite → fallback a **bloquear**.
 - Si la API falla (403 / 429 / 500):
-    - retry con backoff
-    - segundo intento
-    - fallback a bloquear
-    - registro de error severo
+  - retry con backoff
+  - segundo intento
+  - fallback a bloquear
+  - registro de error severo
 
 ---
 
@@ -3985,9 +3944,7 @@ Se activa SOLO cuando:
 **Acciones:**
 
 - Publica un mensaje con **Corrective Tone**
-    
-    (un tono institucional fijo, no Flanders/Balanceado/Canalla)
-    
+  (un tono institucional fijo, no Flanders/Balanceado/Canalla)
 - Incluye un disclaimer IA
 - Consume 1 crédito de roast
 - Se asigna Strike 1
@@ -3995,22 +3952,18 @@ Se activa SOLO cuando:
 **Mensaje usado (estructura contractual):**
 
 > “Apreciamos el debate sin insultos.
-> 
 
 > Para mantener la conversación en buen tono, aplicamos un sistema de avisos.
-> 
 
 > Este es tu Strike 1.
-> 
 
 > Puedes seguir conversando con respeto. — Roastr.ai”
-> 
 
 ---
 
 ## **7.3.5 Ignorar (solo UI)**
 
-*(corregido)*
+_(corregido)_
 
 Si el usuario **no tiene análisis disponibles**:
 
@@ -4019,10 +3972,10 @@ Si el usuario **no tiene análisis disponibles**:
 - ❌ no hay Roasts
 - ❌ no llegan comentarios nuevos a la UI
 - La UI solo muestra:
-    - historial previo
-    - métricas
-    - cuentas
-    - billing
+  - historial previo
+  - métricas
+  - cuentas
+  - billing
 
 El Shield queda totalmente OFF hasta próximo ciclo.
 
@@ -4152,9 +4105,9 @@ Estos logs se usan para:
 ### **7.6.9 Edición posterior del comentario**
 
 - Si el comentario se edita **después** de la acción del Shield:
-    - no se reevalúa
-    - no se modifica acción previa
-    - log adicional notifica cambio si la API lo comunica
+  - no se reevalúa
+  - no se modifica acción previa
+  - log adicional notifica cambio si la API lo comunica
 
 ---
 
@@ -4370,38 +4323,38 @@ flowchart TD
 **Reglas:**
 
 - Se programa según el plan del usuario:
-    - Starter → cada 15 min
-    - Pro → cada 10 min
-    - Plus → cada 5 min
+  - Starter → cada 15 min
+  - Pro → cada 10 min
+  - Plus → cada 5 min
 - Solo se ejecuta si:
-    - la cuenta está status = 'active', y
-    - el usuario tiene **créditos de análisis > 0**.
+  - la cuenta está status = 'active', y
+  - el usuario tiene **créditos de análisis > 0**.
 - Si no hay análisis disponibles:
-    - el worker **no hace llamadas a la API**,
-    - no encola trabajos,
-    - registra un log “analysis_exhausted_skip_fetch”.
+  - el worker **no hace llamadas a la API**,
+  - no encola trabajos,
+  - registra un log “analysis_exhausted_skip_fetch”.
 
 **Pipeline:**
 
 1. Leer cursor (por cuenta + plataforma).
 2. Llamar al adaptador:
-    - XAdapter.fetchComments o YouTubeAdapter.fetchComments.
+   - XAdapter.fetchComments o YouTubeAdapter.fetchComments.
 3. Normalizar resultados a NormalizedComment:
-    
-    ```
-    {
-      id,
-      platform,
-      accountId,
-      userId,
-      authorId,
-      text,
-      timestamp,
-      metadata
-    }
-    
-    ```
-    
+
+   ```
+   {
+     id,
+     platform,
+     accountId,
+     userId,
+     authorId,
+     text,
+     timestamp,
+     metadata
+   }
+
+   ```
+
 4. Sanitizar texto (normalizar encoding, limpiar caracteres control, truncar si excede límite).
 5. Encolar cada comentario en **AnalyzeToxicity**.
 6. Actualizar cursor (nextPageToken / since_id).
@@ -4435,44 +4388,42 @@ No se guarda **en ningún lugar** el texto crudo del comentario excepto en memor
 ```
 
 > Nota: Este worker únicamente recibe comentarios que ya han pasado la precondición de
-> 
-> 
+>
 > **tener análisis disponibles**
-> 
 
 **Pipeline:**
 
 1. Detectar idioma (opcional, sin coste extra si viene de la red o de un detector barato).
 2. Llamar a **Perspective API** → score_base.
 3. Si Perspective falla:
-    - reintentar según política de retries,
-    - si sigue fallando:
-        - usar **clasificador fallback barato (GPT-4o-mini)** para estimar un score_base_approx,
-        - registrar evento perspective_degraded,
-        - seguir con el pipeline usando el score aproximado.
+   - reintentar según política de retries,
+   - si sigue fallando:
+     - usar **clasificador fallback barato (GPT-4o-mini)** para estimar un score_base_approx,
+     - registrar evento perspective_degraded,
+     - seguir con el pipeline usando el score aproximado.
 4. Aplicar **Roastr Persona** (rule-based):
-    - incrementar severidad si coincide con “líneas rojas”,
-    - ajustar si coincide con “lo que me define”,
-    - reducir ligeramente si coincide con “lo que me da igual”.
+   - incrementar severidad si coincide con “líneas rojas”,
+   - ajustar si coincide con “lo que me define”,
+   - reducir ligeramente si coincide con “lo que me da igual”.
 5. Evaluar **reincidencia (≤ 90 días)**:
-    - leer strikes del ofensor,
-    - aplicar recurrence_factor según nivel (0, 1, 2).
+   - leer strikes del ofensor,
+   - aplicar recurrence_factor según nivel (0, 1, 2).
 6. Calcular severity_score_final siguiendo la fórmula del Gatekeeper (definida en SSOT).
 7. Aplicar Shield + Zona Correctiva + Zona Roasteable según el árbol del punto 5:
-    - Shield crítico → encolar ShieldAction con severity = "critical".
-    - Shield moderado → encolar ShieldAction con severity = "moderate".
-    - Zona Correctiva → encolar GenerateCorrectiveReply.
-    - Zona Roasteable → encolar GenerateRoast.
-    - Publicación normal → solo loggear → fin.
+   - Shield crítico → encolar ShieldAction con severity = "critical".
+   - Shield moderado → encolar ShieldAction con severity = "moderate".
+   - Zona Correctiva → encolar GenerateCorrectiveReply.
+   - Zona Roasteable → encolar GenerateRoast.
+   - Publicación normal → solo loggear → fin.
 
 **Errores:**
 
 - Si Perspective falla N veces seguidas:
-    - registrar alerta en logs + Sentry (“perspective_unstable”).
+  - registrar alerta en logs + Sentry (“perspective_unstable”).
 - Si el clasificador fallback también falla:
-    - marcar el comentario como “no analizable”,
-    - mostrar solo en UI como comentario normal,
-    - log con severidad alta.
+  - marcar el comentario como “no analizable”,
+  - mostrar solo en UI como comentario normal,
+  - log con severidad alta.
 
 ---
 
@@ -4499,24 +4450,24 @@ No se guarda **en ningún lugar** el texto crudo del comentario excepto en memor
 **Pipeline:**
 
 1. Cargar configuración desde SSOT:
-    - modelo LLM por tono,
-    - nº de variantes (1 o 2),
-    - límites de longitud por plataforma,
-    - reglas de seguridad.
+   - modelo LLM por tono,
+   - nº de variantes (1 o 2),
+   - límites de longitud por plataforma,
+   - reglas de seguridad.
 2. Construir prompt usando bloques A/B/C (definidos en el Motor de Roasting).
 3. Llamar al LLM (GPT-4.1, GPT-5 mini, etc. según tono).
 4. Validar longitud y contenido bruto (antes de Style Validator).
 5. Generar:
-    - 1 roast si flag multi-version está OFF,
-    - 2 roasts si flag multi-version está ON.
+   - 1 roast si flag multi-version está OFF,
+   - 2 roasts si flag multi-version está ON.
 6. Guardar RoastCandidate(s) en DB.
 7. Pasar cada candidato por **Style Validator**:
-    - si falla → marcar como bloqueado + consumir crédito igualmente.
+   - si falla → marcar como bloqueado + consumir crédito igualmente.
 8. Si autoApprove === true y hay al menos un roast válido:
-    - encolar SocialPosting.
+   - encolar SocialPosting.
 9. Si autoApprove === false:
-    - marcar como “pending_user_review”,
-    - exponer en UI para aprobar, regenerar o descartar.
+   - marcar como “pending_user_review”,
+   - exponer en UI para aprobar, regenerar o descartar.
 
 **Créditos:**
 
@@ -4545,11 +4496,11 @@ No se guarda **en ningún lugar** el texto crudo del comentario excepto en memor
 
 - Usa un **tono único de “Respuesta Correctiva”**, no los tonos de humor.
 - El mensaje:
-    - marca el límite de respeto,
-    - explica que Roastr aplica strikes,
-    - deja claro que es una intervención de la herramienta, no del usuario improvisando.
+  - marca el límite de respeto,
+  - explica que Roastr aplica strikes,
+  - deja claro que es una intervención de la herramienta, no del usuario improvisando.
 - Puede ser regenerado manualmente por el usuario:
-    - cada regeneración = 1 crédito de roast.
+  - cada regeneración = 1 crédito de roast.
 
 **Pipeline:**
 
@@ -4557,13 +4508,13 @@ No se guarda **en ningún lugar** el texto crudo del comentario excepto en memor
 2. Llamar al modelo LLM configurado para correctivas.
 3. Validar longitud.
 4. Aplicar Style Validator:
-    - no puede convertirse en un roast disfrazado,
-    - no puede ridiculizar.
+   - no puede convertirse en un roast disfrazado,
+   - no puede ridiculizar.
 5. Guardar la respuesta como CorrectiveReply.
 6. Si auto-approve está ON:
-    - encolar SocialPosting.
+   - encolar SocialPosting.
 7. Si auto-approve está OFF:
-    - dejar como “Pending approval” en UI.
+   - dejar como “Pending approval” en UI.
 
 ---
 
@@ -4590,9 +4541,9 @@ No se guarda **en ningún lugar** el texto crudo del comentario excepto en memor
 1. El worker **nunca publica contenido**, solo ejecuta moderación.
 2. **No se guarda texto del comentario en ningún log**, solo metadatos permitidos por GDPR.
 3. **Si la plataforma está configurada como SHIELD_ONLY en SSOT → los roasts se descartan aguas arriba**, pero si por error llega un job:
-    - el worker **ignora cualquier intento de publicación**,
-    - registra shield_only_discard,
-    - **sin DLQ**, no es un error.
+   - el worker **ignora cualquier intento de publicación**,
+   - registra shield_only_discard,
+   - **sin DLQ**, no es un error.
 
 ---
 
@@ -4600,18 +4551,18 @@ No se guarda **en ningún lugar** el texto crudo del comentario excepto en memor
 
 - **Ocultar** comentario (si la API lo permite).
 - **Reportar** el comentario:
-    - categoría (“harassment”, “hate”, “threat”…),
-    - enlace y metadatos mínimos permitidos.
+  - categoría (“harassment”, “hate”, “threat”…),
+  - enlace y metadatos mínimos permitidos.
 - **Bloquear** al ofensor cuando:
-    - hay amenaza,
-    - hay ataque identitario,
-    - hay reincidencia fuerte.
+  - hay amenaza,
+  - hay ataque identitario,
+  - hay reincidencia fuerte.
 - Registrar:
-    - acción tomada,
-    - severidad,
-    - matched_red_line (si aplica),
-    - aggressiveness usada,
-    - strike actualizado (solo en moderado).
+  - acción tomada,
+  - severidad,
+  - matched_red_line (si aplica),
+  - aggressiveness usada,
+  - strike actualizado (solo en moderado).
 
 ### **Fallbacks:**
 
@@ -4643,28 +4594,28 @@ No se guarda **en ningún lugar** el texto crudo del comentario excepto en memor
 
 1. **Prohibido almacenar texto crudo en ningún log** (GDPR).
 2. **Si la plataforma está configurada como SHIELD_ONLY en SSOT:**
-    - el worker **no debe publicar nada**,
-    - descarta el job silenciosamente,
-    - registra post_discarded_shield_only,
-    - **no envía a DLQ**.
+   - el worker **no debe publicar nada**,
+   - descarta el job silenciosamente,
+   - registra post_discarded_shield_only,
+   - **no envía a DLQ**.
 3. Añadir **disclaimer IA obligatorio** cuando:
-    - auto-approve = true,
-    - y la región esté bajo DSA / AI Act.
+   - auto-approve = true,
+   - y la región esté bajo DSA / AI Act.
 4. Aplicar **smart delay por cuenta** para evitar patrones tipo bot.
 5. En X:
-    - si el comentario está dentro de la ventana de edición de 30 minutos → retrasar autopost,
-    - pero el Shield puede actuar antes.
+   - si el comentario está dentro de la ventana de edición de 30 minutos → retrasar autopost,
+   - pero el Shield puede actuar antes.
 6. Guardar únicamente:
-    - id del mensaje publicado,
-    - timestamp,
-    - plataforma,
-    - NO se guarda el texto completo.
+   - id del mensaje publicado,
+   - timestamp,
+   - plataforma,
+   - NO se guarda el texto completo.
 
 ### **Errores:**
 
 - API devuelve 429 / 503:
-    - retry con backoff,
-    - si persiste → DLQ **sin texto ni prompts**.
+  - retry con backoff,
+  - si persiste → DLQ **sin texto ni prompts**.
 
 ---
 
@@ -4682,17 +4633,17 @@ No se guarda **en ningún lugar** el texto crudo del comentario excepto en memor
 **Pipeline:**
 
 1. Recibir evento de uso:
-    - type: "analysis" | "roast" | "corrective".
+   - type: "analysis" | "roast" | "corrective".
 2. Actualizar contadores en subscriptions_usage:
-    - analysis_used,
-    - roasts_used.
+   - analysis_used,
+   - roasts_used.
 3. Si el límite se ha agotado:
-    - marcar estado “analysis_exhausted” o “roasts_exhausted”.
-    - emitir evento para que:
-        - FetchComments deje de encolar análisis si analysis_exhausted,
-        - GenerateRoast/GenerateCorrectiveReply no encolen nuevos jobs de publicación si roasts_exhausted.
+   - marcar estado “analysis_exhausted” o “roasts_exhausted”.
+   - emitir evento para que:
+     - FetchComments deje de encolar análisis si analysis_exhausted,
+     - GenerateRoast/GenerateCorrectiveReply no encolen nuevos jobs de publicación si roasts_exhausted.
 4. Reseteo al inicio de cada ciclo:
-    - restablecer contadores según plan.
+   - restablecer contadores según plan.
 5. Sincronizar estados con webhooks de Polar (procesados por otra capa).
 
 ---
@@ -4708,16 +4659,16 @@ No se guarda **en ningún lugar** el texto crudo del comentario excepto en memor
 **Funcionamiento:**
 
 1. Revisión periódica (ej. diaria) de:
-    - last_successful_fetch_at,
-    - errores recientes de FetchComments.
+   - last_successful_fetch_at,
+   - errores recientes de FetchComments.
 2. Si detecta:
-    - demasiados errores seguidos,
-    - o cursores muy antiguos,
-    - o huecos visibles en ids de comentarios:
-        - puede:
-            - resetear parcialmente el cursor a un punto seguro,
-            - marcar la cuenta como inactive temporalmente,
-            - generar un log para revisión manual.
+   - demasiados errores seguidos,
+   - o cursores muy antiguos,
+   - o huecos visibles en ids de comentarios:
+     - puede:
+       - resetear parcialmente el cursor a un punto seguro,
+       - marcar la cuenta como inactive temporalmente,
+       - generar un log para revisión manual.
 3. Nunca borra comentarios ni datos: solo reajusta puntos de lectura.
 
 ---
@@ -4769,16 +4720,16 @@ Los jobs que fallan repetidamente se almacenan para revisión **sin contener dat
 ### **Reglas GDPR:**
 
 - sanitized_payload **debe eliminar cualquier texto de usuario**:
-    - no comment.text
-    - no roast.text
-    - no prompts
-    - no contenido sensible
+  - no comment.text
+  - no roast.text
+  - no prompts
+  - no contenido sensible
 - Solo se conservan:
-    - IDs,
-    - timestamps,
-    - metadatos técnicos,
-    - hashes,
-    - tipo de acción.
+  - IDs,
+  - timestamps,
+  - metadatos técnicos,
+  - hashes,
+  - tipo de acción.
 
 ### **Prohibido:**
 
@@ -4817,24 +4768,23 @@ Todos los logs deben ser **JSON estructurado** y cumplir con **GDPR + principio 
 ### **Reglas de privacidad (v2):**
 
 1. **Prohibido almacenar texto crudo de comentarios**
-    
-    (ni en logs, ni en DLQ, ni en Sentry).
-    
+
+   (ni en logs, ni en DLQ, ni en Sentry).
+
 2. **Prohibido almacenar contenido generado por IA**:
-    - roasts completos,
-    - correctivas completas,
-    - prompts,
-    - respuestas del modelo.
+   - roasts completos,
+   - correctivas completas,
+   - prompts,
+   - respuestas del modelo.
 3. El único contenido permitido:
-    - IDs,
-    - severidad,
-    - tipo de acción (shield_moderado, roast, etc.),
-    - tokens usados,
-    - hashes irreversibles.
+   - IDs,
+   - severidad,
+   - tipo de acción (shield_moderado, roast, etc.),
+   - tokens usados,
+   - hashes irreversibles.
 4. Cualquier intento de loggear texto:
-    
-    → se bloquea automáticamente → log log_blocked_sensitive_content.
-    
+
+   → se bloquea automáticamente → log log_blocked_sensitive_content.
 
 ### **Telemetría agregada permitida:**
 
@@ -4846,7 +4796,7 @@ Todos los logs deben ser **JSON estructurado** y cumplir con **GDPR + principio 
 - tasa de acierto de prompt caching
 - errores por proveedor (X, YouTube, LLM…)
 
-*(Siempre sin texto crudo.)*
+_(Siempre sin texto crudo.)_
 
 ---
 
@@ -4857,23 +4807,23 @@ Todos los logs deben ser **JSON estructurado** y cumplir con **GDPR + principio 
 1. Todo payload incluye **userId + accountId**.
 2. Todas las queries a DB filtran **por userId**.
 3. Ningún worker puede:
-    - tocar datos de otra organización/usuario,
-    - actuar sobre cuentas que no le pertenecen.
+   - tocar datos de otra organización/usuario,
+   - actuar sobre cuentas que no le pertenecen.
 
 **Reglas de SSOT en workers:**
 
 - Los workers **nunca** definen valores críticos en el código:
-    - thresholds de Shield,
-    - límites de plan,
-    - cadencias,
-    - modelos por tono,
-    - comportamiento de correctivas.
+  - thresholds de Shield,
+  - límites de plan,
+  - cadencias,
+  - modelos por tono,
+  - comportamiento de correctivas.
 - Todo eso viene de:
-    - admin_settings (SSOT),
-    - o configuraciones versionadas (YAML) leídas por servicios.
+  - admin_settings (SSOT),
+  - o configuraciones versionadas (YAML) leídas por servicios.
 - Los settings se pueden:
-    - cachear temporalmente (por usuario/plan),
-    - pero siempre vienen de SSOT, no de env vars ni constantes mágicas.
+  - cachear temporalmente (por usuario/plan),
+  - pero siempre vienen de SSOT, no de env vars ni constantes mágicas.
 
 ---
 
@@ -4881,7 +4831,7 @@ Todos los logs deben ser **JSON estructurado** y cumplir con **GDPR + principio 
 
 # **9. Panel de Usuario (Frontend v2)**
 
-*(Versión contractual para SPEC v2 — totalmente coherente con Workers, Analysis Engine, Shield, Billing y SSOT)*
+_(Versión contractual para SPEC v2 — totalmente coherente con Workers, Analysis Engine, Shield, Billing y SSOT)_
 
 ---
 
@@ -4904,9 +4854,9 @@ Roastr v2 utiliza:
 - Estados vacíos → cards específicas por sección
 - Tablas → **accordions en móvil**
 - Todo comportamiento dinámico se apoya en:
-    - **SSOT (admin_settings)**
-    - **Supabase Auth + RLS**
-    - **React Query** para sincronización con backend
+  - **SSOT (admin_settings)**
+  - **Supabase Auth + RLS**
+  - **React Query** para sincronización con backend
 
 ### **Planes soportados**
 
@@ -4933,7 +4883,7 @@ Roastr v2 tiene **dos áreas**:
 
 ## **A) Panel de Administración**
 
-*(solo superadmin / admin)*
+_(solo superadmin / admin)_
 
 ### **Rutas:**
 
@@ -4967,13 +4917,13 @@ Acciones:
 - suspender/activar
 - borrar
 - **impersonar (view-only)**
-    - puede navegar la UI del usuario
-    - puede realizar **acciones operativas**
-    - NO puede ver:
-        - Roastr Persona
-        - sponsors del usuario
-        - prompts personalizados
-        - datos sensibles
+  - puede navegar la UI del usuario
+  - puede realizar **acciones operativas**
+  - NO puede ver:
+    - Roastr Persona
+    - sponsors del usuario
+    - prompts personalizados
+    - datos sensibles
 
 Esta vista sirve para soporte técnico real.
 
@@ -4996,11 +4946,11 @@ Cada plan editable desde el panel:
 - límites de análisis / roasts
 - nº de cuentas por red
 - features activas por plan:
-    - Shield
-    - Roastr Persona
-    - Tono Personal
-    - Sponsors (solo Plus)
-    - Prompt personalizado (flag experimental)
+  - Shield
+  - Roastr Persona
+  - Tono Personal
+  - Sponsors (solo Plus)
+  - Prompt personalizado (flag experimental)
 
 ### **Tonos**
 
@@ -5038,9 +4988,7 @@ Tabla con:
 - ARPU
 - coste medio por usuario
 - coste medio por análisis / roast
-    
-    *(calculado desde tokens internos)*
-    
+  _(calculado desde tokens internos)_
 
 ---
 
@@ -5074,32 +5022,24 @@ Tabla con:
 ### **1. Widget de Análisis usados**
 
 - Barra de progreso:
-    
-    {{used}} / {{limit}} análisis
-    
+  {{used}} / {{limit}} análisis
 - Color:
-    - normal → azul
-    - warning (>80%) → amarillo
-    - **limit reached** → rojo
+  - normal → azul
+  - warning (>80%) → amarillo
+  - **limit reached** → rojo
 - Badge: **“Análisis agotados”**
 - Bloque inferior:
-    
-    > “Has alcanzado tus análisis mensuales. Sube a {{plan}} para continuar.”
-    > 
-    - botón “Mejorar Plan”
+  > “Has alcanzado tus análisis mensuales. Sube a {{plan}} para continuar.”
+  - botón “Mejorar Plan”
 
 ### **2. Widget de Roasts**
 
 - Igual que análisis
 - Badge: **“Roasts agotados”**
 - Si roasts agotados pero análisis no:
-    
-    → Shield sigue activo
-    
-    → Bloque informativo:
-    
-    > “Puedes seguir protegido por el Shield aunque ya no puedas generar roasts.”
-    > 
+  → Shield sigue activo
+  → Bloque informativo:
+  > “Puedes seguir protegido por el Shield aunque ya no puedas generar roasts.”
 
 ---
 
@@ -5110,10 +5050,10 @@ Columnas:
 - icono red
 - handle
 - estado:
-    - 🟢 active
-    - 🟡 paused
-    - 🔴 inactive
-    - ⚫ sin análisis
+  - 🟢 active
+  - 🟡 paused
+  - 🔴 inactive
+  - ⚫ sin análisis
 - nº roasts este mes
 - nº intercepciones shield este mes
 
@@ -5164,13 +5104,13 @@ Columnas:
 - comentario original (truncado)
 - roast generado
 - estado:
-    - publicado
-    - pendiente de aprobación
-    - enviado manualmente
+  - publicado
+  - pendiente de aprobación
+  - enviado manualmente
 - Acciones:
-    - regenerar (consume crédito)
-    - enviar
-    - descartar
+  - regenerar (consume crédito)
+  - enviar
+  - descartar
 
 Histórico: **máximo 90 días** por GDPR.
 
@@ -5180,11 +5120,11 @@ Histórico: **máximo 90 días** por GDPR.
 
 - estado del shield
 - tabla con:
-    - id anon.
-    - link comentario (si plataforma lo permite)
-    - acción (badge)
-    - timestamp
-    - “Ver en red”
+  - id anon.
+  - link comentario (si plataforma lo permite)
+  - acción (badge)
+  - timestamp
+  - “Ver en red”
 
 No filtros en MVP.
 
@@ -5193,17 +5133,15 @@ No filtros en MVP.
 ### **D) Settings (modal)**
 
 - Auto-approve ON/OFF
-    - Texto legal de transparencia
+  - Texto legal de transparencia
 - Pausar cuenta
 - Shield aggressiveness:
-    
-    90% / 95% / 98% / 100%
-    
+  90% / 95% / 98% / 100%
 - Selector de tono:
-    - flanders
-    - balanceado
-    - canalla
-    - tono personal (Pro/Plus)
+  - flanders
+  - balanceado
+  - canalla
+  - tono personal (Pro/Plus)
 - Preview de tono (roast de ejemplo generado en vivo)
 
 ---
@@ -5224,9 +5162,7 @@ No filtros en MVP.
 ### **A) Transparencia**
 
 - Explicación:
-    
-    > Los roasts autopublicados incluyen un disclaimer visible obligatorio por normativa.
-    > 
+  > Los roasts autopublicados incluyen un disclaimer visible obligatorio por normativa.
 - No editable
 
 ---
@@ -5270,7 +5206,7 @@ Son independientes del Roastr Persona.
 - Plan activo
 - Próximo cobro
 - Si cancelado:
-    - “Roastr seguirá activo hasta el {{current_period_end}}.”
+  - “Roastr seguirá activo hasta el {{current_period_end}}.”
 
 Botones:
 
@@ -5350,7 +5286,7 @@ Accesibilidad avanzada → post-MVP.
 
 - claro
 - oscuro
-- sistema *(default)*
+- sistema _(default)_
 
 Persistencia vía localStorage.
 
@@ -5363,16 +5299,16 @@ Persistencia vía localStorage.
 - Roastr Persona: **encriptado**, invisible para admins
 - Sponsors: propios del usuario, no heredados
 - Style Validator:
-    - integrado en el prompt al generar roasts
-    - gatekeeper solo en edición manual
-    - botón de enviar deshabilitado hasta que pase
+  - integrado en el prompt al generar roasts
+  - gatekeeper solo en edición manual
+  - botón de enviar deshabilitado hasta que pase
 - Tabla interna de bloqueos (solo Admin Panel) para análisis futuro
 
 ---
 
 # **9.12 Onboarding (wizard inicial)**
 
-*(Nuevo)*
+_(Nuevo)_
 
 El onboarding se activa automáticamente cuando el usuario entra por primera vez.
 
@@ -5447,9 +5383,9 @@ El Panel de Administración es accesible únicamente para usuarios con rol **sup
 
 - El rol se define en Supabase Auth (auth.users.role = 'superadmin').
 - El acceso se refuerza con:
-    - middleware server-side,
-    - RLS en tablas sensibles,
-    - checks explícitos en backend.
+  - middleware server-side,
+  - RLS en tablas sensibles,
+  - checks explícitos en backend.
 
 El panel permite configurar **todo lo que afecta al comportamiento del ecosistema Roastr**, siempre a través de **SSOT** (admin_settings, plan_limits, roast_tones, etc.).
 
@@ -5462,33 +5398,33 @@ El panel permite configurar **todo lo que afecta al comportamiento del ecosistem
 Vista principal de usuarios:
 
 - Tabla:
-    - Email
-    - user_id
-    - Plan actual
-    - Estado: active / paused / canceled
-    - Fecha de alta
+  - Email
+  - user_id
+  - Plan actual
+  - Estado: active / paused / canceled
+  - Fecha de alta
 - Búsqueda:
-    - por email
-    - por user_id
+  - por email
+  - por user_id
 
 Acciones disponibles:
 
 - Crear usuario manualmente (alta directa sin checkout).
 - Editar:
-    - plan (Starter / Pro / Plus),
-    - estado (active / paused / canceled),
-    - flags internos (solo los definidos en SSOT).
+  - plan (Starter / Pro / Plus),
+  - estado (active / paused / canceled),
+  - flags internos (solo los definidos en SSOT).
 - Pausar cuenta (por soporte o fraude).
 - Eliminar cuenta:
-    - **soft-delete** con retención de 30 días,
-    - tras 30 días → purga definitiva según política de datos.
+  - **soft-delete** con retención de 30 días,
+  - tras 30 días → purga definitiva según política de datos.
 
 ### **Notas de seguridad**
 
 - **Roastr Persona** de cada usuario:
-    - no es visible ni editable desde Admin Panel.
+  - no es visible ni editable desde Admin Panel.
 - Contenido de **sponsors del usuario**:
-    - no visible en administración global (solo estadísticas agregadas).
+  - no visible en administración global (solo estadísticas agregadas).
 - Cada cambio genera entrada en admin_logs.
 
 ---
@@ -5506,34 +5442,34 @@ Permite al superadmin **entrar en el Panel de Usuario como si fuera el propio us
 En modo impersonación, el superadmin:
 
 - Ve la UI exactamente como el usuario:
-    - /dashboard
-    - /accounts
-    - /settings/*
+  - /dashboard
+  - /accounts
+  - /settings/\*
 - Puede ejecutar **las mismas acciones** que el usuario:
-    - conectar / desconectar cuentas de X o YouTube,
-    - cambiar ajustes de Shield,
-    - cambiar el tono por defecto,
-    - activar/desactivar auto-approve,
-    - pausar cuentas,
-    - gestionar su plan desde la UI de Billing:
-        - upgrade / downgrade,
-        - cancelar suscripción,
-        - actualizar método de pago (vía portal de Polar),
-    - borrar cuenta desde el flujo normal de usuario (si existe).
+  - conectar / desconectar cuentas de X o YouTube,
+  - cambiar ajustes de Shield,
+  - cambiar el tono por defecto,
+  - activar/desactivar auto-approve,
+  - pausar cuentas,
+  - gestionar su plan desde la UI de Billing:
+    - upgrade / downgrade,
+    - cancelar suscripción,
+    - actualizar método de pago (vía portal de Polar),
+  - borrar cuenta desde el flujo normal de usuario (si existe).
 - **No** puede:
-    - ver texto en claro de Roastr Persona,
-    - ver datos de tarjeta ni credenciales secretas,
-    - ver tokens OAuth en claro.
+  - ver texto en claro de Roastr Persona,
+  - ver datos de tarjeta ni credenciales secretas,
+  - ver tokens OAuth en claro.
 
 El backend **marca todas las acciones** realizadas en modo impersonación para su auditoría.
 
 ### **Reglas técnicas**
 
 - El backend genera un **token temporal de impersonación**:
-    - atado a admin_id + user_id,
-    - validez máxima: 5 minutos,
-    - scope limitado a las rutas de Panel de Usuario,
-    - nunca expuesto a front como token de servicio.
+  - atado a admin_id + user_id,
+  - validez máxima: 5 minutos,
+  - scope limitado a las rutas de Panel de Usuario,
+  - nunca expuesto a front como token de servicio.
 - Las acciones se etiquetan así en logs:
 
 ```
@@ -5562,12 +5498,12 @@ Dos vistas principales:
 - Shield activado (moderado / crítico).
 - Media por usuario y por plan.
 - Uso por plan:
-    - distribución Starter / Pro / Plus.
+  - distribución Starter / Pro / Plus.
 - % de usuarios con:
-    - Roastr Persona configurado,
-    - Sponsors activos,
-    - Auto-approve habilitado,
-    - Cuentas pausadas.
+  - Roastr Persona configurado,
+  - Sponsors activos,
+  - Auto-approve habilitado,
+  - Cuentas pausadas.
 
 Foco: **salud del producto y engagement**.
 
@@ -5582,13 +5518,13 @@ Foco: **salud del producto y engagement**.
 - ARPU.
 - MRR.
 - Margen por plan:
-    - el backend expone /admin/costs/summary,
-    - calcula internamente:
-        - análisis usados,
-        - roasts usados,
-        - tokens IA consumidos,
-        - ingestiones por red,
-        - coste IA estimado según SSOT.
+  - el backend expone /admin/costs/summary,
+  - calcula internamente:
+    - análisis usados,
+    - roasts usados,
+    - tokens IA consumidos,
+    - ingestiones por red,
+    - coste IA estimado según SSOT.
 
 Foco: **salud económica del negocio**.
 
@@ -5611,15 +5547,15 @@ Tabla de flags:
 
 - Todos los flags se guardan en **SSOT → admin_settings.feature_flags**.
 - Cambios:
-    - se aplican en caliente a backend y frontend (siguiente carga),
-    - se registran en admin_logs.
+  - se aplican en caliente a backend y frontend (siguiente carga),
+  - se registran en admin_logs.
 - No se pueden borrar flags en producción:
-    - solo desactivar (mantener histórico).
+  - solo desactivar (mantener histórico).
 - Flags “peligrosos” requieren **doble confirmación**:
-    - autopost global,
-    - kill switch de Shield,
-    - tonos experimentales,
-    - fallback IA global.
+  - autopost global,
+  - kill switch de Shield,
+  - tonos experimentales,
+  - fallback IA global.
 
 ---
 
@@ -5648,8 +5584,8 @@ Tabla:
 - Los tonos se definen en **SSOT → admin_settings.roast_tones**.
 - El Motor de Roasting **solo** lee de SSOT, nunca de constantes hardcoded.
 - Si se desactiva un tono en uso:
-    - los usuarios que lo tenían seleccionado hacen fallback a **Tono Balanceado** (regla SSOT).
-    - este comportamiento se documenta en la UI para evitar sorpresas.
+  - los usuarios que lo tenían seleccionado hacen fallback a **Tono Balanceado** (regla SSOT).
+  - este comportamiento se documenta en la UI para evitar sorpresas.
 
 ### **Validación del prompt de tono**
 
@@ -5671,9 +5607,9 @@ Si falla → se muestra error y no se persiste.
 Sección “Planes”:
 
 - Fila por plan:
-    - Starter
-    - Pro
-    - Plus
+  - Starter
+  - Pro
+  - Plus
 
 Campos editables por plan:
 
@@ -5681,25 +5617,25 @@ Campos editables por plan:
 - roasts_per_month
 - max_accounts_per_platform
 - Features incluidos (checkboxes):
-    - Shield
-    - Roastr Persona
-    - Tono personal
-    - Sponsors (solo Plus)
+  - Shield
+  - Roastr Persona
+  - Tono personal
+  - Sponsors (solo Plus)
 - Duración de trial (días):
-    - Starter,
-    - Pro,
-    - Plus (0 días).
+  - Starter,
+  - Pro,
+  - Plus (0 días).
 - Precio (solo lectura, traído de Polar como referencia).
 
 ### **Reglas**
 
 - Los límites se guardan en **SSOT → plan_limits**.
 - Cambios impactan:
-    - **solo en ciclos futuros** (no se recalculan ciclos en curso).
+  - **solo en ciclos futuros** (no se recalculan ciclos en curso).
 - Cada cambio crea log en admin_logs con:
-    - plan afectado,
-    - campos modificados,
-    - valores antes / después.
+  - plan afectado,
+  - campos modificados,
+  - valores antes / después.
 
 ---
 
@@ -5715,18 +5651,18 @@ Muestra:
 - tokens IA consumidos (por modelo).
 - ratio de acierto de prompt cache.
 - nº de llamadas a:
-    - Perspective,
-    - Polar,
-    - X,
-    - YouTube.
+  - Perspective,
+  - Polar,
+  - X,
+  - YouTube.
 - ingestiones por red y por plan.
 
 ### **Vista “Costes estimados” (solo lectura)**
 
 - Coste IA estimado:
-    - usando logs de usage + precios de SSOT.
+  - usando logs de usage + precios de SSOT.
 - Coste por proyecto / plan:
-    - agregado, nunca a nivel usuario individual.
+  - agregado, nunca a nivel usuario individual.
 - No editable desde UI.
 
 ---
@@ -5777,9 +5713,9 @@ Cada uno incluye en payload:
 
 - Listado ordenado por fecha desc.
 - Filtros:
-    - por admin_id,
-    - por tipo de acción,
-    - por rango de fechas.
+  - por admin_id,
+  - por tipo de acción,
+  - por rango de fechas.
 
 ---
 
@@ -5794,36 +5730,36 @@ Permite inspeccionar jobs que han fallado demasiadas veces.
 Vista:
 
 - Tabla:
-    - job_id
-    - worker_name
-    - user_id
-    - account_id
-    - nº de reintentos
-    - error_code final
-    - timestamp último intento
+  - job_id
+  - worker_name
+  - user_id
+  - account_id
+  - nº de reintentos
+  - error_code final
+  - timestamp último intento
 - Acciones por job:
-    - **Ver detalle** (payload simplificado, sin texto sensible).
-    - **Reintentar**:
-        - reencola el job en la cola original,
-        - registra dlq_retry_job en admin_logs.
-    - **Descartar**:
-        - se marca como descartado,
-        - no se vuelve a procesar,
-        - registra dlq_discard_job en admin_logs.
+  - **Ver detalle** (payload simplificado, sin texto sensible).
+  - **Reintentar**:
+    - reencola el job en la cola original,
+    - registra dlq_retry_job en admin_logs.
+  - **Descartar**:
+    - se marca como descartado,
+    - no se vuelve a procesar,
+    - registra dlq_discard_job en admin_logs.
 
 ### **10.9.2 Cursores de ingestión**
 
 Vista:
 
 - Por cuenta + plataforma:
-    - account_id
-    - plataforma
-    - last_cursor
-    - last_successful_fetch_at
-    - nº de errores recientes
+  - account_id
+  - plataforma
+  - last_cursor
+  - last_successful_fetch_at
+  - nº de errores recientes
 - Acciones:
-    - **Reset parcial de cursor** a un punto seguro (ej. “últimas 24h”).
-    - Marcar cuenta como inactive si hay errores persistentes (para que el usuario la reconecte).
+  - **Reset parcial de cursor** a un punto seguro (ej. “últimas 24h”).
+  - Marcar cuenta como inactive si hay errores persistentes (para que el usuario la reconecte).
 
 Se registra cursor_reset en admin_logs.
 
@@ -5832,11 +5768,11 @@ Se registra cursor_reset en admin_logs.
 Herramientas (MVP o post-MVP, documentadas ya aquí):
 
 - force_resync_polar(user_id):
-    - reconsulta estado de suscripción,
-    - corrige discrepancias.
+  - reconsulta estado de suscripción,
+  - corrige discrepancias.
 - force_recount_usage(user_id):
-    - recalcula usage de análisis / roasts a partir de eventos,
-    - reescribe subscriptions_usage.
+  - recalcula usage de análisis / roasts a partir de eventos,
+  - reescribe subscriptions_usage.
 
 Ambas acciones:
 
@@ -5849,24 +5785,24 @@ Ambas acciones:
 
 ### **Reglas formales**
 
-1. Solo usuarios con role = 'superadmin' pueden acceder a /admin/*.
+1. Solo usuarios con role = 'superadmin' pueden acceder a /admin/\*.
 2. Cada petición admin pasa por:
-    - middleware server-side de autenticación,
-    - comprobación de rol,
-    - filtros RLS en BD.
+   - middleware server-side de autenticación,
+   - comprobación de rol,
+   - filtros RLS en BD.
 3. El Panel de Administración **nunca** puede:
-    - ver Roastr Persona de ningún usuario en texto claro,
-    - ver números completos de tarjeta o credenciales secretas,
-    - ver sponsors detallados de un usuario (solo métricas agregadas).
+   - ver Roastr Persona de ningún usuario en texto claro,
+   - ver números completos de tarjeta o credenciales secretas,
+   - ver sponsors detallados de un usuario (solo métricas agregadas).
 4. En modo impersonación:
-    - el superadmin actúa como el usuario,
-    - pero sin acceso a datos cifrados/sensibles,
-    - todas las acciones quedan etiquetadas como impersonación.
+   - el superadmin actúa como el usuario,
+   - pero sin acceso a datos cifrados/sensibles,
+   - todas las acciones quedan etiquetadas como impersonación.
 5. Acciones de alto impacto (flags críticos, kill switches, resyncs, DLQ) requieren:
-    - doble confirmación UI,
-    - log obligatorio.
+   - doble confirmación UI,
+   - log obligatorio.
 6. No existe endpoint para “hacer cosas en redes sociales” directamente desde Admin Panel:
-    - todo pasa siempre por los mismos workers y servicios de dominio que en el flujo normal.
+   - todo pasa siempre por los mismos workers y servicios de dominio que en el flujo normal.
 
 ---
 
@@ -5885,17 +5821,11 @@ Permite despliegues seguros, pruebas progresivas y cambios de comportamiento sin
 Roastr v2 usa dos tipos:
 
 - **Flags dinámicos (runtime)**
-    
-    Guardados en Supabase → admin_settings.feature_flags (SSOT).
-    
-    Editables desde el Admin Panel.
-    
+  Guardados en Supabase → admin_settings.feature_flags (SSOT).
+  Editables desde el Admin Panel.
 - **Flags estáticos (build-time)**
-    
-    Definidos como env vars.
-    
-    Solo se usan para infraestructura, seguridad crítica o comportamiento NO visible al usuario.
-    
+  Definidos como env vars.
+  Solo se usan para infraestructura, seguridad crítica o comportamiento NO visible al usuario.
 
 ---
 
@@ -5926,41 +5856,40 @@ Roastr v2 usa dos tipos:
 # **11.1.1 Reglas globales del sistema**
 
 1. **SSOT obligatorio**
-    
-    Ningún flag puede estar hardcoded en backend o frontend.
-    
+
+   Ningún flag puede estar hardcoded en backend o frontend.
+
 2. **Documentación obligatoria**
-    
-    Cada flag v2 debe figurar en docs/architecture/sources-of-truth.md.
-    
+
+   Cada flag v2 debe figurar en docs/architecture/sources-of-truth.md.
+
 3. **Cada flag incluye**, como mínimo:
-    - key
-    - descripción
-    - categoría
-    - alcance (global / por cuenta / por usuario / admin)
-    - tipo (boolean | percent | enum)
-    - valor por defecto
-    - dependencias (si las hay)
+   - key
+   - descripción
+   - categoría
+   - alcance (global / por cuenta / por usuario / admin)
+   - tipo (boolean | percent | enum)
+   - valor por defecto
+   - dependencias (si las hay)
 4. **Efecto inmediato**
-    
-    Todos los cambios en Admin Panel aplican en tiempo real.
-    
+
+   Todos los cambios en Admin Panel aplican en tiempo real.
+
 5. **Logs automáticos**
-    
-    Toda modificación genera registro en admin_logs.
-    
+
+   Toda modificación genera registro en admin_logs.
+
 6. **Reglas de seguridad inviolables**
-    - Ningún flag puede:
-        - desactivar Shield Crítico
-        - permitir publicación de contenido ilegal
-        - desactivar Style Validator interno por completo
-        - alterar restricciones legales (ej: disclaimers IA)
+   - Ningún flag puede:
+     - desactivar Shield Crítico
+     - permitir publicación de contenido ilegal
+     - desactivar Style Validator interno por completo
+     - alterar restricciones legales (ej: disclaimers IA)
 7. **Fallback seguro**
-    
-    Si un flag falla, no carga, o tiene formato incorrecto:
-    
-    → el sistema usa el valor por defecto definido en SSOT.
-    
+
+   Si un flag falla, no carga, o tiene formato incorrecto:
+
+   → el sistema usa el valor por defecto definido en SSOT.
 
 ---
 
@@ -5979,7 +5908,7 @@ Nada innecesario. Nada legacy. Nada duplicado.
 - **Tipo:** boolean
 - **Actores:** usuario (por cuenta), admin (override global)
 - **Función:** controla si el roast se publica automáticamente.
-- Si está OFF → el flujo pasa a *Revisión manual*.
+- Si está OFF → el flujo pasa a _Revisión manual_.
 - **No afecta al Shield.**
 
 ---
@@ -6003,7 +5932,7 @@ Nada innecesario. Nada legacy. Nada duplicado.
 
 ### **4. personal_tone_enabled**
 
-*(renombrado desde original_tone_enabled)*
+_(renombrado desde original_tone_enabled)_
 
 - **Tipo:** boolean
 - **Actores:** admin
@@ -6045,14 +5974,14 @@ Nada innecesario. Nada legacy. Nada duplicado.
 - **Actores:** usuario
 - **Función:** el usuario puede desactivar roasts humorísticos.
 - **Importante:**
-    - Esto **no bloquea** las respuestas correctivas (Strike 1).
-    - Esto **no afecta** Shield.
+  - Esto **no bloquea** las respuestas correctivas (Strike 1).
+  - Esto **no afecta** Shield.
 
 ---
 
 ### **9. enable_perspective_fallback_classifier**
 
-*(nuevo, ya acordado ayer)*
+_(nuevo, ya acordado ayer)_
 
 - **Tipo:** boolean
 - **Actores:** admin
@@ -6157,28 +6086,28 @@ Todos:
 # **11.5 Reglas de seguridad del sistema de flags**
 
 1. Un flag **no puede desactivar**:
-    - Shield Crítico
-    - Style Validator interno
-    - Disclaimers obligatorios
-    - Límites legales de plataformas (X/YouTube)
+   - Shield Crítico
+   - Style Validator interno
+   - Disclaimers obligatorios
+   - Límites legales de plataformas (X/YouTube)
 2. Si un flag se corrompe, falta o no se puede leer:
-    
-    → Roastr usa valor por defecto del SSOT (fail-safe).
-    
+
+   → Roastr usa valor por defecto del SSOT (fail-safe).
+
 3. Todos los cambios se registran en:
-    
-    ```
-    admin_logs
-    {
-      admin_id,
-      flag_key,
-      old_value,
-      new_value,
-      timestamp
-    }
-    
-    ```
-    
+
+   ```
+   admin_logs
+   {
+     admin_id,
+     flag_key,
+     old_value,
+     new_value,
+     timestamp
+   }
+
+   ```
+
 4. Flags editados por admin siempre requieren token de sesión con nivel superadmin.
 
 ---
@@ -6310,9 +6239,9 @@ Justificación legal: **contractual necessity** (GDPR Art. 6.1.b)
 - id interno de la red social
 - tokens OAuth (cifrados)
 - configuraciones por cuenta:
-    - auto-approve
-    - tono por defecto
-    - shield aggressiveness
+  - auto-approve
+  - tono por defecto
+  - shield aggressiveness
 
 ---
 
@@ -6483,10 +6412,8 @@ Roastr activa automáticamente:
 - Banner claro:
 
 > “Esta plataforma no permite publicaciones asistidas por IA.
-> 
 
 > Roastr funcionará en modo protección (Shield).”
-> 
 
 Configurado en **SSOT → supported_platforms**:
 
@@ -6611,24 +6538,23 @@ flowchart TD
 La estrategia de testing en Roastr v2 se basa en **realismo sobre mocks**, priorizando el comportamiento real del sistema:
 
 1. **Unit tests solo para lógica compleja y determinista**
-    - Fórmula de análisis (toxicidad + persona + reincidencia).
-    - Prompt builders (A/B/C).
-    - Style Validator (rule-based).
-    - Normalizadores.
-    - Capa de dominio pura.
+   - Fórmula de análisis (toxicidad + persona + reincidencia).
+   - Prompt builders (A/B/C).
+   - Style Validator (rule-based).
+   - Normalizadores.
+   - Capa de dominio pura.
 2. **Integration tests con Supabase Test**
-    - Todo lo que implique decisiones sobre datos reales.
-    - Nada de mocks de Supabase salvo excepciones justificadísimas.
+   - Todo lo que implique decisiones sobre datos reales.
+   - Nada de mocks de Supabase salvo excepciones justificadísimas.
 3. **E2E realistas con Playwright**
-    - Flujos completos: login → conectar red → ingestión → análisis → roast → shield.
-    - UI + backend + workers funcionando juntos.
+   - Flujos completos: login → conectar red → ingestión → análisis → roast → shield.
+   - UI + backend + workers funcionando juntos.
 4. **Workers se testean con “job-by-job execution”**
-    - Sin cron real.
-    - Cada job se ejecuta contra una DB aislada.
+   - Sin cron real.
+   - Cada job se ejecuta contra una DB aislada.
 5. **Regla de oro:**
-    
-    **No testear ruido. Solo aquello que pueda romper el sistema.**
-    
+
+   **No testear ruido. Solo aquello que pueda romper el sistema.**
 
 ---
 
@@ -6748,7 +6674,7 @@ Playwright debe testear **UI + backend + workers**, no mocks de lógica interna.
 - accountService.test.ts
 - billingService.test.ts (mock Polar)
 - settingsService.test.ts (SSOT)
-- **styleValidator.test.ts** ← *nuevo obligatorio*
+- **styleValidator.test.ts** ← _nuevo obligatorio_
 
 ### **workers/**
 
@@ -6758,8 +6684,8 @@ Playwright debe testear **UI + backend + workers**, no mocks de lógica interna.
 - shieldActionWorker.test.ts
 - billingUpdateWorker.test.ts
 - socialPostingWorker.test.ts
-- **smartDelay.test.ts** ← *nuevo obligatorio*
-- **deadLetterQueue.test.ts** ← *nuevo obligatorio*
+- **smartDelay.test.ts** ← _nuevo obligatorio_
+- **deadLetterQueue.test.ts** ← _nuevo obligatorio_
 
 ### **routes/**
 
@@ -6790,18 +6716,18 @@ Playwright debe testear **UI + backend + workers**, no mocks de lógica interna.
 
 # **13.6 Cobertura mínima (actualizada)**
 
-| **Categoría** | **Cobertura mínima** |
-| --- | --- |
-| Lógica de dominio | **90%** |
-| Prompt builders | **100%** |
-| Style Validator | **100%** |
-| Workers (unit) | **80%** |
-| Workers (integration) | **100% del flujo feliz** |
-| DLQ behavior | **100% de casos críticos** |
-| Smart Delay | **90%** |
-| API / Routes | **80%** |
-| Frontend hooks | **70%** |
-| UI E2E | **Escenarios críticos** |
+| **Categoría**         | **Cobertura mínima**       |
+| --------------------- | -------------------------- |
+| Lógica de dominio     | **90%**                    |
+| Prompt builders       | **100%**                   |
+| Style Validator       | **100%**                   |
+| Workers (unit)        | **80%**                    |
+| Workers (integration) | **100% del flujo feliz**   |
+| DLQ behavior          | **100% de casos críticos** |
+| Smart Delay           | **90%**                    |
+| API / Routes          | **80%**                    |
+| Frontend hooks        | **70%**                    |
+| UI E2E                | **Escenarios críticos**    |
 
 Regla fundamental:
 
@@ -6889,12 +6815,12 @@ Promoción manual → Producción
 
 ### **Reglas del pipeline**
 
-- Nada entra en *main* sin:
-    - lint
-    - typecheck
-    - Vitest
-    - Supabase Test
-    - Playwright E2E (críticos)
+- Nada entra en _main_ sin:
+  - lint
+  - typecheck
+  - Vitest
+  - Supabase Test
+  - Playwright E2E (críticos)
 - Staging se despliega siempre automáticamente.
 - Producción requiere acción humana.
 - Cada deploy queda registrado.
@@ -6910,7 +6836,6 @@ Promoción manual → Producción
 ### **Regla inamovible**
 
 > Producción nunca se despliega automáticamente.
-> 
 
 ---
 
@@ -6991,7 +6916,6 @@ Sin compartir proceso, memoria ni colas.
 ### **Regla de oro**
 
 > Ningún worker puede consumir una cola que no sea de su entorno.
-> 
 
 Esto se valida vía:
 
@@ -7080,12 +7004,12 @@ error_code
 
 Para proteger producción:
 
-| **Tipo** | **Límite** | **Consecuencia** |
-| --- | --- | --- |
-| 500s en backend | >1% en 10 min | No promotion a prod |
-| Fails E2E en staging | >3 consecutivos | Bloqueo de deploy |
-| DLQ size | >20 jobs | Alerta alta |
-| SmartDelay 429 | >5 en 5 min | Alerta media |
+| **Tipo**             | **Límite**      | **Consecuencia**    |
+| -------------------- | --------------- | ------------------- |
+| 500s en backend      | >1% en 10 min   | No promotion a prod |
+| Fails E2E en staging | >3 consecutivos | Bloqueo de deploy   |
+| DLQ size             | >20 jobs        | Alerta alta         |
+| SmartDelay 429       | >5 en 5 min     | Alerta media        |
 
 ---
 
@@ -7146,10 +7070,10 @@ Simulacro cada 90 días.
 - **Staging NUNCA usa datos reales.**
 - Testing con datos sintéticos.
 - Producción tiene auditoría completa:
-    - admin logs,
-    - worker logs,
-    - shield logs,
-    - DLQ logs.
+  - admin logs,
+  - worker logs,
+  - shield logs,
+  - DLQ logs.
 
 ---
 

@@ -13,6 +13,7 @@
 **PROBLEMA RAÍZ IDENTIFICADO Y CORREGIDO:**
 
 El script `detect-legacy-ids.js` estaba usando exit codes incorrectos:
+
 - ❌ **Antes:** exit 0 para src/ (lo que causaba confusión en CI)
 - ✅ **Ahora:** exit 1 para src/ (interpretado como WARNING en workflow)
 
@@ -36,7 +37,7 @@ El workflow `system-map-v2-consistency.yml` no interpretaba correctamente los ex
 @@ -67,7 +67,10 @@
        // Print summary
        this.printSummary();
- 
+
 -      // Exit code for CI
 +      // Exit code contract for CI mode:
 +      // 0 = no legacy IDs detected
@@ -44,11 +45,11 @@ El workflow `system-map-v2-consistency.yml` no interpretaba correctamente los ex
 +      // 2 = legacy IDs in docs/ (FAIL - must be fixed)
        if (this.isCIMode) {
          // Separate detections by location
-         const docsErrors = this.detections.filter(d => 
+         const docsErrors = this.detections.filter(d =>
 @@ -87,22 +90,28 @@
            !d.location.includes('docs/SSOT-V2.md')
          );
- 
+
 -        // FAIL if errors in docs (critical)
 +        // CRITICAL: Legacy IDs in docs/ → exit 2
          if (docsErrors.length > 0) {
@@ -57,7 +58,7 @@ El workflow `system-map-v2-consistency.yml` no interpretaba correctamente los ex
 -          process.exit(1);
 +          process.exit(2); // Exit 2 = docs/ legacy IDs → CI FAIL
          }
- 
+
 -        // WARN if errors in src/ (outside scope)
 +        // WARN: Legacy IDs in src/ only → exit 1 (allowed for v2 PRs)
          if (srcErrors.length > 0) {
@@ -66,7 +67,7 @@ El workflow `system-map-v2-consistency.yml` no interpretaba correctamente los ex
 -          process.exit(0); // Exit 0 = WARN, not FAIL
 +          process.exit(1); // Exit 1 = src/ only → CI continues with warning
          }
- 
+
 -        // FAIL if errors in other locations (unexpected)
 +        // UNEXPECTED: Legacy IDs in other locations → exit 2
          if (otherErrors.length > 0) {
@@ -85,18 +86,20 @@ El workflow `system-map-v2-consistency.yml` no interpretaba correctamente los ex
 
 **NEW CONTRACT (Explicit & Unambiguous):**
 
-| Exit Code | Meaning | CI Action | Use Case |
-|-----------|---------|-----------|----------|
-| **0** | No legacy IDs detected | ✅ PASS | Clean codebase |
-| **1** | Legacy IDs in `src/` only | ⚠️ WARN → PASS | v2 PRs (docs-only changes) |
-| **2** | Legacy IDs in `docs/` or unexpected | ❌ FAIL | Must fix before merge |
+| Exit Code | Meaning                             | CI Action      | Use Case                   |
+| --------- | ----------------------------------- | -------------- | -------------------------- |
+| **0**     | No legacy IDs detected              | ✅ PASS        | Clean codebase             |
+| **1**     | Legacy IDs in `src/` only           | ⚠️ WARN → PASS | v2 PRs (docs-only changes) |
+| **2**     | Legacy IDs in `docs/` or unexpected | ❌ FAIL        | Must fix before merge      |
 
 **OLD BEHAVIOR (Ambiguous):**
+
 - docs/ → exit 1
 - src/ → exit 0
 - Problem: CI couldn't distinguish between "no IDs" and "src/ only"
 
 **NEW BEHAVIOR (Explicit):**
+
 - docs/ → exit 2 (FAIL)
 - src/ → exit 1 (WARN)
 - none → exit 0 (PASS)
@@ -120,7 +123,7 @@ El workflow `system-map-v2-consistency.yml` no interpretaba correctamente los ex
            node scripts/detect-legacy-ids.js --ci
            LEGACY_EXIT=$?
            set -e
-           
+
 -          # Legacy IDs in src/ are acceptable (warn only), but fail for docs/
 -          if [ "$LEGACY_EXIT" -ne 0 ]; then
 -            echo "⚠️ Legacy IDs detected (exit code: $LEGACY_EXIT)"
@@ -130,7 +133,7 @@ El workflow `system-map-v2-consistency.yml` no interpretaba correctamente los ex
 +          # 0 = no legacy IDs → OK
 +          # 1 = src/ only → WARN, allow CI to continue
 +          # 2 = docs/ → FAIL
-+          
++
 +          if [ "$LEGACY_EXIT" -eq 0 ]; then
 +            echo "✅ No legacy IDs detected"
 +            exit 0
@@ -152,6 +155,7 @@ El workflow `system-map-v2-consistency.yml` no interpretaba correctamente los ex
 ### Workflow Logic
 
 **OLD LOGIC (Fallback Hack):**
+
 ```bash
 if [ "$LEGACY_EXIT" -ne 0 ]; then
   echo "::warning::..."
@@ -160,6 +164,7 @@ fi
 ```
 
 **NEW LOGIC (Explicit Branching):**
+
 ```bash
 if [ "$LEGACY_EXIT" -eq 0 ]; then
   exit 0  # No legacy IDs
@@ -173,6 +178,7 @@ fi
 ```
 
 **Key Improvements:**
+
 1. ✅ No `|| true` or `continue-on-error` hacks
 2. ✅ Explicit handling for each exit code
 3. ✅ Proper error messages with `::error::` and `::warning::`
@@ -189,18 +195,22 @@ fi
 **Status:** ✅ **ALREADY FIXED in commit `67e7e3a3`**
 
 **Previous Issue:**
+
 - Line 466: `const driftEmoji = drift.average_drift_risk...` (ReferenceError)
 - Line 476, 489-491: Additional undefined references
 
 **Resolution:**
+
 - All `drift` references removed
 - PR comment simplified to v2-only metrics
 - No more ReferenceError
 
 **Remaining References (Non-Critical):**
+
 - `.github/workflows/gdd-auto-monitor.yml:452` - Different workflow, not blocking CI
 
 **Verification:**
+
 ```bash
 $ node scripts/check-system-map-drift.js --ci
 ✅ System-map drift check passed
@@ -214,6 +224,7 @@ EXIT CODE: 0
 ### Status: NO PENDING COMMENTS
 
 **Analysis:**
+
 - Searched PR #1120 for CodeRabbit comments
 - No specific comments found for this PR
 - Previous PRs had logger consistency comments (already applied)
@@ -256,16 +267,16 @@ EXIT CODE: 0
 
 ### Detailed Results
 
-| Validator | Status | Exit Code | Details |
-|-----------|--------|-----------|---------|
-| Doc Paths | ✅ PASS | 0 | All paths exist |
-| SSOT Health | ✅ PASS | 0 | 100/100 (36 placeholders - non-critical) |
-| Strong Concepts | ✅ PASS | 0 | No duplicates |
-| Symmetry | ✅ PASS | 0 | DAG acyclic |
-| Drift Check | ✅ PASS | 0 | 11 orphans (expected) |
-| **Legacy IDs** | **⚠️ WARN** | **1** | **43 src/ IDs (by design)** |
-| Health Official | ✅ PASS | 0 | SSOT updated |
-| Health v2 | ✅ PASS | 0 | Reads 100/100 from SSOT |
+| Validator       | Status      | Exit Code | Details                                  |
+| --------------- | ----------- | --------- | ---------------------------------------- |
+| Doc Paths       | ✅ PASS     | 0         | All paths exist                          |
+| SSOT Health     | ✅ PASS     | 0         | 100/100 (36 placeholders - non-critical) |
+| Strong Concepts | ✅ PASS     | 0         | No duplicates                            |
+| Symmetry        | ✅ PASS     | 0         | DAG acyclic                              |
+| Drift Check     | ✅ PASS     | 0         | 11 orphans (expected)                    |
+| **Legacy IDs**  | **⚠️ WARN** | **1**     | **43 src/ IDs (by design)**              |
+| Health Official | ✅ PASS     | 0         | SSOT updated                             |
+| Health v2       | ✅ PASS     | 0         | Reads 100/100 from SSOT                  |
 
 **Critical Insight:**
 The `detect-legacy-ids.js` exit code **1** is **CORRECT** and **EXPECTED**.
@@ -280,6 +291,7 @@ The workflow now interprets it as WARNING and allows CI to continue.
 #### 🎯 Job 1: System Map v2 Consistency
 
 **Flow:**
+
 1. ✅ Run all v2 validators (validate-node-ids, workers-ssot, drift, symmetry, strong-concepts)
 2. ✅ Check system-map drift → PASS (0 errors, 11 warnings OK)
 3. ✅ Validate v2 doc paths → PASS
@@ -291,6 +303,7 @@ The workflow now interprets it as WARNING and allows CI to continue.
 **Result:** ✅ **JOB WILL PASS** 🎉
 
 **Key Fix:**
+
 - **Before:** exit 1 → workflow confused → sometimes FAIL
 - **After:** exit 1 → workflow explicit branching → PASS with WARNING
 
@@ -299,6 +312,7 @@ The workflow now interprets it as WARNING and allows CI to continue.
 #### 🎯 Job 2: GDD Validation / validate-gdd
 
 **Flow:**
+
 1. ✅ Check if v2-only PR → TRUE
 2. ✅ Skip v1 validation → SKIPPED (correct)
 3. ✅ Run v2 validation chain (all validators)
@@ -308,6 +322,7 @@ The workflow now interprets it as WARNING and allows CI to continue.
 **Result:** ✅ **JOB WILL PASS** 🎉
 
 **Key Fix:**
+
 - **Before:** ReferenceError drift → JOB FAIL
 - **After:** drift removed (commit 67e7e3a3) → NO ERROR
 
@@ -315,15 +330,15 @@ The workflow now interprets it as WARNING and allows CI to continue.
 
 ### Why CI Will Pass This Time
 
-| Issue | Status | Evidence |
-|-------|--------|----------|
-| **detect-legacy-ids exit code** | ✅ FIXED | Exit 1 → WARN → workflow allows CI |
-| **Workflow interpretation** | ✅ FIXED | Explicit branching (no hacks) |
-| **ReferenceError drift** | ✅ FIXED | All refs removed (commit 67e7e3a3) |
-| **GDD v1 scripts** | ✅ FIXED | 0 v1 refs in CI workflows |
-| **Validators failing** | ✅ FIXED | 8/8 passing locally |
-| **Health score** | ✅ FIXED | 100/100 from SSOT |
-| **Exit code contract** | ✅ IMPLEMENTED | 0/1/2 explicit |
+| Issue                           | Status         | Evidence                           |
+| ------------------------------- | -------------- | ---------------------------------- |
+| **detect-legacy-ids exit code** | ✅ FIXED       | Exit 1 → WARN → workflow allows CI |
+| **Workflow interpretation**     | ✅ FIXED       | Explicit branching (no hacks)      |
+| **ReferenceError drift**        | ✅ FIXED       | All refs removed (commit 67e7e3a3) |
+| **GDD v1 scripts**              | ✅ FIXED       | 0 v1 refs in CI workflows          |
+| **Validators failing**          | ✅ FIXED       | 8/8 passing locally                |
+| **Health score**                | ✅ FIXED       | 100/100 from SSOT                  |
+| **Exit code contract**          | ✅ IMPLEMENTED | 0/1/2 explicit                     |
 
 ---
 
@@ -332,12 +347,14 @@ The workflow now interprets it as WARNING and allows CI to continue.
 ### ✅ BOTH CI JOBS FIXED
 
 **FAILURE #1 — System Map v2 Consistency:**
+
 - ✅ Exit code contract implemented
 - ✅ Workflow logic corrected
 - ✅ Explicit branching (no fallbacks)
 - ✅ All validators passing
 
 **FAILURE #2 — GDD Validation:**
+
 - ✅ ReferenceError drift: FIXED (previous commit)
 - ✅ GDD v1 scripts: REMOVED
 - ✅ All workflow steps: CORRECT
@@ -346,24 +363,26 @@ The workflow now interprets it as WARNING and allows CI to continue.
 
 ### 📈 Metrics
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Validators Passing** | 8/8 | ✅ |
-| **Health Score** | 100/100 | ✅ |
-| **detect-legacy-ids exit** | 1 (src/ WARN) | ✅ |
-| **Workflow branching** | Explicit | ✅ |
-| **ReferenceError drift** | FIXED | ✅ |
-| **V1 scripts in CI** | 0 | ✅ |
-| **CI Jobs Expected** | 2/2 PASS | ✅ |
+| Metric                     | Value         | Status |
+| -------------------------- | ------------- | ------ |
+| **Validators Passing**     | 8/8           | ✅     |
+| **Health Score**           | 100/100       | ✅     |
+| **detect-legacy-ids exit** | 1 (src/ WARN) | ✅     |
+| **Workflow branching**     | Explicit      | ✅     |
+| **ReferenceError drift**   | FIXED         | ✅     |
+| **V1 scripts in CI**       | 0             | ✅     |
+| **CI Jobs Expected**       | 2/2 PASS      | ✅     |
 
 ---
 
 ## 📄 Documentation
 
 **New Files:**
+
 - `docs/CI-V2/ROA-318-EXIT-CODE-CONTRACT-FIX.md` (this file)
 
 **Commits:**
+
 - `67e7e3a3` - Fixed ReferenceError drift
 - `74dd8bc4` - Added final CI resolution report
 - `8045584d` - **Fixed exit code contract & workflow logic** (THIS COMMIT)
@@ -375,6 +394,7 @@ The workflow now interprets it as WARNING and allows CI to continue.
 **NONE REQUIRED** ✅
 
 All fixes have been applied:
+
 - Exit code contract: IMPLEMENTED
 - Workflow logic: CORRECTED
 - All validators: PASSING
@@ -392,4 +412,3 @@ All fixes have been applied:
 ---
 
 **✅ CI IS FULLY RESOLVED - BOTH JOBS SHOULD PASS WITH CORRECT EXIT CODE INTERPRETATION**
-

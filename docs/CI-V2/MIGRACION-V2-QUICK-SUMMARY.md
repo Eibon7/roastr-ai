@@ -8,22 +8,22 @@
 
 ## 📊 En Números
 
-| Métrica                       | v1 (Roto)         | v2 Target            | Esfuerzo |
-| ----------------------------- | ----------------- | -------------------- | -------- |
-| **Billing System**            | Stripe (legacy)   | Polar v2             | 20h      |
-| **Credits System**            | Diseñado no activo| v2 funcional         | 12h      |
-| **Roast Engine**              | Prompts v1 rotos  | SSOT-driven v2       | 16h      |
-| **Shield Engine**             | 9/15 tests        | 15/15 + refactor     | 16h      |
-| **Analysis Engine**           | Lógica mixta      | SSOT-driven v2       | 12h      |
-| **Workers**                   | Flaky tests       | Estables v2          | 12h      |
-| **Platform Integrations**     | 9 legacy          | 9 limpias v2         | 8h       |
-| **Auth**                      | OAuth pollution   | Estable v2           | 4h       |
-| **Frontend UI**               | Inconsistente     | shadcn/ui completo   | 50h      |
-| **Tests**                     | 178 suites failing| Suite completa 80%+  | 40h      |
-| **Total Backend**             | -                 | -                    | **100h** |
-| **Total Frontend**            | -                 | -                    | **50h**  |
-| **Total Tests**               | -                 | -                    | **40h**  |
-| **TOTAL EFFORT**              | -                 | -                    | **190h** |
+| Métrica                   | v1 (Roto)          | v2 Target           | Esfuerzo |
+| ------------------------- | ------------------ | ------------------- | -------- |
+| **Billing System**        | Stripe (legacy)    | Polar v2            | 20h      |
+| **Credits System**        | Diseñado no activo | v2 funcional        | 12h      |
+| **Roast Engine**          | Prompts v1 rotos   | SSOT-driven v2      | 16h      |
+| **Shield Engine**         | 9/15 tests         | 15/15 + refactor    | 16h      |
+| **Analysis Engine**       | Lógica mixta       | SSOT-driven v2      | 12h      |
+| **Workers**               | Flaky tests        | Estables v2         | 12h      |
+| **Platform Integrations** | 9 legacy           | 9 limpias v2        | 8h       |
+| **Auth**                  | OAuth pollution    | Estable v2          | 4h       |
+| **Frontend UI**           | Inconsistente      | shadcn/ui completo  | 50h      |
+| **Tests**                 | 178 suites failing | Suite completa 80%+ | 40h      |
+| **Total Backend**         | -                  | -                   | **100h** |
+| **Total Frontend**        | -                  | -                   | **50h**  |
+| **Total Tests**           | -                  | -                   | **40h**  |
+| **TOTAL EFFORT**          | -                  | -                   | **190h** |
 
 ---
 
@@ -73,6 +73,7 @@ Total: 168h efectivas / 15 días = 11.2h/día (intensivo pero sostenible)
 ## ✅ Lo que YA funciona (Specs v2)
 
 **Documentación completa:**
+
 - ✅ SSOT-V2.md (~2000 líneas) - Fuente única de verdad
 - ✅ system-map-v2.yaml (15 nodos)
 - ✅ 16 nodos en docs/nodes-v2/ con specs detalladas
@@ -81,6 +82,7 @@ Total: 168h efectivas / 15 días = 11.2h/día (intensivo pero sostenible)
 - ✅ 3 reglas v2 en .cursor/rules/
 
 **Infrastructure parcial:**
+
 - ✅ Supabase (DB, Auth, RLS)
 - ✅ OpenAI integration
 - ✅ Redis/Upstash
@@ -91,6 +93,7 @@ Total: 168h efectivas / 15 días = 11.2h/día (intensivo pero sostenible)
 ## ❌ Lo que está ROTO en v1 (Rebuild necesario)
 
 **Backend roto/obsoleto:**
+
 - ❌ **Roast Engine** - Prompts v1, modelos incorrectos, no sigue SSOT
 - ❌ **Shield Service** - 9/15 tests passing (60%), lógica incompleta
 - ❌ **Billing** - Stripe (legacy), **Polar NO implementado**
@@ -101,6 +104,7 @@ Total: 168h efectivas / 15 días = 11.2h/día (intensivo pero sostenible)
 - ❌ **Platform Integrations** - 9 plataformas con código legacy
 
 **Frontend roto/obsoleto:**
+
 - ❌ **UI inconsistente** - Mix de estilos, no design system
 - ❌ **Dashboard** - Widgets rotos, datos incorrectos
 - ❌ **Billing UI** - Stripe hardcoded, no sigue v2 plans
@@ -109,11 +113,13 @@ Total: 168h efectivas / 15 días = 11.2h/día (intensivo pero sostenible)
 - ❌ **Onboarding** - Flow incompleto
 
 **Tests completamente rotos:**
+
 - ❌ **178 test suites failing** (casi todo roto)
 - ❌ **Coverage 1.48%** (prácticamente 0)
 - ❌ **Test infrastructure** - Mocks no alineados, flaky tests
 
 **Features incorrectas (fuera de spec v2):**
+
 - ❌ Plans legacy: "free", "basic", "creator_plus"
 - ❌ Features admin no especificadas
 - ❌ Funcionalidades de analytics fuera de scope
@@ -122,13 +128,13 @@ Total: 168h efectivas / 15 días = 11.2h/día (intensivo pero sostenible)
 
 ## 🎲 Factores de Riesgo
 
-| Riesgo                          | Probabilidad | Impacto  | Mitigación                        |
-| ------------------------------- | ------------ | -------- | --------------------------------- |
-| **Romper CI/CD**                | Alta         | Crítico  | Testing exhaustivo + rollback     |
-| **IDs legacy → features rotas** | Media        | Alto     | Tests automáticos por cambio      |
-| **Scope creep**                 | Alta         | Medio    | **SCOPE FREEZE** absoluto         |
-| **Health <100%**                | Media        | Bajo     | Threshold temporal 95% aceptable  |
-| **Features incompletas**        | Media        | Medio    | Feature flags + defer a post-v2   |
+| Riesgo                          | Probabilidad | Impacto | Mitigación                       |
+| ------------------------------- | ------------ | ------- | -------------------------------- |
+| **Romper CI/CD**                | Alta         | Crítico | Testing exhaustivo + rollback    |
+| **IDs legacy → features rotas** | Media        | Alto    | Tests automáticos por cambio     |
+| **Scope creep**                 | Alta         | Medio   | **SCOPE FREEZE** absoluto        |
+| **Health <100%**                | Media        | Bajo    | Threshold temporal 95% aceptable |
+| **Features incompletas**        | Media        | Medio   | Feature flags + defer a post-v2  |
 
 ---
 
@@ -175,16 +181,13 @@ Total: 168h efectivas / 15 días = 11.2h/día (intensivo pero sostenible)
 ## 🎯 Success Metrics
 
 **Must-Have (Bloqueadores):**
+
 1. ✅ 0 workflows ejecutando scripts v1
 2. ✅ 0 IDs legacy en código crítico
 3. ✅ GDD Health v2 ≥95%
 4. ✅ CI passing al 100%
 
-**Nice-to-Have (Post-v2 OK):**
-5. ⭐ Shield Phase 2 completo (15/15)
-6. ⭐ Credits v2 activado
-7. ⭐ Health v2 al 100%
-8. ⭐ Kill switch activo
+**Nice-to-Have (Post-v2 OK):** 5. ⭐ Shield Phase 2 completo (15/15) 6. ⭐ Credits v2 activado 7. ⭐ Health v2 al 100% 8. ⭐ Kill switch activo
 
 ---
 
@@ -195,11 +198,13 @@ Total: 168h efectivas / 15 días = 11.2h/día (intensivo pero sostenible)
 ### Opción A: MVP Mínimo (12 días) - ARRIESGADO ⚠️
 
 **Scope:**
+
 - Backend: Billing (trial+active), Credits, Roasts (3 tonos básicos), Shield básico
 - Frontend: 4 vistas core (dashboard, roasts, settings, billing)
 - Tests: Unit (60%), Integration (3 flows), E2E (smoke tests)
 
 **Riesgos:**
+
 - Features incompletas (sin tono personal, sin admin avanzado)
 - Tests mínimos (60% coverage)
 - Bugs probables en producción
@@ -208,12 +213,14 @@ Total: 168h efectivas / 15 días = 11.2h/día (intensivo pero sostenible)
 ### Opción B: MVP Robusto (15 días) - RECOMENDADO ✅
 
 **Scope:**
+
 - Backend: Todo de A + Workers estables + Platform integrations completas
 - Frontend: 6 vistas (+ onboarding + admin panel)
 - Tests: Unit (80%), Integration (6 flows), E2E (4 journeys)
 - Deployment: Staging + Production soft launch
 
 **Beneficios:**
+
 - Features core completas según SSOT v2
 - Tests robustos (80% coverage)
 - Menor riesgo de bugs
@@ -222,12 +229,14 @@ Total: 168h efectivas / 15 días = 11.2h/día (intensivo pero sostenible)
 ### Opción C: v2 Completo (20 días) - IDEAL ⭐
 
 **Scope:**
+
 - Backend: Todo + Analytics + Advanced Shield features
 - Frontend: Todo + Analytics dashboard + Admin advanced
 - Tests: Unit (90%), Integration (10 flows), E2E (8 journeys)
 - Deployment: Production full launch
 
 **Beneficios:**
+
 - Feature parity 100% con spec v2
 - Tests exhaustivos
 - Producto production-ready sin deuda técnica
@@ -251,6 +260,7 @@ Total: 168h efectivas / 15 días = 11.2h/día (intensivo pero sostenible)
 **Timeline realista:** **15 días** para MVP robusto (Opción B)
 
 **Por qué NO 12 días:**
+
 1. Scope es rebuild completo (~190h), no migración de docs
 2. Frontend desde cero con shadcn/ui (50h)
 3. Backend refactor completo según SSOT (100h)
@@ -258,12 +268,14 @@ Total: 168h efectivas / 15 días = 11.2h/día (intensivo pero sostenible)
 5. Polar billing NO existe, hay que construir (20h)
 
 **Por qué 15 días:**
+
 - Buffer razonable para imprevistos (20% extra)
 - Tests robustos (80% vs 60%)
 - Features core completas
 - Menor riesgo de bugs en production
 
 **Si decides 12 días:**
+
 - ⚠️ Scope DEBE ser mínimo (Opción A)
 - ⚠️ Acepta features incompletas
 - ⚠️ Acepta tests básicos (60%)
@@ -273,9 +285,9 @@ Total: 168h efectivas / 15 días = 11.2h/día (intensivo pero sostenible)
 ---
 
 **Documentos completos:**
+
 - `docs/CI-V2/REBUILD-V2-TIMELINE-REALISTA.md` - Análisis detallado
 - `docs/CI-V2/MIGRACION-V1-V2-TIMELINE-ANALISIS.md` - Primera versión (obsoleta)
 
 **Fecha:** 2025-12-09  
 **Veredicto:** ⚠️ **12 días ARRIESGADO, 15 días RECOMENDADO**
-

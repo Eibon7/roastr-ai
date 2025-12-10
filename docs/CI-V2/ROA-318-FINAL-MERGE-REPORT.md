@@ -85,11 +85,13 @@ Se resolvieron **9 conflictos** en los siguientes archivos:
 ### 4. Regeneración de Métricas de Health v2
 
 **Ejecutado:**
+
 ```bash
 node scripts/compute-health-v2-official.js --update-ssot
 ```
 
 **Resultados:**
+
 - ✅ Health Score: **100/100**
 - ✅ System Map Alignment: **100%**
 - ✅ SSOT Alignment: **100%**
@@ -98,6 +100,7 @@ node scripts/compute-health-v2-official.js --update-ssot
 - ✅ Narrative Consistency: **100%**
 
 **Archivos actualizados:**
+
 - ✅ `docs/SSOT-V2.md` (sección 15)
 - ✅ `gdd-health-v2.json`
 - ✅ `docs/GDD-V2-HEALTH-REPORT.md`
@@ -109,16 +112,16 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 **Validadores ejecutados:**
 
-| Validador | Estado | Notas |
-|-----------|--------|-------|
-| `validate-v2-doc-paths.js` | ✅ PASS | 15/15 paths válidos |
-| `validate-ssot-health.js` | ✅ PASS | Health Score 100/100 |
-| `validate-strong-concepts.js` | ✅ PASS | 0 Strong Concepts duplicados |
-| `check-system-map-drift.js` | ✅ PASS | 0 errores, 11 warnings (archivos huérfanos esperados) |
-| `detect-legacy-ids.js` | ⚠️ WARN | 43 IDs legacy en `src/` (fuera de scope ROA-318) |
+| Validador                       | Estado  | Notas                                                      |
+| ------------------------------- | ------- | ---------------------------------------------------------- |
+| `validate-v2-doc-paths.js`      | ✅ PASS | 15/15 paths válidos                                        |
+| `validate-ssot-health.js`       | ✅ PASS | Health Score 100/100                                       |
+| `validate-strong-concepts.js`   | ✅ PASS | 0 Strong Concepts duplicados                               |
+| `check-system-map-drift.js`     | ✅ PASS | 0 errores, 11 warnings (archivos huérfanos esperados)      |
+| `detect-legacy-ids.js`          | ⚠️ WARN | 43 IDs legacy en `src/` (fuera de scope ROA-318)           |
 | `detect-guardian-references.js` | ⚠️ WARN | 46 referencias guardian en `src/` (fuera de scope ROA-318) |
-| `compute-health-v2-official.js` | ✅ PASS | Health Score 100/100 |
-| `calculate-gdd-health-v2.js` | ✅ PASS | Lee correctamente desde SSOT |
+| `compute-health-v2-official.js` | ✅ PASS | Health Score 100/100                                       |
+| `calculate-gdd-health-v2.js`    | ✅ PASS | Lee correctamente desde SSOT                               |
 
 **Resultado:** ✅ **Todos los validadores críticos pasan**
 
@@ -128,16 +131,17 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 **Métricas desde SSOT (Sección 15):**
 
-| Métrica | Valor | Estado |
-|---------|-------|--------|
-| **System Map Alignment** | 100% | ✅ |
-| **SSOT Alignment** | 100% | ✅ |
-| **Dependency Density** | 100% | ✅ |
-| **Crosslink Score** | 100% | ✅ |
-| **Narrative Consistency** | 100% | ✅ |
-| **Health Score Final** | **100/100** | ✅ |
+| Métrica                   | Valor       | Estado |
+| ------------------------- | ----------- | ------ |
+| **System Map Alignment**  | 100%        | ✅     |
+| **SSOT Alignment**        | 100%        | ✅     |
+| **Dependency Density**    | 100%        | ✅     |
+| **Crosslink Score**       | 100%        | ✅     |
+| **Narrative Consistency** | 100%        | ✅     |
+| **Health Score Final**    | **100/100** | ✅     |
 
 **Confirmación:**
+
 - ✅ Health Score leído desde SSOT (no hardcoded)
 - ✅ Todos los campos numéricos presentes
 - ✅ Sin NaN, undefined, o TBD en métricas críticas
@@ -230,6 +234,7 @@ node scripts/compute-health-v2-official.js --update-ssot
 **PR #1120 está lista para merge.**
 
 **Resumen:**
+
 - ✅ Todos los conflictos resueltos
 - ✅ Todos los comentarios CodeRabbit aplicados
 - ✅ CI v2 unificado y funcionando
@@ -240,6 +245,7 @@ node scripts/compute-health-v2-official.js --update-ssot
 - ✅ Documentación actualizada
 
 **Próximos pasos:**
+
 1. Code review final
 2. Merge a `main`
 3. Monitorear CI v2 en producción
