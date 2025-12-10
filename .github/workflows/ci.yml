@@ -19,22 +19,25 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
 
-      - name: Cache node modules
+      - name: Clean frontend environment
+        working-directory: ./frontend
+        run: rm -rf node_modules package-lock.json || true
+
+      - name: Cache npm
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.npm
-            frontend/node_modules
-          key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('frontend/package.json') }}
           restore-keys: |
-            ${{ runner.os }}-frontend-
+            ${{ runner.os }}-npm-
 
       - name: Install frontend deps
         working-directory: ./frontend
-        run: npm ci
+        run: npm ci || npm install
+
+      - name: Validate lockfile sync
+        run: git diff --exit-code frontend/package-lock.json || (echo "❌ Lockfile out of sync" && exit 1)
 
       - name: Build frontend (mock env, no CI)
         working-directory: ./frontend
