@@ -31,9 +31,7 @@ describe('detect-hardcoded-values.js', () => {
   
   test('should detect hardcoded plan value that exists in SSOT', () => {
     // SSOT v2 defines: starter, pro, plus
-    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
-    fs.mkdirSync(backendV2Dir, { recursive: true });
-    const invalidFile = path.join(backendV2Dir, 'hardcoded-plan.js');
+    const invalidFile = path.join(testDir, 'hardcoded-plan.js');
     fs.writeFileSync(invalidFile, `const plan = 'starter';`);
     
     try {
@@ -48,9 +46,7 @@ describe('detect-hardcoded-values.js', () => {
   });
   
   test('should detect hardcoded threshold value', () => {
-    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
-    fs.mkdirSync(backendV2Dir, { recursive: true });
-    const invalidFile = path.join(backendV2Dir, 'hardcoded-threshold.js');
+    const invalidFile = path.join(testDir, 'hardcoded-threshold.js');
     fs.writeFileSync(invalidFile, `const threshold = 0.5;`);
     
     try {
@@ -66,9 +62,7 @@ describe('detect-hardcoded-values.js', () => {
   
   test('should ignore constants internal to script (not SSOT)', () => {
     // Internal constants that are not SSOT-defined should be ignored
-    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
-    fs.mkdirSync(backendV2Dir, { recursive: true });
-    const validFile = path.join(backendV2Dir, 'internal-const.js');
+    const validFile = path.join(testDir, 'internal-const.js');
     fs.writeFileSync(validFile, `
       const INTERNAL_CONST = 'some-value';
       const localVar = 123;
@@ -87,9 +81,7 @@ describe('detect-hardcoded-values.js', () => {
   });
   
   test('should pass when no hardcoded SSOT values detected', () => {
-    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
-    fs.mkdirSync(backendV2Dir, { recursive: true });
-    const validFile = path.join(backendV2Dir, 'valid.js');
+    const validFile = path.join(testDir, 'valid.js');
     fs.writeFileSync(validFile, `
       // Values loaded from SSOT
       const plan = loadFromSSOT('plan');

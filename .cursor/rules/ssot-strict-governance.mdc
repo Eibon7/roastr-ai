@@ -1,0 +1,211 @@
+# 🔒 SSOT STRICT GOVERNANCE RULE — VERSION DEFINITIVA (v3, Blindada)
+
+**🔐 Nivel:** MÁXIMA PRIORIDAD
+
+Esta regla se aplica **SIEMPRE**, en todas las PRs, commits, generación de código, generación de docs, refactors, análisis, tests o modificaciones automáticas que realice el agente.
+
+**No puede ignorarse, suavizarse, reinterpretarse, ni aplicarse parcialmente.**
+
+---
+
+## 1. 🔒 Fuentes Permitidas (y Obligatorias)
+
+El agente **SOLO** puede usar información proveniente de estos archivos exactos:
+
+### 1.1 SSOT v2 (Obligatorio)
+
+- `docs/SSOT/roastr-ssot-v2.md`
+
+→ Esta es la fuente de verdad absoluta. Tiene precedencia sobre TODO lo demás.
+
+### 1.2 Spec v2 (Obligatorio)
+
+- `docs/spec/roastr-spec-v2.md`
+
+→ Su existencia ha sido verificada.
+
+→ Cursor no puede ignorarlo bajo ninguna circunstancia.
+
+→ Si no puede leerlo, debe DETENERSE.
+
+### 1.3 System Map v2 (Obligatorio)
+
+- `docs/system-map-v2.yaml`
+
+### 1.4 Nodos GDD v2 (Solo si Existen)
+
+- `docs/nodes-v2/*.md`
+
+### 1.5 Código Existente v2
+
+- `/apps/backend-v2/**/*`
+- `/apps/frontend-v2/**/*`
+
+(si este último no existe aún, simplemente no se usa; no se infiere nada)
+
+### 1.6 Issue Actual
+
+- El texto EXACTO de la issue activa.
+
+---
+
+## 2. ❌ Prohibiciones Absolutas
+
+Estas prohibiciones **no tienen excepciones**.
+
+El agente **NO PUEDE**:
+
+### 2.1 Inventar Información No Documentada
+
+- features,
+- flags,
+- endpoints,
+- workers,
+- modelos de datos,
+- colas,
+- tablas,
+- estados,
+- prompts,
+- tonos,
+- constraints,
+- flujos,
+- capacidades del sistema,
+- configuraciones.
+
+### 2.2 Extender Comportamientos Existentes
+
+NO puede "rellenar huecos" con lógica inventada.
+
+### 2.3 Crear Nada Nuevo Sin Documentación Previa
+
+Si NO está en SSOT, Spec o nodos:
+
+→ NO se puede crear.
+
+### 2.4 Usar Información Legacy v1
+
+Queda prohibido totalmente.
+
+---
+
+## 3. 🔍 Comprobaciones Obligatorias Antes de Completar Cualquier PR
+
+El agente **DEBE** validar:
+
+### 3.1 Trabajo Realizado vs Scope de la Issue
+
+- Si falta algo → completarlo.
+- Si sobra algo → eliminarlo o moverlo a nueva issue.
+
+### 3.2 Trabajo Realizado vs Nodos GDD v2
+
+- Cualquier contradicción → detenerse y corregir.
+- Si falta definición → marcar TBD (NO inventar).
+
+### 3.3 Trabajo Realizado vs SSOT v2 (Máxima Prioridad)
+
+- Si hay contradicción → se corrige lo que hizo el agente.
+- Si algo no está definido → marcar TBD.
+
+### 3.4 Trabajo Realizado vs Spec v2 (Segunda Prioridad)
+
+- No se puede contradecir el Spec.
+- No se pueden rellenar huecos inventando.
+
+---
+
+## 4. 🚫 Regla de Propuesta Controlada (Anti-Invención)
+
+Si el agente detecta que está a punto de introducir algo que **NO existe** en SSOT/Spec/GDD:
+
+Debe detenerse inmediatamente y emitir:
+
+```
+⚠️ Proposed Extension Detected
+
+Reason: {explicación exacta}
+
+Action Required:
+- Confirmar si debe crearse una nueva issue, o
+- Descartar la propuesta.
+```
+
+**NO puede continuar sin aprobación explícita del usuario.**
+
+---
+
+## 5. 📋 Post-PR Audit Checklist (Obligatorio)
+
+Antes de finalizar una PR, el agente debe verificar:
+
+- [ ] Cumple 100% los Nodos GDD v2
+- [ ] Cumple 100% el SSOT v2
+- [ ] No contradice Spec v2
+- [ ] No usa hardcoded donde SSOT define valores
+- [ ] No introduce lógica nueva no documentada
+- [ ] No añade flags/features/endpoints nuevos
+- [ ] Todas las conexiones system-map ←→ código siguen siendo válidas
+- [ ] No reintroduce legacy v1
+- [ ] No añadió nada no solicitado en la issue
+
+**Si alguno falla → la PR NO se completa.**
+
+---
+
+## 6. ❌ Failure Mode Obligatorio
+
+Si se detecta alguna violación SSOT:
+
+El agente debe detenerse inmediatamente y emitir:
+
+```
+❌ SSOT violation: this change introduces behavior not defined in SSOT v2 or Spec v2.
+```
+
+Y **NO continuar**.
+
+---
+
+## 7. 🧭 Jerarquía de Precedencia
+
+El agente siempre debe priorizar:
+
+1. **SSOT v2**
+2. **Spec v2**
+3. **System Map v2**
+4. **Nodos GDD v2**
+5. **Código v2**
+6. **Issue actual**
+
+❌ No puede invertir el orden.
+
+❌ No puede "inferir" significado de la issue.
+
+❌ No puede saltarse una capa si falta información.
+
+---
+
+## 8. 🧨 Regla Anti-Heurísticas
+
+El agente tiene prohibido:
+
+- Suponer información implícita
+- Rellenar huecos "lógicos"
+- Usar palabras clave para intuir comportamientos
+- Aplicar patrones aprendidos de otros proyectos
+- Optimizar o reestructurar el código si no está documentado en SSOT/Spec
+
+---
+
+## 9. 🔏 Instalación
+
+**Versión:** 3.0 (Definitiva - Blindada)  
+**Fecha:** 2025-12-05  
+**Estado:** ✅ Activo (Máxima Prioridad)  
+**Aplicación:** Global (PRs, commits, refactors, generación de código, documentación, análisis)
+
+---
+
+**Última actualización:** 2025-12-05  
+**Versión:** 3.0 (Definitiva - Blindada)  
+**Estado:** ✅ Activo (Máxima Prioridad - Constitución del Proyecto)
