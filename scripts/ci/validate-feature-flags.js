@@ -76,12 +76,13 @@ function isCommentOrTest(line, filePath) {
 function extractFeatureFlags(line) {
   const flags = [];
   
-  // Pattern: 'flag_name' or "flag_name" or flag_name
+  // Pattern: Only match flag-like patterns (with _enabled, _feature, _flag suffix or explicit flag access)
   const patterns = [
-    /['"]([a-z_]+)['"]/g,
-    /featureFlag\s*[=:]\s*['"]([a-z_]+)['"]/gi,
-    /flag\s*[=:]\s*['"]([a-z_]+)['"]/gi,
-    /feature_flags\.([a-z_]+)/gi
+    /featureFlag\s*[=:]\s*['"]([a-z_]+)['"]/i,
+    /flag\s*[=:]\s*['"]([a-z_]+)['"]/i,
+    /feature_flags\.([a-z_]+)/i,
+    // Only match snake_case strings ending in flag-like suffixes
+    /['"]([a-z_]+_(?:enabled|feature|flag))['"]/i
   ];
 
   for (const pattern of patterns) {

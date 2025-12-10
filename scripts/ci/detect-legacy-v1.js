@@ -72,7 +72,7 @@ function scanFile(filePath) {
           file: filePath,
           line: lineNum,
           type: 'legacy_plan',
-          message: `Legacy plan "${legacyPlan}" detected. SSOT v2 only allows: starter, pro, plus`,
+          message: `Legacy plan "${legacyPlan}" detected. SSOT v2 only allows: starter, pro, plus (no starter_trial in SSOT v2)`,
           source: 'docs/SSOT/roastr-ssot-v2.md:39-46',
           code: line.trim()
         });

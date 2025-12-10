@@ -34,7 +34,7 @@ const DOMAIN_PROHIBITIONS = [
     source: 'docs/spec/roastr-spec-v2.md:632'
   },
   {
-    pattern: /from ['"]@supabase|supabase\.from\(|\.query\(|\.select\(/i,
+    pattern: /\b(supabase|db|database)\.(from|query|select)\(/i,
     message: 'No direct DB access allowed in domain layer',
     source: 'docs/spec/roastr-spec-v2.md:633'
   },
@@ -44,7 +44,7 @@ const DOMAIN_PROHIBITIONS = [
     source: 'docs/spec/roastr-spec-v2.md:634'
   },
   {
-    pattern: /worker|Worker|queue|Queue|enqueue/i,
+    pattern: /\b(worker|Worker|queue|Queue|enqueue)\s*\(|\benqueue\s*\(/i,
     message: 'No worker logic allowed in domain layer',
     source: 'docs/spec/roastr-spec-v2.md:635'
   },

@@ -33,35 +33,35 @@ const SSOT_DEFINED_VALUES = {
   // Plans (from SSOT v2 section 1)
   plans: {
     patterns: [
-      /plan\s*[=:]\s*['"](starter|pro|plus)['"]/gi,
-      /planId\s*[=:]\s*['"](starter|pro|plus)['"]/gi
+      /plan\s*[=:]\s*['"](starter|pro|plus)['"]/i,
+      /planId\s*[=:]\s*['"](starter|pro|plus)['"]/i
     ],
     source: 'docs/SSOT/roastr-ssot-v2.md:31-88'
   },
   // Feature flags (from SSOT v2 section 3)
   featureFlags: {
     patterns: [
-      /featureFlag\s*[=:]\s*['"](autopost_enabled|manual_approval_enabled|enable_shield|enable_roast)['"]/gi
+      /featureFlag\s*[=:]\s*['"](autopost_enabled|manual_approval_enabled|enable_shield|enable_roast)['"]/i
     ],
     source: 'docs/SSOT/roastr-ssot-v2.md:208-232'
   },
   // Thresholds (from SSOT v2 section 4)
   thresholds: {
     patterns: [
-      /threshold\s*[=:]\s*0\.\d+/g,
-      /roastLower\s*[=:]\s*0\.\d+/g,
-      /shield\s*[=:]\s*0\.\d+/g,
-      /critical\s*[=:]\s*0\.\d+/g
+      /threshold\s*[=:]\s*0\.\d+/,
+      /roastLower\s*[=:]\s*0\.\d+/,
+      /shield\s*[=:]\s*0\.\d+/,
+      /critical\s*[=:]\s*0\.\d+/
     ],
     source: 'docs/SSOT/roastr-ssot-v2.md:279-289'
   },
   // Weights (from SSOT v2 section 4.2)
   weights: {
     patterns: [
-      /lineaRoja\s*[=:]\s*1\.\d+/g,
-      /identidad\s*[=:]\s*1\.\d+/g,
-      /strike1\s*[=:]\s*1\.\d+/g,
-      /strike2\s*[=:]\s*1\.\d+/g
+      /lineaRoja\s*[=:]\s*1\.\d+/,
+      /identidad\s*[=:]\s*1\.\d+/,
+      /strike1\s*[=:]\s*1\.\d+/,
+      /strike2\s*[=:]\s*1\.\d+/
     ],
     source: 'docs/SSOT/roastr-ssot-v2.md:291-303'
   }

@@ -46,11 +46,14 @@ function readSSOT() {
  */
 function getValidPlans(ssotContent) {
   // Extract from: type PlanId = 'starter' | 'pro' | 'plus';
+  // Source: docs/SSOT/roastr-ssot-v2.md lines 35-36
   const planMatch = ssotContent.match(/type PlanId = ['"]([^'"]+)['"] \| ['"]([^'"]+)['"] \| ['"]([^'"]+)['"]/);
   if (planMatch) {
     return [planMatch[1], planMatch[2], planMatch[3]];
   }
-  // Fallback to explicit list
+  // Fallback: SSOT v2 defines exactly these 3 plans (lines 35-36)
+  // If parsing fails, SSOT format may have changed - this is a validation error
+  console.warn('⚠️  Could not parse PlanId from SSOT v2. Using documented values: starter, pro, plus');
   return ['starter', 'pro', 'plus'];
 }
 
@@ -60,6 +63,8 @@ function getValidPlans(ssotContent) {
  */
 function getLegacyPlans(ssotContent) {
   // Extract from: "free", "basic", "creator_plus"
+  // Source: docs/SSOT/roastr-ssot-v2.md lines 42-44
+  // These are explicitly listed as legacy v1 in SSOT
   return ['free', 'basic', 'creator_plus'];
 }
 
@@ -139,6 +144,12 @@ function scanFile(filePath, ssotContent) {
  */
 function getChangedFiles() {
   try {
+    // Try to fetch main branch for comparison (works in full checkout)
+    try {
+      execSync('git fetch origin main --depth=1 2>/dev/null', { stdio: 'pipe' });
+    } catch {
+      // Ignore fetch errors in shallow clones
+    }
     const output = execSync('git diff --name-only HEAD origin/main 2>/dev/null || git diff --name-only HEAD~1 HEAD 2>/dev/null || echo ""', {
       encoding: 'utf8',
       stdio: 'pipe'
