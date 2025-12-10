@@ -14,7 +14,7 @@ const { execSync } = require('child_process');
 const os = require('os');
 
 describe('validate-system-map-dependencies.js', () => {
-  const scriptPath = path.join(__dirname, '../../scripts/ci/validate-system-map-dependencies.js');
+  const scriptPath = path.join(__dirname, '../../../../scripts/ci/validate-system-map-dependencies.js');
   
   test('should pass with current system-map (no broken dependencies)', () => {
     // This test validates against the actual system-map-v2.yaml
@@ -22,7 +22,7 @@ describe('validate-system-map-dependencies.js', () => {
       const result = execSync(`node ${scriptPath}`, {
         encoding: 'utf8',
         stdio: 'pipe',
-        cwd: path.join(__dirname, '../..')
+        cwd: path.join(__dirname, '../../../../')
       });
       expect(result).toContain('✅');
     } catch (error) {
@@ -55,7 +55,7 @@ describe('validate-system-map-dependencies.js', () => {
       const result = execSync(`node ${scriptPath}`, {
         encoding: 'utf8',
         stdio: 'pipe',
-        cwd: path.join(__dirname, '../..')
+        cwd: path.join(__dirname, '../../../../')
       });
       // Should complete without crashing
       expect(result).toBeDefined();
