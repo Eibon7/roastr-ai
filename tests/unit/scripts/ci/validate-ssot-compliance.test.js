@@ -33,7 +33,9 @@ describe('validate-ssot-compliance.js', () => {
   
   test('should exit with code 0 when no SSOT violations are found', () => {
     // Create a valid file that doesn't violate SSOT
-    const validFile = path.join(testDir, 'valid.js');
+    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
+    fs.mkdirSync(backendV2Dir, { recursive: true });
+    const validFile = path.join(backendV2Dir, 'valid.js');
     fs.writeFileSync(validFile, `
       const plan = 'starter'; // Valid SSOT v2 plan
       const billing = 'polar'; // Valid SSOT v2 billing
@@ -53,7 +55,9 @@ describe('validate-ssot-compliance.js', () => {
   
   test('should exit with code 1 when SSOT violation is detected (Stripe)', () => {
     // Create a file with Stripe reference (prohibited in SSOT v2)
-    const invalidFile = path.join(testDir, 'invalid.js');
+    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
+    fs.mkdirSync(backendV2Dir, { recursive: true });
+    const invalidFile = path.join(backendV2Dir, 'invalid.js');
     fs.writeFileSync(invalidFile, `
       const stripe = require('stripe'); // SSOT v2 prohibits Stripe
     `);
@@ -66,7 +70,8 @@ describe('validate-ssot-compliance.js', () => {
       fail('Should have exited with code 1');
     } catch (error) {
       expect(error.status).toBe(1);
-      expect(error.stdout).toContain('Stripe');
+      const output = (error.stdout || '') + (error.stderr || '');
+      expect(output).toContain('Stripe');
     }
   });
   
@@ -89,7 +94,9 @@ describe('validate-ssot-compliance.js', () => {
   
   test('should detect legacy plan violation', () => {
     // Create a file with legacy plan (prohibited in SSOT v2)
-    const invalidFile = path.join(testDir, 'legacy-plan.js');
+    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
+    fs.mkdirSync(backendV2Dir, { recursive: true });
+    const invalidFile = path.join(backendV2Dir, 'legacy-plan.js');
     fs.writeFileSync(invalidFile, `
       const plan = 'free'; // Legacy v1 plan prohibited in SSOT v2
     `);

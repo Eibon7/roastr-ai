@@ -51,7 +51,13 @@ function scanFile(filePath) {
     return;
   }
 
-  const content = fs.readFileSync(filePath, 'utf8');
+  let content;
+  try {
+    content = fs.readFileSync(filePath, 'utf8');
+  } catch (error) {
+    console.error(`⚠️  Error reading file ${filePath}: ${error.message}`);
+    return;
+  }
   const lines = content.split('\n');
 
   // Only check backend-v2 files
@@ -65,8 +71,10 @@ function scanFile(filePath) {
     const lineNum = i + 1;
 
     for (const legacyPlan of LEGACY_PLANS) {
+      // Escape special regex characters in plan name for safety
+      const escapedPlan = legacyPlan.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       // Match quoted strings and type definitions
-      const regex = new RegExp(`['"]${legacyPlan}['"]|\\b${legacyPlan}\\b`, 'gi');
+      const regex = new RegExp(`['"]${escapedPlan}['"]|\\b${escapedPlan}\\b`, 'gi');
       if (regex.test(line)) {
         violations.push({
           file: filePath,
@@ -117,14 +125,28 @@ function main() {
   const args = process.argv.slice(2);
   const pathArg = args.find(arg => arg.startsWith('--path='));
   const targetPath = pathArg ? pathArg.split('=')[1] : null;
+  const ciMode = args.includes('--ci');
 
-  console.log('🔍 Detecting legacy v1 references...\n');
+  if (!ciMode) {
+    console.log('🔍 Detecting legacy v1 references...\n');
+  }
 
   let filesToCheck = [];
 
   if (targetPath) {
-    const fullPath = path.resolve(targetPath);
-    if (fs.statSync(fullPath).isDirectory()) {
+    // Normalize path to prevent path traversal issues
+    const normalizedPath = path.normalize(targetPath);
+    const fullPath = path.resolve(normalizedPath);
+    
+    let stats;
+    try {
+      stats = fs.statSync(fullPath);
+    } catch (error) {
+      console.error(`❌ Error accessing path: ${error.message}`);
+      process.exit(1);
+    }
+    
+    if (stats.isDirectory()) {
       // Recursively find all JS/TS files
       function findFiles(dir) {
         const files = [];
@@ -148,15 +170,19 @@ function main() {
     const changedFiles = getChangedFiles();
     filesToCheck = changedFiles
       .filter(f => f.includes('apps/backend-v2'))
-      .map(f => path.resolve(f));
+      .map(f => path.resolve(path.normalize(f)));
   }
 
   if (filesToCheck.length === 0) {
-    console.log('ℹ️  No files to check.');
+    if (!ciMode) {
+      console.log('ℹ️  No files to check.');
+    }
     process.exit(0);
   }
 
-  console.log(`📁 Checking ${filesToCheck.length} file(s)...\n`);
+  if (!ciMode) {
+    console.log(`📁 Checking ${filesToCheck.length} file(s)...\n`);
+  }
 
   for (const file of filesToCheck) {
     scanFile(file);
@@ -164,22 +190,24 @@ function main() {
 
   // Report results
   if (violations.length > 0) {
-    console.log('❌ Legacy v1 References Detected:\n');
+    console.error('❌ Legacy v1 References Detected:\n');
     for (const violation of violations) {
-      console.log(`  File: ${violation.file}`);
-      console.log(`  Line: ${violation.line}`);
-      console.log(`  Type: ${violation.type}`);
-      console.log(`  Message: ${violation.message}`);
-      console.log(`  Source: ${violation.source}`);
-      console.log(`  Code: ${violation.code}\n`);
+      console.error(`  File: ${violation.file}`);
+      console.error(`  Line: ${violation.line}`);
+      console.error(`  Type: ${violation.type}`);
+      console.error(`  Message: ${violation.message}`);
+      console.error(`  Source: ${violation.source}`);
+      console.error(`  Code: ${violation.code}\n`);
     }
-    console.log(`\n❌ Total violations: ${violations.length}`);
-    console.log('\n⚠️  Legacy v1 elements are prohibited in code v2.');
-    console.log('   Update code to use v2 equivalents or mark as legacy with explicit comment.');
+    console.error(`\n❌ Total violations: ${violations.length}`);
+    console.error('\n⚠️  Legacy v1 elements are prohibited in code v2.');
+    console.error('   Update code to use v2 equivalents or mark as legacy with explicit comment.');
     process.exit(1);
   }
 
-  console.log('✅ No legacy v1 references found.');
+  if (!ciMode) {
+    console.log('✅ No legacy v1 references found.');
+  }
   process.exit(0);
 }
 

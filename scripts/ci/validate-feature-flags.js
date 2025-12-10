@@ -112,7 +112,13 @@ function scanFile(filePath) {
     return;
   }
 
-  const content = fs.readFileSync(filePath, 'utf8');
+  let content;
+  try {
+    content = fs.readFileSync(filePath, 'utf8');
+  } catch (error) {
+    console.error(`⚠️  Error reading file ${filePath}: ${error.message}`);
+    return;
+  }
   const lines = content.split('\n');
 
   for (let i = 0; i < lines.length; i++) {
@@ -172,14 +178,28 @@ function main() {
   const args = process.argv.slice(2);
   const pathArg = args.find(arg => arg.startsWith('--path='));
   const targetPath = pathArg ? pathArg.split('=')[1] : null;
+  const ciMode = args.includes('--ci');
 
-  console.log('🔍 Validating feature flags...\n');
+  if (!ciMode) {
+    console.log('🔍 Validating feature flags...\n');
+  }
 
   let filesToCheck = [];
 
   if (targetPath) {
-    const fullPath = path.resolve(targetPath);
-    if (fs.statSync(fullPath).isDirectory()) {
+    // Normalize path to prevent path traversal issues
+    const normalizedPath = path.normalize(targetPath);
+    const fullPath = path.resolve(normalizedPath);
+    
+    let stats;
+    try {
+      stats = fs.statSync(fullPath);
+    } catch (error) {
+      console.error(`❌ Error accessing path: ${error.message}`);
+      process.exit(1);
+    }
+    
+    if (stats.isDirectory()) {
       // Recursively find all JS/TS files
       function findFiles(dir) {
         const files = [];
@@ -203,15 +223,19 @@ function main() {
     const changedFiles = getChangedFiles();
     filesToCheck = changedFiles
       .filter(f => f.includes('apps/backend-v2'))
-      .map(f => path.resolve(f));
+      .map(f => path.resolve(path.normalize(f)));
   }
 
   if (filesToCheck.length === 0) {
-    console.log('ℹ️  No files to check.');
+    if (!ciMode) {
+      console.log('ℹ️  No files to check.');
+    }
     process.exit(0);
   }
 
-  console.log(`📁 Checking ${filesToCheck.length} file(s)...\n`);
+  if (!ciMode) {
+    console.log(`📁 Checking ${filesToCheck.length} file(s)...\n`);
+  }
 
   for (const file of filesToCheck) {
     scanFile(file);
@@ -219,23 +243,25 @@ function main() {
 
   // Report results
   if (violations.length > 0) {
-    console.log('❌ Unauthorized Feature Flags Detected:\n');
+    console.error('❌ Unauthorized Feature Flags Detected:\n');
     for (const violation of violations) {
-      console.log(`  File: ${violation.file}`);
-      console.log(`  Line: ${violation.line}`);
-      console.log(`  Flag: ${violation.message.match(/"([^"]+)"/)?.[1] || 'unknown'}`);
-      console.log(`  Message: ${violation.message}`);
-      console.log(`  Source: ${violation.source}`);
-      console.log(`  Code: ${violation.code}\n`);
+      console.error(`  File: ${violation.file}`);
+      console.error(`  Line: ${violation.line}`);
+      console.error(`  Flag: ${violation.message.match(/"([^"]+)"/)?.[1] || 'unknown'}`);
+      console.error(`  Message: ${violation.message}`);
+      console.error(`  Source: ${violation.source}`);
+      console.error(`  Code: ${violation.code}\n`);
     }
-    console.log(`\n❌ Total violations: ${violations.length}`);
-    console.log('\n⚠️  Only feature flags defined in SSOT v2 are authorized.');
-    console.log('   Authorized flags:', AUTHORIZED_FLAGS.join(', '));
-    console.log('   To add a new flag, update SSOT v2 first.');
+    console.error(`\n❌ Total violations: ${violations.length}`);
+    console.error('\n⚠️  Only feature flags defined in SSOT v2 are authorized.');
+    console.error('   Authorized flags:', AUTHORIZED_FLAGS.join(', '));
+    console.error('   To add a new flag, update SSOT v2 first.');
     process.exit(1);
   }
 
-  console.log('✅ All feature flags are authorized.');
+  if (!ciMode) {
+    console.log('✅ All feature flags are authorized.');
+  }
   process.exit(0);
 }
 

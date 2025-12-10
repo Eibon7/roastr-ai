@@ -104,7 +104,13 @@ function scanFile(filePath) {
     return;
   }
 
-  const content = fs.readFileSync(filePath, 'utf8');
+  let content;
+  try {
+    content = fs.readFileSync(filePath, 'utf8');
+  } catch (error) {
+    console.error(`⚠️  Error reading file ${filePath}: ${error.message}`);
+    return;
+  }
   const lines = content.split('\n');
 
   for (let i = 0; i < lines.length; i++) {
@@ -159,14 +165,28 @@ function main() {
   const args = process.argv.slice(2);
   const pathArg = args.find(arg => arg.startsWith('--path='));
   const targetPath = pathArg ? pathArg.split('=')[1] : null;
+  const ciMode = args.includes('--ci');
 
-  console.log('🔍 Validating hexagonal architecture...\n');
+  if (!ciMode) {
+    console.log('🔍 Validating hexagonal architecture...\n');
+  }
 
   let filesToCheck = [];
 
   if (targetPath) {
-    const fullPath = path.resolve(targetPath);
-    if (fs.statSync(fullPath).isDirectory()) {
+    // Normalize path to prevent path traversal issues
+    const normalizedPath = path.normalize(targetPath);
+    const fullPath = path.resolve(normalizedPath);
+    
+    let stats;
+    try {
+      stats = fs.statSync(fullPath);
+    } catch (error) {
+      console.error(`❌ Error accessing path: ${error.message}`);
+      process.exit(1);
+    }
+    
+    if (stats.isDirectory()) {
       // Recursively find all JS/TS files
       function findFiles(dir) {
         const files = [];
@@ -190,15 +210,19 @@ function main() {
     const changedFiles = getChangedFiles();
     filesToCheck = changedFiles
       .filter(f => f.includes('apps/backend-v2') && f.includes('/services/'))
-      .map(f => path.resolve(f));
+      .map(f => path.resolve(path.normalize(f)));
   }
 
   if (filesToCheck.length === 0) {
-    console.log('ℹ️  No domain layer files to check.');
+    if (!ciMode) {
+      console.log('ℹ️  No domain layer files to check.');
+    }
     process.exit(0);
   }
 
-  console.log(`📁 Checking ${filesToCheck.length} file(s) in domain layer...\n`);
+  if (!ciMode) {
+    console.log(`📁 Checking ${filesToCheck.length} file(s) in domain layer...\n`);
+  }
 
   for (const file of filesToCheck) {
     scanFile(file);
@@ -206,25 +230,27 @@ function main() {
 
   // Report results
   if (violations.length > 0) {
-    console.log('❌ Hexagonal Architecture Violations Detected:\n');
+    console.error('❌ Hexagonal Architecture Violations Detected:\n');
     for (const violation of violations) {
-      console.log(`  File: ${violation.file}`);
-      console.log(`  Line: ${violation.line}`);
-      console.log(`  Message: ${violation.message}`);
-      console.log(`  Source: ${violation.source}`);
-      console.log(`  Code: ${violation.code}\n`);
+      console.error(`  File: ${violation.file}`);
+      console.error(`  Line: ${violation.line}`);
+      console.error(`  Message: ${violation.message}`);
+      console.error(`  Source: ${violation.source}`);
+      console.error(`  Code: ${violation.code}\n`);
     }
-    console.log(`\n❌ Total violations: ${violations.length}`);
-    console.log('\n⚠️  Domain layer (services/) must not contain:');
-    console.log('   - HTTP calls');
-    console.log('   - Direct DB access');
-    console.log('   - Express logic');
-    console.log('   - Worker logic');
-    console.log('   - Serialization logic');
+    console.error(`\n❌ Total violations: ${violations.length}`);
+    console.error('\n⚠️  Domain layer (services/) must not contain:');
+    console.error('   - HTTP calls');
+    console.error('   - Direct DB access');
+    console.error('   - Express logic');
+    console.error('   - Worker logic');
+    console.error('   - Serialization logic');
     process.exit(1);
   }
 
-  console.log('✅ Hexagonal architecture rules followed.');
+  if (!ciMode) {
+    console.log('✅ Hexagonal architecture rules followed.');
+  }
   process.exit(0);
 }
 

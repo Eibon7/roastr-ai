@@ -37,7 +37,12 @@ function readSSOT() {
     console.error(`❌ SSOT file not found: ${SSOT_PATH}`);
     process.exit(1);
   }
-  return fs.readFileSync(SSOT_PATH, 'utf8');
+  try {
+    return fs.readFileSync(SSOT_PATH, 'utf8');
+  } catch (error) {
+    console.error(`❌ Error reading SSOT file: ${error.message}`);
+    process.exit(1);
+  }
 }
 
 /**
@@ -111,7 +116,13 @@ function scanFile(filePath, ssotContent) {
     return;
   }
 
-  const content = fs.readFileSync(filePath, 'utf8');
+  let content;
+  try {
+    content = fs.readFileSync(filePath, 'utf8');
+  } catch (error) {
+    console.error(`⚠️  Error reading file ${filePath}: ${error.message}`);
+    return;
+  }
   const validPlans = getValidPlans(ssotContent);
   const legacyPlans = getLegacyPlans(ssotContent);
   const validFlags = getValidFeatureFlags(ssotContent);
@@ -119,7 +130,9 @@ function scanFile(filePath, ssotContent) {
   // Check for legacy plan references (only in backend-v2)
   if (isBackendV2File(filePath)) {
     for (const legacyPlan of legacyPlans) {
-      const regex = new RegExp(`['"]${legacyPlan}['"]`, 'g');
+      // Escape special regex characters in plan name for safety
+      const escapedPlan = legacyPlan.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`['"]${escapedPlan}['"]`, 'g');
       const matches = content.match(regex);
       if (matches) {
         violations.push({
@@ -191,16 +204,30 @@ function main() {
   const args = process.argv.slice(2);
   const pathArg = args.find(arg => arg.startsWith('--path='));
   const targetPath = pathArg ? pathArg.split('=')[1] : null;
+  const ciMode = args.includes('--ci');
 
-  console.log('🔍 Validating SSOT compliance...\n');
+  if (!ciMode) {
+    console.log('🔍 Validating SSOT compliance...\n');
+  }
 
   const ssotContent = readSSOT();
 
   let filesToCheck = [];
 
   if (targetPath) {
-    const fullPath = path.resolve(targetPath);
-    if (fs.statSync(fullPath).isDirectory()) {
+    // Normalize path to prevent path traversal issues
+    const normalizedPath = path.normalize(targetPath);
+    const fullPath = path.resolve(normalizedPath);
+    
+    let stats;
+    try {
+      stats = fs.statSync(fullPath);
+    } catch (error) {
+      console.error(`❌ Error accessing path: ${error.message}`);
+      process.exit(1);
+    }
+    
+    if (stats.isDirectory()) {
       // Recursively find all JS/TS files
       function findFiles(dir) {
         const files = [];
@@ -225,7 +252,9 @@ function main() {
     if (changedFiles.length === 0) {
       // In shallow clones, if no changed files detected, check all backend-v2 files
       // This is a fallback - ideally CI should use fetch-depth: 0
-      console.log('⚠️  No changed files detected (shallow clone?). Checking all backend-v2 files...');
+      if (!ciMode) {
+        console.log('⚠️  No changed files detected (shallow clone?). Checking all backend-v2 files...');
+      }
       const backendV2Path = path.join(__dirname, '../../apps/backend-v2');
       if (fs.existsSync(backendV2Path)) {
         function findFiles(dir) {
@@ -243,22 +272,28 @@ function main() {
         }
         filesToCheck = findFiles(backendV2Path);
       } else {
-        console.log('ℹ️  No files to check.');
+        if (!ciMode) {
+          console.log('ℹ️  No files to check.');
+        }
         process.exit(0);
       }
     } else {
       filesToCheck = changedFiles
         .filter(f => f.includes('apps/backend-v2'))
-        .map(f => path.resolve(f));
+        .map(f => path.resolve(path.normalize(f)));
     }
   }
 
   if (filesToCheck.length === 0) {
-    console.log('ℹ️  No files to check.');
+    if (!ciMode) {
+      console.log('ℹ️  No files to check.');
+    }
     process.exit(0);
   }
 
-  console.log(`📁 Checking ${filesToCheck.length} file(s)...\n`);
+  if (!ciMode) {
+    console.log(`📁 Checking ${filesToCheck.length} file(s)...\n`);
+  }
 
   for (const file of filesToCheck) {
     scanFile(file, ssotContent);
@@ -266,14 +301,14 @@ function main() {
 
   // Report results
   if (violations.length > 0) {
-    console.log('❌ SSOT Compliance Violations Detected:\n');
+    console.error('❌ SSOT Compliance Violations Detected:\n');
     for (const violation of violations) {
-      console.log(`  File: ${violation.file}`);
-      console.log(`  Type: ${violation.type}`);
-      console.log(`  Message: ${violation.message}`);
-      console.log(`  Source: ${violation.source}\n`);
+      console.error(`  File: ${violation.file}`);
+      console.error(`  Type: ${violation.type}`);
+      console.error(`  Message: ${violation.message}`);
+      console.error(`  Source: ${violation.source}\n`);
     }
-    console.log(`\n❌ Total violations: ${violations.length}`);
+    console.error(`\n❌ Total violations: ${violations.length}`);
     process.exit(1);
   }
 

@@ -41,7 +41,11 @@ function loadSystemMap() {
     const content = fs.readFileSync(SYSTEM_MAP_PATH, 'utf8');
     return yaml.load(content);
   } catch (error) {
-    console.error(`❌ Error parsing system-map-v2.yaml: ${error.message}`);
+    if (error instanceof yaml.YAMLException) {
+      console.error(`❌ Error parsing system-map-v2.yaml: ${error.message}`);
+    } else {
+      console.error(`❌ Error reading system-map-v2.yaml: ${error.message}`);
+    }
     process.exit(1);
   }
 }
@@ -136,8 +140,11 @@ function main() {
   const args = process.argv.slice(2);
   const nodeArg = args.find(arg => arg.startsWith('--node='));
   const targetNode = nodeArg ? nodeArg.split('=')[1] : null;
+  const ciMode = args.includes('--ci');
 
-  console.log('🔍 Validating system-map dependencies...\n');
+  if (!ciMode) {
+    console.log('🔍 Validating system-map dependencies...\n');
+  }
 
   const systemMap = loadSystemMap();
 
@@ -156,16 +163,16 @@ function main() {
 
   // Report results
   if (violations.length > 0) {
-    console.log('❌ System Map Dependency Violations Detected:\n');
+    console.error('❌ System Map Dependency Violations Detected:\n');
     for (const violation of violations) {
-      console.log(`  Type: ${violation.type}`);
-      console.log(`  Message: ${violation.message}`);
-      console.log(`  Source: docs/system-map-v2.yaml\n`);
+      console.error(`  Type: ${violation.type}`);
+      console.error(`  Message: ${violation.message}`);
+      console.error(`  Source: docs/system-map-v2.yaml\n`);
     }
-    console.log(`\n❌ Total violations: ${violations.length}`);
-    console.log('\n⚠️  System Map dependencies must be bidirectional and valid.');
-    console.log('   - If A depends_on B, then B must have A in required_by');
-    console.log('   - All referenced nodes must exist');
+    console.error(`\n❌ Total violations: ${violations.length}`);
+    console.error('\n⚠️  System Map dependencies must be bidirectional and valid.');
+    console.error('   - If A depends_on B, then B must have A in required_by');
+    console.error('   - All referenced nodes must exist');
     process.exit(1);
   }
 
@@ -176,7 +183,9 @@ function main() {
     }
   }
 
-  console.log('✅ System Map dependencies are valid.');
+  if (!ciMode) {
+    console.log('✅ System Map dependencies are valid.');
+  }
   process.exit(0);
 }
 

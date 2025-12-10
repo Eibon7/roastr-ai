@@ -22,7 +22,8 @@ jobs:
 
       - name: Clean frontend environment
         working-directory: ./frontend
-        run: rm -rf node_modules package-lock.json || true
+        run: |
+          rm -rf node_modules package-lock.json 2>/dev/null || true
 
       - name: Cache npm
         uses: actions/cache@v4
@@ -36,10 +37,14 @@ jobs:
         working-directory: ./frontend
         run: npm ci || npm install
 
-      - name: Validate lockfile sync
-        run: git diff --exit-code frontend/package-lock.json || (echo "❌ Lockfile out of sync" && exit 1)
+      - name: Validate lockfile synchronization
+        run: |
+          if ! git diff --exit-code frontend/package-lock.json; then
+            echo "❌ Lockfile out of sync"
+            exit 1
+          fi
 
-      - name: Build frontend (mock env, no CI)
+      - name: Build frontend production bundle
         working-directory: ./frontend
         run: npm run build:ci
 
@@ -147,17 +152,6 @@ jobs:
             ./package-lock.json
             ./frontend/package-lock.json
 
-      - name: Cache node modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            ./node_modules
-            ./frontend/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
       - name: Install backend dependencies
         run: npm ci
 
@@ -182,12 +176,14 @@ jobs:
           echo "🛡️ Running Perspective API → Shield integration validation..."
           node scripts/test-perspective-shield-integration.js
           echo "✅ Integration test completed"
+        continue-on-error: false
 
       - name: Run frontend linting
         working-directory: ./frontend
         run: |
           echo "🔍 Running frontend ESLint checks..."
           npx eslint src/ --ext .js,.jsx,.ts,.tsx --max-warnings 0 || echo "⚠️ ESLint warnings found but not blocking CI"
+        continue-on-error: false
 
       - name: Run frontend tests (allow failures in Phase 1)
         if: false  # Disabled until v2 test infrastructure is ready

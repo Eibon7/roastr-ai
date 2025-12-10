@@ -30,7 +30,9 @@ describe('detect-legacy-v1.js', () => {
   });
   
   test('should fail with legacy v1 plan (free)', () => {
-    const invalidFile = path.join(testDir, 'legacy-plan.js');
+    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
+    fs.mkdirSync(backendV2Dir, { recursive: true });
+    const invalidFile = path.join(backendV2Dir, 'legacy-plan.js');
     fs.writeFileSync(invalidFile, `const plan = 'free';`);
     
     try {
@@ -41,12 +43,15 @@ describe('detect-legacy-v1.js', () => {
       fail('Should have exited with code 1');
     } catch (error) {
       expect(error.status).toBe(1);
-      expect(error.stdout).toContain('free');
+      const output = (error.stdout || '') + (error.stderr || '');
+      expect(output).toContain('free');
     }
   });
   
   test('should fail with legacy v1 plan (basic)', () => {
-    const invalidFile = path.join(testDir, 'legacy-plan.js');
+    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
+    fs.mkdirSync(backendV2Dir, { recursive: true });
+    const invalidFile = path.join(backendV2Dir, 'legacy-plan.js');
     fs.writeFileSync(invalidFile, `const plan = 'basic';`);
     
     try {
@@ -61,7 +66,9 @@ describe('detect-legacy-v1.js', () => {
   });
   
   test('should fail with legacy v1 plan (creator_plus)', () => {
-    const invalidFile = path.join(testDir, 'legacy-plan.js');
+    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
+    fs.mkdirSync(backendV2Dir, { recursive: true });
+    const invalidFile = path.join(backendV2Dir, 'legacy-plan.js');
     fs.writeFileSync(invalidFile, `const plan = 'creator_plus';`);
     
     try {
@@ -76,7 +83,9 @@ describe('detect-legacy-v1.js', () => {
   });
   
   test('should fail with Stripe reference', () => {
-    const invalidFile = path.join(testDir, 'stripe.js');
+    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
+    fs.mkdirSync(backendV2Dir, { recursive: true });
+    const invalidFile = path.join(backendV2Dir, 'stripe.js');
     fs.writeFileSync(invalidFile, `const stripe = require('stripe');`);
     
     try {
@@ -87,12 +96,15 @@ describe('detect-legacy-v1.js', () => {
       fail('Should have exited with code 1');
     } catch (error) {
       expect(error.status).toBe(1);
-      expect(error.stdout).toContain('Stripe');
+      const output = (error.stdout || '') + (error.stderr || '');
+      expect(output).toContain('Stripe');
     }
   });
   
   test('should pass when no legacy references found', () => {
-    const validFile = path.join(testDir, 'valid.js');
+    const backendV2Dir = path.join(testDir, 'apps', 'backend-v2');
+    fs.mkdirSync(backendV2Dir, { recursive: true });
+    const validFile = path.join(backendV2Dir, 'valid.js');
     fs.writeFileSync(validFile, `
       const plan = 'starter'; // Valid SSOT v2 plan
       const billing = 'polar'; // Valid SSOT v2 billing

@@ -112,7 +112,13 @@ function scanFile(filePath) {
     return;
   }
 
-  const content = fs.readFileSync(filePath, 'utf8');
+  let content;
+  try {
+    content = fs.readFileSync(filePath, 'utf8');
+  } catch (error) {
+    console.error(`⚠️  Error reading file ${filePath}: ${error.message}`);
+    return;
+  }
   const lines = content.split('\n');
 
   for (let i = 0; i < lines.length; i++) {
@@ -169,14 +175,28 @@ function main() {
   const args = process.argv.slice(2);
   const pathArg = args.find(arg => arg.startsWith('--path='));
   const targetPath = pathArg ? pathArg.split('=')[1] : null;
+  const ciMode = args.includes('--ci');
 
-  console.log('🔍 Detecting hardcoded values that should come from SSOT...\n');
+  if (!ciMode) {
+    console.log('🔍 Detecting hardcoded values that should come from SSOT...\n');
+  }
 
   let filesToCheck = [];
 
   if (targetPath) {
-    const fullPath = path.resolve(targetPath);
-    if (fs.statSync(fullPath).isDirectory()) {
+    // Normalize path to prevent path traversal issues
+    const normalizedPath = path.normalize(targetPath);
+    const fullPath = path.resolve(normalizedPath);
+    
+    let stats;
+    try {
+      stats = fs.statSync(fullPath);
+    } catch (error) {
+      console.error(`❌ Error accessing path: ${error.message}`);
+      process.exit(1);
+    }
+    
+    if (stats.isDirectory()) {
       // Recursively find all JS/TS files
       function findFiles(dir) {
         const files = [];
@@ -200,15 +220,19 @@ function main() {
     const changedFiles = getChangedFiles();
     filesToCheck = changedFiles
       .filter(f => f.includes('apps/backend-v2'))
-      .map(f => path.resolve(f));
+      .map(f => path.resolve(path.normalize(f)));
   }
 
   if (filesToCheck.length === 0) {
-    console.log('ℹ️  No files to check.');
+    if (!ciMode) {
+      console.log('ℹ️  No files to check.');
+    }
     process.exit(0);
   }
 
-  console.log(`📁 Checking ${filesToCheck.length} file(s)...\n`);
+  if (!ciMode) {
+    console.log(`📁 Checking ${filesToCheck.length} file(s)...\n`);
+  }
 
   for (const file of filesToCheck) {
     scanFile(file);
@@ -216,22 +240,24 @@ function main() {
 
   // Report results
   if (violations.length > 0) {
-    console.log('❌ Hardcoded Values Detected:\n');
+    console.error('❌ Hardcoded Values Detected:\n');
     for (const violation of violations) {
-      console.log(`  File: ${violation.file}`);
-      console.log(`  Line: ${violation.line}`);
-      console.log(`  Type: ${violation.type}`);
-      console.log(`  Message: ${violation.message}`);
-      console.log(`  Source: ${violation.source}`);
-      console.log(`  Code: ${violation.code}\n`);
+      console.error(`  File: ${violation.file}`);
+      console.error(`  Line: ${violation.line}`);
+      console.error(`  Type: ${violation.type}`);
+      console.error(`  Message: ${violation.message}`);
+      console.error(`  Source: ${violation.source}`);
+      console.error(`  Code: ${violation.code}\n`);
     }
-    console.log(`\n❌ Total violations: ${violations.length}`);
-    console.log('\n⚠️  Values defined in SSOT must be loaded from SSOT, not hardcoded.');
-    console.log('   Use loadSettings() or getSetting() to load from SSOT.');
+    console.error(`\n❌ Total violations: ${violations.length}`);
+    console.error('\n⚠️  Values defined in SSOT must be loaded from SSOT, not hardcoded.');
+    console.error('   Use loadSettings() or getSetting() to load from SSOT.');
     process.exit(1);
   }
 
-  console.log('✅ No hardcoded values detected (or all values properly loaded from SSOT).');
+  if (!ciMode) {
+    console.log('✅ No hardcoded values detected (or all values properly loaded from SSOT).');
+  }
   process.exit(0);
 }
 

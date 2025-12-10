@@ -44,7 +44,8 @@ describe('validate-hexagonal-architecture.js', () => {
       fail('Should have exited with code 1');
     } catch (error) {
       expect(error.status).toBe(1);
-      expect(error.stdout).toContain('HTTP');
+      const output = (error.stdout || '') + (error.stderr || '');
+      expect(output).toContain('HTTP');
     }
   });
   
@@ -62,7 +63,8 @@ describe('validate-hexagonal-architecture.js', () => {
       fail('Should have exited with code 1');
     } catch (error) {
       expect(error.status).toBe(1);
-      expect(error.stdout).toContain('DB');
+      const output = (error.stdout || '') + (error.stderr || '');
+      expect(output).toContain('DB');
     }
   });
   
@@ -80,7 +82,8 @@ describe('validate-hexagonal-architecture.js', () => {
       fail('Should have exited with code 1');
     } catch (error) {
       expect(error.status).toBe(1);
-      expect(error.stdout).toContain('Express');
+      const output = (error.stdout || '') + (error.stderr || '');
+      expect(output).toContain('Express');
     }
   });
   
@@ -98,7 +101,8 @@ describe('validate-hexagonal-architecture.js', () => {
       fail('Should have exited with code 1');
     } catch (error) {
       expect(error.status).toBe(1);
-      expect(error.stdout).toContain('worker');
+      const output = (error.stdout || '') + (error.stderr || '');
+      expect(output).toContain('worker');
     }
   });
   
@@ -117,7 +121,8 @@ describe('validate-hexagonal-architecture.js', () => {
       fail('Should have exited with code 1');
     } catch (error) {
       expect(error.status).toBe(1);
-      expect(error.stdout).toContain('serialization');
+      const output = (error.stdout || '') + (error.stderr || '');
+      expect(output).toContain('serialization');
     }
   });
   
@@ -140,7 +145,8 @@ describe('validate-hexagonal-architecture.js', () => {
       // If validator fails, it may be detecting false positives
       // Accept both outcomes - test documents expected behavior
       if (error.status === 1) {
-        console.log('Validator output:', error.stdout);
+        const output = (error.stdout || '') + (error.stderr || '');
+        console.log('Validator output:', output);
       }
       expect([0, 1]).toContain(error.status || 0);
     }
