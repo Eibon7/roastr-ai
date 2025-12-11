@@ -51,6 +51,11 @@ describe('Core System Health', () => {
     process.env.ENABLE_MOCK_MODE = 'true';
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.clearAllMocks();
+  });
+
   describe('API Health Check', () => {
     it('should return healthy status', async () => {
       const response = await request(app).get('/health').expect(200);

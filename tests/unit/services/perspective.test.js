@@ -16,6 +16,11 @@ describe('Perspective Service Tests', () => {
     jest.clearAllMocks();
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.clearAllMocks();
+  });
+
   describe('Constructor', () => {
     it('should initialize with API key', () => {
       const service = new PerspectiveService('test-perspective-key');

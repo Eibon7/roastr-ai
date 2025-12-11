@@ -20,11 +20,13 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 #### 1. gdd-validate.yml
 
 **Scripts v1 eliminados:**
+
 - ❌ `node scripts/score-gdd-health.js --ci` (línea 272)
 - ❌ `node scripts/validate-gdd-runtime.js --ci` (línea 126)
 - ❌ `node scripts/predict-gdd-drift.js --ci` (línea 284)
 
 **Scripts v2 añadidos:**
+
 - ✅ `node scripts/compute-health-v2-official.js --update-ssot` (cálculo)
 - ✅ `node scripts/calculate-gdd-health-v2.js --json` (lectura desde SSOT)
 - ✅ `node scripts/check-system-map-drift.js --ci` (drift v2)
@@ -33,6 +35,7 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 - ✅ `node scripts/validate-strong-concepts.js --ci`
 
 **Cambios adicionales:**
+
 - Actualizado step "Run health scoring" → "Calculate GDD Health v2"
 - Actualizado step "Run drift prediction" → "Check System Map Drift (v2)"
 - Actualizado step "Run GDD validation" → "Run GDD v2 validation"
@@ -42,39 +45,47 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 #### 2. gdd-telemetry.yml
 
 **Scripts v1 eliminados:**
+
 - ❌ `node scripts/validate-gdd-runtime.js --ci || true` (línea 41)
 - ❌ `node scripts/score-gdd-health.js --ci || true` (línea 42)
 - ❌ `node scripts/predict-gdd-drift.js --ci || true` (línea 43)
 
 **Scripts v2 añadidos:**
+
 - ✅ `node scripts/compute-health-v2-official.js --update-ssot || true` (cálculo)
 - ✅ `node scripts/calculate-gdd-health-v2.js --json` (lectura desde SSOT)
 
 **Cambios adicionales:**
+
 - Actualizado step "Run GDD validation" → "Calculate GDD Health v2"
 - Actualizado referencias de `gdd-health.json`, `gdd-drift.json`, `gdd-status.json` → `gdd-health-v2.json`, `scripts/outputs/gdd-health-v2-official.json`
 
 #### 3. gdd-repair.yml
 
 **Scripts v1 eliminados:**
+
 - ❌ `node scripts/validate-gdd-runtime.js --ci` (línea 114)
 - ❌ `node scripts/score-gdd-health.js --ci` (línea 115)
 
 **Scripts v2 añadidos:**
+
 - ✅ `node scripts/compute-health-v2-official.js --update-ssot` (cálculo)
 - ✅ `node scripts/calculate-gdd-health-v2.js --json` (lectura desde SSOT)
 
 **Cambios adicionales:**
+
 - Actualizado step "Re-validate after repair" → "Re-validate after repair (v2)"
 - Actualizado referencias de `gdd-health.json` → `gdd-health-v2.json`
 
 #### 4. gdd-auto-monitor.yml
 
 **Scripts v1 eliminados:**
+
 - ❌ `node scripts/validate-gdd-runtime.js --ci` (línea 95)
 - ❌ `node scripts/score-gdd-health.js --summary` (línea 104)
 
 **Scripts v2 añadidos:**
+
 - ✅ `node scripts/compute-health-v2-official.js --update-ssot` (cálculo)
 - ✅ `node scripts/calculate-gdd-health-v2.js --json` (lectura desde SSOT)
 - ✅ `node scripts/validate-v2-doc-paths.js --ci`
@@ -83,6 +94,7 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 - ✅ `node scripts/check-system-map-drift.js --ci`
 
 **Cambios adicionales:**
+
 - Actualizado step "Run GDD validation" → "Run GDD v2 validation"
 - Actualizado step "Run health scoring" → "Calculate GDD Health v2"
 - Actualizado lógica de conteo (v2 es un solo score, no por-nodo)
@@ -95,6 +107,7 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 **Archivo modificado:** `scripts/detect-legacy-ids.js`
 
 **Cambios realizados:**
+
 - Añadida lógica para distinguir entre errores en docs/ vs src/
 - En modo `--ci`:
   - Legacy IDs en `docs/system-map-v2.yaml` → FAIL (exit 1)
@@ -104,13 +117,16 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
   - Legacy IDs en otras ubicaciones → FAIL (exit 1)
 
 **Comportamiento anterior:**
+
 - Cualquier legacy ID detectado → FAIL (exit 1)
 
 **Comportamiento nuevo:**
+
 - Legacy IDs en docs/ → FAIL (crítico)
 - Legacy IDs en src/ → WARN (fuera de scope ROA-318)
 
 **Resultado:**
+
 - ✅ 43 IDs legacy en `src/` ahora generan WARN pero no hacen fallar CI
 - ✅ Legacy IDs en docs/ siguen haciendo fallar CI (correcto)
 
@@ -121,6 +137,7 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 **Archivo modificado:** `.github/workflows/system-map-v2-consistency.yml`
 
 **Orden anterior:**
+
 1. Validate Node IDs
 2. Validate Workers SSOT
 3. Validate Drift
@@ -133,6 +150,7 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 10. Calculate GDD Health v2
 
 **Orden nuevo:**
+
 1. Validate Node IDs
 2. Validate Workers SSOT
 3. Validate Drift
@@ -146,6 +164,7 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 11. **Calculate GDD Health v2 (read from SSOT)** (nuevo step separado)
 
 **Cambios específicos:**
+
 - `check-system-map-drift.js` movido antes de `validate-v2-doc-paths.js`
 - `check-system-map-drift.js` movido antes de `detect-legacy-ids.js`
 - Step "Calculate GDD Health v2" separado en dos:
@@ -159,6 +178,7 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 ### Total de Referencias Eliminadas
 
 **score-gdd-health.js:**
+
 - ❌ gdd-validate.yml: 1 referencia eliminada
 - ❌ gdd-telemetry.yml: 1 referencia eliminada
 - ❌ gdd-repair.yml: 1 referencia eliminada
@@ -166,6 +186,7 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 - **Total:** 4 referencias eliminadas
 
 **validate-gdd-runtime.js:**
+
 - ❌ gdd-validate.yml: 1 referencia eliminada
 - ❌ gdd-telemetry.yml: 1 referencia eliminada
 - ❌ gdd-repair.yml: 1 referencia eliminada
@@ -173,6 +194,7 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 - **Total:** 4 referencias eliminadas
 
 **predict-gdd-drift.js:**
+
 - ❌ gdd-validate.yml: 1 referencia eliminada
 - ❌ gdd-telemetry.yml: 1 referencia eliminada
 - **Total:** 2 referencias eliminadas
@@ -243,6 +265,7 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 ### CI v2 es Ahora el Único CI para GDD
 
 **✅ Confirmado:**
+
 - Todos los workflows GDD usan exclusivamente scripts v2
 - Health score se lee desde SSOT (sección 15)
 - No hay scripts v1 activos en CI
@@ -250,6 +273,7 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 - Health score dinámico y SSOT-driven
 
 **Workflows v2 activos:**
+
 - ✅ `system-map-v2-consistency.yml` - Validación v2 principal
 - ✅ `gdd-validate.yml` - Validación v2 (cuando PR es v2-only)
 - ✅ `gdd-telemetry.yml` - Telemetría v2
@@ -257,6 +281,7 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 - ✅ `gdd-auto-monitor.yml` - Monitoreo v2
 
 **Scripts v2 usados:**
+
 - `validate-node-ids.js`
 - `validate-workers-ssot.js`
 - `validate-drift.js`
@@ -274,6 +299,7 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 ## 📝 Archivos Modificados
 
 ### Workflows
+
 1. `.github/workflows/gdd-validate.yml`
 2. `.github/workflows/gdd-telemetry.yml`
 3. `.github/workflows/gdd-repair.yml`
@@ -281,9 +307,11 @@ Se ha eliminado completamente GDD v1 de todos los workflows CI y se han corregid
 5. `.github/workflows/system-map-v2-consistency.yml`
 
 ### Scripts
+
 1. `scripts/detect-legacy-ids.js`
 
 ### Documentación
+
 1. `docs/CI-V2/ROA-318-CI-V1-REMOVAL-PLAN.md` (plan)
 2. `docs/CI-V2/ROA-318-CI-V1-REMOVAL-SUMMARY.md` (este resumen)
 
@@ -311,4 +339,3 @@ Todos los cambios están listos para commit. **NO se ha hecho push** según inst
 
 **Última actualización:** 2025-12-09  
 **Estado:** ✅ COMPLETADO - Listo para commit (sin push)
-

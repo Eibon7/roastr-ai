@@ -73,41 +73,44 @@ class LegacyIDDetector {
       // 2 = legacy IDs in docs/ (FAIL - must be fixed)
       if (this.isCIMode) {
         // Separate detections by location
-        const docsErrors = this.detections.filter(d => 
-          d.location && (
-            d.location.includes('docs/system-map-v2.yaml') ||
-            d.location.includes('docs/nodes-v2/') ||
-            d.location.includes('docs/SSOT-V2.md')
-          )
+        const docsErrors = this.detections.filter(
+          (d) =>
+            d.location &&
+            (d.location.includes('docs/system-map-v2.yaml') ||
+              d.location.includes('docs/nodes-v2/') ||
+              d.location.includes('docs/SSOT-V2.md'))
         );
-        const srcErrors = this.detections.filter(d => 
-          d.location && d.location.includes('src/')
-        );
-        const otherErrors = this.detections.filter(d => 
-          d.location && !d.location.includes('src/') && 
-          !d.location.includes('docs/system-map-v2.yaml') &&
-          !d.location.includes('docs/nodes-v2/') &&
-          !d.location.includes('docs/SSOT-V2.md')
+        const srcErrors = this.detections.filter((d) => d.location && d.location.includes('src/'));
+        const otherErrors = this.detections.filter(
+          (d) =>
+            d.location &&
+            !d.location.includes('src/') &&
+            !d.location.includes('docs/system-map-v2.yaml') &&
+            !d.location.includes('docs/nodes-v2/') &&
+            !d.location.includes('docs/SSOT-V2.md')
         );
 
         // CRITICAL: Legacy IDs in docs/ → exit 2
         if (docsErrors.length > 0) {
           this.log(`❌ Found ${docsErrors.length} legacy ID(s) in docs (CRITICAL)`, 'error');
-          this.log(`   Locations: ${docsErrors.map(d => d.location).join(', ')}`, 'error');
+          this.log(`   Locations: ${docsErrors.map((d) => d.location).join(', ')}`, 'error');
           process.exit(2); // Exit 2 = docs/ legacy IDs → CI FAIL
         }
 
         // WARN: Legacy IDs in src/ only → exit 1 (allowed for v2 PRs)
         if (srcErrors.length > 0) {
-          this.log(`⚠️ Found ${srcErrors.length} legacy ID(s) in src/ (outside scope - WARN only)`, 'warning');
-          this.log(`   Locations: ${srcErrors.map(d => d.location).join(', ')}`, 'warning');
+          this.log(
+            `⚠️ Found ${srcErrors.length} legacy ID(s) in src/ (outside scope - WARN only)`,
+            'warning'
+          );
+          this.log(`   Locations: ${srcErrors.map((d) => d.location).join(', ')}`, 'warning');
           process.exit(1); // Exit 1 = src/ only → CI continues with warning
         }
 
         // UNEXPECTED: Legacy IDs in other locations → exit 2
         if (otherErrors.length > 0) {
           this.log(`❌ Found ${otherErrors.length} legacy ID(s) in unexpected locations`, 'error');
-          this.log(`   Locations: ${otherErrors.map(d => d.location).join(', ')}`, 'error');
+          this.log(`   Locations: ${otherErrors.map((d) => d.location).join(', ')}`, 'error');
           process.exit(2); // Exit 2 = unexpected location → CI FAIL
         }
 

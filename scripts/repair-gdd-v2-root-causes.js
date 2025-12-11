@@ -62,34 +62,34 @@ function repairCrosslinksInNode(nodeId, systemMap, dryRun = false) {
   const changes = [];
 
   const dependsOn = nodeData.depends_on || [];
-  
+
   // Verificar crosslinks faltantes en la sección Dependencies
   const depsSectionMatch = content.match(/^##\s+\d+\.\s+Dependencies([\s\S]*?)(?=^##\s+\d+\.|$)/m);
-  
+
   if (depsSectionMatch) {
     const depsSection = depsSectionMatch[0];
     const missingCrosslinks = [];
-    
-    dependsOn.forEach(dep => {
+
+    dependsOn.forEach((dep) => {
       const depFileName = getNodeFileName(dep, systemMap);
       if (!depFileName) return;
-      
+
       // Buscar si ya existe el crosslink
       const patterns = [
         new RegExp(`\\[\`${dep}\`\\]\\(.*?${depFileName}`, 'i'),
         new RegExp(`\\[${dep}\\]\\(.*?${depFileName}`, 'i')
       ];
-      
-      const exists = patterns.some(p => p.test(depsSection));
+
+      const exists = patterns.some((p) => p.test(depsSection));
       if (!exists) {
         missingCrosslinks.push({ dep, file: depFileName });
       }
     });
-    
+
     if (missingCrosslinks.length > 0) {
       // Añadir crosslinks faltantes en la lista de dependencies
       let updatedDepsSection = depsSection;
-      
+
       // Buscar la lista de dependencias
       const listMatch = depsSection.match(/(^- .+$)/m);
       if (listMatch) {
@@ -97,11 +97,14 @@ function repairCrosslinksInNode(nodeId, systemMap, dryRun = false) {
         const lastDepLine = depsSection.lastIndexOf('\n- ');
         if (lastDepLine !== -1) {
           const insertPos = depsSection.indexOf('\n', lastDepLine + 1);
-          missingCrosslinks.forEach(m => {
+          missingCrosslinks.forEach((m) => {
             const newLine = `\n- [\`${m.dep}\`](./${m.file})`;
-            updatedDepsSection = updatedDepsSection.substring(0, insertPos) + newLine + updatedDepsSection.substring(insertPos);
+            updatedDepsSection =
+              updatedDepsSection.substring(0, insertPos) +
+              newLine +
+              updatedDepsSection.substring(insertPos);
           });
-          
+
           content = content.replace(depsSection, updatedDepsSection);
           changes.push(`Añadidos ${missingCrosslinks.length} crosslinks faltantes en Dependencies`);
         }
@@ -121,18 +124,18 @@ function repairCrosslinksInNode(nodeId, systemMap, dryRun = false) {
 
 function main() {
   const dryRun = process.argv.includes('--dry-run');
-  
+
   logger.info(`🔧 Reparando root causes de GDD v2...${dryRun ? ' (DRY RUN)' : ''}\n`);
 
   const systemMap = loadSystemMapV2();
   const nodeNames = Object.keys(systemMap.nodes || {});
-  
+
   const results = [];
   let totalModified = 0;
 
   // 1. Reparar crosslinks faltantes
   logger.info('1️⃣  Reparando crosslinks faltantes...\n');
-  nodeNames.forEach(nodeName => {
+  nodeNames.forEach((nodeName) => {
     const result = repairCrosslinksInNode(nodeName, systemMap, dryRun);
     if (result.modified || result.wouldModify) {
       totalModified++;
@@ -143,12 +146,12 @@ function main() {
   logger.info(`\n📊 Resultados:`);
   logger.info(`   Nodos procesados: ${nodeNames.length}`);
   logger.info(`   Nodos modificados: ${totalModified}`);
-  
+
   if (results.length > 0) {
     logger.info(`\n📝 Cambios aplicados:`);
-    results.forEach(r => {
+    results.forEach((r) => {
       logger.info(`\n   ${r.node}:`);
-      r.changes.forEach(c => logger.info(`     - ${c}`));
+      r.changes.forEach((c) => logger.info(`     - ${c}`));
     });
   }
 
@@ -164,4 +167,3 @@ if (require.main === module) {
 }
 
 module.exports = { repairCrosslinksInNode };
-

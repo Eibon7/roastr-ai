@@ -15,15 +15,15 @@ Se eliminaron todas las referencias en `required_by` que causaban ciclos indirec
 
 ### Cambios Realizados
 
-| Ciclo | Acción | Resultado |
-|-------|--------|-----------|
-| **frontend-user-app ↔ roasting-engine** | Eliminado `frontend-user-app` de `roasting-engine.required_by` | ✅ Ciclo eliminado |
-| **frontend-admin ↔ billing-integration** | Eliminado `frontend-admin` de `billing-integration.required_by` | ✅ Ciclo eliminado |
-| **workers ↔ infraestructura** | Eliminado `workers` de `infraestructura.required_by` | ✅ Ciclo eliminado |
-| **frontend-user-app ↔ shield-engine** | Eliminado `frontend-user-app` de `shield-engine.required_by` | ✅ Ciclo indirecto eliminado |
+| Ciclo                                                 | Acción                                                                      | Resultado                    |
+| ----------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------- |
+| **frontend-user-app ↔ roasting-engine**              | Eliminado `frontend-user-app` de `roasting-engine.required_by`              | ✅ Ciclo eliminado           |
+| **frontend-admin ↔ billing-integration**             | Eliminado `frontend-admin` de `billing-integration.required_by`             | ✅ Ciclo eliminado           |
+| **workers ↔ infraestructura**                        | Eliminado `workers` de `infraestructura.required_by`                        | ✅ Ciclo eliminado           |
+| **frontend-user-app ↔ shield-engine**                | Eliminado `frontend-user-app` de `shield-engine.required_by`                | ✅ Ciclo indirecto eliminado |
 | **frontend-user-app ↔ integraciones-redes-sociales** | Eliminado `frontend-user-app` de `integraciones-redes-sociales.required_by` | ✅ Ciclo indirecto eliminado |
-| **frontend-user-app ↔ billing-integration** | Eliminado `frontend-user-app` de `billing-integration.required_by` | ✅ Ciclo indirecto eliminado |
-| **workers ↔ observabilidad** | Eliminado `workers` de `observabilidad.required_by` | ✅ Ciclo indirecto eliminado |
+| **frontend-user-app ↔ billing-integration**          | Eliminado `frontend-user-app` de `billing-integration.required_by`          | ✅ Ciclo indirecto eliminado |
+| **workers ↔ observabilidad**                         | Eliminado `workers` de `observabilidad.required_by`                         | ✅ Ciclo indirecto eliminado |
 
 ---
 
@@ -52,6 +52,7 @@ Los ciclos eran **indirectos**, no directos. El grafo de dependencias tenía cam
 Se eliminaron referencias en `required_by` que creaban simetría incorrecta:
 
 **Principio aplicado:**
+
 - **UI depende de Engine, no al revés** → Frontend puede depender de backend, pero backend NO debe requerir frontend
 - **Infraestructura es base** → Workers usan infraestructura, pero infraestructura NO requiere workers
 - **Billing es servicio** → Frontend usa billing, pero billing NO requiere frontend-admin
@@ -63,6 +64,7 @@ Se eliminaron referencias en `required_by` que creaban simetría incorrecta:
 ### 1. roasting-engine
 
 **Antes:**
+
 ```yaml
 required_by:
   - observabilidad
@@ -70,6 +72,7 @@ required_by:
 ```
 
 **Después:**
+
 ```yaml
 required_by:
   - observabilidad
@@ -80,6 +83,7 @@ required_by:
 ### 2. billing-integration
 
 **Antes:**
+
 ```yaml
 required_by:
   - roasting-engine
@@ -92,6 +96,7 @@ required_by:
 ```
 
 **Después:**
+
 ```yaml
 required_by:
   - roasting-engine
@@ -106,6 +111,7 @@ required_by:
 ### 3. infraestructura
 
 **Antes:**
+
 ```yaml
 required_by:
   - analysis-engine
@@ -117,6 +123,7 @@ required_by:
 ```
 
 **Después:**
+
 ```yaml
 required_by:
   - analysis-engine
@@ -131,6 +138,7 @@ required_by:
 ### 4. shield-engine
 
 **Antes:**
+
 ```yaml
 required_by:
   - roasting-engine
@@ -139,6 +147,7 @@ required_by:
 ```
 
 **Después:**
+
 ```yaml
 required_by:
   - roasting-engine
@@ -150,6 +159,7 @@ required_by:
 ### 5. integraciones-redes-sociales
 
 **Antes:**
+
 ```yaml
 required_by:
   - roasting-engine
@@ -158,6 +168,7 @@ required_by:
 ```
 
 **Después:**
+
 ```yaml
 required_by:
   - roasting-engine
@@ -169,6 +180,7 @@ required_by:
 ### 6. observabilidad
 
 **Antes:**
+
 ```yaml
 required_by:
   - roasting-engine
@@ -182,6 +194,7 @@ required_by:
 ```
 
 **Después:**
+
 ```yaml
 required_by:
   - roasting-engine
@@ -246,16 +259,16 @@ SSOT Alignment: 100%
 
 ## 📊 Métricas Finales
 
-| Métrica | Valor | Estado |
-|---------|-------|--------|
-| **Health Score v2** | 100/100 | ✅ |
-| **System Map Alignment** | 100% | ✅ |
-| **SSOT Alignment** | 100% | ✅ |
-| **Dependency Density** | 100% | ✅ |
-| **Crosslink Score** | 100% | ✅ |
-| **Narrative Consistency** | 100% | ✅ |
-| **Ciclos detectados** | 0 | ✅ |
-| **Relaciones asimétricas** | 0 | ✅ |
+| Métrica                    | Valor   | Estado |
+| -------------------------- | ------- | ------ |
+| **Health Score v2**        | 100/100 | ✅     |
+| **System Map Alignment**   | 100%    | ✅     |
+| **SSOT Alignment**         | 100%    | ✅     |
+| **Dependency Density**     | 100%    | ✅     |
+| **Crosslink Score**        | 100%    | ✅     |
+| **Narrative Consistency**  | 100%    | ✅     |
+| **Ciclos detectados**      | 0       | ✅     |
+| **Relaciones asimétricas** | 0       | ✅     |
 
 ---
 
@@ -264,18 +277,21 @@ SSOT Alignment: 100%
 ### 1. Dirección Lógica
 
 ✅ **UI → Engine, no al revés**
+
 - Frontend puede depender de backend engines
 - Backend engines NO requieren frontend
 
 ### 2. Infraestructura como Base
 
 ✅ **Workers → Infraestructura, no al revés**
+
 - Workers usan infraestructura (queue, DB)
 - Infraestructura NO requiere workers
 
 ### 3. Servicios como Capa Intermedia
 
 ✅ **Frontend → Billing, no al revés**
+
 - Frontend consume servicios de billing
 - Billing NO requiere frontend
 
@@ -318,4 +334,3 @@ Todos los ciclos han sido eliminados manteniendo la dirección lógica correcta.
 
 **Última actualización:** 2025-12-09  
 **Validado por:** validate-symmetry.js, compute-health-v2-official.js
-

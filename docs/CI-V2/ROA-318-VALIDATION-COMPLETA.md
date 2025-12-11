@@ -78,13 +78,14 @@
 
 **Contract Implementado:**
 
-| Exit Code | Condición | Acción CI | Estado |
-|-----------|-----------|-----------|--------|
-| **0** | No legacy IDs | ✅ PASS | ✅ Correcto |
-| **1** | Legacy IDs solo en `src/` | ⚠️ WARN → PASS | ✅ Correcto |
-| **2** | Legacy IDs en `docs/` | ❌ FAIL | ✅ Correcto |
+| Exit Code | Condición                 | Acción CI      | Estado      |
+| --------- | ------------------------- | -------------- | ----------- |
+| **0**     | No legacy IDs             | ✅ PASS        | ✅ Correcto |
+| **1**     | Legacy IDs solo en `src/` | ⚠️ WARN → PASS | ✅ Correcto |
+| **2**     | Legacy IDs en `docs/`     | ❌ FAIL        | ✅ Correcto |
 
 **Prueba Local:**
+
 ```bash
 $ node scripts/detect-legacy-ids.js --ci >/dev/null 2>&1; echo $?
 1
@@ -95,6 +96,7 @@ $ node scripts/detect-legacy-ids.js --ci >/dev/null 2>&1; echo $?
 ```
 
 **Verificación en Código:**
+
 ```javascript
 // scripts/detect-legacy-ids.js líneas 70-116
 
@@ -135,12 +137,12 @@ process.exit(0); // ✅ PASS
     node scripts/detect-legacy-ids.js --ci
     LEGACY_EXIT=$?
     set -e
-    
+
     # Exit code contract:
     # 0 = no legacy IDs → OK
     # 1 = src/ only → WARN, allow CI to continue
     # 2 = docs/ → FAIL
-    
+
     if [ "$LEGACY_EXIT" -eq 0 ]; then
       echo "✅ No legacy IDs detected"
       exit 0
@@ -159,6 +161,7 @@ process.exit(0); // ✅ PASS
 ```
 
 **Verificación:**
+
 - ✅ Lógica de branching explícita (no hacks)
 - ✅ Exit 0 para códigos 0 y 1 (PASS y WARN)
 - ✅ Exit 1 para código 2 (FAIL)
@@ -177,11 +180,13 @@ process.exit(0); // ✅ PASS
 **Estado:** ✅ **YA CORREGIDO en commit `67e7e3a3`**
 
 **Fix Aplicado:**
+
 - Todas las referencias a variable `drift` eliminadas
 - PR comment simplificado a métricas v2
 - No más ReferenceError en CI
 
 **Verificación:**
+
 ```bash
 $ grep -r "drift\." .github/workflows/gdd-validate.yml | grep -v "check-system-map-drift"
 (no results)
@@ -199,10 +204,12 @@ $ grep -r "drift\." .github/workflows/gdd-validate.yml | grep -v "check-system-m
 **Estado:** No se encontraron comentarios específicos para PR #1120
 
 **Comentarios Aplicados Previamente:**
+
 - Logger consistency en scripts (ya aplicado)
-- Eliminación de console.* (ya aplicado)
+- Eliminación de console.\* (ya aplicado)
 
 **Verificación:**
+
 ```bash
 $ grep -n "console\." scripts/detect-legacy-ids.js
 (no matches)
@@ -217,14 +224,14 @@ $ grep -n "console\." scripts/detect-legacy-ids.js
 
 ### Métricas Oficiales (desde SSOT sección 15)
 
-| Métrica | Valor | Estado |
-|---------|-------|--------|
-| **Health Score Final** | 100/100 | ✅ |
-| **System Map Alignment** | 100% | ✅ |
-| **SSOT Alignment** | 100% | ✅ |
-| **Dependency Density** | 100% | ✅ |
-| **Crosslink Score** | 100% | ✅ |
-| **Narrative Consistency** | 100% | ✅ |
+| Métrica                   | Valor   | Estado |
+| ------------------------- | ------- | ------ |
+| **Health Score Final**    | 100/100 | ✅     |
+| **System Map Alignment**  | 100%    | ✅     |
+| **SSOT Alignment**        | 100%    | ✅     |
+| **Dependency Density**    | 100%    | ✅     |
+| **Crosslink Score**       | 100%    | ✅     |
+| **Narrative Consistency** | 100%    | ✅     |
 
 ### Estado Documental
 
@@ -253,20 +260,24 @@ $ git diff origin/main --name-only | grep "^src/" | wc -l
 ### Archivos Modificados en Este PR
 
 **Workflows:**
+
 - `.github/workflows/system-map-v2-consistency.yml` (exit code logic)
 - `.github/workflows/gdd-validate.yml` (drift references removed)
 
 **Scripts:**
+
 - `scripts/detect-legacy-ids.js` (exit code contract)
 - `scripts/check-system-map-drift.js` (logger consistency)
 
 **Documentación:**
+
 - `docs/CI-V2/*.md` (reportes y análisis)
 - `docs/system-map-v2.yaml` (eliminación de ciclos)
 - `docs/SSOT-V2.md` (auto-actualizado por health script)
 - `docs/nodes-v2/*.md` (migraciones y correcciones)
 
 **Auto-Generados:**
+
 - `docs/GDD-V2-HEALTH-REPORT.md`
 - `gdd-health-v2.json`
 - `scripts/outputs/gdd-health-v2-official.json`
@@ -280,6 +291,7 @@ $ git diff origin/main --name-only | grep "^src/" | wc -l
 ### Job 1: System Map v2 Consistency
 
 **Flow Esperado:**
+
 1. ✅ Validate Node IDs → PASS
 2. ✅ Validate Workers SSOT → PASS
 3. ✅ Validate Drift → PASS
@@ -299,6 +311,7 @@ $ git diff origin/main --name-only | grep "^src/" | wc -l
 ### Job 2: GDD Validation / validate-gdd
 
 **Flow Esperado:**
+
 1. ✅ Check v2-only PR → TRUE
 2. ✅ Skip v1 validation → SKIPPED (correcto)
 3. ✅ Run v2 validation chain → PASS
@@ -311,15 +324,15 @@ $ git diff origin/main --name-only | grep "^src/" | wc -l
 
 ## 📈 COMPARATIVA ANTES/DESPUÉS
 
-| Aspecto | Antes | Después | Estado |
-|---------|-------|---------|--------|
-| **detect-legacy-ids exit** | exit 0 para src/ | exit 1 para src/ | ✅ Corregido |
-| **Workflow interpretation** | Fallback hack | Explicit branching | ✅ Corregido |
-| **ReferenceError drift** | undefined | removed | ✅ Corregido |
-| **Exit code contract** | Ambiguo | 0/1/2 explícito | ✅ Implementado |
-| **CI jobs** | FAILING | PASSING | ✅ Corregido |
-| **Health Score** | 100/100 | 100/100 | ✅ Mantenido |
-| **Files in src/** | 0 | 0 | ✅ No tocados |
+| Aspecto                     | Antes            | Después            | Estado          |
+| --------------------------- | ---------------- | ------------------ | --------------- |
+| **detect-legacy-ids exit**  | exit 0 para src/ | exit 1 para src/   | ✅ Corregido    |
+| **Workflow interpretation** | Fallback hack    | Explicit branching | ✅ Corregido    |
+| **ReferenceError drift**    | undefined        | removed            | ✅ Corregido    |
+| **Exit code contract**      | Ambiguo          | 0/1/2 explícito    | ✅ Implementado |
+| **CI jobs**                 | FAILING          | PASSING            | ✅ Corregido    |
+| **Health Score**            | 100/100          | 100/100            | ✅ Mantenido    |
+| **Files in src/**           | 0                | 0                  | ✅ No tocados   |
 
 ---
 
@@ -340,6 +353,7 @@ ee3e32b9 - fix: finalize legacy-ID contract + CR suggestions
 ## 📄 DOCUMENTACIÓN GENERADA
 
 **Reportes Creados:**
+
 1. `docs/CI-V2/CI-AUDIT-REPORT.md` - Auditoría inicial
 2. `docs/CI-V2/WORKFLOW-SPEC.md` - Especificación de workflow v2
 3. `docs/CI-V2/CI-FINAL-VALIDATION.md` - Validación final migración
@@ -356,6 +370,7 @@ ee3e32b9 - fix: finalize legacy-ID contract + CR suggestions
 ### ✅ TODOS LOS REQUISITOS CUMPLIDOS
 
 **Objetivos de la Issue ROA-318:**
+
 - ✅ Legacy IDs en src/ generan WARNING (NO FAIL)
 - ✅ Legacy IDs en docs/ generan FAIL
 - ✅ Job System Map v2 Consistency deja de fallar
@@ -366,6 +381,7 @@ ee3e32b9 - fix: finalize legacy-ID contract + CR suggestions
 - ✅ Se respetan todos los comentarios de CodeRabbit
 
 **Métricas Finales:**
+
 - 🎯 Validadores: 8/8 PASS
 - 🎯 Health Score: 100/100
 - 🎯 Exit Code: 1 (correcto para src/)
@@ -392,4 +408,3 @@ ee3e32b9 - fix: finalize legacy-ID contract + CR suggestions
 ---
 
 **✅ ROA-318 COMPLETADO - CI WILL PASS - READY FOR MERGE** 🚀
-

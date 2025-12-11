@@ -189,4 +189,3 @@ Esta PR implementa la limpieza estructural v2 completa según ROA-318, eliminand
 **Última actualización:** 2025-12-09  
 **Issue:** ROA-318  
 **Estado:** ✅ Listo para merge
-

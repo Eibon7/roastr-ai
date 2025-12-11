@@ -70,13 +70,19 @@ function repairNodeCrosslinks(nodeId, systemMap, dryRun = false) {
 
 Este nodo depende de los siguientes nodos:
 
-${dependsOn.length > 0 ? dependsOn.map(dep => {
-  const fileName = getNodeFileName(dep, systemMap);
-  if (fileName) {
-    return `- [\`${dep}\`](./${fileName})`;
-  }
-  return `- \`${dep}\` (TBD: archivo no encontrado)`;
-}).join('\n') : '- Ninguna dependencia directa'}
+${
+  dependsOn.length > 0
+    ? dependsOn
+        .map((dep) => {
+          const fileName = getNodeFileName(dep, systemMap);
+          if (fileName) {
+            return `- [\`${dep}\`](./${fileName})`;
+          }
+          return `- \`${dep}\` (TBD: archivo no encontrado)`;
+        })
+        .join('\n')
+    : '- Ninguna dependencia directa'
+}
 
 ---
 
@@ -84,13 +90,19 @@ ${dependsOn.length > 0 ? dependsOn.map(dep => {
 
 Este nodo está relacionado con los siguientes nodos:
 
-${requiredBy.length > 0 ? requiredBy.map(req => {
-  const fileName = getNodeFileName(req, systemMap);
-  if (fileName) {
-    return `- [\`${req}\`](./${fileName})`;
-  }
-  return `- \`${req}\` (TBD: archivo no encontrado)`;
-}).join('\n') : '- Ningún nodo relacionado'}
+${
+  requiredBy.length > 0
+    ? requiredBy
+        .map((req) => {
+          const fileName = getNodeFileName(req, systemMap);
+          if (fileName) {
+            return `- [\`${req}\`](./${fileName})`;
+          }
+          return `- \`${req}\` (TBD: archivo no encontrado)`;
+        })
+        .join('\n')
+    : '- Ningún nodo relacionado'
+}
 
 ---`;
 
@@ -113,7 +125,11 @@ ${requiredBy.length > 0 ? requiredBy.map(req => {
     // Determinar número de sección a usar
     const nextSectionNum = lastSectionNum + 1;
     const depsSectionNum = hasDependenciesSection ? null : nextSectionNum;
-    const relatedSectionNum = hasRelatedSection ? null : (hasDependenciesSection ? nextSectionNum : nextSectionNum + 1);
+    const relatedSectionNum = hasRelatedSection
+      ? null
+      : hasDependenciesSection
+        ? nextSectionNum
+        : nextSectionNum + 1;
 
     // Crear secciones con numeración correcta
     let newSections = '';
@@ -122,13 +138,19 @@ ${requiredBy.length > 0 ? requiredBy.map(req => {
 
 Este nodo depende de los siguientes nodos:
 
-${dependsOn.length > 0 ? dependsOn.map(dep => {
-  const fileName = getNodeFileName(dep, systemMap);
-  if (fileName) {
-    return `- [\`${dep}\`](./${fileName})`;
-  }
-  return `- \`${dep}\` (TBD: archivo no encontrado)`;
-}).join('\n') : '- Ninguna dependencia directa'}
+${
+  dependsOn.length > 0
+    ? dependsOn
+        .map((dep) => {
+          const fileName = getNodeFileName(dep, systemMap);
+          if (fileName) {
+            return `- [\`${dep}\`](./${fileName})`;
+          }
+          return `- \`${dep}\` (TBD: archivo no encontrado)`;
+        })
+        .join('\n')
+    : '- Ninguna dependencia directa'
+}
 
 ---
 
@@ -139,13 +161,19 @@ ${dependsOn.length > 0 ? dependsOn.map(dep => {
 
 Este nodo está relacionado con los siguientes nodos:
 
-${requiredBy.length > 0 ? requiredBy.map(req => {
-  const fileName = getNodeFileName(req, systemMap);
-  if (fileName) {
-    return `- [\`${req}\`](./${fileName})`;
-  }
-  return `- \`${req}\` (TBD: archivo no encontrado)`;
-}).join('\n') : '- Ningún nodo relacionado'}
+${
+  requiredBy.length > 0
+    ? requiredBy
+        .map((req) => {
+          const fileName = getNodeFileName(req, systemMap);
+          if (fileName) {
+            return `- [\`${req}\`](./${fileName})`;
+          }
+          return `- \`${req}\` (TBD: archivo no encontrado)`;
+        })
+        .join('\n')
+    : '- Ningún nodo relacionado'
+}
 
 ---
 
@@ -158,8 +186,10 @@ ${requiredBy.length > 0 ? requiredBy.map(req => {
   } else {
     // Ya existen, actualizar contenido (buscar con regex flexible)
     const depsSectionMatch = content.match(/^##\s+\d+\.\s+.*?Dependencies.*?(?=^##\s+\d+\.|$)/ms);
-    const relatedSectionMatch = content.match(/^##\s+\d+\.\s+.*?Related\s+Nodes.*?(?=^##\s+\d+\.|$)/ms);
-    
+    const relatedSectionMatch = content.match(
+      /^##\s+\d+\.\s+.*?Related\s+Nodes.*?(?=^##\s+\d+\.|$)/ms
+    );
+
     if (depsSectionMatch) {
       const sectionNum = depsSectionMatch[0].match(/^##\s+(\d+)\./);
       const num = sectionNum ? sectionNum[1] : '6';
@@ -167,19 +197,25 @@ ${requiredBy.length > 0 ? requiredBy.map(req => {
 
 Este nodo depende de los siguientes nodos:
 
-${dependsOn.length > 0 ? dependsOn.map(dep => {
-  const fileName = getNodeFileName(dep, systemMap);
-  if (fileName) {
-    return `- [\`${dep}\`](./${fileName})`;
-  }
-  return `- \`${dep}\` (TBD: archivo no encontrado)`;
-}).join('\n') : '- Ninguna dependencia directa'}
+${
+  dependsOn.length > 0
+    ? dependsOn
+        .map((dep) => {
+          const fileName = getNodeFileName(dep, systemMap);
+          if (fileName) {
+            return `- [\`${dep}\`](./${fileName})`;
+          }
+          return `- \`${dep}\` (TBD: archivo no encontrado)`;
+        })
+        .join('\n')
+    : '- Ninguna dependencia directa'
+}
 
 ---`;
       content = content.replace(depsSectionMatch[0], newDepsSection);
       changes.push('Actualizada sección Dependencies');
     }
-    
+
     if (relatedSectionMatch) {
       const sectionNum = relatedSectionMatch[0].match(/^##\s+(\d+)\./);
       const num = sectionNum ? sectionNum[1] : '7';
@@ -187,13 +223,19 @@ ${dependsOn.length > 0 ? dependsOn.map(dep => {
 
 Este nodo está relacionado con los siguientes nodos:
 
-${requiredBy.length > 0 ? requiredBy.map(req => {
-  const fileName = getNodeFileName(req, systemMap);
-  if (fileName) {
-    return `- [\`${req}\`](./${fileName})`;
-  }
-  return `- \`${req}\` (TBD: archivo no encontrado)`;
-}).join('\n') : '- Ningún nodo relacionado'}
+${
+  requiredBy.length > 0
+    ? requiredBy
+        .map((req) => {
+          const fileName = getNodeFileName(req, systemMap);
+          if (fileName) {
+            return `- [\`${req}\`](./${fileName})`;
+          }
+          return `- \`${req}\` (TBD: archivo no encontrado)`;
+        })
+        .join('\n')
+    : '- Ningún nodo relacionado'
+}
 
 ---`;
       content = content.replace(relatedSectionMatch[0], newRelatedSection);
@@ -203,10 +245,13 @@ ${requiredBy.length > 0 ? requiredBy.map(req => {
 
   // Verificar que los crosslinks están presentes en el contenido
   const missingCrosslinks = [];
-  allDependencies.forEach(dep => {
+  allDependencies.forEach((dep) => {
     const fileName = getNodeFileName(dep, systemMap);
     if (fileName) {
-      const linkPattern = new RegExp(`\\[.*?\\]\\(.*?${fileName.replace('.md', '')}.*?\\)|\\[.*?\\]\\(.*?${fileName}\\)`, 'i');
+      const linkPattern = new RegExp(
+        `\\[.*?\\]\\(.*?${fileName.replace('.md', '')}.*?\\)|\\[.*?\\]\\(.*?${fileName}\\)`,
+        'i'
+      );
       if (!linkPattern.test(content) && !content.includes(`\`${dep}\``)) {
         missingCrosslinks.push(dep);
       }
@@ -218,18 +263,22 @@ ${requiredBy.length > 0 ? requiredBy.map(req => {
     const summarySection = content.match(/^##\s+1\.\s+Summary.*?(?=^##\s+\d+\.|$)/ms);
     if (summarySection) {
       const summaryText = summarySection[0];
-      const newRefs = missingCrosslinks.map(dep => {
-        const fileName = getNodeFileName(dep, systemMap);
-        if (fileName) {
-          return `[\`${dep}\`](./${fileName})`;
-        }
-        return `\`${dep}\``;
-      }).join(', ');
-      
+      const newRefs = missingCrosslinks
+        .map((dep) => {
+          const fileName = getNodeFileName(dep, systemMap);
+          if (fileName) {
+            return `[\`${dep}\`](./${fileName})`;
+          }
+          return `\`${dep}\``;
+        })
+        .join(', ');
+
       if (!summaryText.includes(newRefs)) {
         const updatedSummary = summaryText.replace(/(\.)$/, ` (ver también: ${newRefs}).`);
         content = content.replace(summarySection[0], updatedSummary);
-        changes.push(`Añadidas referencias a nodos faltantes en Summary: ${missingCrosslinks.join(', ')}`);
+        changes.push(
+          `Añadidas referencias a nodos faltantes en Summary: ${missingCrosslinks.join(', ')}`
+        );
       }
     }
   }
@@ -246,16 +295,16 @@ ${requiredBy.length > 0 ? requiredBy.map(req => {
 
 function main() {
   const dryRun = process.argv.includes('--dry-run');
-  
+
   logger.info(`🔧 Reparando crosslinks en nodos v2...${dryRun ? ' (DRY RUN)' : ''}\n`);
 
   const systemMap = loadSystemMapV2();
   const nodeNames = Object.keys(systemMap.nodes || {});
-  
+
   const results = [];
   let totalModified = 0;
 
-  nodeNames.forEach(nodeName => {
+  nodeNames.forEach((nodeName) => {
     const result = repairNodeCrosslinks(nodeName, systemMap, dryRun);
     if (result.modified || result.wouldModify) {
       totalModified++;
@@ -266,12 +315,12 @@ function main() {
   logger.info(`\n📊 Resultados:`);
   logger.info(`   Nodos procesados: ${nodeNames.length}`);
   logger.info(`   Nodos modificados: ${totalModified}`);
-  
+
   if (results.length > 0) {
     logger.info(`\n📝 Cambios aplicados:`);
-    results.forEach(r => {
+    results.forEach((r) => {
       logger.info(`\n   ${r.node}:`);
-      r.changes.forEach(c => logger.info(`     - ${c}`));
+      r.changes.forEach((c) => logger.info(`     - ${c}`));
     });
   }
 
@@ -287,4 +336,3 @@ if (require.main === module) {
 }
 
 module.exports = { repairNodeCrosslinks };
-
