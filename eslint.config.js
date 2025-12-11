@@ -8,6 +8,8 @@ module.exports = [
   {
     ignores: [
       'frontend/**',
+      'apps/frontend/**',
+      'apps/frontend-v2/**',
       'node_modules/**',
       '*.config.js',
       'coverage/**',
@@ -15,11 +17,7 @@ module.exports = [
       'dist/**',
       '**/*.min.js',
       '**/build/**',
-      '**/dist/**',
-      'tests/unit/components/**',
-      'tests/unit/frontend/**',
-      'tests/unit/pages/**',
-      '**/*' // Ignore everything by default
+      '**/dist/**'
     ]
   },
   // Main configuration - ONLY lint apps/backend-v2/** and scripts/**

@@ -158,16 +158,12 @@ jobs:
         run: npm ci
 
       - name: Run backend linting
-        run: npm run lint
+        run: npx eslint apps/backend-v2 scripts
 
       - name: Run backend tests
-        if: false  # Disabled until v2 test infrastructure is ready
         run: |
-          echo "🧪 Running backend tests with environment:"
-          echo "NODE_ENV: $NODE_ENV"
-          echo "ENABLE_RQC: $ENABLE_RQC"
-          echo "SKIP_E2E: $SKIP_E2E"
-          npm run test:ci
+          echo "🧪 Running backend tests"
+          npm test
 
       - name: Run Perspective-Shield integration test
         run: |
@@ -180,19 +176,17 @@ jobs:
         working-directory: ./frontend
         run: |
           echo "🔍 Running frontend ESLint checks..."
-          npx eslint src/ --ext .js,.jsx,.ts,.tsx --max-warnings 0
+          npm run lint
         continue-on-error: false
 
-      - name: Run frontend tests (allow failures in Phase 1)
-        if: false  # Disabled until v2 test infrastructure is ready
+      - name: Run frontend tests
         working-directory: ./frontend
         run: |
           echo "🧪 Running frontend tests with complete mocking:"
           echo "REACT_APP_ENABLE_MOCK_MODE: $REACT_APP_ENABLE_MOCK_MODE"
           echo "CI: $CI"
           echo "SKIP_E2E: $SKIP_E2E"
-          echo "⚠️  Note: Frontend tests may fail - full fix scheduled for Phase 2"
-          npm run test:ci || echo "Frontend tests failed as expected - continuing with build"
+          npm run test
 
       - name: Upload backend test results
         uses: actions/upload-artifact@v5

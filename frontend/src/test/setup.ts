@@ -2,6 +2,11 @@ import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
+// Mock Perspective client to avoid real API calls
+vi.mock('../lib/perspectiveClient', () => ({
+  analyze: async () => ({})
+}));
+
 // Cleanup after each test
 afterEach(() => {
   cleanup();

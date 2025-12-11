@@ -13,6 +13,8 @@ export default defineConfig({
       'node_modules/',
       'dist/',
       'e2e/',
+      '../apps/backend-v2/**',
+      '../scripts/**',
       // Exclude Jest-based tests from main branch that aren't compatible with Vitest yet
       'src/contexts/__tests__/**',
       'src/hooks/__tests__/**'
