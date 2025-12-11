@@ -44,13 +44,7 @@ args.forEach((arg) => {
 // Previous: 2s polling = 216,000 queries/day = 32GB/month ❌
 // New: 60s polling = 7,200 queries/day = 1GB/month ✅
 let config = {
-  enabledWorkers: [
-    'fetch_comments',
-    'analyze_toxicity',
-    'generate_roast',
-    'style_profile',
-    'social_posting'
-  ],
+  enabledWorkers: ['fetch_comments', 'analyze_toxicity', 'generate_roast', 'social_posting'],
   workerConfig: {
     fetch_comments: {
       maxConcurrency: 5,
@@ -63,10 +57,6 @@ let config = {
     generate_roast: {
       maxConcurrency: 2,
       pollInterval: 60000 // 60s (was 2s) - Issue #894
-    },
-    style_profile: {
-      maxConcurrency: 2,
-      pollInterval: 300000 // 5min (was 5s) - Less time-critical
     },
     social_posting: {
       maxConcurrency: 2,

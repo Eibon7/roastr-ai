@@ -17,7 +17,6 @@ const AnalyzeToxicityWorker = require('../../../src/workers/AnalyzeToxicityWorke
 const GenerateReplyWorker = require('../../../src/workers/GenerateReplyWorker');
 const ShieldActionWorker = require('../../../src/workers/ShieldActionWorker');
 const BillingWorker = require('../../../src/workers/BillingWorker');
-const StyleProfileWorker = require('../../../src/workers/StyleProfileWorker');
 const PublisherWorker = require('../../../src/workers/PublisherWorker');
 
 // Mock all worker classes
@@ -26,7 +25,6 @@ jest.mock('../../../src/workers/AnalyzeToxicityWorker');
 jest.mock('../../../src/workers/GenerateReplyWorker');
 jest.mock('../../../src/workers/ShieldActionWorker');
 jest.mock('../../../src/workers/BillingWorker');
-jest.mock('../../../src/workers/StyleProfileWorker');
 jest.mock('../../../src/workers/PublisherWorker');
 
 describe('WorkerManager', () => {
@@ -146,7 +144,6 @@ describe('WorkerManager', () => {
         generate_roast: GenerateReplyWorker,
         shield_action: ShieldActionWorker,
         billing_update: BillingWorker,
-        style_profile: StyleProfileWorker,
         social_posting: PublisherWorker
       });
     });

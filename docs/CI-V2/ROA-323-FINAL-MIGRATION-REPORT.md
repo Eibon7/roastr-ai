@@ -29,13 +29,13 @@
 - detect-legacy-ids: ✅ sin legacy.
 - validate-node-ids: ✅ sin errores.
 - validate-v2-doc-paths: ✅.
-- validate-workers-ssot: ✅ con warnings conocidos (falta sección 8.1 en SSOT; worker style_profile no oficial, tratado como warning).
+- validate-workers-ssot: ✅ con warnings conocidos (falta sección 8.1 en SSOT).
 - check-system-map-drift: ✅ con warnings de archivos orphaned en docs/nodes-v2 (no tocados por alcance).
 - validate-ssot-health: ✅ warning por placeholder en SSOT (existente).
 - calculate-gdd-health-v2: ✅ health 100.
 
 ## 5. Riesgos y pendientes conocidos
-- Warnings deliberadamente no resueltos: archivos orphaned en docs/nodes-v2 (11) y worker `style_profile` marcado como no oficial (warning), placeholder en SSOT sección 15.
+- Warnings deliberadamente no resueltos: archivos orphaned en docs/nodes-v2 (11) y placeholder en SSOT sección 15.
 - No se modificó system-map-v2.yaml ni los docs orphaned.
 - No se renombraron archivos legacy de workers; solo se alinearon colas/IDs.
 

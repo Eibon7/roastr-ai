@@ -1,7 +1,7 @@
 # Legacy → V2 Official Mapping
 
 **Generated:** 2025-12-11  
-**Commit:** 6380f8d3  
+**Commit:** 6d0cc138  
 **Sources:** system-map-v2.yaml, docs/nodes-v2/*, scripts/shared/legacy-ids.js, docs/CI-V2/ROA-323-FINAL-MIGRATION-REPORT.md
 
 
@@ -41,7 +41,7 @@
 
 ## 5. Notes & Known Limitations
 - 11 orphaned docs en nodes-v2  
-- worker style_profile marcado como experimental (warning)  
+- worker style_profile eliminado (legacy sin soporte en SSOT/Spec/system-map)  
 - placeholder en SSOT sección 15  
 - No existen pseudo-v2 en system-map
 
