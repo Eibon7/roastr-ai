@@ -274,7 +274,7 @@ class GDDCrossValidator {
    * @param {string} declaredDate - Date from node doc (YYYY-MM-DD)
    */
   async validateTimestamp(nodeName, declaredDate) {
-    const nodeFile = path.join('docs', 'nodes', `${nodeName}.md`);
+    const nodeFile = path.join('docs', 'nodes-v2', `${nodeName}.md`);
 
     try {
       // Get last commit date for the node file (using spawnSync to prevent command injection)

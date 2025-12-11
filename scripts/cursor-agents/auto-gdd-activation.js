@@ -139,16 +139,16 @@ function detectNodesFromFiles(files) {
   const nodes = new Set();
 
   const fileToNode = {
-    shield: 'shield',
-    costControl: 'cost-control',
-    billing: 'cost-control',
-    queue: 'queue-system',
-    worker: 'queue-system',
-    roast: 'roast',
-    persona: 'persona',
-    tone: 'tone',
-    platform: 'social-platforms',
-    integration: 'social-platforms'
+    shield: 'shield-engine',
+    costControl: 'billing-integration',
+    billing: 'billing-integration',
+    queue: 'workers',
+    worker: 'workers',
+    roast: 'roasting-engine',
+    persona: 'analysis-engine',
+    tone: 'roasting-engine',
+    platform: 'integraciones-redes-sociales',
+    integration: 'integraciones-redes-sociales'
   };
 
   for (const file of files) {
