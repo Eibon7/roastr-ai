@@ -1,7 +1,6 @@
 const prettierConfig = require('eslint-plugin-prettier');
 const prettierRecommended = require('eslint-config-prettier');
-const babelParser = require('@babel/eslint-parser');
-const reactPlugin = require('eslint-plugin-react');
+const tsParser = require('@typescript-eslint/parser');
 
 module.exports = [
   // Ignore patterns (must be first in flat config)
@@ -22,16 +21,13 @@ module.exports = [
   },
   // Main configuration - ONLY lint apps/backend-v2/** and scripts/**
   {
-    files: ['apps/backend-v2/**/*.{js,jsx}', 'scripts/**/*.{js,jsx}'],
+    files: ['apps/backend-v2/**/*.{js,jsx,ts,tsx}', 'scripts/**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
-      parser: babelParser,
+      parser: tsParser,
       parserOptions: {
-        ecmaVersion: 2020,
+        ecmaVersion: 2022,
         sourceType: 'module',
-        requireConfigFile: false,
-        ecmaFeatures: {
-          jsx: true
-        }
+        ecmaFeatures: { jsx: true }
       },
       globals: {
         node: true,
@@ -43,14 +39,11 @@ module.exports = [
         __dirname: true,
         __filename: true,
         global: true,
-        Buffer: true,
-        React: 'readonly',
-        JSX: 'readonly'
+        Buffer: true
       }
     },
     plugins: {
-      prettier: prettierConfig,
-      react: reactPlugin
+      prettier: prettierConfig
     },
     rules: {
       // Disable strict rules that might break CI

@@ -158,7 +158,9 @@ jobs:
         run: npm ci
 
       - name: Run backend linting
-        run: npx eslint apps/backend-v2 scripts
+        run: |
+          echo "🔍 Running backend ESLint checks from repo root"
+          npx eslint --ext .js,.jsx,.ts,.tsx --resolve-plugins-relative-to . apps/backend-v2 scripts
 
       - name: Run backend tests
         run: |
