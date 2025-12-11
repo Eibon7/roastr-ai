@@ -1,7 +1,7 @@
 # Legacy → V2 Official Mapping
 
 **Generated:** 2025-12-11  
-**Commit:** 6d0cc138  
+**Commit:** a01d8bcc  
 **Sources:** system-map-v2.yaml, docs/nodes-v2/*, scripts/shared/legacy-ids.js, docs/CI-V2/ROA-323-FINAL-MIGRATION-REPORT.md
 
 
