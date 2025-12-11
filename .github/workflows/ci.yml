@@ -163,10 +163,10 @@ jobs:
           npx eslint -v
           npx eslint --ext .js,.jsx,.ts,.tsx apps/backend-v2 scripts
 
-      - name: Run backend tests
+      - name: Run backend tests (smoke suite)
         run: |
-          echo "🧪 Running backend tests"
-          npm test
+          echo "🧪 Running backend smoke tests (jest.ci.config.cjs)"
+          npm run test:ci
 
       - name: Run Perspective-Shield integration test
         run: |
