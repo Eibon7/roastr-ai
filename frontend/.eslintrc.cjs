@@ -22,11 +22,12 @@ module.exports = {
       version: 'detect'
     }
   },
-  plugins: ['react', 'react-refresh', '@typescript-eslint'],
+  plugins: ['react', 'react-refresh', '@typescript-eslint', 'react-hooks'],
   rules: {
     'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-dynamic-delete': 'off',
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off'
   }

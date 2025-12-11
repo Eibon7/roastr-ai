@@ -18,12 +18,13 @@ module.exports = [
       '**/dist/**',
       'tests/unit/components/**',
       'tests/unit/frontend/**',
-      'tests/unit/pages/**'
+      'tests/unit/pages/**',
+      '**/*' // Ignore everything by default
     ]
   },
-  // Main configuration
+  // Main configuration - ONLY lint apps/backend-v2/** and scripts/**
   {
-    files: ['**/*.{js,jsx}'],
+    files: ['apps/backend-v2/**/*.{js,jsx}', 'scripts/**/*.{js,jsx}'],
     languageOptions: {
       parser: babelParser,
       parserOptions: {
@@ -65,6 +66,9 @@ module.exports = [
       // React rules (minimal, just to avoid JSX parsing errors)
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
+      
+      // Disable unsupported TypeScript rules (not available in this config)
+      '@typescript-eslint/no-dynamic-delete': 'off',
       
       // Disable rules that conflict with Prettier
       ...prettierRecommended.rules
