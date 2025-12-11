@@ -146,8 +146,12 @@ async function runIntegrationTest() {
       let analysisResult;
 
       // Always use mock in CI/test environments (SSOT Governance: no real API calls in tests)
-      const useMock = !apiKey || process.env.CI === 'true' || process.env.ENABLE_MOCK_MODE === 'true' || process.env.ENABLE_REAL_PERSPECTIVE !== 'true';
-      
+      const useMock =
+        !apiKey ||
+        process.env.CI === 'true' ||
+        process.env.ENABLE_MOCK_MODE === 'true' ||
+        process.env.ENABLE_REAL_PERSPECTIVE !== 'true';
+
       if (useMock) {
         // Mock response based on expected level
         analysisResult = mockPerspectiveResponse(testCase);
