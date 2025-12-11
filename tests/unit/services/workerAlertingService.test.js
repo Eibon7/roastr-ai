@@ -87,7 +87,7 @@ describe('WorkerAlertingService', () => {
             failed: 3,
             uptime: 3600000
           },
-          { type: 'generate_reply', status: 'healthy', processed: 80, failed: 1, uptime: 3600000 },
+          { type: 'generate_roast', status: 'healthy', processed: 80, failed: 1, uptime: 3600000 },
           { type: 'shield_action', status: 'unhealthy', processed: 50, failed: 10, uptime: 3600000 }
         ]
       },
@@ -99,7 +99,7 @@ describe('WorkerAlertingService', () => {
         byQueue: {
           fetch_comments: { pending: 500, processing: 2, completed: 100, failed: 5, dlq: 50 },
           analyze_toxicity: { pending: 300, processing: 1, completed: 150, failed: 8, dlq: 40 },
-          generate_reply: { pending: 200, processing: 1, completed: 80, failed: 3, dlq: 30 },
+          generate_roast: { pending: 200, processing: 1, completed: 80, failed: 3, dlq: 30 },
           shield_action: { pending: 200, processing: 1, completed: 50, failed: 4, dlq: 30 }
         }
       },

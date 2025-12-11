@@ -5,24 +5,29 @@
 
 ---
 
-## 📋 Mapeo Oficial Legacy → v2
+## 📋 Mapeo Oficial Legacy → v2 (solo IDs existentes en system-map-v2)
 
-| Legacy ID | v2 ID | Tipo | Estado |
-|-----------|-------|------|--------|
-| `roast` | `roast-generation` | Node | ⚠️ En código (43 refs) |
-| `shield` | `shield-moderation` | Node | ⚠️ En código (10 refs) |
-| `billing` | `billing-integration` | Node | ⚠️ En system-map + código |
-| `analytics` | `analytics-dashboard` | Node | ⚠️ En código (1 ref) |
-| `persona` | `persona-config` | Node | ⚠️ En código (1 ref) |
-| `social-platforms` | `platform-integrations` | Node | ✅ Migrado |
-| `frontend-dashboard` | `admin-dashboard` | Node | ✅ Migrado |
-| `plan-features` | `plan-configuration` | Node | ✅ Migrado |
-| `cost-control` | `cost-management` | Node | ✅ Migrado |
-| `queue-system` | `queue-management` | Node | ✅ Migrado |
-| `multi-tenant` | `tenant-management` | Node | ✅ Migrado |
-| `observability` | `monitoring` | Node | ✅ Migrado |
-| `trainer` | `model-training` | Node | ✅ Migrado |
-| `guardian` | `null` (deprecated) | Node | ✅ Eliminado |
+| Legacy ID | v2 ID (oficial) | Tipo | Estado esperado tras migrar |
+|-----------|-----------------|------|-----------------------------|
+| `roast` | `roasting-engine` | Node | Dejar sin legacy |
+| `shield` | `shield-engine` | Node | Dejar sin legacy |
+| `billing` | `billing-integration` | Node | Dejar sin legacy |
+| `social-platforms` | `integraciones-redes-sociales` | Node | Dejar sin legacy |
+| `frontend-dashboard` | `frontend-admin` | Node | Dejar sin legacy |
+| `observability` | `observabilidad` | Node | Dejar sin legacy |
+
+## Legacy sin equivalente v2 (señalados, no mapear)
+
+| Legacy ID | Motivo |
+|-----------|--------|
+| `plan-features` | No existe nodo/subnodo v2 explícito; revisar plan-limits en billing-integration. |
+| `persona` | No hay node ID dedicado; persona se gestiona en `analysis-engine`/SSOT; requiere decisión. |
+| `cost-control` | No hay ID v2 de nodo; cost-control es subárea en billing-integration (plan-limits/cost tracking). |
+| `queue-system` | No hay ID v2; usar infraestructura/queue-management cuando exista definición formal. |
+| `multi-tenant` | No hay ID v2; multi-tenancy es parte de infraestructura; requiere definición. |
+| `analytics` | No hay node v2; analytics es subnodo de observabilidad, no ID propio. |
+| `trainer` | No existe en system-map-v2/SSOT. |
+| `guardian` | Deprecated, prohibido. |
 
 ---
 

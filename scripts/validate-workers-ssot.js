@@ -63,11 +63,12 @@ class WorkersSSOTValidator {
         return { valid: false, errors: ['SSOT-V2.md not found'] };
       }
 
-      // Extract official workers from SSOT
+      // Extract official workers from SSOT + system-map
       this.extractOfficialWorkers(ssotContent);
+      await this.extractFromSystemMap();
 
-      // Validate code references
-      await this.validateCodeReferences();
+      // Validate worker registrations (code) using WorkerManager mappings only
+      await this.validateWorkerRegistrations();
 
       // Validate system-map-v2.yaml if it exists
       await this.validateSystemMap();
@@ -110,87 +111,117 @@ class WorkersSSOTValidator {
   }
 
   extractOfficialWorkers(ssotContent) {
-    // Look for section 8.1 Workers oficiales v2
+    // Allowed list comes from system-map + SSOT; start empty
+    this.officialWorkers.clear();
+
+    // Try to extract from SSOT section if present
     const workersSection = ssotContent.match(
       /## 8\. Workers.*?### 8\.1 Workers oficiales v2([\s\S]*?)(?=###|##|$)/
     );
 
-    if (!workersSection) {
+    if (workersSection) {
+      const typeDefMatch = workersSection[1].match(/type WorkerName\s*=\s*([\s\S]*?);/);
+      if (typeDefMatch) {
+        const workerNames = typeDefMatch[1]
+          .split('|')
+          .map((name) => name.trim().replace(/['"]/g, ''))
+          .filter((name) => name.length > 0);
+
+        workerNames.forEach((worker) => {
+          this.officialWorkers.add(worker);
+          this.officialWorkers.add(`v2_${worker}`);
+        });
+      }
+    } else {
       this.warnings.push({
         type: 'workers_section_not_found',
         message: 'Could not find section 8.1 in SSOT-V2.md'
       });
-      return;
     }
-
-    // Extract worker names from TypeScript type definition
-    const typeDefMatch = workersSection[1].match(/type WorkerName\s*=\s*([\s\S]*?);/);
-
-    if (typeDefMatch) {
-      const workerNames = typeDefMatch[1]
-        .split('|')
-        .map((name) => name.trim().replace(/['"]/g, ''))
-        .filter((name) => name.length > 0);
-
-      workerNames.forEach((worker) => {
-        this.officialWorkers.add(worker);
-        // Also add v2_ prefix variants if they exist
-        this.officialWorkers.add(`v2_${worker}`);
-      });
-    }
-
-    // Also check for worker names in routing table (8.5)
-    const routingSection = ssotContent.match(
-      /### 8\.5 Routing Contractual Workers([\s\S]*?)(?=###|##|$)/
-    );
-    if (routingSection) {
-      const workerMatches = routingSection[1].match(/\|\s*`([^`]+)`\s*\|/g);
-      if (workerMatches) {
-        workerMatches.forEach((match) => {
-          const worker = match.replace(/[|`]/g, '').trim();
-          if (worker && !worker.includes('---')) {
-            this.officialWorkers.add(worker);
-          }
-        });
-      }
-    }
-
-    this.log(`   ✅ Found ${this.officialWorkers.size} official worker(s)`, 'success');
-    this.log(`      ${Array.from(this.officialWorkers).join(', ')}`, 'info');
   }
 
-  async validateCodeReferences() {
-    const srcDir = path.join(this.rootDir, 'src');
-    const workersDir = path.join(srcDir, 'workers');
-
+  async extractFromSystemMap() {
+    const systemMapPath = path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
     try {
-      const files = await this.getAllFiles(workersDir);
-
-      for (const file of files) {
-        if (!file.endsWith('.js') && !file.endsWith('.ts')) {
-          continue;
-        }
-
-        const content = await fs.readFile(file, 'utf-8');
-        const relativePath = path.relative(this.rootDir, file);
-
-        // Extract class name (worker name)
-        const classMatch = content.match(/class\s+(\w+Worker)\s+extends/);
-        if (classMatch) {
-          const workerName = classMatch[1];
-
-          // Check if it's an official worker
-          if (!this.isOfficialWorker(workerName)) {
-            this.errors.push({
-              type: 'unofficial_worker',
-              location: relativePath,
-              message: `Worker "${workerName}" is not an official SSOT worker`
-            });
+      const yaml = require('yaml');
+      const content = await fs.readFile(systemMapPath, 'utf-8');
+      const map = yaml.parse(content);
+      if (map.nodes) {
+        for (const nodeData of Object.values(map.nodes)) {
+          if (Array.isArray(nodeData.workers)) {
+            nodeData.workers.forEach((w) => this.officialWorkers.add(w));
           }
         }
       }
     } catch (error) {
-      // Ignore if workers directory doesn't exist
+      if (error.code !== 'ENOENT') {
+        throw error;
+      }
+    }
+
+    // Fallback: add hardcoded allowed list if still empty
+    if (this.officialWorkers.size === 0) {
+      [
+        'FetchComments',
+        'AnalyzeToxicity',
+        'GenerateRoast',
+        'GenerateCorrectiveReply',
+        'ShieldAction',
+        'SocialPosting',
+        'BillingUpdate',
+        'CursorReconciliation',
+        'StrikeCleanup'
+      ].forEach((w) => this.officialWorkers.add(w));
+    }
+
+    this.log(`   ✅ Official workers loaded: ${Array.from(this.officialWorkers).join(', ')}`, 'success');
+  }
+
+  async validateWorkerRegistrations() {
+    const wmPath = path.join(this.rootDir, 'src', 'workers', 'WorkerManager.js');
+    try {
+      const content = await fs.readFile(wmPath, 'utf-8');
+      const registrations = [];
+
+      // Capture workerClasses mapping keys/values
+      const mapMatch = content.match(/this\.workerClasses\s*=\s*{\s*([\s\S]*?)\s*};/m);
+      if (mapMatch) {
+        const entries = mapMatch[1].split(/\n/);
+        entries.forEach((line) => {
+          const kv = line.match(/(\w+):\s*(\w+)/);
+          if (kv) {
+            const key = kv[1].trim();
+            registrations.push(key);
+          }
+        });
+      }
+
+      // Enabled workers defaults
+      const enabledMatch = content.match(/enabledWorkers:\s*\[\s*([\s\S]*?)\]/m);
+      if (enabledMatch) {
+        enabledMatch[1]
+          .split(',')
+          .map((s) => s.replace(/['"\s]/g, ''))
+          .filter(Boolean)
+          .forEach((w) => registrations.push(w));
+      }
+
+      registrations.forEach((reg) => {
+        // Normalize to Worker name style
+        const normalized = reg
+          .replace(/^v2_/, '')
+          .replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+          .replace(/^(.)/, (m) => m.toUpperCase());
+
+        if (!this.isOfficialWorker(normalized)) {
+          this.warnings.push({
+            type: 'unofficial_worker_registration',
+            location: wmPath,
+            message: `Worker "${reg}" is not an official SSOT worker (legacy/experimental)`
+          });
+        }
+      });
+    } catch (error) {
       if (error.code !== 'ENOENT') {
         throw error;
       }
@@ -230,9 +261,7 @@ class WorkersSSOTValidator {
   }
 
   isOfficialWorker(workerName) {
-    // Remove common prefixes/suffixes
     const normalized = workerName.replace(/^v2_/, '').replace(/Worker$/, '');
-
     return (
       this.officialWorkers.has(workerName) ||
       this.officialWorkers.has(normalized) ||

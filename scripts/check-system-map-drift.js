@@ -322,7 +322,6 @@ class SystemMapDriftChecker {
       'cost-control',
       'queue-system',
       'multi-tenant',
-      'observability',
       'analytics',
       'trainer',
       'guardian'

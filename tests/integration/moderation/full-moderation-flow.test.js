@@ -101,7 +101,7 @@ describe('Full Moderation Flow Integration', () => {
 
       // Step 4: Queue for reply generation (if toxic enough)
       if (toxicityResult.score > 0.5) {
-        const replyJob = await queueService.add('generate_reply', {
+        const replyJob = await queueService.add('generate_roast', {
           ...commentData,
           toxicityData: toxicityResult
         });
@@ -123,7 +123,7 @@ describe('Full Moderation Flow Integration', () => {
 
       // Step 7: Queue for posting (if approved)
       if (isApproved) {
-        const postJob = await queueService.add('post_response', {
+        const postJob = await queueService.add('social_posting', {
           commentId: commentData.commentId,
           response: roastResult.roast,
           platform: commentData.platform
@@ -364,7 +364,7 @@ describe('Full Moderation Flow Integration', () => {
       // Queue regular jobs
       for (let i = 0; i < 5; i++) {
         const job = await queueService.add(
-          'generate_reply',
+          'generate_roast',
           { commentId: `regular-${i}` },
           { priority: 5 }
         );

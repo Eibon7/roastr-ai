@@ -375,7 +375,7 @@ describe('CostControlService - Alert Methods', () => {
     it('should record usage with all tracking', async () => {
       const organizationId = 'test-org-123';
       const platform = 'twitter';
-      const operationType = 'generate_reply';
+      const operationType = 'generate_roast';
 
       // Mock usage_records insert
       mockInsertSelect.mockResolvedValueOnce({

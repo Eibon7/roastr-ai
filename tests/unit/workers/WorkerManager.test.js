@@ -70,15 +70,19 @@ describe('WorkerManager', () => {
     mockWorkerInstances = {
       fetch_comments: createMockWorker('fetch_comments'),
       analyze_toxicity: createMockWorker('analyze_toxicity'),
-      generate_reply: createMockWorker('generate_reply'),
-      shield_action: createMockWorker('shield_action')
+      generate_roast: createMockWorker('generate_roast'),
+      shield_action: createMockWorker('shield_action'),
+      billing_update: createMockWorker('billing_update'),
+      social_posting: createMockWorker('social_posting')
     };
 
     // Mock worker constructors
     FetchCommentsWorker.mockImplementation(() => mockWorkerInstances.fetch_comments);
     AnalyzeToxicityWorker.mockImplementation(() => mockWorkerInstances.analyze_toxicity);
-    GenerateReplyWorker.mockImplementation(() => mockWorkerInstances.generate_reply);
+    GenerateReplyWorker.mockImplementation(() => mockWorkerInstances.generate_roast);
     ShieldActionWorker.mockImplementation(() => mockWorkerInstances.shield_action);
+    BillingWorker.mockImplementation(() => mockWorkerInstances.billing_update);
+    PublisherWorker.mockImplementation(() => mockWorkerInstances.social_posting);
 
     // Spy on console.log
     jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -104,9 +108,10 @@ describe('WorkerManager', () => {
       expect(manager.options.enabledWorkers).toEqual([
         'fetch_comments',
         'analyze_toxicity',
-        'generate_reply',
+        'generate_roast',
         'shield_action',
-        'billing'
+        'billing_update',
+        'social_posting'
       ]);
       expect(manager.options.workerConfig).toEqual({});
       expect(manager.options.healthCheckInterval).toBe(30000);
@@ -138,11 +143,11 @@ describe('WorkerManager', () => {
       expect(manager.workerClasses).toEqual({
         fetch_comments: FetchCommentsWorker,
         analyze_toxicity: AnalyzeToxicityWorker,
-        generate_reply: GenerateReplyWorker,
+        generate_roast: GenerateReplyWorker,
         shield_action: ShieldActionWorker,
-        billing: BillingWorker,
+        billing_update: BillingWorker,
         style_profile: StyleProfileWorker,
-        post_response: PublisherWorker
+        social_posting: PublisherWorker
       });
     });
 
@@ -659,7 +664,7 @@ describe('WorkerManager', () => {
   describe('Integration Scenarios', () => {
     it('should handle full lifecycle with multiple workers', async () => {
       manager = new WorkerManager({
-        enabledWorkers: ['fetch_comments', 'analyze_toxicity', 'generate_reply']
+        enabledWorkers: ['fetch_comments', 'analyze_toxicity', 'generate_roast']
       });
 
       // Start manager

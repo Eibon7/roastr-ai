@@ -21,16 +21,16 @@ const GDD_ACTIVATION_GUIDE = path.join(__dirname, '../../docs/GDD-ACTIVATION-GUI
 
 // Mapeo labels → nodos (desde GDD-ACTIVATION-GUIDE.md)
 const LABEL_TO_NODES = {
-  'area:shield': ['shield', 'multi-tenant'],
-  'area:billing': ['cost-control', 'plan-features', 'multi-tenant'],
-  'area:platforms': ['social-platforms', 'platform-constraints'],
-  'area:workers': ['queue-system', 'multi-tenant'],
-  'area:ui': ['roast', 'persona', 'tone'],
-  'area:demo': ['roast', 'shield', 'queue-system'],
-  'area:multitenant': ['multi-tenant'],
-  'area:publisher': ['queue-system', 'social-platforms'],
+  'area:shield': ['shield-engine', 'infraestructura'],
+  'area:billing': ['billing-integration'],
+  'area:platforms': ['integraciones-redes-sociales'],
+  'area:workers': ['workers', 'infraestructura'],
+  'area:ui': ['frontend-user-app', 'frontend-admin'],
+  'area:demo': ['roasting-engine', 'shield-engine', 'workers'],
+  'area:multitenant': ['infraestructura'],
+  'area:publisher': ['workers', 'integraciones-redes-sociales'],
   'area:observability': ['ALL'], // Todos los nodos
-  'area:reliability': ['queue-system', 'shield', 'multi-tenant'],
+  'area:reliability': ['workers', 'shield-engine', 'infraestructura'],
   'test:e2e': ['ALL'], // Todos los nodos
   'test:integration': null, // Depende de otros labels
   'test:unit': null // Se infiere del título
@@ -38,38 +38,38 @@ const LABEL_TO_NODES = {
 
 // Keywords → nodos (fallback)
 const KEYWORD_TO_NODES = {
-  shield: 'shield',
-  moderación: 'shield',
-  ofensor: 'shield',
-  billing: 'cost-control',
-  stripe: 'cost-control',
-  plan: 'cost-control',
-  entitlements: 'cost-control',
-  worker: 'queue-system',
-  queue: 'queue-system',
-  redis: 'queue-system',
-  job: 'queue-system',
-  roast: 'roast',
-  generación: 'roast',
-  prompt: 'roast',
-  variante: 'roast',
-  'multi-tenant': 'multi-tenant',
-  rls: 'multi-tenant',
-  organization: 'multi-tenant',
-  platform: 'social-platforms',
-  twitter: 'social-platforms',
-  discord: 'social-platforms',
-  integration: 'social-platforms',
-  persona: 'persona',
-  tone: 'persona',
-  style: 'persona',
-  humor: 'persona',
-  'demo mode': 'roast',
-  fixtures: 'roast',
-  seeds: 'roast',
-  publisher: 'queue-system',
-  publicación: 'queue-system',
-  post: 'queue-system'
+  shield: 'shield-engine',
+  moderación: 'shield-engine',
+  ofensor: 'shield-engine',
+  billing: 'billing-integration',
+  stripe: 'billing-integration',
+  plan: 'billing-integration',
+  entitlements: 'billing-integration',
+  worker: 'workers',
+  queue: 'workers',
+  redis: 'infraestructura',
+  job: 'workers',
+  roast: 'roasting-engine',
+  generación: 'roasting-engine',
+  prompt: 'roasting-engine',
+  variante: 'roasting-engine',
+  'multi-tenant': 'infraestructura',
+  rls: 'infraestructura',
+  organization: 'infraestructura',
+  platform: 'integraciones-redes-sociales',
+  twitter: 'integraciones-redes-sociales',
+  discord: 'integraciones-redes-sociales',
+  integration: 'integraciones-redes-sociales',
+  persona: 'analysis-engine',
+  tone: 'roasting-engine',
+  style: 'roasting-engine',
+  humor: 'roasting-engine',
+  'demo mode': 'roasting-engine',
+  fixtures: 'roasting-engine',
+  seeds: 'roasting-engine',
+  publisher: 'workers',
+  publicación: 'workers',
+  post: 'workers'
 };
 
 // Obtener issue desde rama o número
@@ -166,12 +166,12 @@ function detectNodesFromFiles(files) {
 function resolveGraph(nodes) {
   if (nodes === 'ALL') {
     console.log('📚 Cargando TODOS los nodos (test:e2e o area:observability)');
-    return { command: 'cat docs/nodes/*.md', nodes: 'ALL' };
+    return { command: 'cat docs/nodes-v2/*.md', nodes: 'ALL' };
   }
 
   if (nodes.length === 0) {
     console.log('⚠️  No se detectaron nodos específicos. Usando nodos comunes.');
-    nodes = ['roast', 'shield', 'queue-system'];
+    nodes = ['roasting-engine', 'shield-engine', 'workers'];
   }
 
   const command = `node scripts/resolve-graph.js ${nodes.join(' ')}`;
@@ -186,8 +186,8 @@ function generateCursorInstructions(resolution, issueInfo) {
     command: resolution.command,
     cursorMentions:
       resolution.nodes === 'ALL'
-        ? '@docs/nodes/'
-        : resolution.nodes.map((n) => `@docs/nodes/${n}.md`).join(' '),
+        ? '@docs/nodes-v2/'
+        : resolution.nodes.map((n) => `@docs/nodes-v2/${n}.md`).join(' '),
     workflow: []
   };
 

@@ -604,7 +604,7 @@ if (require.main === module) {
       try {
         // 1. Read node
         console.log('\n1️⃣ Testing readNode...');
-        const node = await ail.readNode('roast');
+        const node = await ail.readNode('roasting-engine');
         console.log(`✅ Read node: ${node.name} (hash: ${node.hash.substring(0, 8)}...)`);
 
         // 2. Get system health

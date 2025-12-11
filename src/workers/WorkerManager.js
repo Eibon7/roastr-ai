@@ -30,9 +30,10 @@ class WorkerManager {
       enabledWorkers: [
         'fetch_comments',
         'analyze_toxicity',
-        'generate_reply',
+        'generate_roast',
         'shield_action',
-        'billing'
+        'billing_update',
+        'social_posting'
       ],
       workerConfig: {},
       healthCheckInterval: 30000, // 30 seconds
@@ -48,11 +49,11 @@ class WorkerManager {
     this.workerClasses = {
       fetch_comments: FetchCommentsWorker,
       analyze_toxicity: AnalyzeToxicityWorker,
-      generate_reply: GenerateReplyWorker,
+      generate_roast: GenerateReplyWorker,
       shield_action: ShieldActionWorker,
-      billing: BillingWorker,
+      billing_update: BillingWorker,
       style_profile: StyleProfileWorker,
-      post_response: PublisherWorker
+      social_posting: PublisherWorker
     };
 
     this.log('info', 'Worker Manager initialized', {

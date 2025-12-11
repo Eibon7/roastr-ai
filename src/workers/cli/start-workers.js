@@ -47,9 +47,9 @@ let config = {
   enabledWorkers: [
     'fetch_comments',
     'analyze_toxicity',
-    'generate_reply',
+    'generate_roast',
     'style_profile',
-    'post_response'
+    'social_posting'
   ],
   workerConfig: {
     fetch_comments: {
@@ -60,7 +60,7 @@ let config = {
       maxConcurrency: 3,
       pollInterval: 45000 // 45s (was 1.5s) - Issue #894
     },
-    generate_reply: {
+    generate_roast: {
       maxConcurrency: 2,
       pollInterval: 60000 // 60s (was 2s) - Issue #894
     },
@@ -68,7 +68,7 @@ let config = {
       maxConcurrency: 2,
       pollInterval: 300000 // 5min (was 5s) - Less time-critical
     },
-    post_response: {
+    social_posting: {
       maxConcurrency: 2,
       pollInterval: 60000, // 60s (was 2s) - Issue #894
       maxRetries: 3,
@@ -110,13 +110,13 @@ if (options.environment === 'production') {
       maxConcurrency: 5,
       pollInterval: 30000 // 30s (was 1s) - Issue #894
     },
-    generate_reply: {
-      ...config.workerConfig.generate_reply,
+    generate_roast: {
+      ...config.workerConfig.generate_roast,
       maxConcurrency: 3,
       pollInterval: 45000 // 45s (was 1.5s) - Issue #894
     },
-    post_response: {
-      ...config.workerConfig.post_response,
+    social_posting: {
+      ...config.workerConfig.social_posting,
       maxConcurrency: 3,
       pollInterval: 45000 // 45s (was 1.5s) - Issue #894
     }

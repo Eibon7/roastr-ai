@@ -82,8 +82,8 @@ describe('CostControlService', () => {
       expect(costControl.operationCosts).toEqual({
         fetch_comment: 0,
         analyze_toxicity: 1,
-        generate_reply: 5,
-        post_response: 0
+        generate_roast: 5,
+        social_posting: 0
       });
     });
   });
@@ -192,7 +192,7 @@ describe('CostControlService', () => {
       });
       jest.spyOn(costControl, 'getUserSubscriptionPlan').mockResolvedValue(mockUserData);
 
-      const result = await costControl.checkOperationAllowed('user123', 'generate_reply');
+      const result = await costControl.checkOperationAllowed('user123', 'generate_roast');
 
       expect(result).toEqual({
         allowed: true,
@@ -217,7 +217,7 @@ describe('CostControlService', () => {
       });
       jest.spyOn(costControl, 'getUserSubscriptionPlan').mockResolvedValue(mockUserData);
 
-      const result = await costControl.checkOperationAllowed('user123', 'generate_reply');
+      const result = await costControl.checkOperationAllowed('user123', 'generate_roast');
 
       expect(result).toEqual({
         allowed: false,
@@ -242,7 +242,7 @@ describe('CostControlService', () => {
       });
       jest.spyOn(costControl, 'getUserSubscriptionPlan').mockResolvedValue(mockUserData);
 
-      const result = await costControl.checkOperationAllowed('user123', 'generate_reply');
+      const result = await costControl.checkOperationAllowed('user123', 'generate_roast');
 
       expect(result.allowed).toBe(true);
     });
@@ -268,7 +268,7 @@ describe('CostControlService', () => {
         error: 'Database error'
       });
 
-      const result = await costControl.checkOperationAllowed('user123', 'generate_reply');
+      const result = await costControl.checkOperationAllowed('user123', 'generate_roast');
 
       expect(result).toEqual({
         allowed: false,
@@ -297,7 +297,7 @@ describe('CostControlService', () => {
         })
       });
 
-      const result = await costControl.trackOperation('user123', 'generate_reply');
+      const result = await costControl.trackOperation('user123', 'generate_roast');
 
       expect(result).toEqual({
         success: true,
@@ -309,8 +309,8 @@ describe('CostControlService', () => {
       const operations = [
         { type: 'fetch_comment', expectedCost: 0 },
         { type: 'analyze_toxicity', expectedCost: 1 },
-        { type: 'generate_reply', expectedCost: 5 },
-        { type: 'post_response', expectedCost: 0 }
+        { type: 'generate_roast', expectedCost: 5 },
+        { type: 'social_posting', expectedCost: 0 }
       ];
 
       for (const { type, expectedCost } of operations) {
@@ -351,7 +351,7 @@ describe('CostControlService', () => {
         })
       });
 
-      const result = await costControl.trackOperation('user123', 'generate_reply');
+      const result = await costControl.trackOperation('user123', 'generate_roast');
 
       expect(result).toEqual({
         success: false,
@@ -523,8 +523,8 @@ describe('CostControlService', () => {
     it('should return correct costs for all operations', () => {
       expect(costControl.calculateOperationCost('fetch_comment')).toBe(0);
       expect(costControl.calculateOperationCost('analyze_toxicity')).toBe(1);
-      expect(costControl.calculateOperationCost('generate_reply')).toBe(5);
-      expect(costControl.calculateOperationCost('post_response')).toBe(0);
+      expect(costControl.calculateOperationCost('generate_roast')).toBe(5);
+      expect(costControl.calculateOperationCost('social_posting')).toBe(0);
     });
 
     it('should return 0 for unknown operations', () => {
@@ -554,12 +554,12 @@ describe('CostControlService', () => {
       });
 
       // 1. Check if operation is allowed
-      const checkResult = await costControl.checkOperationAllowed('user123', 'generate_reply');
+      const checkResult = await costControl.checkOperationAllowed('user123', 'generate_roast');
       expect(checkResult.allowed).toBe(true);
 
       // 2. If allowed, track the operation
       if (checkResult.allowed) {
-        const trackResult = await costControl.trackOperation('user123', 'generate_reply');
+        const trackResult = await costControl.trackOperation('user123', 'generate_roast');
         expect(trackResult.success).toBe(true);
       }
     });
@@ -574,12 +574,12 @@ describe('CostControlService', () => {
       });
       jest.spyOn(costControl, 'getUserSubscriptionPlan').mockResolvedValue(mockUserData);
 
-      const checkResult = await costControl.checkOperationAllowed('user123', 'generate_reply');
+      const checkResult = await costControl.checkOperationAllowed('user123', 'generate_roast');
       expect(checkResult.allowed).toBe(true); // Should still be allowed (999 < 1000)
 
       // But if we're at exactly the limit
       mockUsage.responses_this_month = 1000;
-      const checkResult2 = await costControl.checkOperationAllowed('user123', 'generate_reply');
+      const checkResult2 = await costControl.checkOperationAllowed('user123', 'generate_roast');
       expect(checkResult2.allowed).toBe(false);
     });
   });

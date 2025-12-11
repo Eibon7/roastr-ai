@@ -394,7 +394,7 @@ describe('MultiTenantIntegration', () => {
 
       expect(result).toBeDefined();
       expect(mockQueueService.addJob).toHaveBeenCalledWith(
-        'generate_reply',
+        'generate_roast',
         expect.objectContaining({
           organization_id: 'org-123',
           comment_id: 'comment-123',
@@ -416,7 +416,7 @@ describe('MultiTenantIntegration', () => {
 
       expect(result).toBeDefined();
       expect(mockQueueService.addJob).toHaveBeenCalledWith(
-        'post_response',
+        'social_posting',
         expect.objectContaining({
           organization_id: 'org-123',
           roast_id: 'roast-123'

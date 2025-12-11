@@ -685,7 +685,7 @@ class QueueService {
 
     const jobTypes = jobType
       ? [jobType]
-      : ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'shield_action'];
+      : ['fetch_comments', 'analyze_toxicity', 'generate_roast', 'shield_action'];
 
     for (const type of jobTypes) {
       stats.queues[type] = { byPriority: {}, total: 0 };

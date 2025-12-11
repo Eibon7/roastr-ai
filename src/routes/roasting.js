@@ -174,7 +174,7 @@ router.get('/stats', async (req, res) => {
       .from('job_queue')
       .select('id', { count: 'exact', head: true })
       .eq('organization_id', orgData.id)
-      .eq('job_type', 'generate_reply')
+      .eq('job_type', 'generate_roast')
       .eq('status', 'pending');
 
     if (jobsError) {

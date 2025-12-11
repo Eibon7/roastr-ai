@@ -211,10 +211,10 @@ describe('CostControlService - Final Coverage Push', () => {
             gte: jest.fn().mockReturnThis(),
             lt: jest.fn().mockResolvedValue({
               data: [
-                { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
-                { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
+                { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
+                { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
                 { platform: 'twitter', action_type: 'analyze_toxicity', cost_cents: 1 },
-                { platform: 'youtube', action_type: 'generate_reply', cost_cents: 5 }
+                { platform: 'youtube', action_type: 'generate_roast', cost_cents: 5 }
               ],
               error: null
             })
@@ -867,11 +867,11 @@ describe('CostControlService - Final Coverage Push', () => {
             gte: jest.fn().mockReturnThis(),
             lt: jest.fn().mockResolvedValue({
               data: [
-                { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
-                { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
+                { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
+                { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
                 { platform: 'twitter', action_type: 'analyze_toxicity', cost_cents: 1 },
-                { platform: 'youtube', action_type: 'generate_reply', cost_cents: 5 },
-                { platform: 'youtube', action_type: 'generate_reply', cost_cents: 5 },
+                { platform: 'youtube', action_type: 'generate_roast', cost_cents: 5 },
+                { platform: 'youtube', action_type: 'generate_roast', cost_cents: 5 },
                 { platform: 'instagram', action_type: 'fetch_comments', cost_cents: 0 }
               ],
               error: null
@@ -1121,13 +1121,13 @@ describe('CostControlService - Final Coverage Push', () => {
             gte: jest.fn().mockReturnThis(),
             lt: jest.fn().mockResolvedValue({
               data: [
-                { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
-                { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
+                { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
+                { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
                 { platform: 'twitter', action_type: 'analyze_toxicity', cost_cents: 1 },
                 { platform: 'twitter', action_type: 'fetch_comments', cost_cents: 0 },
-                { platform: 'youtube', action_type: 'generate_reply', cost_cents: 5 },
+                { platform: 'youtube', action_type: 'generate_roast', cost_cents: 5 },
                 { platform: 'youtube', action_type: 'analyze_toxicity', cost_cents: 1 },
-                { platform: 'instagram', action_type: 'generate_reply', cost_cents: 5 },
+                { platform: 'instagram', action_type: 'generate_roast', cost_cents: 5 },
                 { platform: 'discord', action_type: 'fetch_comments', cost_cents: 0 }
               ],
               error: null
@@ -1243,10 +1243,10 @@ describe('CostControlService - Final Coverage Push', () => {
             gte: jest.fn().mockReturnThis(),
             lt: jest.fn().mockResolvedValue({
               data: [
-                { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
-                { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
+                { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
+                { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
                 { platform: 'twitter', action_type: 'analyze_toxicity', cost_cents: 1 },
-                { platform: 'youtube', action_type: 'generate_reply', cost_cents: 5 }
+                { platform: 'youtube', action_type: 'generate_roast', cost_cents: 5 }
               ],
               error: null
             })
@@ -1300,7 +1300,7 @@ describe('CostControlService - Final Coverage Push', () => {
             gte: jest.fn().mockReturnThis(),
             lt: jest.fn().mockResolvedValue({
               data: [
-                { platform: 'discord', action_type: 'generate_reply', cost_cents: 5 },
+                { platform: 'discord', action_type: 'generate_roast', cost_cents: 5 },
                 { platform: 'discord', action_type: 'fetch_comments', cost_cents: 0 },
                 { platform: 'discord', action_type: 'analyze_toxicity', cost_cents: 1 }
               ],

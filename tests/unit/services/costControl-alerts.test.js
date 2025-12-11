@@ -585,7 +585,7 @@ describe('CostControlService - Alerts (Issue 72)', () => {
       const checkAlertsSpy = jest.spyOn(costControl, 'checkAndSendUsageAlerts');
       checkAlertsSpy.mockResolvedValue();
 
-      await costControl.recordUsage('test-org-123', 'twitter', 'generate_reply', {
+      await costControl.recordUsage('test-org-123', 'twitter', 'generate_roast', {
         tokensUsed: 25
       });
 

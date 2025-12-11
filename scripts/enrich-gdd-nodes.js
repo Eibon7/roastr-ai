@@ -18,87 +18,76 @@ const path = require('path');
 class GDDNodeEnricher {
   constructor() {
     this.rootDir = path.resolve(__dirname, '..');
-    this.nodesDir = path.join(this.rootDir, 'docs', 'nodes');
+    this.nodesDir = path.join(this.rootDir, 'docs', 'nodes-v2');
     this.today = new Date().toISOString().split('T')[0];
 
     // Coverage mapping from known test files
     this.coverageMap = {
-      roast: 85,
-      shield: 78,
-      'queue-system': 87,
-      'multi-tenant': 72,
-      'cost-control': 68,
-      billing: 65,
-      'plan-features': 70,
-      persona: 75,
-      tone: 73,
-      'platform-constraints': 80,
-      'social-platforms': 82,
-      analytics: 60,
-      trainer: 45
+      'roasting-engine': 85,
+      'shield-engine': 78,
+      workers: 87,
+      infraestructura: 72,
+      'billing-integration': 65,
+      'analysis-engine': 75,
+      'integraciones-redes-sociales': 82,
+      observabilidad: 60
     };
 
     // Agent mapping by node type
     this.agentsByNode = {
-      roast: ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'Orchestrator'],
-      shield: [
+      'roasting-engine': [
+        'Documentation Agent',
+        'Test Engineer',
+        'Backend Developer',
+        'Orchestrator'
+      ],
+      'shield-engine': [
         'Documentation Agent',
         'Test Engineer',
         'Backend Developer',
         'Security Engineer',
         'Orchestrator'
       ],
-      'queue-system': [
+      workers: [
         'Documentation Agent',
         'Test Engineer',
         'Backend Developer',
         'Performance Monitor',
         'Orchestrator'
       ],
-      'multi-tenant': [
+      infraestructura: [
         'Documentation Agent',
         'Test Engineer',
         'Backend Developer',
         'Security Engineer',
         'Database Admin'
       ],
-      'cost-control': [
+      'billing-integration': [
         'Documentation Agent',
         'Test Engineer',
         'Backend Developer',
         'Billing Specialist',
         'Orchestrator'
       ],
-      billing: [
+      'analysis-engine': [
         'Documentation Agent',
         'Test Engineer',
         'Backend Developer',
-        'Billing Specialist',
-        'Orchestrator'
+        'UX Designer'
       ],
-      'plan-features': [
-        'Documentation Agent',
-        'Test Engineer',
-        'Backend Developer',
-        'Product Manager'
-      ],
-      persona: ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'UX Designer'],
-      tone: ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'UX Designer'],
-      'platform-constraints': [
-        'Documentation Agent',
-        'Test Engineer',
-        'Backend Developer',
-        'Integration Specialist'
-      ],
-      'social-platforms': [
+      'integraciones-redes-sociales': [
         'Documentation Agent',
         'Test Engineer',
         'Backend Developer',
         'Integration Specialist',
         'API Specialist'
       ],
-      analytics: ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'Data Analyst'],
-      trainer: ['Documentation Agent', 'Backend Developer', 'ML Engineer', 'Data Scientist']
+      observabilidad: [
+        'Documentation Agent',
+        'Test Engineer',
+        'Backend Developer',
+        'Data Analyst'
+      ]
     };
   }
 
