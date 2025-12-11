@@ -1,7 +1,7 @@
 # Legacy → V2 Official Mapping
 
 **Generated:** 2025-12-11  
-**Commit:** 049998f1  
+**Commit:** 6380f8d3  
 **Sources:** system-map-v2.yaml, docs/nodes-v2/*, scripts/shared/legacy-ids.js, docs/CI-V2/ROA-323-FINAL-MIGRATION-REPORT.md
 
 
@@ -13,20 +13,17 @@
 | shield | shield-engine | Node | system-map-v2.yaml |
 | social-platforms | integraciones-redes-sociales | Node | system-map-v2.yaml |
 | billing | billing-integration | Node | system-map-v2.yaml |
-| frontend-dashboard | frontend-admin | Node | system-map-v2.yaml |
-| observability | observabilidad | Node | system-map-v2.yaml |
 
 
-## 2. Legacy IDs without V2 equivalent
-- plan-features  
-- persona  
-- cost-control  
-- queue-system  
-- multi-tenant  
-- analytics  
-- trainer  
-- guardian  
-- (any other not present in system-map/SSOT)
+## 2. Legacy IDs with no V2 equivalent
+- plan-features
+- persona
+- cost-control
+- queue-system
+- multi-tenant
+- analytics
+- trainer
+- guardian
 
 ## 3. Worker & Queue Migration Summary
 - generate_reply → generate_roast  
