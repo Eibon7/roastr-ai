@@ -1,6 +1,5 @@
 const prettierConfig = require('eslint-plugin-prettier');
 const prettierRecommended = require('eslint-config-prettier');
-const tsParser = require('@typescript-eslint/parser');
 
 module.exports = [
   // Ignore patterns (must be first in flat config)
@@ -19,15 +18,13 @@ module.exports = [
       '**/dist/**'
     ]
   },
-  // Main configuration - ONLY lint apps/backend-v2/** and scripts/**
+  // Main configuration - ONLY lint apps/backend-v2/** and scripts/** (Node.js)
   {
-    files: ['apps/backend-v2/**/*.{js,jsx,ts,tsx}', 'scripts/**/*.{js,jsx,ts,tsx}'],
+    files: ['apps/backend-v2/**/*.js', 'scripts/**/*.js'],
     languageOptions: {
-      parser: tsParser,
       parserOptions: {
         ecmaVersion: 2022,
-        sourceType: 'module',
-        ecmaFeatures: { jsx: true }
+        sourceType: 'module'
       },
       globals: {
         node: true,
