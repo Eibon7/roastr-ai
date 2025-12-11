@@ -79,6 +79,11 @@ describe('Full Moderation Flow Integration', () => {
     });
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.clearAllMocks();
+  });
+
   describe('Complete Flow: Toxic → Filtered → Generated → Approved', () => {
     it('should process toxic comment through entire pipeline', async () => {
       const { comment } = simulateToxicComment({ toxicityLevel: 'high' });
