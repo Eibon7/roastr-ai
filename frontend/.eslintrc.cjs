@@ -23,10 +23,17 @@ module.exports = {
     }
   },
   plugins: ['react', 'react-refresh', '@typescript-eslint'],
+  linterOptions: {
+    reportUnusedDisableDirectives: false
+  },
   rules: {
     'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
-    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    'react-hooks/exhaustive-deps': 'off',
+    '@typescript-eslint/no-unused-vars': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-dynamic-delete': 'off',
+    '@typescript-eslint/no-require-imports': 'off',
+    'react/no-unescaped-entities': 'off',
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off'
   }

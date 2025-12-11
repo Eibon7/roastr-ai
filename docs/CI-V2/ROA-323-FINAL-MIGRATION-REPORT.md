@@ -43,3 +43,4 @@
 - Solo se usaron IDs oficiales de system-map-v2.yaml y SSOT-V2; sin invención de IDs.
 - Pseudo-v2 eliminados de tooling.
 - Detector y validador ajustados para no marcar texto de dominio como legacy, solo IDs/colas/worker registrations.
+
