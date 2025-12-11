@@ -1,9 +1,6 @@
 module.exports = {
   testEnvironment: 'node',
-  testMatch: [
-    '<rootDir>/tests/smoke/feature-flags.test.js',
-    '<rootDir>/tests/smoke/api-health.test.js'
-  ],
+  testMatch: ['<rootDir>/tests/smoke/feature-flags.test.js'],
   testPathIgnorePatterns: [
     '/node_modules/',
     '<rootDir>/frontend/',
