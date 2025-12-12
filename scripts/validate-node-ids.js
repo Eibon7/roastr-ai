@@ -206,7 +206,14 @@ class NodeIDValidator {
 
         const lines = content.split('\n');
         const legacyQueueIds = new Set(['generate_reply', 'billing', 'post_response']);
-        const legacyNodeIds = new Set(['roast', 'shield', 'social-platforms', 'billing', 'analytics', 'persona']);
+        const legacyNodeIds = new Set([
+          'roast',
+          'shield',
+          'social-platforms',
+          'billing',
+          'analytics',
+          'persona'
+        ]);
         const contextTokens = [
           'job_type',
           'queueName',

@@ -82,12 +82,7 @@ class GDDNodeEnricher {
         'Integration Specialist',
         'API Specialist'
       ],
-      observabilidad: [
-        'Documentation Agent',
-        'Test Engineer',
-        'Backend Developer',
-        'Data Analyst'
-      ]
+      observabilidad: ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'Data Analyst']
     };
   }
 

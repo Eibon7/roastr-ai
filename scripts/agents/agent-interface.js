@@ -228,7 +228,7 @@ class AgentInterface {
       const SecureWrite = require('./secure-write');
       const secureWrite = new SecureWrite();
 
-      const writeResult = await secureWrite.write({
+      await secureWrite.write({
         path: nodeData.path,
         content: updatedContent,
         agent,

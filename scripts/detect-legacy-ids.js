@@ -15,7 +15,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
 const logger = require('../src/utils/logger');
-const { getAllMappings, isLegacyId, getV2Equivalent } = require('./shared/legacy-ids');
+const { getAllMappings } = require('./shared/legacy-ids');
 const { parseArgs, getOption, hasFlag } = require('./shared/cli-parser');
 
 class LegacyIDDetector {
@@ -26,7 +26,14 @@ class LegacyIDDetector {
     this.legacyIds = getAllMappings();
     // Explicit legacy targets (code scope) limited to real v1 IDs
     this.legacyQueueIds = new Set(['generate_reply', 'billing', 'post_response']);
-    this.legacyNodeIds = new Set(['roast', 'shield', 'social-platforms', 'billing', 'analytics', 'persona']);
+    this.legacyNodeIds = new Set([
+      'roast',
+      'shield',
+      'social-platforms',
+      'billing',
+      'analytics',
+      'persona'
+    ]);
     // Context tokens that indicate an ID usage (queue/job/worker/system-map)
     this.contextTokens = [
       'job_type',

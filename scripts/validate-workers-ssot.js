@@ -174,7 +174,10 @@ class WorkersSSOTValidator {
       ].forEach((w) => this.officialWorkers.add(w));
     }
 
-    this.log(`   ✅ Official workers loaded: ${Array.from(this.officialWorkers).join(', ')}`, 'success');
+    this.log(
+      `   ✅ Official workers loaded: ${Array.from(this.officialWorkers).join(', ')}`,
+      'success'
+    );
   }
 
   async validateWorkerRegistrations() {

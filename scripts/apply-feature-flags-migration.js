@@ -75,7 +75,7 @@ async function applyMigration() {
       console.log('⚠️  Direct SQL execution not available, trying statement-by-statement...');
 
       // For now, let's just check if table exists
-      const { data: checkData, error: checkError } = await supabase
+      const { error: checkError } = await supabase
         .from('feature_flags')
         .select('*', { count: 'exact', head: true });
 
@@ -98,7 +98,7 @@ async function applyMigration() {
     }
 
     // Verify table exists
-    const { data: countData, error: countError } = await supabase
+    const { error: countError } = await supabase
       .from('feature_flags')
       .select('*', { count: 'exact', head: true });
 

@@ -200,7 +200,10 @@ class GDDCrossValidator {
         'src/services/costControl.js'
       ],
       workers: ['src/services/queueService.js', 'src/workers/BaseWorker.js'],
-      'integraciones-redes-sociales': ['src/integrations/*/index.js', 'src/integrations/*Service.js'],
+      'integraciones-redes-sociales': [
+        'src/integrations/*/index.js',
+        'src/integrations/*Service.js'
+      ],
       'analysis-engine': ['src/services/personaService.js'],
       observabilidad: ['src/services/analyticsService.js'],
       'roasting-engine:tone': ['src/services/toneService.js'],
