@@ -45,3 +45,4 @@
 - Detector y validador ajustados para no marcar texto de dominio como legacy, solo IDs/colas/worker registrations.
 
 
+
