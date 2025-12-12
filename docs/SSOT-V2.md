@@ -636,14 +636,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 100% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 100% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **100/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor       | Descripción                                                                                                                   |
+| ------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 100%        | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 100%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%        | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 100%        | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%        | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **100/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 

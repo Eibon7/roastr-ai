@@ -2630,4 +2630,9 @@ describe('AnalyzeToxicityWorker', () => {
       }
     });
   });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.clearAllMocks();
+  });
 });

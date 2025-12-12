@@ -29,47 +29,51 @@ El script **ya implementa** la lógica exacta requerida (líneas 70-110):
 ```javascript
 // In CI mode: FAIL if errors in docs/, WARN if errors in src/
 if (this.isCIMode && this.detections.length > 0) {
-  const docsErrors = this.detections.filter(d => 
-    d.location && (
-      d.location.includes('docs/system-map-v2.yaml') ||
-      d.location.includes('docs/nodes-v2/') ||
-      d.location.includes('docs/SSOT-V2.md')
-    )
+  const docsErrors = this.detections.filter(
+    (d) =>
+      d.location &&
+      (d.location.includes('docs/system-map-v2.yaml') ||
+        d.location.includes('docs/nodes-v2/') ||
+        d.location.includes('docs/SSOT-V2.md'))
   );
-  const srcErrors = this.detections.filter(d => 
-    d.location && d.location.includes('src/')
-  );
-  const otherErrors = this.detections.filter(d => 
-    d.location && !d.location.includes('src/') && 
-    !d.location.includes('docs/system-map-v2.yaml') &&
-    !d.location.includes('docs/nodes-v2/') &&
-    !d.location.includes('docs/SSOT-V2.md')
+  const srcErrors = this.detections.filter((d) => d.location && d.location.includes('src/'));
+  const otherErrors = this.detections.filter(
+    (d) =>
+      d.location &&
+      !d.location.includes('src/') &&
+      !d.location.includes('docs/system-map-v2.yaml') &&
+      !d.location.includes('docs/nodes-v2/') &&
+      !d.location.includes('docs/SSOT-V2.md')
   );
 
   // FAIL if errors in docs (critical)
   if (docsErrors.length > 0) {
     this.log(`❌ Found ${docsErrors.length} legacy ID(s) in docs (CRITICAL)`, 'error');
-    this.log(`   Locations: ${docsErrors.map(d => d.location).join(', ')}`, 'error');
+    this.log(`   Locations: ${docsErrors.map((d) => d.location).join(', ')}`, 'error');
     process.exit(1);
   }
 
   // WARN if errors in src/ (outside scope)
   if (srcErrors.length > 0) {
-    this.log(`⚠️ Found ${srcErrors.length} legacy ID(s) in src/ (outside scope - WARN only)`, 'warning');
-    this.log(`   Locations: ${srcErrors.map(d => d.location).join(', ')}`, 'warning');
+    this.log(
+      `⚠️ Found ${srcErrors.length} legacy ID(s) in src/ (outside scope - WARN only)`,
+      'warning'
+    );
+    this.log(`   Locations: ${srcErrors.map((d) => d.location).join(', ')}`, 'warning');
     process.exit(0); // Exit 0 = WARN, not FAIL
   }
 
   // FAIL if errors in other locations (unexpected)
   if (otherErrors.length > 0) {
     this.log(`❌ Found ${otherErrors.length} legacy ID(s) in unexpected locations`, 'error');
-    this.log(`   Locations: ${otherErrors.map(d => d.location).join(', ')}`, 'error');
+    this.log(`   Locations: ${otherErrors.map((d) => d.location).join(', ')}`, 'error');
     process.exit(1);
   }
 }
 ```
 
 **Verification:**
+
 ```bash
 $ node scripts/detect-legacy-ids.js --ci
 ⚠️ Found 43 legacy ID(s) in src/ (outside scope - WARN only)
@@ -77,6 +81,7 @@ EXIT CODE: 0 ✅
 ```
 
 **Behavior Confirmed:**
+
 - ✅ `docsMatches > 0` → exit(1)
 - ✅ `docsMatches = 0 AND srcMatches > 0` → exit(0) with warnings
 - ✅ `both = 0` → exit(0)
@@ -122,18 +127,18 @@ EXIT CODE: 0 ✅
 
 ### Summary: Workflows Calling detect-legacy-ids.js
 
-| Workflow | detect-legacy-ids Behavior | Status |
-|----------|----------------------------|--------|
-| `system-map-v2-consistency.yml` | Exit 0 for src/ ✅ | CORRECT |
-| `gdd-validate.yml` | Exit 0 for src/ ✅ | CORRECT |
+| Workflow                        | detect-legacy-ids Behavior | Status  |
+| ------------------------------- | -------------------------- | ------- |
+| `system-map-v2-consistency.yml` | Exit 0 for src/ ✅         | CORRECT |
+| `gdd-validate.yml`              | Exit 0 for src/ ✅         | CORRECT |
 
 ### Summary: V1 Script References
 
-| Script | Remaining References | Status |
-|--------|---------------------|--------|
-| `validate-gdd-runtime.js` | 0 | ✅ REMOVED |
-| `score-gdd-health.js` | 0 | ✅ REMOVED |
-| `predict-gdd-drift.js` | 1 (post-merge-doc-sync.yml) | ⚠️ OUT OF SCOPE |
+| Script                    | Remaining References        | Status          |
+| ------------------------- | --------------------------- | --------------- |
+| `validate-gdd-runtime.js` | 0                           | ✅ REMOVED      |
+| `score-gdd-health.js`     | 0                           | ✅ REMOVED      |
+| `predict-gdd-drift.js`    | 1 (post-merge-doc-sync.yml) | ⚠️ OUT OF SCOPE |
 
 **Outcome:** ✅ **All critical CI workflows clean of v1 references**
 
@@ -146,8 +151,10 @@ EXIT CODE: 0 ✅
 **Error Location:** `.github/workflows/gdd-validate.yml` — Line 466
 
 **Problem:**
+
 ```javascript
-const driftEmoji = drift.average_drift_risk <= 30 ? '🟢' : drift.average_drift_risk <= 60 ? '🟡' : '🔴';
+const driftEmoji =
+  drift.average_drift_risk <= 30 ? '🟢' : drift.average_drift_risk <= 60 ? '🟡' : '🔴';
 // ↑ ReferenceError: drift is not defined
 ```
 
@@ -172,6 +179,7 @@ Removed all references to undefined `drift` variable and simplified PR comment:
 ```
 
 **Verification:**
+
 ```bash
 $ node scripts/check-system-map-drift.js --ci
 ✅ System-map drift check passed
@@ -181,6 +189,7 @@ EXIT CODE: 0
 **No exceptions thrown** ✅
 
 **Files Checked:**
+
 - ✅ `scripts/check-system-map-drift.js` - No drift variable issues
 - ✅ `scripts/validate-drift.js` - No drift variable issues
 - ✅ `.github/workflows/gdd-validate.yml` - Fixed (commit 67e7e3a3)
@@ -195,16 +204,16 @@ EXIT CODE: 0
 
 ### ✅ ALL VALIDATORS PASSING
 
-| Validator | Status | Exit Code | Details |
-|-----------|--------|-----------|---------|
-| `validate-v2-doc-paths.js --ci` | ✅ PASS | 0 | 15/15 paths valid |
-| `validate-ssot-health.js --ci` | ✅ PASS | 0 | Health Score 100/100 |
-| `validate-strong-concepts.js --ci` | ✅ PASS | 0 | 0 duplicates |
-| `validate-symmetry.js --ci` | ✅ PASS | 0 | All relationships symmetric |
-| `check-system-map-drift.js --ci` | ✅ PASS | 0 | 11 warnings (orphans - expected) |
-| `detect-legacy-ids.js --ci` | ✅ PASS | 0 | 43 src/ IDs (WARN only) |
-| `compute-health-v2-official.js` | ✅ PASS | 0 | SSOT updated |
-| `calculate-gdd-health-v2.js --json` | ✅ PASS | 0 | 100/100 from SSOT |
+| Validator                           | Status  | Exit Code | Details                          |
+| ----------------------------------- | ------- | --------- | -------------------------------- |
+| `validate-v2-doc-paths.js --ci`     | ✅ PASS | 0         | 15/15 paths valid                |
+| `validate-ssot-health.js --ci`      | ✅ PASS | 0         | Health Score 100/100             |
+| `validate-strong-concepts.js --ci`  | ✅ PASS | 0         | 0 duplicates                     |
+| `validate-symmetry.js --ci`         | ✅ PASS | 0         | All relationships symmetric      |
+| `check-system-map-drift.js --ci`    | ✅ PASS | 0         | 11 warnings (orphans - expected) |
+| `detect-legacy-ids.js --ci`         | ✅ PASS | 0         | 43 src/ IDs (WARN only)          |
+| `compute-health-v2-official.js`     | ✅ PASS | 0         | SSOT updated                     |
+| `calculate-gdd-health-v2.js --json` | ✅ PASS | 0         | 100/100 from SSOT                |
 
 **Result:** 🎉 **8/8 validators passing with 0 errors**
 
@@ -215,6 +224,7 @@ EXIT CODE: 0
 ### ✅ STATUS: ALREADY COMMITTED
 
 **Previous Fix Commit:** `67e7e3a3`
+
 ```
 fix(roa-318): resolve ReferenceError drift crash + correct legacy ID handling in CI
 
@@ -225,6 +235,7 @@ fix(roa-318): resolve ReferenceError drift crash + correct legacy ID handling in
 ```
 
 **Files Changed:**
+
 - `.github/workflows/gdd-validate.yml` (drift references removed)
 - `docs/GDD-V2-HEALTH-REPORT.md` (auto-updated)
 - `docs/SSOT-V2.md` (auto-updated)
@@ -242,6 +253,7 @@ fix(roa-318): resolve ReferenceError drift crash + correct legacy ID handling in
 **NO CHANGES NEEDED** ✅
 
 The script already implements the exact required behavior:
+
 - Lines 70-110 contain correct exit logic
 - CI mode properly separates docs/ vs src/
 - Exit codes: docs/ → 1, src/ → 0, none → 0
@@ -252,7 +264,7 @@ The script already implements the exact required behavior:
 
 1. ✅ `.github/workflows/gdd-validate.yml`
    - Line 466: Removed `drift.average_drift_risk` reference
-   - Line 476: Removed `drift.average_drift_risk` reference  
+   - Line 476: Removed `drift.average_drift_risk` reference
    - Lines 489-491: Removed drift analysis section
    - Simplified PR comment to v2-only metrics
 
@@ -271,6 +283,7 @@ The script already implements the exact required behavior:
 **Location:** `.github/workflows/gdd-validate.yml`
 
 **Lines:**
+
 - Line 466: `const driftEmoji = drift.average_drift_risk...`
 - Line 476: `| **Drift Risk** | ${drift.average_drift_risk}/100...`
 - Line 489: `- 🟢 Low risk: ${drift.healthy_count}`
@@ -282,6 +295,7 @@ The script already implements the exact required behavior:
 ### Validator Results Summary
 
 **ALL PASSING:**
+
 ```
 ✅ validate-v2-doc-paths.js     → 15/15 paths valid
 ✅ validate-ssot-health.js      → 100/100 health score
@@ -298,6 +312,7 @@ The script already implements the exact required behavior:
 **Expected CI Behavior:**
 
 #### Job 1: System Map v2 Consistency
+
 - ✅ Runs all v2 validators in correct order
 - ✅ detect-legacy-ids exits 0 for src/ legacy IDs (not blocking)
 - ✅ No ReferenceError
@@ -306,6 +321,7 @@ The script already implements the exact required behavior:
 - ✅ **JOB WILL PASS** 🎉
 
 #### Job 2: GDD Validation / validate-gdd
+
 - ✅ Detects v2-only PR correctly
 - ✅ Skips v1 validation (deprecated notice)
 - ✅ Runs v2 validation chain (complete)
@@ -333,14 +349,14 @@ The script already implements the exact required behavior:
 
 ### 📊 Metrics
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Validators Passing** | 8/8 | ✅ |
-| **Health Score** | 100/100 | ✅ |
-| **detect-legacy-ids exit code** | 0 (for src/) | ✅ |
-| **ReferenceError drift** | FIXED | ✅ |
-| **V1 scripts in CI workflows** | 0 | ✅ |
-| **CI Jobs Expected to Pass** | 2/2 | ✅ |
+| Metric                          | Value        | Status |
+| ------------------------------- | ------------ | ------ |
+| **Validators Passing**          | 8/8          | ✅     |
+| **Health Score**                | 100/100      | ✅     |
+| **detect-legacy-ids exit code** | 0 (for src/) | ✅     |
+| **ReferenceError drift**        | FIXED        | ✅     |
+| **V1 scripts in CI workflows**  | 0            | ✅     |
+| **CI Jobs Expected to Pass**    | 2/2          | ✅     |
 
 ---
 
@@ -349,6 +365,7 @@ The script already implements the exact required behavior:
 **NONE REQUIRED** ✅
 
 All fixes have been applied:
+
 - Commit `67e7e3a3` contains all necessary corrections
 - All validators passing
 - No additional changes needed
@@ -365,4 +382,3 @@ All fixes have been applied:
 ---
 
 **✅ CI IS FULLY RESOLVED - BOTH JOBS SHOULD PASS**
-

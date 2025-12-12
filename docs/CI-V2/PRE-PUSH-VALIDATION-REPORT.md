@@ -20,6 +20,7 @@
 **Rama esperada (`.issue_lock`):** `feature/epic-1037-admin-panel-pr`
 
 **Acción requerida:**
+
 - Verificar que estás trabajando en la rama correcta
 - Si esta es la rama correcta para ROA-310, actualizar `.issue_lock`
 - Si no, cambiar a la rama correcta antes de continuar
@@ -31,6 +32,7 @@
 ### Archivos Modificados (Esperados)
 
 ✅ **Workflows CI:**
+
 - `.github/workflows/ci.yml` (tests desactivados)
 - `.github/workflows/e2e-tests.yml` (tests desactivados)
 - `.github/workflows/integration-tests.yml` (tests desactivados)
@@ -39,22 +41,26 @@
 - `.github/workflows/tests.yml` (tests desactivados)
 
 ✅ **Documentación:**
+
 - `docs/system-map-v2.yaml` (billing → billing-integration)
 - `docs/SSOT-V2.md` (actualizado con health score)
 - `docs/CI-V2/CI-AUDIT-REPORT.md` (actualizado)
 
 ✅ **Scripts:**
+
 - `scripts/check-system-map-drift.js` (corregido)
 
 ### Archivos Eliminados (Esperados)
 
 ✅ **11 workflows obsoletos eliminados:**
+
 - `agent-receipts.yml`, `auto-format.yml`, `ci-pr-validation.yml`
 - `claude-code-review.yml`, `claude.yml`, `format-check.yml`
 - `frontend-build-check.yml`, `gdd-issue-cleanup.yml`, `main.yml`
 - `runner-json-demo.yml`, `spec14-qa-test-suite.yml`
 
 ✅ **7 archivos movidos de nodes-v2/:**
+
 - `01-arquitectura-general.md`, `03-billing-polar.md`, `README.md` → `docs/architecture/`
 - `ARQUITECTURA-NODE-CORRECTIONS-APPLIED.md`, `GENERATION-COMPLETE.md`
 - `SHIELD-NODE-CORRECTIONS-APPLIED.md`, `VALIDATION-CHECKLIST.md` → `docs/legacy/`
@@ -62,6 +68,7 @@
 ### Archivos Sin Trackear (Nuevos)
 
 ✅ **Documentación CI-V2 (esperados):**
+
 - `docs/CI-V2/CI-FINAL-OPTIMIZED-SPEC.md`
 - `docs/CI-V2/CI-FINAL-VALIDATION.md`
 - `docs/CI-V2/CI-V2-MIGRATION-SUMMARY.md`
@@ -69,10 +76,12 @@
 - `docs/CI-V2/LEGACY-TO-V2-MAPPING.md`
 
 ✅ **Directorios nuevos:**
+
 - `docs/architecture/` (3 archivos)
 - `docs/legacy/` (4 archivos)
 
 ⚠️ **Scripts nuevos (verificar si deben incluirse):**
+
 - `scripts/repair-crosslinks-v2.js`
 - `scripts/repair-gdd-v2-root-causes.js`
 
@@ -105,6 +114,7 @@ Health Score: 100/100
 ```
 
 **Warnings:**
+
 - Valores placeholder en sección 15 del SSOT (no crítico)
 
 ### ✅ VALIDADOR 3: validate-strong-concepts.js
@@ -126,6 +136,7 @@ Found 43 legacy ID reference(s):
 ```
 
 **Detalles:**
+
 - `roast` → `roast-generation` (30 refs en src/)
 - `shield` → `shield-moderation` (10 refs en src/)
 - `billing` → `billing-integration` (3 refs en src/)
@@ -133,11 +144,13 @@ Found 43 legacy ID reference(s):
 - `persona` → `persona-config` (1 ref en src/)
 
 **Diagnóstico:**
+
 - Las referencias en system-map-v2.yaml fueron corregidas
 - Las referencias en código src/ NO fueron modificadas (según instrucciones explícitas)
 - El validador está configurado para fallar en CI si encuentra cualquier ID legacy
 
 **Acción requerida:**
+
 - Decidir si se permite push con IDs legacy en código (temporal)
 - O migrar IDs legacy en código antes de push
 - O ajustar validador para ignorar código src/ temporalmente
@@ -152,6 +165,7 @@ Found 43 legacy ID reference(s):
 ```
 
 **Warnings (no críticos):**
+
 - El script detecta archivos por nombre sin número, pero están referenciados por ruta completa
 - Estos son falsos positivos del script
 
@@ -167,11 +181,13 @@ Found 6 error(s):
 ```
 
 **Diagnóstico:**
+
 - Dependencias circulares detectadas en system-map-v2.yaml
 - Esto viola las reglas de arquitectura v2
 - Debe resolverse antes de push
 
 **Acción requerida:**
+
 - Revisar y corregir dependencias circulares
 - Verificar que `depends_on` y `required_by` no crean ciclos
 
@@ -199,6 +215,7 @@ Health Score Final: 100/100 ✅
 ### ✅ Scripts Revisados
 
 **`scripts/compute-health-v2-official.js`:**
+
 - ✅ No hay arrays estáticos de nombres de nodos
 - ✅ No hay NODE_NAME_MAPPING hardcoded
 - ✅ Valores extraídos dinámicamente de system-map-v2.yaml
@@ -206,6 +223,7 @@ Health Score Final: 100/100 ✅
 - ✅ Comentario explícito: "NO se permiten valores hardcoded"
 
 **`scripts/calculate-gdd-health-v2.js`:**
+
 - ⚠️ Script no encontrado (puede no existir o tener otro nombre)
 
 **Estado:** ✅ **PASS** (compute-health-v2-official.js está limpio)
@@ -217,6 +235,7 @@ Health Score Final: 100/100 ✅
 ### ✅ Verificación de Docs
 
 **Todos los nodos tienen doc válido:**
+
 - 15 nodos en system-map-v2.yaml
 - 15 paths en `docs:` que existen
 - 0 nodos sin doc
@@ -226,11 +245,13 @@ Health Score Final: 100/100 ✅
 **Estado:** ❌ **FAIL** (dependencias circulares detectadas)
 
 **Problemas:**
+
 1. `frontend-user-app` ↔ `roasting-engine` (circular)
 2. `frontend-admin` ↔ `billing-integration` (circular)
 3. `workers` ↔ `infraestructura` (circular)
 
 **Acción requerida:**
+
 - Revisar dependencias y eliminar ciclos
 - Verificar que `depends_on` y `required_by` son correctos
 
@@ -290,14 +311,14 @@ Health Score Final: 100/100 ✅
 
 ## 📊 Estado Final de Validadores
 
-| Validador | Estado | Exit Code |
-|-----------|--------|-----------|
-| validate-v2-doc-paths.js | ✅ PASS | 0 |
-| validate-ssot-health.js | ✅ PASS | 0 |
-| validate-strong-concepts.js | ✅ PASS | 0 |
-| detect-legacy-ids.js | ❌ FAIL | 1 |
-| check-system-map-drift.js | ⚠️ PASS (warnings) | 0 |
-| validate-symmetry.js | ❌ FAIL | 1 |
+| Validador                   | Estado             | Exit Code |
+| --------------------------- | ------------------ | --------- |
+| validate-v2-doc-paths.js    | ✅ PASS            | 0         |
+| validate-ssot-health.js     | ✅ PASS            | 0         |
+| validate-strong-concepts.js | ✅ PASS            | 0         |
+| detect-legacy-ids.js        | ❌ FAIL            | 1         |
+| check-system-map-drift.js   | ⚠️ PASS (warnings) | 0         |
+| validate-symmetry.js        | ❌ FAIL            | 1         |
 
 **Total:** 4/6 PASS, 2/6 FAIL
 
@@ -306,6 +327,7 @@ Health Score Final: 100/100 ✅
 ## 📁 Archivos Listos para Commit/Push
 
 ✅ **Archivos modificados (esperados):**
+
 - Workflows CI (5 archivos)
 - system-map-v2.yaml
 - SSOT-V2.md
@@ -313,6 +335,7 @@ Health Score Final: 100/100 ✅
 - Documentación CI-V2 (1 archivo actualizado)
 
 ✅ **Archivos nuevos (documentación):**
+
 - `docs/CI-V2/CI-FINAL-OPTIMIZED-SPEC.md`
 - `docs/CI-V2/CI-FINAL-VALIDATION.md`
 - `docs/CI-V2/CI-V2-MIGRATION-SUMMARY.md`
@@ -322,6 +345,7 @@ Health Score Final: 100/100 ✅
 - `docs/legacy/` (4 archivos)
 
 ⚠️ **Archivos a verificar:**
+
 - `scripts/repair-crosslinks-v2.js` (¿debe incluirse?)
 - `scripts/repair-gdd-v2-root-causes.js` (¿debe incluirse?)
 
@@ -358,44 +382,53 @@ Health Score Final: 100/100 ✅
 ### Ciclo 1: frontend-user-app ↔ roasting-engine
 
 **Problema:**
+
 - `frontend-user-app.depends_on` incluye `roasting-engine` (línea 350)
 - `roasting-engine.required_by` incluye `frontend-user-app` (línea 35)
 
 **Análisis:**
+
 - Frontend usa roasting-engine → correcto
 - Roasting-engine es requerido por frontend → correcto
 - **PERO:** La simetría crea un ciclo técnico
 
 **Solución sugerida:**
+
 - `frontend-user-app` depende de `roasting-engine` (correcto)
 - `roasting-engine` NO debe tener `frontend-user-app` en `required_by` (frontend es consumidor, no dependencia)
 
 ### Ciclo 2: frontend-admin ↔ billing-integration
 
 **Problema:**
+
 - `frontend-admin.depends_on` incluye `billing-integration` (línea 404)
 - `billing-integration.required_by` incluye `frontend-admin` (línea 217)
 
 **Análisis:**
+
 - Frontend admin usa billing → correcto
 - Billing es requerido por frontend admin → correcto
 - **PERO:** La simetría crea un ciclo técnico
 
 **Solución sugerida:**
+
 - `frontend-admin` depende de `billing-integration` (correcto)
 - `billing-integration` NO debe tener `frontend-admin` en `required_by` (frontend es consumidor, no dependencia)
 
 ### Ciclo 3: workers ↔ infraestructura
 
 **Problema:**
+
 - `workers.depends_on` incluye `infraestructura` (línea 500)
 - `infraestructura.depends_on` incluye `workers` (línea 263)
 
 **Análisis:**
+
 - Workers usan infraestructura (queue, DB) → correcto
 - Infraestructura necesita workers para funcionar → **PROBLEMA CONCEPTUAL**
 
 **Solución sugerida:**
+
 - `workers` depende de `infraestructura` (correcto)
 - `infraestructura` NO debe depender de `workers` (infraestructura es base, workers la usan)
 
@@ -406,6 +439,7 @@ Health Score Final: 100/100 ✅
 **PRE-PUSH VALIDATION FAILED**
 
 **NO se puede proceder con el push hasta resolver:**
+
 1. ❌ **Rama incorrecta** - No coincide con `.issue_lock`
 2. ❌ **Dependencias circulares** - 3 ciclos detectados (ver análisis arriba)
 3. ❌ **IDs legacy en código** - 43 refs (validador falla en CI)
@@ -415,4 +449,3 @@ Health Score Final: 100/100 ✅
 ---
 
 **Última actualización:** 2025-12-09
-

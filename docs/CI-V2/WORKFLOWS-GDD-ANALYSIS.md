@@ -118,6 +118,7 @@
    - **Impacto:** Reparación valida con health v1
 
 4. **gdd-auto-monitor.yml:104**
+
    ```yaml
    node scripts/score-gdd-health.js --summary
    ```

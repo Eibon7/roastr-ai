@@ -19,24 +19,30 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
 
-      - name: Cache node modules
+      - name: Clean frontend environment
+        run: |
+          rm -rf frontend/node_modules
+
+      - name: Cache npm
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.npm
-            frontend/node_modules
-          key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-frontend-
+            ${{ runner.os }}-npm-
 
-      - name: Install frontend deps
+      - name: Install frontend deps (lockfile-first with fallback)
         working-directory: ./frontend
-        run: npm ci
+        run: |
+          npm ci || (echo "⚠️ npm ci failed, falling back to npm install for diagnostics" && npm install && exit 1)
 
-      - name: Build frontend (mock env, no CI)
+      - name: Ensure Rollup native dependencies
+        working-directory: ./frontend
+        run: |
+          npm ls @rollup/rollup-linux-x64-gnu || npm install @rollup/rollup-linux-x64-gnu --no-save || true
+
+      - name: Build frontend production bundle
         working-directory: ./frontend
         run: npm run build:ci
 
@@ -144,17 +150,6 @@ jobs:
             ./package-lock.json
             ./frontend/package-lock.json
 
-      - name: Cache node modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            ./node_modules
-            ./frontend/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
       - name: Install backend dependencies
         run: npm ci
 
@@ -163,15 +158,14 @@ jobs:
         run: npm ci
 
       - name: Run backend linting
-        run: npm run lint
-
-      - name: Run backend tests
-        if: false  # Disabled until v2 test infrastructure is ready
         run: |
-          echo "🧪 Running backend tests with environment:"
-          echo "NODE_ENV: $NODE_ENV"
-          echo "ENABLE_RQC: $ENABLE_RQC"
-          echo "SKIP_E2E: $SKIP_E2E"
+          echo "🔍 Running backend ESLint checks from repo root"
+          npx eslint -v
+          npx eslint --ext .js,.jsx,.ts,.tsx apps/backend-v2 scripts
+
+      - name: Run backend tests (smoke suite)
+        run: |
+          echo "🧪 Running backend smoke tests (jest.ci.config.cjs)"
           npm run test:ci
 
       - name: Run Perspective-Shield integration test
@@ -179,23 +173,23 @@ jobs:
           echo "🛡️ Running Perspective API → Shield integration validation..."
           node scripts/test-perspective-shield-integration.js
           echo "✅ Integration test completed"
+        continue-on-error: false
 
       - name: Run frontend linting
         working-directory: ./frontend
         run: |
           echo "🔍 Running frontend ESLint checks..."
-          npx eslint src/ --ext .js,.jsx,.ts,.tsx --max-warnings 0 || echo "⚠️ ESLint warnings found but not blocking CI"
+          npm run lint
+        continue-on-error: false
 
-      - name: Run frontend tests (allow failures in Phase 1)
-        if: false  # Disabled until v2 test infrastructure is ready
+      - name: Run frontend tests
         working-directory: ./frontend
         run: |
           echo "🧪 Running frontend tests with complete mocking:"
           echo "REACT_APP_ENABLE_MOCK_MODE: $REACT_APP_ENABLE_MOCK_MODE"
           echo "CI: $CI"
           echo "SKIP_E2E: $SKIP_E2E"
-          echo "⚠️  Note: Frontend tests may fail - full fix scheduled for Phase 2"
-          npm run test:ci || echo "Frontend tests failed as expected - continuing with build"
+          npm run test
 
       - name: Upload backend test results
         uses: actions/upload-artifact@v5

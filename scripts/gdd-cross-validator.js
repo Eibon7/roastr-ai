@@ -310,7 +310,7 @@ class GDDCrossValidator {
       // Valid if dates match or declared is within 1 day of actual
       const valid = Math.abs(diffDays) <= 1;
 
-      const result = {
+      const dateResult = {
         valid,
         reason: valid ? null : diffDays > 0 ? 'future_date' : 'stale_date',
         declared: declaredDate,
@@ -321,11 +321,11 @@ class GDDCrossValidator {
       if (!valid) {
         this.violations.timestamp.push({
           node: nodeName,
-          ...result
+          ...dateResult
         });
       }
 
-      return result;
+      return dateResult;
     } catch (error) {
       return {
         valid: false,

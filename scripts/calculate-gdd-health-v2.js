@@ -242,7 +242,8 @@ function main() {
     const outputMetrics = {
       ...metrics,
       overall_score: metrics.health_score,
-      status: metrics.health_score >= 95 ? 'healthy' : metrics.health_score >= 80 ? 'warning' : 'critical'
+      status:
+        metrics.health_score >= 95 ? 'healthy' : metrics.health_score >= 80 ? 'warning' : 'critical'
     };
 
     // In JSON mode, output ONLY JSON and exit
@@ -279,11 +280,17 @@ function main() {
   } catch (error) {
     if (jsonMode) {
       // In JSON mode, output error as JSON
-      console.log(JSON.stringify({
-        error: error.message,
-        overall_score: 0,
-        status: 'error'
-      }, null, 2));
+      console.log(
+        JSON.stringify(
+          {
+            error: error.message,
+            overall_score: 0,
+            status: 'error'
+          },
+          null,
+          2
+        )
+      );
       process.exit(1);
     } else {
       logError('❌ Error:', error.message);

@@ -1,11 +1,33 @@
 const prettierConfig = require('eslint-plugin-prettier');
 const prettierRecommended = require('eslint-config-prettier');
+const tsParser = require('@typescript-eslint/parser');
 
 module.exports = [
+  // Ignore patterns (must be first in flat config)
   {
+    ignores: [
+      'frontend/**',
+      'apps/frontend/**',
+      'apps/frontend-v2/**',
+      'node_modules/**',
+      '*.config.js',
+      'coverage/**',
+      'build/**',
+      'dist/**',
+      '**/*.min.js',
+      '**/build/**',
+      '**/dist/**'
+    ]
+  },
+  // Main configuration - ONLY lint apps/backend-v2/** and scripts/** (Node.js)
+  {
+    files: ['apps/backend-v2/**/*.{js,ts,tsx}', 'scripts/**/*.{js,ts,tsx}'],
     languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'module',
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: 'module'
+      },
       globals: {
         node: true,
         jest: true,
@@ -31,21 +53,20 @@ module.exports = [
       // Prettier integration
       'prettier/prettier': 'error',
       
+      // React rules (minimal, just to avoid JSX parsing errors)
+      'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
+      
+      // Disable unsupported TypeScript rules (not available in this config)
+      '@typescript-eslint/no-dynamic-delete': 'off',
+      
       // Disable rules that conflict with Prettier
       ...prettierRecommended.rules
     },
-    ignores: [
-      'frontend/',
-      'node_modules/',
-      '*.config.js',
-      'coverage/',
-      'build/',
-      'dist/',
-      '**/*.min.js',
-      '**/build/**',
-      '**/dist/**',
-      'tests/unit/components/**',
-      'tests/unit/frontend/**'
-    ]
+    settings: {
+      react: {
+        version: 'detect'
+      }
+    }
   }
 ];

@@ -31,15 +31,18 @@
 ### 1.3 Separación ROA-310 vs ROA-318
 
 **Commits ROA-310 (historial base):**
+
 - `bfac927c` - fix(roa-310): apply CodeRabbit review improvements
 - `7abc72bd` - feat(roa-310): finalize Cursor Rules v2
 - Y otros commits previos
 
 **Commits ROA-318 (específicos):**
+
 - `17c8d6a1` - docs(roa-318): add PR description
 - `c9d7a5bf` - chore(roa-318): sync working state before CI validation
 
 **Cambios ROA-318 específicos:**
+
 - Migración `billing` → `billing-integration` en system-map
 - Eliminación de ciclos (DAG fix)
 - Movimiento de archivos huérfanos a architecture/legacy/
@@ -279,6 +282,7 @@
 ### 4.1 system-map-v2.yaml
 
 **Reglas de preservación:**
+
 - ✅ Mantener estructura DAG (0 ciclos)
 - ✅ Mantener simetría `depends_on` / `required_by`
 - ✅ No reintroducir IDs legacy
@@ -286,6 +290,7 @@
 - ✅ Verificar con `validate-symmetry.js` después de cambios
 
 **Validación post-cambio:**
+
 ```bash
 node scripts/validate-symmetry.js --ci  # Debe pasar
 node scripts/check-system-map-drift.js --ci  # Debe pasar
@@ -294,12 +299,14 @@ node scripts/check-system-map-drift.js --ci  # Debe pasar
 ### 4.2 SSOT-V2.md
 
 **Reglas de preservación:**
+
 - ✅ Solo modificar sección 15
 - ✅ Usar `compute-health-v2-official.js --update-ssot` (nunca editar manualmente)
 - ✅ Mantener resto del SSOT intacto
 - ✅ Verificar que Health Score = 100/100 después de actualización
 
 **Validación post-cambio:**
+
 ```bash
 node scripts/validate-ssot-health.js --ci  # Debe pasar
 node scripts/calculate-gdd-health-v2.js  # Debe mostrar 100/100
@@ -308,12 +315,14 @@ node scripts/calculate-gdd-health-v2.js  # Debe mostrar 100/100
 ### 4.3 Health v2 (100/100)
 
 **Reglas de preservación:**
+
 - ✅ Health Score debe venir exclusivamente de SSOT sección 15
 - ✅ No hardcodes en scripts
 - ✅ Cálculo dinámico desde system-map y nodes-v2
 - ✅ Todos los campos numéricos presentes (sin NaN, undefined, TBD)
 
 **Validación post-cambio:**
+
 ```bash
 node scripts/compute-health-v2-official.js  # Debe mostrar 100/100
 node scripts/validate-ssot-health.js --ci  # Debe pasar
@@ -322,24 +331,28 @@ node scripts/validate-ssot-health.js --ci  # Debe pasar
 ### 4.4 CI v2
 
 **Reglas de preservación:**
+
 - ✅ Solo ejecutar scripts v2
 - ✅ No ejecutar `score-gdd-health.js` (v1)
 - ✅ Health threshold ≥95 (preferiblemente 100)
 - ✅ Todos los validadores v2 integrados
 
 **Validación post-cambio:**
+
 - Verificar que workflows no referencian scripts v1
 - Verificar que health threshold es correcto
 
 ### 4.5 Validadores Estrictos
 
 **Reglas de preservación:**
+
 - ✅ Todos los validadores deben funcionar en modo `--ci`
 - ✅ Exit code 1 en errores, 0 en éxito
 - ✅ Logger consistency (no console.log)
 - ✅ Error handling completo
 
 **Validación post-cambio:**
+
 ```bash
 # Todos deben pasar (excepto detect-legacy-ids y detect-guardian si hay en código)
 node scripts/validate-v2-doc-paths.js --ci
@@ -352,11 +365,13 @@ node scripts/check-system-map-drift.js --ci
 ### 4.6 Nodos v2
 
 **Reglas de preservación:**
+
 - ✅ Todos los nodos en system-map tienen docs válidos
 - ✅ 0 archivos huérfanos en nodes-v2/
 - ✅ Todos los paths existen
 
 **Validación post-cambio:**
+
 ```bash
 node scripts/validate-v2-doc-paths.js --ci  # Debe pasar
 node scripts/check-system-map-drift.js --ci  # Debe pasar
@@ -369,11 +384,13 @@ node scripts/check-system-map-drift.js --ci  # Debe pasar
 ### 5.1 Cambios ROA-310 (Historial Base)
 
 **Commits:**
+
 - `bfac927c` - fix(roa-310): apply CodeRabbit review improvements
 - `7abc72bd` - feat(roa-310): finalize Cursor Rules v2
 - Y otros commits previos
 
 **Archivos afectados (potencialmente):**
+
 - `.cursor/rules/` - Reglas de Cursor
 - `docs/spec-v2.md` - Spec v2
 - Scripts de validación base
@@ -383,10 +400,12 @@ node scripts/check-system-map-drift.js --ci  # Debe pasar
 ### 5.2 Cambios ROA-318 (Específicos)
 
 **Commits:**
+
 - `17c8d6a1` - docs(roa-318): add PR description
 - `c9d7a5bf` - chore(roa-318): sync working state before CI validation
 
 **Archivos afectados (específicos de ROA-318):**
+
 - `docs/system-map-v2.yaml` - Migración billing → billing-integration, eliminación de ciclos
 - `docs/SSOT-V2.md` - Sección 15 actualizada
 - `.github/workflows/system-map-v2-consistency.yml` - Workflow v2 nuevo
@@ -399,11 +418,13 @@ node scripts/check-system-map-drift.js --ci  # Debe pasar
 ### 5.3 Conflictos Esperados
 
 **Tipos de conflictos:**
+
 1. **Conflictos de contenido:** Main tiene cambios que chocan con ROA-318
 2. **Conflictos de estructura:** Main tiene cambios en estructura que afectan ROA-318
 3. **Conflictos de scripts:** Main tiene mejoras en scripts que debemos integrar
 
 **Estrategia de resolución:**
+
 - Siempre preferir versión más reciente y estricta
 - Mantener cambios de ROA-318 cuando sean específicos
 - Integrar mejoras de main cuando sean compatibles
@@ -482,4 +503,3 @@ Antes de commit, verificar:
 
 **Plan generado:** 2025-12-09  
 **Estado:** READY FOR EXECUTION (pendiente confirmación)
-

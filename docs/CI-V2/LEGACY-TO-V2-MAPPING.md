@@ -44,4 +44,3 @@
 - worker style_profile eliminado (legacy sin soporte en SSOT/Spec/system-map)  
 - placeholder en SSOT sección 15  
 - No existen pseudo-v2 en system-map
-
