@@ -168,8 +168,8 @@ jobs:
       - name: Run backend tests (smoke suite)
         run: |
           echo "🧪 Running backend targeted tests (workers/unit + worker integrations) with increased heap to avoid OOM"
-          echo "🔧 Command: NODE_OPTIONS=\"${NODE_OPTIONS}\" npm test -- --runInBand --maxWorkers=2 tests/unit/workers tests/integration/workers"
-          NODE_OPTIONS="${NODE_OPTIONS}" npm test -- --runInBand --maxWorkers=2 tests/unit/workers tests/integration/workers
+          echo "🔧 Command: NODE_OPTIONS=\"${NODE_OPTIONS}\" npm test -- --runInBand tests/unit/workers tests/integration/workers"
+          NODE_OPTIONS="${NODE_OPTIONS}" npm test -- --runInBand tests/unit/workers tests/integration/workers
           # Evita OOM en Actions; la suite completa se mantiene para ejecuciones locales/optimización futura sin relajar validaciones críticas.
 
       - name: Run Perspective-Shield integration test
@@ -193,8 +193,8 @@ jobs:
           echo "REACT_APP_ENABLE_MOCK_MODE: $REACT_APP_ENABLE_MOCK_MODE"
           echo "CI: $CI"
           echo "SKIP_E2E: $SKIP_E2E"
-          echo "🔧 Command: NODE_OPTIONS=\"${NODE_OPTIONS}\" npm run test -- --runInBand --maxWorkers=2"
-          NODE_OPTIONS="${NODE_OPTIONS}" npm run test -- --runInBand --maxWorkers=2
+          echo "🔧 Command: NODE_OPTIONS=\"${NODE_OPTIONS}\" npm run test -- --runInBand"
+          NODE_OPTIONS="${NODE_OPTIONS}" npm run test -- --runInBand
           # Evita OOM en Actions; la suite completa se mantiene para local/optimización futura.
 
       - name: Upload backend test results
