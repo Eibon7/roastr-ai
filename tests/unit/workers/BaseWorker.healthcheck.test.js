@@ -4,14 +4,7 @@
  * Tests for the healthcheck functionality in BaseWorker and all worker types
  */
 
-const BaseWorker = require('../../../src/workers/BaseWorker');
-const FetchCommentsWorker = require('../../../src/workers/FetchCommentsWorker');
-const AnalyzeToxicityWorker = require('../../../src/workers/AnalyzeToxicityWorker');
-const GenerateReplyWorker = require('../../../src/workers/GenerateReplyWorker');
-const ShieldActionWorker = require('../../../src/workers/ShieldActionWorker');
-const WorkerManager = require('../../../src/workers/WorkerManager');
-
-// Mock dependencies
+// Mock dependencies (must be declared before imports)
 jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn(() => ({
     from: jest.fn(() => ({
@@ -31,9 +24,22 @@ jest.mock('googleapis', () => ({
       comments: {
         analyze: jest.fn()
       }
+    })),
+    youtube: jest.fn(() => ({
+      search: {
+        list: jest.fn().mockResolvedValue({ data: { items: [] } })
+      }
     }))
   }
 }));
+
+// Import after mocks
+const BaseWorker = require('../../../src/workers/BaseWorker');
+const FetchCommentsWorker = require('../../../src/workers/FetchCommentsWorker');
+const AnalyzeToxicityWorker = require('../../../src/workers/AnalyzeToxicityWorker');
+const GenerateReplyWorker = require('../../../src/workers/GenerateReplyWorker');
+const ShieldActionWorker = require('../../../src/workers/ShieldActionWorker');
+const WorkerManager = require('../../../src/workers/WorkerManager');
 
 jest.mock('../../../src/services/queueService', () => {
   return jest.fn().mockImplementation(() => ({

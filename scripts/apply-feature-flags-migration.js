@@ -68,7 +68,7 @@ async function applyMigration() {
     // Note: Supabase client doesn't have direct SQL execution, so we'll use RPC
     // Or we need to execute it statement by statement
 
-    const { data, error } = await supabase.rpc('exec_sql', { query: sql });
+    const { error } = await supabase.rpc('exec_sql', { query: sql });
 
     if (error) {
       // exec_sql might not exist, try alternative: execute statements manually

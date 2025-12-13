@@ -252,18 +252,23 @@ function createSupabaseMock(tableData = {}, rpcResponses = {}) {
         }
         storage.updatedData[tableName].push(updateData);
 
-        return {
-          eq: jest.fn(() => ({
-            select: jest.fn(() => ({
-              single: jest.fn(() =>
-                Promise.resolve({
-                  data: { ...updateData },
-                  error: null
-                })
-              )
-            })),
-            then: (resolve) => resolve({ data: { ...updateData }, error: null })
+        const eqChain = {
+          select: jest.fn(() => ({
+            single: jest.fn(() =>
+              Promise.resolve({
+                data: { ...updateData },
+                error: null
+              })
+            )
           })),
+          then: (resolve) => resolve({ data: { ...updateData }, error: null })
+        };
+
+        // Allow chained eq().eq() by returning the same object
+        eqChain.eq = jest.fn(() => eqChain);
+
+        return {
+          eq: jest.fn(() => eqChain),
           select: jest.fn(() => ({
             single: jest.fn(() =>
               Promise.resolve({

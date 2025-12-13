@@ -917,7 +917,7 @@ ${this.fixes.map((f) => `- ${f.description}`).join('\n')}
   /**
    * Helper: Get default agents for node
    */
-  getDefaultAgentsSection(nodeName) {
+  getDefaultAgentsSection() {
     return `## Agentes Relevantes
 
 Los siguientes agentes son responsables de mantener este nodo:
