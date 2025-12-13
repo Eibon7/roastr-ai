@@ -57,8 +57,8 @@ class CostControlService {
     this.operationCosts = {
       fetch_comment: 0, // Free operation
       analyze_toxicity: 1, // 1 cent per analysis
-      generate_reply: 5, // 5 cents per generation (OpenAI cost)
-      post_response: 0 // Free operation
+      generate_roast: 5, // 5 cents per generation (OpenAI cost)
+      social_posting: 0 // Free operation
     };
   }
 
@@ -67,18 +67,18 @@ class CostControlService {
    */
   async canPerformOperation(
     organizationId,
-    operationType = 'generate_reply',
+    operationType = 'generate_roast',
     quantity = 1,
     platform = null
   ) {
     try {
       // Map operation types to resource types
       const resourceTypeMap = {
-        generate_reply: 'roasts',
+        generate_roast: 'roasts',
         fetch_comment: 'api_calls',
         analyze_toxicity: 'comment_analysis',
         triage_analysis: 'comment_analysis', // CodeRabbit #3298511777 - Triage uses same resource as toxicity analysis
-        post_response: 'api_calls',
+        social_posting: 'api_calls',
         shield_action: 'shield_actions',
         webhook_call: 'webhook_calls'
       };
@@ -183,11 +183,11 @@ class CostControlService {
 
       // Map operation types to resource types
       const resourceTypeMap = {
-        generate_reply: 'roasts',
+        generate_roast: 'roasts',
         fetch_comment: 'api_calls',
         analyze_toxicity: 'comment_analysis',
         triage_analysis: 'comment_analysis', // CodeRabbit #3298511777 - Triage uses same resource as toxicity analysis
-        post_response: 'api_calls',
+        social_posting: 'api_calls',
         shield_action: 'shield_actions',
         webhook_call: 'webhook_calls'
       };
@@ -436,7 +436,7 @@ class CostControlService {
           platformBreakdown[record.platform].operations[record.action_type] = 0;
         }
 
-        if (record.action_type === 'generate_reply') {
+        if (record.action_type === 'generate_roast') {
           platformBreakdown[record.platform].responses++;
         }
 

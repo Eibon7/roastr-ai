@@ -257,7 +257,7 @@ class JobValidator {
     const sanitizedJob = this.sanitizeJob(normalizedJob);
 
     switch (workerType) {
-      case 'generate_reply':
+      case 'generate_roast':
         return this.validateGenerateReplyJob(sanitizedJob);
       case 'analyze_toxicity':
         return this.validateAnalyzeToxicityJob(sanitizedJob);

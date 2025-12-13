@@ -110,7 +110,7 @@ const createMockAnalyzeToxicityJob = (overrides = {}) =>
 
 const createMockGenerateReplyJob = (overrides = {}) =>
   createMockJob({
-    job_type: 'generate_reply',
+    job_type: 'generate_roast',
     comment_id: generateId('comment'),
     text: 'This is a stupid post',
     author_id: 'user-789',

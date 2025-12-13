@@ -209,19 +209,19 @@ class GraphResolver {
 
         // Special mappings for common patterns (using path-based matching)
         if (file.includes('src/integrations/')) {
-          affectedNodes.add('social-platforms');
+          affectedNodes.add('integraciones-redes-sociales');
         }
         if (file.includes('src/services/costControl') || file.includes('cost-control')) {
-          affectedNodes.add('cost-control');
+          affectedNodes.add('billing-integration');
         }
         if (file.includes('src/services/shield') || file.includes('Shield')) {
-          affectedNodes.add('shield');
+          affectedNodes.add('shield-engine');
         }
         if (file.includes('src/services/queue') || file.includes('workers/')) {
-          affectedNodes.add('queue-system');
+          affectedNodes.add('workers');
         }
-        if (file.includes('docs/nodes/')) {
-          const nodeMatch = file.match(/docs\/nodes\/([^.]+)\.md/);
+        if (file.includes('docs/nodes-v2/')) {
+          const nodeMatch = file.match(/docs\/nodes-v2\/([^.]+)\.md/);
           if (nodeMatch) {
             affectedNodes.add(nodeMatch[1]);
           }

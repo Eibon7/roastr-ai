@@ -192,7 +192,7 @@ function createMockQueueJob(type, data = {}, options = {}) {
       comment: 'Test comment',
       platform: 'twitter'
     },
-    generate_reply: {
+    generate_roast: {
       commentId: uuidv4(),
       toxicityData: { score: 0.8, categories: ['TOXICITY'] }
     },

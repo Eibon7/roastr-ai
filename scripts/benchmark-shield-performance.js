@@ -141,7 +141,6 @@ async function executeShieldAction(index) {
 
   const startTime = Date.now();
   let success = false;
-  let error = null;
   let latency = 0;
 
   try {

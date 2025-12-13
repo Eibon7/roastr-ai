@@ -29,7 +29,7 @@ const LLMClient = require('../lib/llmClient'); // Issue #920: Use LLMClient wrap
  */
 class GenerateReplyWorker extends BaseWorker {
   constructor(options = {}) {
-    super('generate_reply', {
+    super('generate_roast', {
       maxConcurrency: 2, // Lower concurrency due to LLM rate limits
       pollInterval: 2000,
       maxRetries: 3,
@@ -381,7 +381,7 @@ class GenerateReplyWorker extends BaseWorker {
     // Check cost control limits with enhanced tracking
     const canProcess = await this.costControl.canPerformOperation(
       organization_id,
-      'generate_reply',
+      'generate_roast',
       1, // quantity
       platform
     );
@@ -487,7 +487,7 @@ class GenerateReplyWorker extends BaseWorker {
     await this.costControl.recordUsage(
       organization_id,
       platform,
-      'generate_reply',
+      'generate_roast',
       {
         commentId: comment_id,
         responseId: storedResponse.id,
@@ -1419,7 +1419,7 @@ class GenerateReplyWorker extends BaseWorker {
 
     const postJob = {
       organization_id: organizationId,
-      job_type: 'post_response',
+      job_type: 'social_posting',
       priority: autoApprovalMetadata?.autoApproved ? 3 : 4, // Higher priority for auto-approved content
       payload: {
         response_id: response.id,
@@ -1436,7 +1436,7 @@ class GenerateReplyWorker extends BaseWorker {
 
     try {
       if (this.redis) {
-        await this.redis.rpush('roastr:jobs:post_response', JSON.stringify(postJob));
+        await this.redis.rpush('roastr:jobs:social_posting', JSON.stringify(postJob));
       } else {
         const { error } = await this.supabase.from('job_queue').insert([postJob]);
 
