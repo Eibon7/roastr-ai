@@ -67,7 +67,7 @@ async function checkTable(tableName) {
       }
     }
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }
@@ -93,7 +93,6 @@ async function main() {
     console.log(`${status.padEnd(25)} ${tableName}`);
   }
 
-  const existingCount = results.filter((r) => r.exists).length;
   const testedCount = results.filter((r) => r.tested).length;
   const needsTestCount = results.filter((r) => r.exists && !r.tested).length;
   const missingCount = results.filter((r) => !r.exists).length;

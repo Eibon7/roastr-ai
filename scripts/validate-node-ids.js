@@ -204,23 +204,77 @@ class NodeIDValidator {
         const content = await fs.readFile(file, 'utf-8');
         const relativePath = path.relative(this.rootDir, file);
 
-        // Look for node ID references (simple pattern matching)
-        const nodeIdPattern = /['"`]([a-z-]+(?:-[a-z-]+)*)['"`]/g;
-        let match;
+        const lines = content.split('\n');
+        const legacyQueueIds = new Set(['generate_reply', 'billing', 'post_response']);
+        const legacyNodeIds = new Set([
+          'roast',
+          'shield',
+          'social-platforms',
+          'billing',
+          'analytics',
+          'persona'
+        ]);
+        const contextTokens = [
+          'job_type',
+          'queueName',
+          'queue',
+          'queueKey',
+          'queuePrefix',
+          'workerType',
+          'enabledWorkers',
+          'workerClasses',
+          'addJob',
+          'rpush',
+          'lpush',
+          'lrange',
+          'llen',
+          'collectCoverageFrom',
+          'affectsNodes',
+          'relatedNodes',
+          'requiredNodes'
+        ];
 
-        while ((match = nodeIdPattern.exec(content)) !== null) {
-          const potentialId = match[1];
+        const isUsage = (line, legacyId) => {
+          const literal = new RegExp(`['"\`]${legacyId}['"\`]`);
+          const objectKey = new RegExp(`\\b${legacyId}\\s*:\\s`);
+          const queueKey = new RegExp(`roastr:jobs:${legacyId}`);
+          const jobType = new RegExp(`job_type\\s*[:=]\\s*['"\`]${legacyId}['"\`]`);
+          const addJob = new RegExp(`addJob\\s*\\(\\s*['"\`]${legacyId}['"\`]`);
+          const rpush = new RegExp(`rpush\\([^)]*['"\`]${legacyId}['"\`]`);
+          return (
+            literal.test(line) ||
+            objectKey.test(line) ||
+            queueKey.test(line) ||
+            jobType.test(line) ||
+            addJob.test(line) ||
+            rpush.test(line)
+          );
+        };
 
-          // Check if it's a legacy ID
-          if (this.legacyIds.has(potentialId)) {
-            this.errors.push({
-              type: 'legacy_id_in_code',
-              location: relativePath,
-              line: this.getLineNumber(content, match.index),
-              message: `Legacy ID "${potentialId}" found in code. Must use v2 equivalent.`
-            });
-          }
-        }
+        lines.forEach((line, idx) => {
+          const hasContextToken = contextTokens.some((token) => line.includes(token));
+          if (!hasContextToken) return;
+
+          legacyQueueIds.forEach((legacyId) => {
+            if (isUsage(line, legacyId)) {
+              this.errors.push({
+                type: 'legacy_id_in_code',
+                location: `${relativePath}:${idx + 1}`,
+                message: `Legacy queue ID "${legacyId}" found in code. Must use v2 equivalent.`
+              });
+            }
+          });
+
+          legacyNodeIds.forEach((legacyId) => {
+            if (isUsage(line, legacyId)) {
+              this.errors.push({
+                type: 'legacy_id_in_code',
+                location: `${relativePath}:${idx + 1}`,
+                message: `Legacy node ID "${legacyId}" found in code. Must use v2 equivalent.`
+              });
+            }
+          });
+        });
       }
     } catch (error) {
       // Ignore if src directory doesn't exist

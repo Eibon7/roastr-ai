@@ -142,7 +142,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
           id: uuidv4(),
           organization_id: tenantA.id,
           platform: 'twitter',
-          action_type: 'generate_reply',
+          action_type: 'generate_roast',
           tokens_used: 150,
           cost_cents: 3
         };
@@ -162,7 +162,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
           id: uuidv4(),
           organization_id: tenantB.id, // Cross-tenant attempt
           platform: 'twitter',
-          action_type: 'generate_reply',
+          action_type: 'generate_roast',
           tokens_used: 150,
           cost_cents: 3
         };
@@ -445,7 +445,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
               id: uuidv4(),
               organization_id: tenantA.id,
               platform: 'twitter',
-              action_type: 'generate_reply',
+              action_type: 'generate_roast',
               tokens_used: 150,
               cost_cents: 3
             })
@@ -479,7 +479,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
               id: uuidv4(),
               organization_id: tenantB.id,
               platform: 'twitter',
-              action_type: 'generate_reply',
+              action_type: 'generate_roast',
               tokens_used: 150,
               cost_cents: 3
             })

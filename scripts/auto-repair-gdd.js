@@ -34,8 +34,7 @@ const { CoverageHelper } = require('./gdd-coverage-helper');
 const {
   isMaintenanceMode,
   hasMaintenanceFlag,
-  showMaintenanceBanner,
-  blockIfMaintenance
+  showMaintenanceBanner
 } = require('./gdd-maintenance-mode');
 
 class AutoRepairEngine {
@@ -224,7 +223,7 @@ class AutoRepairEngine {
       const content = await fs.readFile(healthFile, 'utf-8');
       const data = JSON.parse(content);
       return data.overall_score;
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -254,7 +253,7 @@ class AutoRepairEngine {
       try {
         await fs.mkdir(path.dirname(destPath), { recursive: true });
         await fs.copyFile(sourcePath, destPath);
-      } catch (error) {
+      } catch {
         // File might not exist, continue
       }
     }
@@ -304,7 +303,7 @@ class AutoRepairEngine {
         const oldBackup = path.join(backupsRoot, sorted[i]);
         await fs.rm(oldBackup, { recursive: true, force: true });
       }
-    } catch (error) {
+    } catch {
       // Backups directory might not exist yet
     }
   }
@@ -750,7 +749,7 @@ class AutoRepairEngine {
 
       try {
         await fs.copyFile(sourcePath, destPath);
-      } catch (error) {
+      } catch {
         // File might not exist in backup
       }
     }
@@ -769,7 +768,7 @@ class AutoRepairEngine {
       const logs = JSON.parse(existingLog);
       logs.push(logEntry);
       await fs.writeFile(logPath, JSON.stringify(logs, null, 2));
-    } catch (error) {
+    } catch {
       await fs.writeFile(logPath, JSON.stringify([logEntry], null, 2));
     }
   }
@@ -844,7 +843,7 @@ ${this.fixes.map((f) => `- ${f.description}`).join('\n')}
       const parts = existing.split('\n\n');
       parts.splice(1, 0, entry.trim());
       await fs.writeFile(changelogPath, parts.join('\n\n'));
-    } catch (error) {
+    } catch {
       // Create new changelog
       const newChangelog = `# Auto-Repair Changelog\n${entry}`;
       await fs.writeFile(changelogPath, newChangelog);
@@ -918,7 +917,7 @@ ${this.fixes.map((f) => `- ${f.description}`).join('\n')}
   /**
    * Helper: Get default agents for node
    */
-  getDefaultAgentsSection(nodeName) {
+  getDefaultAgentsSection() {
     return `## Agentes Relevantes
 
 Los siguientes agentes son responsables de mantener este nodo:

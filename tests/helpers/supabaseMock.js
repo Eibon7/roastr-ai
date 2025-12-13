@@ -148,63 +148,81 @@ class MockSupabaseClient {
   from(table) {
     this.callCount++;
 
-    return {
-      select: (columns = '*') => ({
-        eq: (column, value) => {
-          const rows = this.data[table] || [];
-          const filtered = rows.filter((r) => r[column] === value);
-          const rlsFiltered = this._applyRLSFilter(table, filtered);
+    const buildSelectChain = ({ filters = [], orderBys = [], limitValue = null } = {}) => {
+      const applyQuery = () => {
+        const rows = this.data[table] || [];
+        let filtered = [...rows];
 
-          return {
-            data: rlsFiltered,
-            error: null,
+        filters.forEach((fn) => {
+          filtered = filtered.filter(fn);
+        });
 
-            // Chainable methods
-            maybeSingle: () =>
-              Promise.resolve({
-                data: rlsFiltered[0] || null,
-                error: null // No error if not found (unlike single())
-              }),
-
-            single: () =>
-              Promise.resolve({
-                data: rlsFiltered[0] || null,
-                error: rlsFiltered.length === 0 ? { message: 'No rows found' } : null
-              }),
-
-            then: (resolve) => {
-              resolve({ data: rlsFiltered, error: null });
-            }
-          };
-        },
-
-        maybeSingle: () => {
-          const rows = this.data[table] || [];
-          const rlsFiltered = this._applyRLSFilter(table, rows);
-
-          return Promise.resolve({
-            data: rlsFiltered[0] || null,
-            error: null // No error if not found
+        // Apply ordering
+        orderBys.forEach(({ column, ascending }) => {
+          filtered = filtered.sort((a, b) => {
+            const av = a[column];
+            const bv = b[column];
+            if (av === bv) return 0;
+            return ascending ? (av > bv ? 1 : -1) : av > bv ? -1 : 1;
           });
-        },
+        });
 
-        single: () => {
-          const rows = this.data[table] || [];
-          const rlsFiltered = this._applyRLSFilter(table, rows);
+        // Apply RLS
+        filtered = this._applyRLSFilter(table, filtered);
 
-          return Promise.resolve({
-            data: rlsFiltered[0] || null,
-            error: rlsFiltered.length === 0 ? { message: 'No rows found' } : null
-          });
-        },
-
-        // Default select (all rows)
-        then: (resolve) => {
-          const rows = this.data[table] || [];
-          const rlsFiltered = this._applyRLSFilter(table, rows);
-          resolve({ data: rlsFiltered, error: null });
+        // Apply limit
+        if (typeof limitValue === 'number') {
+          filtered = filtered.slice(0, limitValue);
         }
-      }),
+
+        return filtered;
+      };
+
+      const toResult = (rows) => ({ data: rows, error: null, status: 200, statusText: 'OK' });
+      const toSingleResult = (rows) => ({
+        data: rows[0] || null,
+        error: rows.length === 0 ? { message: 'No rows found' } : null,
+        status: rows.length === 0 ? 404 : 200,
+        statusText: rows.length === 0 ? 'Not Found' : 'OK'
+      });
+
+      const chain = {
+        eq: (column, value) =>
+          buildSelectChain({
+            filters: [...filters, (r) => r[column] === value],
+            orderBys,
+            limitValue
+          }),
+        in: (column, values = []) =>
+          buildSelectChain({
+            filters: [...filters, (r) => values.includes(r[column])],
+            orderBys,
+            limitValue
+          }),
+        order: (column, options = {}) =>
+          buildSelectChain({
+            filters,
+            orderBys: [...orderBys, { column, ascending: options.ascending !== false }],
+            limitValue
+          }),
+        limit: (value) =>
+          buildSelectChain({
+            filters,
+            orderBys,
+            limitValue: typeof value === 'number' ? value : null
+          }),
+        single: () => Promise.resolve(toSingleResult(applyQuery())),
+        maybeSingle: () => Promise.resolve({ data: applyQuery()[0] || null, error: null }),
+        then: (resolve) => {
+          resolve(toResult(applyQuery()));
+        }
+      };
+
+      return chain;
+    };
+
+    return {
+      select: () => buildSelectChain(),
 
       insert: (rows) => {
         const rowsArray = Array.isArray(rows) ? rows : [rows];

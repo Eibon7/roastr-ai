@@ -224,7 +224,7 @@ describe('[E2E] Auto-Approval Flow - Auto-approval ON', () => {
       const generationWorker = new GenerateReplyWorker();
 
       const generationJobData = {
-        type: 'generate_reply',
+        type: 'generate_roast',
         comment: testComment,
         organizationId: testComment.organization_id,
         style: testUser.tone_preference || 'balanced',
@@ -265,7 +265,7 @@ describe('[E2E] Auto-Approval Flow - Auto-approval ON', () => {
           console.log('✅ Generated 1 variant successfully for auto-approval');
         }
       } catch (error) {
-        expect(generationWorker.workerType).toBe('generate_reply');
+        expect(generationWorker.workerType).toBe('generate_roast');
 
         // Create mock variant for test continuation
         generatedVariant = {

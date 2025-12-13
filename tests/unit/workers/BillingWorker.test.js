@@ -570,6 +570,34 @@ describe('BillingWorker', () => {
           }
         });
         worker.supabase = pastDueMock;
+        // Ensure update().eq().eq() chaining resolves successfully
+        worker.supabase.from = jest.fn(() => ({
+          update: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              eq: jest.fn(() =>
+                Promise.resolve({
+                  data: { status: 'active' },
+                  error: null
+                })
+              )
+            }))
+          })),
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              single: jest.fn(() =>
+                Promise.resolve({
+                  data: {
+                    user_id: 'user-123',
+                    plan: 'pro',
+                    status: 'past_due',
+                    stripe_customer_id: 'cus_stripe123'
+                  },
+                  error: null
+                })
+              )
+            }))
+          }))
+        }));
 
         const job = {
           id: 'job-123',

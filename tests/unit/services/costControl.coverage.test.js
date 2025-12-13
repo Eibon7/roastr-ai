@@ -592,9 +592,9 @@ describe('CostControlService - Coverage Gaps', () => {
               lt: jest.fn(() =>
                 Promise.resolve({
                   data: [
-                    { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
-                    { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
-                    { platform: 'youtube', action_type: 'generate_reply', cost_cents: 5 }
+                    { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
+                    { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
+                    { platform: 'youtube', action_type: 'generate_roast', cost_cents: 5 }
                   ],
                   error: null
                 })

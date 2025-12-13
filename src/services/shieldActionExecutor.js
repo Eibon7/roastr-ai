@@ -124,10 +124,11 @@ class ShieldActionExecutorService {
     metadata = {}
   }) {
     const startTime = Date.now();
+    let normalizedAction = action;
 
     try {
       // Validate inputs
-      this.validateActionInput({
+      normalizedAction = this.validateActionInput({
         organizationId,
         platform,
         externalCommentId,
@@ -154,10 +155,10 @@ class ShieldActionExecutorService {
 
       // Check if action is supported
       const capabilities = adapter.capabilities();
-      if (!this.isActionSupported(action, capabilities)) {
+      if (!this.isActionSupported(normalizedAction, capabilities)) {
         return await this.handleUnsupportedAction(
           adapter,
-          action,
+          normalizedAction,
           capabilities,
           moderationInput,
           startTime
@@ -168,7 +169,7 @@ class ShieldActionExecutorService {
       const result = await this.executeWithResiliency(
         platform,
         adapter,
-        action,
+        normalizedAction,
         moderationInput,
         startTime
       );
@@ -184,7 +185,7 @@ class ShieldActionExecutorService {
           externalAuthorId,
           externalAuthorUsername,
           originalText,
-          action,
+          action: normalizedAction,
           result,
           processingTimeMs: Date.now() - startTime
         });
@@ -192,18 +193,18 @@ class ShieldActionExecutorService {
         this.logger.error('Failed to record successful action', {
           organizationId,
           platform,
-          action,
+          action: normalizedAction,
           error: recordError.message
         });
       }
 
       // Update metrics
-      this.updateMetrics(platform, action, true, false);
+      this.updateMetrics(platform, normalizedAction, true, false);
 
       this.logger.info('Shield action executed successfully', {
         organizationId,
         platform,
-        action,
+        action: normalizedAction,
         externalAuthorId,
         processingTimeMs: Date.now() - startTime
       });
@@ -211,12 +212,12 @@ class ShieldActionExecutorService {
       return result;
     } catch (error) {
       // Update metrics
-      this.updateMetrics(platform, action, false, false);
+      this.updateMetrics(platform, normalizedAction, false, false);
 
       this.logger.error('Shield action execution failed', {
         organizationId,
         platform,
-        action,
+        action: normalizedAction,
         externalAuthorId,
         error: error.message,
         processingTimeMs: Date.now() - startTime
@@ -904,10 +905,22 @@ class ShieldActionExecutorService {
       throw new Error('action is required');
     }
 
+    const legacyActionMap = {
+      reply_warning: 'hideComment',
+      ban_user: 'blockUser',
+      remove_comment: 'hideComment',
+      mute_user: 'blockUser',
+      block_user: 'blockUser'
+    };
+
+    const normalizedAction = legacyActionMap[action] || action;
+
     const validActions = ['hideComment', 'reportUser', 'blockUser', 'unblockUser'];
-    if (!validActions.includes(action)) {
+    if (!validActions.includes(normalizedAction)) {
       throw new Error(`Invalid action: ${action}. Valid actions: ${validActions.join(', ')}`);
     }
+
+    return normalizedAction;
   }
 
   /**

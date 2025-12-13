@@ -15,7 +15,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
 const logger = require('../src/utils/logger');
-const { getAllMappings, isLegacyId, getV2Equivalent } = require('./shared/legacy-ids');
+const { getAllMappings } = require('./shared/legacy-ids');
 const { parseArgs, getOption, hasFlag } = require('./shared/cli-parser');
 
 class LegacyIDDetector {
@@ -24,6 +24,39 @@ class LegacyIDDetector {
     this.rootDir = path.resolve(__dirname, '..');
     this.isCIMode = options.ci || false;
     this.legacyIds = getAllMappings();
+    // Explicit legacy targets (code scope) limited to real v1 IDs
+    this.legacyQueueIds = new Set(['generate_reply', 'billing', 'post_response']);
+    this.legacyNodeIds = new Set([
+      'roast',
+      'shield',
+      'social-platforms',
+      'billing',
+      'analytics',
+      'persona'
+    ]);
+    // Context tokens that indicate an ID usage (queue/job/worker/system-map)
+    this.contextTokens = [
+      'job_type',
+      'queueName',
+      'queue',
+      'queue_key',
+      'queueKey',
+      'queuePrefix',
+      'dlqPrefix',
+      'workerType',
+      'enabledWorkers',
+      'workerClasses',
+      'addJob',
+      'rpush',
+      'lpush',
+      'lrange',
+      'llen',
+      'collectCoverageFrom', // used to point to route files by ID
+      'coverageFrom',
+      'affectsNodes',
+      'relatedNodes',
+      'requiredNodes'
+    ];
     this.detections = [];
   }
 
@@ -260,22 +293,58 @@ class LegacyIDDetector {
 
         const content = await fs.readFile(file, 'utf-8');
         const relativePath = path.relative(this.rootDir, file);
+        const lines = content.split('\n');
 
-        // Check for legacy IDs in strings
-        this.legacyIds.forEach((mapping, legacyId) => {
-          const pattern = new RegExp(`['"\`]${legacyId}['"\`]`, 'g');
-          if (pattern.test(content)) {
-            const lineNumber = this.getLineNumber(content, content.indexOf(`"${legacyId}"`));
-            this.detections.push({
-              type: 'legacy_id_in_code',
-              location: `${relativePath}:${lineNumber}`,
-              legacyId: legacyId,
-              suggestedMapping: mapping,
-              message: mapping
-                ? `Legacy ID "${legacyId}" in code. Should use "${mapping}"`
-                : `Legacy ID "${legacyId}" is deprecated.`
-            });
-          }
+        const isUsage = (line, legacyId) => {
+          const literal = new RegExp(`['"\`]${legacyId}['"\`]`);
+          const objectKey = new RegExp(`\\b${legacyId}\\s*:\\s`);
+          const queueKey = new RegExp(`roastr:jobs:${legacyId}`);
+          const jobType = new RegExp(`job_type\\s*[:=]\\s*['"\`]${legacyId}['"\`]`);
+          const addJob = new RegExp(`addJob\\s*\\(\\s*['"\`]${legacyId}['"\`]`);
+          const rpush = new RegExp(`rpush\\([^)]*['"\`]${legacyId}['"\`]`);
+          return (
+            literal.test(line) ||
+            objectKey.test(line) ||
+            queueKey.test(line) ||
+            jobType.test(line) ||
+            addJob.test(line) ||
+            rpush.test(line)
+          );
+        };
+
+        lines.forEach((line, idx) => {
+          const hasContextToken = this.contextTokens.some((token) => line.includes(token));
+          if (!hasContextToken) return;
+
+          this.legacyQueueIds.forEach((legacyId) => {
+            if (isUsage(line, legacyId)) {
+              const mapping = this.legacyIds.get(legacyId) || null;
+              this.detections.push({
+                type: 'legacy_id_in_code',
+                location: `${relativePath}:${idx + 1}`,
+                legacyId,
+                suggestedMapping: mapping,
+                message: mapping
+                  ? `Legacy ID "${legacyId}" in code. Should use "${mapping}"`
+                  : `Legacy ID "${legacyId}" is deprecated.`
+              });
+            }
+          });
+
+          this.legacyNodeIds.forEach((legacyId) => {
+            if (isUsage(line, legacyId)) {
+              const mapping = this.legacyIds.get(legacyId) || null;
+              this.detections.push({
+                type: 'legacy_id_in_code',
+                location: `${relativePath}:${idx + 1}`,
+                legacyId,
+                suggestedMapping: mapping,
+                message: mapping
+                  ? `Legacy ID "${legacyId}" in code. Should use "${mapping}"`
+                  : `Legacy ID "${legacyId}" is deprecated.`
+              });
+            }
+          });
         });
       }
     } catch (error) {

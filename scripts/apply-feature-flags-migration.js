@@ -68,14 +68,14 @@ async function applyMigration() {
     // Note: Supabase client doesn't have direct SQL execution, so we'll use RPC
     // Or we need to execute it statement by statement
 
-    const { data, error } = await supabase.rpc('exec_sql', { query: sql });
+    const { error } = await supabase.rpc('exec_sql', { query: sql });
 
     if (error) {
       // exec_sql might not exist, try alternative: execute statements manually
       console.log('⚠️  Direct SQL execution not available, trying statement-by-statement...');
 
       // For now, let's just check if table exists
-      const { data: checkData, error: checkError } = await supabase
+      const { error: checkError } = await supabase
         .from('feature_flags')
         .select('*', { count: 'exact', head: true });
 
@@ -98,7 +98,7 @@ async function applyMigration() {
     }
 
     // Verify table exists
-    const { data: countData, error: countError } = await supabase
+    const { error: countError } = await supabase
       .from('feature_flags')
       .select('*', { count: 'exact', head: true });
 

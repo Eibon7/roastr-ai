@@ -5,20 +5,27 @@
  * Used by validation and detection scripts.
  */
 
+/**
+ * Mapping only to IDs that exist in system-map-v2.yaml / SSOT v2.
+ * When a legacy ID has no clear v2 equivalent, keep value null so it is detected as unmapped.
+ */
 const LEGACY_ID_MAPPINGS = new Map([
-  ['roast', 'roast-generation'],
-  ['shield', 'shield-moderation'],
-  ['social-platforms', 'platform-integrations'],
-  ['frontend-dashboard', 'admin-dashboard'],
-  ['plan-features', 'plan-configuration'],
-  ['persona', 'persona-config'],
+  // Nodes with clear v2 IDs
+  ['roast', 'roasting-engine'],
+  ['shield', 'shield-engine'],
+  ['social-platforms', 'integraciones-redes-sociales'],
   ['billing', 'billing-integration'],
-  ['cost-control', 'cost-management'],
-  ['queue-system', 'queue-management'],
-  ['multi-tenant', 'tenant-management'],
-  ['observability', 'monitoring'],
-  ['analytics', 'analytics-dashboard'],
-  ['trainer', 'model-training'],
+  ['frontend-dashboard', 'frontend-admin'],
+  ['observability', 'observabilidad'],
+
+  // Legacy without confirmed v2 node/subnode equivalents (kept as unmapped for detection)
+  ['plan-features', null],
+  ['persona', null],
+  ['cost-control', null],
+  ['queue-system', null],
+  ['multi-tenant', null],
+  ['analytics', null],
+  ['trainer', null],
   ['guardian', null] // Deprecated, cannot be recreated
 ]);
 
