@@ -13,29 +13,29 @@ const path = require('path');
 // Label → Nodes mapping
 // Based on GDD architecture and issue labeling conventions
 const LABEL_TO_NODES = {
-  // Core functionality areas
-  'area:api': ['roast', 'multi-tenant'],
-  'area:workers': ['queue-system', 'multi-tenant'],
-  'area:auth': ['multi-tenant'],
-  'area:cost': ['cost-control', 'billing'],
-  'area:shield': ['shield', 'guardian'],
-  'area:integrations': ['social-platforms'],
-  'area:database': ['multi-tenant'],
-  'area:frontend': ['persona', 'tone'],
-  'area:observability': ['observability', 'analytics'],
+  // Core functionality areas (v2 IDs)
+  'area:api': ['roasting-engine'],
+  'area:workers': ['workers', 'infraestructura'],
+  'area:auth': ['auth'],
+  'area:cost': ['billing-integration'],
+  'area:shield': ['shield-engine'],
+  'area:integrations': ['integraciones-redes-sociales'],
+  'area:database': ['infraestructura'],
+  'area:frontend': ['frontend-user-app', 'frontend-admin'],
+  'area:observability': ['observabilidad'],
 
   // Feature-specific
-  'feature:roast': ['roast', 'persona', 'tone'],
-  'feature:moderation': ['shield', 'guardian'],
-  'feature:billing': ['billing', 'cost-control', 'plan-features'],
-  'feature:analytics': ['analytics', 'observability'],
+  'feature:roast': ['roasting-engine'],
+  'feature:moderation': ['shield-engine'],
+  'feature:billing': ['billing-integration'],
+  'feature:analytics': ['observabilidad'],
 
   // Testing & E2E
-  'test:e2e': ['observability'], // spec.md required for E2E context
-  'test:integration': ['queue-system', 'multi-tenant'],
-  'test:unit': [], // Determined by files changed
+  'test:e2e': ['testing-v2'],
+  'test:integration': ['testing-v2', 'infraestructura'],
+  'test:unit': [],
 
-  // Priority (no specific nodes, but useful for task assessment)
+  // Priority (no specific nodes)
   'priority:critical': [],
   'priority:high': [],
   'priority:medium': [],
@@ -44,41 +44,39 @@ const LABEL_TO_NODES = {
 
 // Keyword fallback mapping (when no area:* label exists)
 const KEYWORD_TO_NODES = {
-  worker: ['queue-system', 'multi-tenant'],
-  queue: ['queue-system'],
-  auth: ['multi-tenant'],
-  authentication: ['multi-tenant'],
-  login: ['multi-tenant'],
-  billing: ['billing', 'cost-control'],
-  payment: ['billing', 'plan-features'],
-  roast: ['roast', 'persona', 'tone'],
-  shield: ['shield', 'guardian'],
-  moderation: ['shield', 'guardian'],
-  platform: ['social-platforms'],
-  twitter: ['social-platforms'],
-  youtube: ['social-platforms'],
-  instagram: ['social-platforms'],
-  facebook: ['social-platforms'],
-  discord: ['social-platforms'],
-  integration: ['social-platforms'],
-  cost: ['cost-control', 'billing'],
-  analytics: ['analytics', 'observability'],
-  monitoring: ['observability'],
-  telemetry: ['observability'],
-  persona: ['persona', 'roast'],
-  tone: ['tone', 'roast'],
-  plan: ['plan-features', 'billing'],
-  subscription: ['plan-features', 'billing'],
-  trainer: ['trainer'],
-  guardian: ['guardian', 'shield'],
-  constraint: ['platform-constraints']
+  worker: ['workers', 'infraestructura'],
+  queue: ['infraestructura'],
+  auth: ['auth'],
+  authentication: ['auth'],
+  login: ['auth'],
+  billing: ['billing-integration'],
+  payment: ['billing-integration'],
+  roast: ['roasting-engine'],
+  shield: ['shield-engine'],
+  moderation: ['shield-engine'],
+  platform: ['integraciones-redes-sociales'],
+  twitter: ['integraciones-redes-sociales'],
+  youtube: ['integraciones-redes-sociales'],
+  instagram: ['integraciones-redes-sociales'],
+  facebook: ['integraciones-redes-sociales'],
+  discord: ['integraciones-redes-sociales'],
+  integration: ['integraciones-redes-sociales'],
+  cost: ['billing-integration'],
+  analytics: ['observabilidad'],
+  monitoring: ['observabilidad'],
+  telemetry: ['observabilidad'],
+  persona: ['analysis-engine'],
+  tone: ['roasting-engine'],
+  plan: ['billing-integration'],
+  subscription: ['billing-integration'],
+  constraint: ['integraciones-redes-sociales']
 };
 
 /**
  * Get all available GDD nodes
  */
 async function getAllNodes() {
-  const nodesDir = path.join(__dirname, '..', 'docs', 'nodes');
+  const nodesDir = path.join(__dirname, '..', 'docs', 'nodes-v2');
   const files = await fs.readdir(nodesDir);
   return files
     .filter((f) => f.endsWith('.md'))

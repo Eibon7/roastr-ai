@@ -148,7 +148,7 @@ describe('CostControlService - Integration Tests', () => {
   });
 
   describe('canPerformOperation', () => {
-    it('should check operation permission via RPC for generate_reply', async () => {
+    it('should check operation permission via RPC for generate_roast', async () => {
       const organizationId = 'test-org-123';
 
       mockRpc.mockResolvedValueOnce({
@@ -163,7 +163,7 @@ describe('CostControlService - Integration Tests', () => {
 
       const result = await costControl.canPerformOperation(
         organizationId,
-        'generate_reply',
+        'generate_roast',
         1,
         'twitter'
       );
@@ -249,7 +249,7 @@ describe('CostControlService - Integration Tests', () => {
         error: null
       });
 
-      const result = await costControl.canPerformOperation('test-org', 'generate_reply', 1);
+      const result = await costControl.canPerformOperation('test-org', 'generate_roast', 1);
 
       expect(result.allowed).toBe(false);
       expect(result.message).toContain('Monthly limit');
@@ -262,7 +262,7 @@ describe('CostControlService - Integration Tests', () => {
       });
 
       await expect(
-        costControl.canPerformOperation('test-org', 'generate_reply', 1)
+        costControl.canPerformOperation('test-org', 'generate_roast', 1)
       ).rejects.toThrow('Invalid response from can_perform_operation');
     });
 
@@ -273,7 +273,7 @@ describe('CostControlService - Integration Tests', () => {
       });
 
       await expect(
-        costControl.canPerformOperation('test-org', 'generate_reply', 1)
+        costControl.canPerformOperation('test-org', 'generate_roast', 1)
       ).rejects.toEqual({ message: 'RPC error' });
     });
   });
@@ -379,12 +379,12 @@ describe('CostControlService - Integration Tests', () => {
         data: [
           {
             platform: 'twitter',
-            action_type: 'generate_reply',
+            action_type: 'generate_roast',
             cost_cents: 5
           },
           {
             platform: 'twitter',
-            action_type: 'generate_reply',
+            action_type: 'generate_roast',
             cost_cents: 5
           }
         ],
@@ -959,7 +959,7 @@ describe('CostControlService - Integration Tests', () => {
         data: [
           {
             platform: 'twitter',
-            action_type: 'generate_reply',
+            action_type: 'generate_roast',
             cost_cents: 5,
             created_at: new Date(year, month - 1, 15).toISOString()
           }
@@ -1233,7 +1233,7 @@ describe('CostControlService - Integration Tests', () => {
     it('should record usage and cost', async () => {
       const organizationId = 'test-org-123';
       const platform = 'twitter';
-      const operationType = 'generate_reply';
+      const operationType = 'generate_roast';
       const metadata = { tokensUsed: 100 };
 
       // Mock usage_records insert - need to use mockInsert properly
@@ -1296,7 +1296,7 @@ describe('CostControlService - Integration Tests', () => {
 
       jest.spyOn(costControl, 'checkAndSendUsageAlerts').mockResolvedValueOnce();
 
-      await costControl.recordUsage(organizationId, 'twitter', 'generate_reply');
+      await costControl.recordUsage(organizationId, 'twitter', 'generate_roast');
 
       expect(costControl.checkAndSendUsageAlerts).toHaveBeenCalled();
     });
@@ -1318,7 +1318,7 @@ describe('CostControlService - Integration Tests', () => {
       });
 
       await expect(
-        costControl.recordUsage('test-org', 'twitter', 'generate_reply')
+        costControl.recordUsage('test-org', 'twitter', 'generate_roast')
       ).rejects.toEqual({ message: 'Database error' });
     });
   });

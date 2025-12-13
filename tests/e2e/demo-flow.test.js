@@ -154,7 +154,7 @@ describe('[E2E] Demo Flow Pipeline', () => {
       const generationWorker = new GenerateReplyWorker();
 
       const generationJobData = {
-        type: 'generate_reply',
+        type: 'generate_roast',
         comment: testComment,
         organizationId: testComment.organization_id,
         style: 'balanced',
@@ -169,7 +169,7 @@ describe('[E2E] Demo Flow Pipeline', () => {
         console.log('✅ Generation worker processed comment successfully');
       } catch (error) {
         // In mock mode, validate worker exists and has correct type
-        expect(generationWorker.workerType).toBe('generate_reply');
+        expect(generationWorker.workerType).toBe('generate_roast');
         expect(error.message).toMatch(/Worker timeout|model.*unavailable|OpenAI|invalid.*payload/i);
         console.log(
           '✅ Generation worker structure validated (timeout or error expected in mock mode)'

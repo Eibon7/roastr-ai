@@ -520,8 +520,8 @@ describe('CostControlService - Extended Coverage', () => {
         gte: jest.fn().mockReturnThis(),
         order: jest.fn().mockResolvedValue({
           data: [
-            { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
-            { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 }
+            { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
+            { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 }
           ],
           error: null
         }),
@@ -781,7 +781,7 @@ describe('CostControlService - Extended Coverage', () => {
       });
 
       try {
-        const result = await costControl.canPerformOperation('org-123', 'generate_reply', 1);
+        const result = await costControl.canPerformOperation('org-123', 'generate_roast', 1);
         expect(result.allowed).toBe(true);
       } catch (error) {
         expect(error).toBeDefined();
@@ -795,7 +795,7 @@ describe('CostControlService - Extended Coverage', () => {
       });
 
       try {
-        const result = await costControl.canPerformOperation('org-123', 'generate_reply', 1);
+        const result = await costControl.canPerformOperation('org-123', 'generate_roast', 1);
         expect(result.allowed).toBe(false);
       } catch (error) {
         expect(error).toBeDefined();
@@ -809,7 +809,7 @@ describe('CostControlService - Extended Coverage', () => {
       });
 
       try {
-        await costControl.canPerformOperation('org-123', 'generate_reply', 1);
+        await costControl.canPerformOperation('org-123', 'generate_roast', 1);
       } catch (error) {
         expect(error).toBeDefined();
       }
@@ -822,7 +822,7 @@ describe('CostControlService - Extended Coverage', () => {
       });
 
       try {
-        await costControl.canPerformOperation('org-123', 'generate_reply', 1);
+        await costControl.canPerformOperation('org-123', 'generate_roast', 1);
       } catch (error) {
         expect(error.message).toContain('Invalid response');
       }
@@ -853,7 +853,7 @@ describe('CostControlService - Extended Coverage', () => {
       });
 
       try {
-        const result = await costControl.recordOperation('org-123', 'generate_reply', 1, 'twitter');
+        const result = await costControl.recordOperation('org-123', 'generate_roast', 1, 'twitter');
         expect(result).toBeDefined();
       } catch (error) {
         expect(error).toBeDefined();
@@ -866,7 +866,7 @@ describe('CostControlService - Extended Coverage', () => {
       });
 
       try {
-        await costControl.recordOperation('org-123', 'generate_reply', 1, 'twitter');
+        await costControl.recordOperation('org-123', 'generate_roast', 1, 'twitter');
       } catch (error) {
         expect(error).toBeDefined();
       }
@@ -962,7 +962,7 @@ describe('CostControlService - Extended Coverage', () => {
 
     it('should have operationCosts defined', () => {
       expect(costControl.operationCosts).toBeDefined();
-      expect(costControl.operationCosts.generate_reply).toBeDefined();
+      expect(costControl.operationCosts.generate_roast).toBeDefined();
     });
   });
 
@@ -1103,7 +1103,7 @@ describe('CostControlService - Extended Coverage', () => {
         const result = await costControl.recordUsage(
           'org-123',
           'twitter',
-          'generate_reply',
+          'generate_roast',
           { tokensUsed: 100 },
           'user-123',
           1
@@ -1135,7 +1135,7 @@ describe('CostControlService - Extended Coverage', () => {
         const result = await costControl.recordUsage(
           'org-123',
           'twitter',
-          'generate_reply',
+          'generate_roast',
           {},
           null,
           1
@@ -1157,7 +1157,7 @@ describe('CostControlService - Extended Coverage', () => {
       });
 
       try {
-        await costControl.recordUsage('org-123', 'twitter', 'generate_reply', {}, null, 1);
+        await costControl.recordUsage('org-123', 'twitter', 'generate_roast', {}, null, 1);
       } catch (error) {
         expect(error).toBeDefined();
       }
@@ -1179,7 +1179,7 @@ describe('CostControlService - Extended Coverage', () => {
       });
 
       try {
-        await costControl.recordUsage('org-123', 'twitter', 'generate_reply', {}, null, 1);
+        await costControl.recordUsage('org-123', 'twitter', 'generate_roast', {}, null, 1);
       } catch (error) {
         expect(error).toBeDefined();
       }
@@ -1246,9 +1246,9 @@ describe('CostControlService - Extended Coverage', () => {
         gte: jest.fn().mockReturnThis(),
         order: jest.fn().mockResolvedValue({
           data: [
-            { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
-            { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
-            { platform: 'youtube', action_type: 'generate_reply', cost_cents: 5 }
+            { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
+            { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
+            { platform: 'youtube', action_type: 'generate_roast', cost_cents: 5 }
           ],
           error: null
         }),
@@ -1585,8 +1585,8 @@ describe('CostControlService - Extended Coverage', () => {
         gte: jest.fn().mockReturnThis(),
         order: jest.fn().mockResolvedValue({
           data: [
-            { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5, tokens_used: 100 },
-            { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5, tokens_used: 100 },
+            { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5, tokens_used: 100 },
+            { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5, tokens_used: 100 },
             { platform: 'youtube', action_type: 'analyze_toxicity', cost_cents: 1, tokens_used: 50 }
           ],
           error: null
@@ -1745,10 +1745,10 @@ describe('CostControlService - Extended Coverage', () => {
             gte: jest.fn().mockReturnThis(),
             lt: jest.fn().mockResolvedValue({
               data: [
-                { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
-                { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
+                { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
+                { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
                 { platform: 'twitter', action_type: 'analyze_toxicity', cost_cents: 1 },
-                { platform: 'youtube', action_type: 'generate_reply', cost_cents: 5 }
+                { platform: 'youtube', action_type: 'generate_roast', cost_cents: 5 }
               ],
               error: null
             })
@@ -2029,7 +2029,7 @@ describe('CostControlService - Extended Coverage', () => {
       costControl.sendUsageAlert = jest.fn().mockResolvedValue({ success: true });
 
       try {
-        await costControl.incrementUsage('org-123', 'twitter', 'generate_reply', 1);
+        await costControl.incrementUsage('org-123', 'twitter', 'generate_roast', 1);
         expect(costControl.sendUsageAlert).toHaveBeenCalled();
       } catch (error) {
         expect(error).toBeDefined();
@@ -2048,7 +2048,7 @@ describe('CostControlService - Extended Coverage', () => {
       costControl.sendUsageAlert = jest.fn();
 
       try {
-        await costControl.incrementUsage('org-123', 'twitter', 'generate_reply', 1);
+        await costControl.incrementUsage('org-123', 'twitter', 'generate_roast', 1);
         expect(costControl.sendUsageAlert).not.toHaveBeenCalled();
       } catch (error) {
         expect(error).toBeDefined();
@@ -2347,7 +2347,7 @@ describe('CostControlService - Extended Coverage', () => {
       });
 
       try {
-        const result = await costControl.recordUsage('org-123', 'generate_reply', 'twitter', {
+        const result = await costControl.recordUsage('org-123', 'generate_roast', 'twitter', {
           cost_cents: 5,
           tokens_used: 500
         });
@@ -2366,7 +2366,7 @@ describe('CostControlService - Extended Coverage', () => {
       });
 
       try {
-        await costControl.recordUsage('org-123', 'generate_reply', 'twitter', {});
+        await costControl.recordUsage('org-123', 'generate_roast', 'twitter', {});
       } catch (error) {
         expect(error).toBeDefined();
       }
@@ -2725,11 +2725,11 @@ describe('CostControlService - Extended Coverage', () => {
             gte: jest.fn().mockReturnThis(),
             lt: jest.fn().mockResolvedValue({
               data: [
-                { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
-                { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5 },
+                { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
+                { platform: 'twitter', action_type: 'generate_roast', cost_cents: 5 },
                 { platform: 'twitter', action_type: 'analyze', cost_cents: 1 },
-                { platform: 'youtube', action_type: 'generate_reply', cost_cents: 5 },
-                { platform: 'youtube', action_type: 'generate_reply', cost_cents: 5 },
+                { platform: 'youtube', action_type: 'generate_roast', cost_cents: 5 },
+                { platform: 'youtube', action_type: 'generate_roast', cost_cents: 5 },
                 { platform: 'discord', action_type: 'shield_action', cost_cents: 0 }
               ],
               error: null

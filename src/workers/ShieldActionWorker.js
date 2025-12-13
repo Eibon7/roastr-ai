@@ -99,13 +99,13 @@ class ShieldActionWorker extends BaseWorker {
     const payload = job.payload || job;
 
     const {
-      organizationId,
-      userId = null,
+      organizationId = payload.organization_id || payload.organization,
+      userId = payload.userId || payload.user_id || null,
       platform,
-      accountRef,
-      externalCommentId,
-      externalAuthorId,
-      externalAuthorUsername,
+      accountRef = payload.account_ref || null,
+      externalCommentId = payload.external_comment_id || payload.comment_id,
+      externalAuthorId = payload.external_author_id || payload.platform_user_id,
+      externalAuthorUsername = payload.external_author_username || payload.platform_username,
       action,
       reason = 'Shield automated action',
       originalText = null,

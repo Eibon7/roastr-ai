@@ -1713,7 +1713,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
 
     const responseJob = {
       organization_id: organizationId,
-      job_type: 'generate_reply',
+      job_type: 'generate_roast',
       priority,
       payload: {
         comment_id: comment.id,
@@ -1731,7 +1731,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
 
     try {
       if (this.redis) {
-        await this.redis.rpush('roastr:jobs:generate_reply', JSON.stringify(responseJob));
+        await this.redis.rpush('roastr:jobs:generate_roast', JSON.stringify(responseJob));
       } else {
         const { error } = await this.supabase.from('job_queue').insert([responseJob]);
 

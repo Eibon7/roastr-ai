@@ -51,7 +51,7 @@ function readMetricsFromSSOT() {
   let ssotContent;
   try {
     ssotContent = fs.readFileSync(SSOT_V2_PATH, 'utf8');
-  } catch (e) {
+  } catch {
     throw new Error(`SSOT-V2.md no encontrado en: ${SSOT_V2_PATH}`);
   }
 

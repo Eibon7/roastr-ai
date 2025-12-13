@@ -301,7 +301,7 @@ class SecureWrite {
       for (let i = keepLast; i < backups.length; i++) {
         fs.unlinkSync(backups[i].path);
       }
-    } catch (error) {
+    } catch {
       // Ignore cleanup errors
     }
   }
@@ -325,7 +325,7 @@ class SecureWrite {
         .sort((a, b) => b.mtime - a.mtime);
 
       return backups.length > 0 ? backups[0].path : null;
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -390,8 +390,8 @@ class SecureWrite {
       fs.writeFileSync(this.signaturesPath, JSON.stringify(signatures, null, 2));
 
       return true;
-    } catch (error) {
-      this.log('error', `Failed to save signature: ${error.message}`);
+    } catch (err) {
+      this.log('error', `Failed to save signature: ${err.message}`);
       return false;
     }
   }
@@ -402,7 +402,7 @@ class SecureWrite {
   loadSignatures() {
     try {
       return JSON.parse(fs.readFileSync(this.signaturesPath, 'utf8'));
-    } catch (error) {
+    } catch {
       return {
         created_at: new Date().toISOString(),
         version: '1.0.0',

@@ -220,7 +220,7 @@ router.post('/:id/approve', async (req, res) => {
     // Include proper rollback logic for failed job queue inserts
     const { error: queueError } = await supabaseServiceClient.from('job_queue').insert({
       organization_id: orgData.id,
-      job_type: 'post_response',
+      job_type: 'social_posting',
       priority: 3,
       payload: {
         response_id: id,
@@ -537,7 +537,7 @@ router.post('/:id/regenerate', async (req, res) => {
 
     const canPerform = await costControl.canPerformOperation(
       orgData.id,
-      'generate_reply',
+      'generate_roast',
       1,
       originalResponse.comments.platform
     );
@@ -676,7 +676,7 @@ router.post('/:id/regenerate', async (req, res) => {
     await costControl.recordUsage(
       orgData.id,
       originalResponse.comments.platform,
-      'generate_reply',
+      'generate_roast',
       {
         regeneration: true,
         original_response_id: id,

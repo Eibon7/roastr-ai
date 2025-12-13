@@ -519,7 +519,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
         .fill(0)
         .map(() =>
           mockQueueService.add({
-            job_type: 'generate_reply',
+            job_type: 'generate_roast',
             comment_id: commentId,
             org_id: testOrg.id,
             priority: 5
@@ -537,7 +537,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
       mockQueueService.getStatus.mockResolvedValueOnce([
         {
           id: queueJobId,
-          job_type: 'generate_reply',
+          job_type: 'generate_roast',
           comment_id: commentId,
           org_id: testOrg.id,
           priority: 5,
@@ -549,7 +549,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
 
       // Should have only one job per comment_id + job_type combination
       const generateReplyJobs = queueStatus.filter(
-        (job) => job.job_type === 'generate_reply' && job.comment_id === commentId
+        (job) => job.job_type === 'generate_roast' && job.comment_id === commentId
       );
 
       expect(generateReplyJobs).toHaveLength(1);

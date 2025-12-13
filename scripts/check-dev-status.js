@@ -2,7 +2,6 @@
 
 const { execSync } = require('child_process');
 const fs = require('fs');
-const path = require('path');
 
 console.log('🔍 Roastr.ai Development Status Check');
 console.log('=====================================\n');
@@ -20,7 +19,7 @@ try {
     });
     console.log('📄 Loaded development configuration from .dev-config');
   }
-} catch (error) {
+} catch {
   console.log('⚠️  Could not load .dev-config, using defaults');
 }
 
@@ -46,7 +45,7 @@ try {
   } else {
     console.log('ℹ️  On custom branch\n');
   }
-} catch (error) {
+} catch {
   console.log('❌ Could not determine current branch\n');
 }
 
@@ -68,7 +67,7 @@ function checkPort(port, service) {
     execSync(command, { stdio: 'ignore' });
     console.log(`✅ ${service}: Port ${port} is in use`);
     return true;
-  } catch (error) {
+  } catch {
     console.log(`❌ ${service}: Port ${port} is free`);
     return false;
   }
@@ -141,7 +140,7 @@ try {
   } else {
     console.log('\n✅ No uncommitted changes');
   }
-} catch (error) {
+} catch {
   console.log('\n❌ Could not check git status');
 }
 
@@ -149,7 +148,7 @@ try {
 try {
   const lastCommit = execSync('git log -1 --oneline', { encoding: 'utf8' }).trim();
   console.log(`\n📝 Last Commit: ${lastCommit}`);
-} catch (error) {
+} catch {
   console.log('\n❌ Could not get last commit info');
 }
 

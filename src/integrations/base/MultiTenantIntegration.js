@@ -336,7 +336,7 @@ class MultiTenantIntegration {
       }
     };
 
-    return await this.queueService.addJob('generate_reply', jobData, priority);
+    return await this.queueService.addJob('generate_roast', jobData, priority);
   }
 
   /**
@@ -366,7 +366,7 @@ class MultiTenantIntegration {
       }
     };
 
-    return await this.queueService.addJob('post_response', jobData, priority);
+    return await this.queueService.addJob('social_posting', jobData, priority);
   }
 
   // ============================================================================

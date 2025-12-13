@@ -401,7 +401,7 @@ async function createTestData(tenantId, type = 'all') {
         id: uuidv4(),
         organization_id: tenantId,
         platform: 'twitter',
-        action_type: 'generate_reply',
+        action_type: 'generate_roast',
         tokens_used: 150,
         cost_cents: 3
       }

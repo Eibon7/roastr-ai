@@ -111,7 +111,7 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
 
       // Step 3: Simulate high toxicity requiring reply generation
       const replyJobResult = await queueService.addJob(
-        'generate_reply',
+        'generate_roast',
         {
           organization_id: testOrganization.id,
           platform: 'twitter',
@@ -167,7 +167,7 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
         limit: 100
       });
 
-      const canGenerate = await costControl.canPerformOperation(limitedOrgId, 'generate_reply');
+      const canGenerate = await costControl.canPerformOperation(limitedOrgId, 'generate_roast');
 
       expect(canGenerate.allowed).toBe(false);
       expect(canGenerate.reason).toBe('monthly_limit_exceeded');
@@ -235,7 +235,7 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
           data: { organization_id: testOrganization.id }
         },
         {
-          type: 'generate_reply',
+          type: 'generate_roast',
           priority: 4,
           data: { organization_id: testOrganization.id }
         }
@@ -412,11 +412,11 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
         cost: 5,
         usage: {
           tokens: 25,
-          operation: 'generate_reply'
+          operation: 'generate_roast'
         }
       });
 
-      const result = await costControl.recordUsage(orgId, 'twitter', 'generate_reply', {
+      const result = await costControl.recordUsage(orgId, 'twitter', 'generate_roast', {
         tokensUsed: 25
       });
 

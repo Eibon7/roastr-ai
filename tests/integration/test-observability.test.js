@@ -152,7 +152,7 @@ describe('Observability Integration Tests (Issue #417)', () => {
         priority: 3
       };
 
-      const result = await queueService.addJob('generate_reply', payload, options);
+      const result = await queueService.addJob('generate_roast', payload, options);
 
       expect(result.success).toBe(true);
       expect(result.job.payload.correlationId).toBe(testCorrelationId);
@@ -244,7 +244,7 @@ describe('Observability Integration Tests (Issue #417)', () => {
         severity_level: 'medium'
       };
 
-      const result3 = await queueService.addJob('generate_reply', finalPayload);
+      const result3 = await queueService.addJob('generate_roast', finalPayload);
       expect(result3.job.payload.correlationId).toBe(testCorrelationId);
 
       // All jobs share the same correlation ID = end-to-end traceability

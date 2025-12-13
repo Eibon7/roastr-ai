@@ -96,7 +96,7 @@ function hasCorrespondingTest(srcFile) {
     try {
       require.resolve(path.resolve(testPath));
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   });

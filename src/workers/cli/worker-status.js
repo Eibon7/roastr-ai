@@ -93,7 +93,14 @@ class WorkerStatusMonitor {
     if (!this.redis) return null;
 
     try {
-      const queueTypes = ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'post_response'];
+      const queueTypes = [
+        'fetch_comments',
+        'analyze_toxicity',
+        'generate_roast',
+        'shield_action',
+        'billing_update',
+        'social_posting'
+      ];
       const stats = {};
 
       for (const queueType of queueTypes) {

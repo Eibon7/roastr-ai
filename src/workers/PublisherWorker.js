@@ -4,7 +4,7 @@ const BaseWorker = require('./BaseWorker');
  * Publisher Worker - Publishes roast responses to social media platforms
  *
  * Responsibilities:
- * - Process post_response queue jobs
+ * - Process social_posting queue jobs
  * - Check idempotency (skip if already published)
  * - Select and call correct platform service
  * - Handle rate limits (429 errors) with exponential backoff
@@ -27,7 +27,7 @@ const BaseWorker = require('./BaseWorker');
  */
 class PublisherWorker extends BaseWorker {
   constructor(options = {}) {
-    super('post_response', {
+    super('social_posting', {
       maxRetries: 3,
       retryDelay: 2000, // 2s base delay for exponential backoff
       maxConcurrency: 2, // Limit concurrent publications to avoid rate limits
@@ -48,7 +48,7 @@ class PublisherWorker extends BaseWorker {
   /**
    * Internal job processing method (required by BaseWorker)
    *
-   * @param {Object} job - Job from post_response queue
+   * @param {Object} job - Job from social_posting queue
    * @param {string} job.payload.response_id - ID of response to publish
    * @param {string} job.payload.organization_id - Organization ID
    * @param {string} job.payload.comment_id - Comment ID (to get platform info)

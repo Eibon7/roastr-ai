@@ -239,8 +239,8 @@ describe('Multi-Tenant Workflow Integration', () => {
 
       // Record several operations
       await costControl.recordUsage(orgAId, 'twitter', 'analyze_toxicity', { tokensUsed: 10 });
-      await costControl.recordUsage(orgAId, 'twitter', 'generate_reply', { tokensUsed: 25 });
-      await costControl.recordUsage(orgAId, 'youtube', 'generate_reply', { tokensUsed: 30 });
+      await costControl.recordUsage(orgAId, 'twitter', 'generate_roast', { tokensUsed: 25 });
+      await costControl.recordUsage(orgAId, 'youtube', 'generate_roast', { tokensUsed: 30 });
 
       // Verify usage was recorded with correct organization scoping
       expect(mockSupabaseClient.from).toHaveBeenCalledWith('usage_records');
@@ -260,7 +260,7 @@ describe('Multi-Tenant Workflow Integration', () => {
       await queueService.initialize();
 
       // Add jobs with different priorities
-      await queueService.addJob('generate_reply', { org: orgAId }, 4); // Normal priority
+      await queueService.addJob('generate_roast', { org: orgAId }, 4); // Normal priority
       await queueService.addJob('shield_action', { org: orgAId }, 1); // High priority
       await queueService.addJob('fetch_comments', { org: orgAId }, 5); // Low priority
 

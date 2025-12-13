@@ -186,7 +186,7 @@ describe('GenerateReplyWorker', () => {
 
   describe('constructor', () => {
     test('should initialize worker with correct type', () => {
-      expect(worker.workerType).toBe('generate_reply');
+      expect(worker.workerType).toBe('generate_roast');
       expect(worker.costControl).toBeDefined();
       expect(worker.openaiClient).toBe(mockOpenAIClient);
       expect(worker.templates).toBeDefined();
@@ -327,7 +327,7 @@ describe('GenerateReplyWorker', () => {
       expect(result.service).toBe('openai');
       expect(mockCostControlService.canPerformOperation).toHaveBeenCalledWith(
         'org-123',
-        'generate_reply',
+        'generate_roast',
         1,
         'twitter'
       );

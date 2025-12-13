@@ -179,7 +179,14 @@ class QueueManager {
       return;
     }
 
-    const jobTypes = ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'shield_action'];
+    const jobTypes = [
+      'fetch_comments',
+      'analyze_toxicity',
+      'generate_roast',
+      'shield_action',
+      'billing_update',
+      'social_posting'
+    ];
 
     for (const jobType of jobTypes) {
       await this.clearQueue(jobType);
@@ -249,7 +256,14 @@ class QueueManager {
         return;
       }
 
-      const jobTypes = ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'shield_action'];
+      const jobTypes = [
+        'fetch_comments',
+        'analyze_toxicity',
+        'generate_roast',
+        'shield_action',
+        'billing_update',
+        'social_posting'
+      ];
       let totalDLQ = 0;
 
       for (const jobType of jobTypes) {
@@ -307,7 +321,7 @@ class QueueManager {
         return;
       }
 
-      const jobTypes = ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'shield_action'];
+      const jobTypes = ['fetch_comments', 'analyze_toxicity', 'generate_roast', 'shield_action'];
       let totalPurged = 0;
 
       for (const jobType of jobTypes) {
@@ -407,7 +421,7 @@ Usage: node src/workers/cli/queue-manager.js <command> [options]
 
 Commands:
   status              Show queue status and statistics
-  clear <job_type>    Clear jobs from specific queue (fetch_comments, analyze_toxicity, generate_reply, shield_action)
+  clear <job_type>    Clear jobs from specific queue (fetch_comments, analyze_toxicity, generate_roast, shield_action)
   clear-all           Clear all queues (requires confirmation)
   retry-failed        Retry all failed jobs from database
   dlq                 Show dead letter queue contents
@@ -458,7 +472,7 @@ async function main() {
         const jobType = args[1];
         if (!jobType) {
           console.error(
-            '❌ Please specify job type (fetch_comments, analyze_toxicity, generate_reply, shield_action)'
+            '❌ Please specify job type (fetch_comments, analyze_toxicity, generate_roast, shield_action)'
           );
           process.exit(1);
         }

@@ -148,7 +148,7 @@ describe('QueueService', () => {
     });
 
     test('should handle various job types', () => {
-      const types = ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'shield_action'];
+      const types = ['fetch_comments', 'analyze_toxicity', 'generate_roast', 'shield_action'];
 
       types.forEach((type) => {
         const key = queueService.getQueueKey(type, 3);
@@ -1114,7 +1114,7 @@ describe('QueueService', () => {
           queues: {
             fetch_comments: { byPriority: {}, total: 3 },
             analyze_toxicity: { byPriority: {}, total: 5 },
-            generate_reply: { byPriority: {}, total: 2 }
+            generate_roast: { byPriority: {}, total: 2 }
           },
           total: 10
         });
@@ -1125,7 +1125,7 @@ describe('QueueService', () => {
         expect(stats.redisStats).toHaveProperty('queues');
         expect(stats.redisStats.queues).toHaveProperty('fetch_comments');
         expect(stats.redisStats.queues).toHaveProperty('analyze_toxicity');
-        expect(stats.redisStats.queues).toHaveProperty('generate_reply');
+        expect(stats.redisStats.queues).toHaveProperty('generate_roast');
       });
     });
 
@@ -1216,7 +1216,7 @@ describe('QueueService', () => {
       });
 
       it('should handle different queue types', () => {
-        const types = ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'shield_action'];
+        const types = ['fetch_comments', 'analyze_toxicity', 'generate_roast', 'shield_action'];
 
         types.forEach((type) => {
           const key = queueService.getQueueKey(type, 3);

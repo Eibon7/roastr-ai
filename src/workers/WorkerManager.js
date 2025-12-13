@@ -4,7 +4,6 @@ const AnalyzeToxicityWorker = require('./AnalyzeToxicityWorker');
 const GenerateReplyWorker = require('./GenerateReplyWorker');
 const ShieldActionWorker = require('./ShieldActionWorker');
 const BillingWorker = require('./BillingWorker');
-const StyleProfileWorker = require('./StyleProfileWorker');
 const PublisherWorker = require('./PublisherWorker');
 
 /**
@@ -16,7 +15,6 @@ const PublisherWorker = require('./PublisherWorker');
  * - GenerateReplyWorker: Creates roast responses
  * - ShieldActionWorker: Executes Shield protection actions
  * - BillingWorker: Processes billing events and notifications
- * - StyleProfileWorker: Extracts and refreshes user style profiles (Pro/Plus)
  *
  * Features:
  * - Graceful startup and shutdown
@@ -30,9 +28,10 @@ class WorkerManager {
       enabledWorkers: [
         'fetch_comments',
         'analyze_toxicity',
-        'generate_reply',
+        'generate_roast',
         'shield_action',
-        'billing'
+        'billing_update',
+        'social_posting'
       ],
       workerConfig: {},
       healthCheckInterval: 30000, // 30 seconds
@@ -48,11 +47,10 @@ class WorkerManager {
     this.workerClasses = {
       fetch_comments: FetchCommentsWorker,
       analyze_toxicity: AnalyzeToxicityWorker,
-      generate_reply: GenerateReplyWorker,
+      generate_roast: GenerateReplyWorker,
       shield_action: ShieldActionWorker,
-      billing: BillingWorker,
-      style_profile: StyleProfileWorker,
-      post_response: PublisherWorker
+      billing_update: BillingWorker,
+      social_posting: PublisherWorker
     };
 
     this.log('info', 'Worker Manager initialized', {

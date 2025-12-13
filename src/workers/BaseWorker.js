@@ -47,7 +47,20 @@ class BaseWorker {
   initializeConnections() {
     if (mockMode.isMockMode) {
       // Use mock clients in mock mode
-      this.supabase = mockMode.generateMockSupabaseClient();
+      const fallbackSupabase = {
+        from: () => ({
+          select: () => ({
+            eq: () => ({
+              single: () => Promise.resolve({ data: null, error: null })
+            })
+          })
+        })
+      };
+
+      this.supabase =
+        typeof mockMode.generateMockSupabaseClient === 'function'
+          ? mockMode.generateMockSupabaseClient()
+          : fallbackSupabase;
       this.queueService = {
         initialize: async () => {},
         getNextJob: async () => null,

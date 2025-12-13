@@ -27,49 +27,49 @@ class IntegrationStatusUpdater {
         name: 'twitter',
         adapter: 'src/integrations/twitter/twitterService.js',
         envVars: ['TWITTER_BEARER_TOKEN', 'TWITTER_APP_KEY', 'TWITTER_APP_SECRET'],
-        relatedNodes: ['social-platforms', 'roast', 'shield']
+        relatedNodes: ['integraciones-redes-sociales']
       },
       {
         name: 'discord',
         adapter: 'src/integrations/discord/discordService.js',
         envVars: ['DISCORD_BOT_TOKEN'],
-        relatedNodes: ['social-platforms', 'shield']
+        relatedNodes: ['integraciones-redes-sociales']
       },
       {
         name: 'twitch',
         adapter: 'src/integrations/twitch/twitchService.js',
         envVars: ['TWITCH_CLIENT_ID', 'TWITCH_CLIENT_SECRET'],
-        relatedNodes: ['social-platforms', 'shield']
+        relatedNodes: ['integraciones-redes-sociales']
       },
       {
         name: 'youtube',
         adapter: 'src/integrations/youtube/youtubeService.js',
         envVars: ['YOUTUBE_API_KEY'],
-        relatedNodes: ['social-platforms']
+        relatedNodes: ['integraciones-redes-sociales']
       },
       {
         name: 'instagram',
         adapter: 'src/integrations/instagram/instagramService.js',
         envVars: ['INSTAGRAM_ACCESS_TOKEN'],
-        relatedNodes: ['social-platforms']
+        relatedNodes: ['integraciones-redes-sociales']
       },
       {
         name: 'facebook',
         adapter: 'src/integrations/facebook/facebookService.js',
         envVars: ['FACEBOOK_ACCESS_TOKEN'],
-        relatedNodes: ['social-platforms']
+        relatedNodes: ['integraciones-redes-sociales']
       },
       {
         name: 'reddit',
         adapter: 'src/integrations/reddit/redditService.js',
         envVars: ['REDDIT_CLIENT_ID', 'REDDIT_CLIENT_SECRET'],
-        relatedNodes: ['social-platforms']
+        relatedNodes: ['integraciones-redes-sociales']
       },
       {
         name: 'tiktok',
         adapter: 'src/integrations/tiktok/tiktokService.js',
         envVars: ['TIKTOK_CLIENT_KEY'],
-        relatedNodes: ['social-platforms']
+        relatedNodes: ['integraciones-redes-sociales']
       },
       {
         name: 'bluesky',

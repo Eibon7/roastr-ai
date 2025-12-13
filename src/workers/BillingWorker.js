@@ -64,7 +64,7 @@ const PLAN_CONFIG = new Proxy(
 
 class BillingWorker extends BaseWorker {
   constructor(options = {}) {
-    super('billing', {
+    super('billing_update', {
       maxRetries: 5, // Higher retry count for billing operations
       retryDelay: 3000, // 3 seconds initial delay
       maxConcurrency: 2, // Lower concurrency for billing safety

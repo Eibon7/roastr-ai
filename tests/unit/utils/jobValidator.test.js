@@ -208,7 +208,7 @@ describe('JobValidator', () => {
         }
       };
 
-      expect(() => JobValidator.validateJob('generate_reply', replyJob)).not.toThrow();
+      expect(() => JobValidator.validateJob('generate_roast', replyJob)).not.toThrow();
     });
 
     test('should reject unknown worker type', () => {

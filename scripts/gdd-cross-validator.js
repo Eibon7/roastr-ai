@@ -182,29 +182,32 @@ class GDDCrossValidator {
    */
   async getNodeSourceFiles(nodeName) {
     const mappings = {
-      shield: [
+      'shield-engine': [
         'src/services/shieldService.js',
         'src/services/shieldDecisionEngine.js',
         'src/services/shieldActionExecutor.js',
         'src/services/shieldPersistenceService.js',
         'src/workers/ShieldActionWorker.js'
       ],
-      roast: [
+      'roasting-engine': [
         'src/services/roastGeneratorEnhanced.js',
         'src/services/roastPromptTemplate.js',
         'src/services/csvRoastService.js'
       ],
-      'cost-control': ['src/services/costControl.js'],
-      'queue-system': ['src/services/queueService.js', 'src/workers/BaseWorker.js'],
-      'multi-tenant': ['src/services/multiTenantService.js'],
-      'social-platforms': ['src/integrations/*/index.js', 'src/integrations/*Service.js'],
-      persona: ['src/services/personaService.js'],
-      tone: ['src/services/toneService.js'],
-      analytics: ['src/services/analyticsService.js'],
-      billing: ['src/services/billingService.js'],
-      publisher: ['src/services/publisherService.js'],
-      'platform-constraints': ['src/services/platformConstraintsService.js'],
-      'plan-features': ['src/services/planFeaturesService.js']
+      'billing-integration': [
+        'src/services/billingService.js',
+        'src/services/planLimitsService.js',
+        'src/services/costControl.js'
+      ],
+      workers: ['src/services/queueService.js', 'src/workers/BaseWorker.js'],
+      'integraciones-redes-sociales': [
+        'src/integrations/*/index.js',
+        'src/integrations/*Service.js'
+      ],
+      'analysis-engine': ['src/services/personaService.js'],
+      observabilidad: ['src/services/analyticsService.js'],
+      'roasting-engine:tone': ['src/services/toneService.js'],
+      'integraciones-redes-sociales:constraints': ['src/services/platformConstraintsService.js']
     };
 
     const files = mappings[nodeName] || [];
@@ -274,7 +277,7 @@ class GDDCrossValidator {
    * @param {string} declaredDate - Date from node doc (YYYY-MM-DD)
    */
   async validateTimestamp(nodeName, declaredDate) {
-    const nodeFile = path.join('docs', 'nodes', `${nodeName}.md`);
+    const nodeFile = path.join('docs', 'nodes-v2', `${nodeName}.md`);
 
     try {
       // Get last commit date for the node file (using spawnSync to prevent command injection)
@@ -363,19 +366,15 @@ class GDDCrossValidator {
 
     // Map node names to possible import patterns
     const depMappings = {
-      'cost-control': ['costControl', 'CostControl'],
-      'queue-system': ['queueService', 'QueueService', 'BaseWorker'],
-      shield: ['shieldService', 'ShieldService', 'shieldDecisionEngine'],
-      roast: ['roastGenerator', 'RoastGenerator', 'roastPrompt'],
-      'multi-tenant': ['multiTenant', 'MultiTenant'],
-      'social-platforms': ['integrations/', 'Service.js'],
-      persona: ['personaService', 'PersonaService'],
-      tone: ['toneService', 'ToneService'],
-      analytics: ['analyticsService', 'AnalyticsService'],
-      billing: ['billingService', 'BillingService'],
-      publisher: ['publisherService', 'PublisherService'],
-      'platform-constraints': ['platformConstraints', 'PlatformConstraints'],
-      'plan-features': ['planFeatures', 'PlanFeatures']
+      'billing-integration': ['billingService', 'BillingService', 'planLimits', 'costControl'],
+      workers: ['queueService', 'QueueService', 'BaseWorker'],
+      'shield-engine': ['shieldService', 'ShieldService', 'shieldDecisionEngine'],
+      'roasting-engine': ['roastGenerator', 'RoastGenerator', 'roastPrompt'],
+      'integraciones-redes-sociales': ['integrations/', 'Service.js'],
+      'analysis-engine': ['personaService', 'PersonaService'],
+      observabilidad: ['analyticsService', 'AnalyticsService'],
+      'roasting-engine:tone': ['toneService', 'ToneService'],
+      'integraciones-redes-sociales:constraints': ['platformConstraints', 'PlatformConstraints']
     };
 
     // Check which declared deps are actually used

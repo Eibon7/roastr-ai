@@ -54,7 +54,7 @@ describe('Worker Metrics API Routes', () => {
         workers: {
           fetch_comments: { status: 'healthy', workerType: 'fetch_comments' },
           analyze_toxicity: { status: 'healthy', workerType: 'analyze_toxicity' },
-          generate_reply: { status: 'healthy', workerType: 'generate_reply' },
+          generate_roast: { status: 'healthy', workerType: 'generate_roast' },
           shield_action: { status: 'warning', workerType: 'shield_action' }
         }
       }),
@@ -73,7 +73,7 @@ describe('Worker Metrics API Routes', () => {
             currentJobs: 2,
             uptime: 3600000
           },
-          generate_reply: {
+          generate_roast: {
             processedJobs: 80,
             failedJobs: 1,
             currentJobs: 0,
@@ -124,7 +124,7 @@ describe('Worker Metrics API Routes', () => {
           healthStatus: 'healthy',
           avgProcessingTime: 2000
         },
-        generate_reply: {
+        generate_roast: {
           pending: 8,
           processing: 0,
           completed: 80,
@@ -142,7 +142,7 @@ describe('Worker Metrics API Routes', () => {
           healthStatus: 'warning',
           avgProcessingTime: 1000
         },
-        post_response: {
+        social_posting: {
           pending: 3,
           processing: 0,
           completed: 60,
@@ -290,9 +290,9 @@ describe('Worker Metrics API Routes', () => {
       // Check that all queue types are present
       expect(data.queues).toHaveProperty('fetch_comments');
       expect(data.queues).toHaveProperty('analyze_toxicity');
-      expect(data.queues).toHaveProperty('generate_reply');
+      expect(data.queues).toHaveProperty('generate_roast');
       expect(data.queues).toHaveProperty('shield_action');
-      expect(data.queues).toHaveProperty('post_response');
+      expect(data.queues).toHaveProperty('social_posting');
 
       // Check queue structure
       const queue = data.queues.fetch_comments;

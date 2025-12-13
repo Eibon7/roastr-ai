@@ -228,7 +228,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       const generationWorker = new GenerateReplyWorker();
 
       const initialGenerationJobData = {
-        type: 'generate_reply',
+        type: 'generate_roast',
         comment: testComment,
         organizationId: testComment.organization_id,
         style: testUser.tone_preference || 'balanced',
@@ -278,7 +278,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
           console.log('✅ Generated 2 initial variants successfully');
         }
       } catch (error) {
-        expect(generationWorker.workerType).toBe('generate_reply');
+        expect(generationWorker.workerType).toBe('generate_roast');
 
         // Create mock variants for test continuation
         initialVariants = [
@@ -319,7 +319,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       }
 
       const postSelectionJobData = {
-        type: 'generate_reply',
+        type: 'generate_roast',
         comment: testComment,
         organizationId: testComment.organization_id,
         style: testUser.tone_preference || 'balanced',
