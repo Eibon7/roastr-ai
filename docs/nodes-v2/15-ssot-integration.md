@@ -286,3 +286,13 @@ export function validateSSOT(config: SSOTConfig): void {
 - CLAUDE.md: Sección "SSOT — MÁXIMA PRIORIDAD"
 
 ## 11. Related Nodes
+
+- analysis-engine (required_by)
+- billing-integration (required_by)
+- workers (required_by)
+- frontend-admin (required_by)
+- settings-loader-and-feature-flags (required_by)
+- roasting-engine (required_by)
+- shield-engine (required_by)
+- integraciones-redes-sociales (required_by)
+- frontend-user-app (required_by)

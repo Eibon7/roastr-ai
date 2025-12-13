@@ -351,9 +351,8 @@ export class AnalyzeToxicityWorker extends BaseWorker<AnalyzePayload> {
 
 ## 11. Related Nodes
 
-Este nodo está relacionado con los siguientes nodos:
-
-- [`billing`](./billing.md) - Usa workers para actualizar billing
+- infraestructura (depends_on)
+- billing-integration (required_by)
 
 ---
 

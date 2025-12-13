@@ -85,3 +85,11 @@ El Motor de Roasting DEBE utilizar exactamente los modelos definidos en SSOT:
 ---
 
 ## 7. Related Nodes
+
+- analysis-engine (depends_on)
+- integraciones-redes-sociales (depends_on)
+- shield-engine (depends_on)
+- billing-integration (depends_on)
+- observabilidad (depends_on)
+- ssot-integration (depends_on)
+- frontend-user-app (required_by)

@@ -236,9 +236,7 @@ export default defineConfig({
 
 ## 11. Related Nodes
 
-Este nodo está relacionado con los siguientes nodos:
-
-- Ningún nodo relacionado
+- TBD — No documented relationships in SSOT/Spec
 
 ---
 

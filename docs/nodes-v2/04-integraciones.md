@@ -47,16 +47,20 @@ Este nodo depende de los siguientes nodos:
 - `ShieldAction`: Acciones de moderación
 - `CursorReconciliation`: Mantenimiento de cursors
 
-### Nodos Relacionados:
-
-- `02-autenticacion-usuarios.md` (OAuth flow)
-- `03-billing-polar.md` (Pausar si billing paused)
-- `05-motor-analisis.md` (Comentarios normalizados)
-- `08-workers.md` (Workers de ingestión y posting)
-
 ---
 
 ## 7. Edge Cases
+
+---
+
+## Related Nodes
+
+- infraestructura (depends_on)
+- billing-integration (depends_on)
+- observabilidad (depends_on)
+- ssot-integration (depends_on)
+- roasting-engine (required_by)
+- frontend-user-app (required_by)
 
 1. **Límite de cuentas alcanzado**:
    - Botón "Añadir cuenta" disabled

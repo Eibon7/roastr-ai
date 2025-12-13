@@ -301,3 +301,13 @@ Este nodo usa los siguientes valores del SSOT (vía backend API):
 **Nota:** Este nodo no accede directamente al SSOT, lo hace a través del backend API.
 
 ---
+
+## Related Nodes
+
+- roasting-engine (depends_on)
+- shield-engine (depends_on)
+- observabilidad (depends_on)
+- integraciones-redes-sociales (depends_on)
+- ssot-integration (depends_on)
+- analysis-engine (depends_on)
+- billing-integration (depends_on)

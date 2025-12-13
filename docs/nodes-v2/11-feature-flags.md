@@ -242,8 +242,6 @@ Este nodo usa los siguientes valores del SSOT:
 
 ## 12. Related Nodes
 
-Este nodo está relacionado con los siguientes nodos:
-
-- Ningún nodo relacionado
+- ssot-integration (depends_on)
 
 ---

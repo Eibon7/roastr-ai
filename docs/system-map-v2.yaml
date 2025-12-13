@@ -566,6 +566,8 @@ nodes:
     used_by: []
     required_by: []
     related: []
+    notes:
+      - 'TBD – No documented dependencies in SSOT/Spec'
     docs:
       - docs/nodes-v2/02-autenticacion-usuarios.md
     files: []
@@ -608,6 +610,8 @@ nodes:
     used_by: []
     required_by: []
     related: []
+    notes:
+      - 'TBD – No documented dependencies in SSOT/Spec'
     docs:
       - docs/nodes-v2/12-gdpr-legal.md
     files: []
@@ -631,6 +635,8 @@ nodes:
     used_by: []
     required_by: []
     related: []
+    notes:
+      - 'TBD – No documented dependencies in SSOT/Spec'
     docs:
       - docs/nodes-v2/13-testing.md
     files: []
