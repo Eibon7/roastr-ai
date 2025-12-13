@@ -193,9 +193,7 @@ jobs:
           echo "REACT_APP_ENABLE_MOCK_MODE: $REACT_APP_ENABLE_MOCK_MODE"
           echo "CI: $CI"
           echo "SKIP_E2E: $SKIP_E2E"
-          echo "🔧 Command: NODE_OPTIONS=\"${NODE_OPTIONS}\" npm run test -- --runInBand"
-          NODE_OPTIONS="${NODE_OPTIONS}" npm run test -- --runInBand
-          # Evita OOM en Actions; la suite completa se mantiene para local/optimización futura.
+          npm run test
 
       - name: Upload backend test results
         uses: actions/upload-artifact@v5
