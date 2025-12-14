@@ -2,16 +2,16 @@
 
 /**
  * Script de migración para añadir frontmatter YAML v2 a nodos v2
- * 
+ *
  * Este script:
  * 1. Lee system-map-v2.yaml para obtener metadata de cada nodo
  * 2. Mapea cada archivo de nodo v2 a su ID en system-map-v2.yaml
  * 3. Genera frontmatter YAML con la metadata
  * 4. Inserta el frontmatter al inicio del archivo (después del título)
- * 
+ *
  * Usage:
  *   node scripts/migrate-nodes-v2-frontmatter.js [--dry-run] [--backup]
- * 
+ *
  * Options:
  *   --dry-run: Muestra qué se haría sin modificar archivos
  *   --backup: Crea backups antes de modificar
@@ -41,7 +41,7 @@ class FrontmatterMigrator {
     console.log('📖 Cargando system-map-v2.yaml...');
     const content = await fs.readFile(SYSTEM_MAP_PATH, 'utf-8');
     this.systemMap = yaml.parse(content);
-    
+
     // Crear mapeo: node_id -> file path
     for (const [nodeId, nodeData] of Object.entries(this.systemMap.nodes || {})) {
       if (nodeData.docs && Array.isArray(nodeData.docs)) {
@@ -54,7 +54,7 @@ class FrontmatterMigrator {
         }
       }
     }
-    
+
     console.log(`✅ Cargados ${this.nodeIdToFileMap.size} nodos del system-map`);
   }
 
@@ -68,7 +68,7 @@ class FrontmatterMigrator {
       status: nodeData.status || 'production',
       priority: nodeData.priority || 'medium',
       owner: nodeData.owner || 'Back-end Dev',
-      last_updated: nodeData.last_updated 
+      last_updated: nodeData.last_updated
         ? new Date(nodeData.last_updated).toISOString().split('T')[0]
         : new Date().toISOString().split('T')[0],
       coverage: nodeData.coverage || 0,
@@ -225,7 +225,7 @@ class FrontmatterMigrator {
 
     // Listar archivos en nodes-v2
     const files = await fs.readdir(NODES_V2_DIR);
-    const mdFiles = files.filter(f => f.endsWith('.md'));
+    const mdFiles = files.filter((f) => f.endsWith('.md'));
 
     console.log(`\n📁 Encontrados ${mdFiles.length} archivos .md en nodes-v2\n`);
 
@@ -265,7 +265,8 @@ if (require.main === module) {
   };
 
   const migrator = new FrontmatterMigrator(options);
-  migrator.migrate()
+  migrator
+    .migrate()
     .then(() => {
       process.exit(0);
     })
