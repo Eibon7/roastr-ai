@@ -83,3 +83,7 @@ gdd-write-signatures.json
 scripts/outputs/
 changed-files.txt
 roastr-ai-worktrees/
+
+# Backup files from migration scripts
+*.backup-*
+*.backup
