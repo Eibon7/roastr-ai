@@ -1,6 +1,7 @@
 # GDD Node — Observabilidad v2
 
 ---
+
 version: "2.0"
 node_id: observabilidad
 status: production
@@ -10,26 +11,27 @@ last_updated: 2025-12-05
 coverage: 60
 coverage_source: auto
 required_by:
-  - roasting-engine
-  - analysis-engine
-  - shield-engine
-  - integraciones-redes-sociales
-  - billing-integration
-  - frontend-user-app
-ssot_references:
-  - gdpr_allowed_log_structure
-  - gdpr_automatic_blocking
-  - gdpr_forbidden_data
-  - worker_logs
-subnodes:
-  - structured-logging
-  - analytics
-  - correlation-tracking
-  - request-tracing
-  - alertas
-  - error-budget
----
 
+- roasting-engine
+- analysis-engine
+- shield-engine
+- integraciones-redes-sociales
+- billing-integration
+- frontend-user-app
+  ssot_references:
+- gdpr_allowed_log_structure
+- gdpr_automatic_blocking
+- gdpr_forbidden_data
+- worker_logs
+  subnodes:
+- structured-logging
+- analytics
+- correlation-tracking
+- request-tracing
+- alertas
+- error-budget
+
+---
 
 **Version:** 2.0  
 **Status:** ✅ Active  

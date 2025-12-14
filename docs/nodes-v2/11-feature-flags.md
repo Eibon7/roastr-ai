@@ -1,6 +1,7 @@
 # GDD Node — Feature Flags v2
 
 ---
+
 version: "2.0"
 node_id: settings-loader-and-feature-flags
 status: production
@@ -10,11 +11,12 @@ last_updated: 2025-12-05
 coverage: 0
 coverage_source: auto
 depends_on:
-  - ssot-integration
-ssot_references:
-  - feature_flags
----
 
+- ssot-integration
+  ssot_references:
+- feature_flags
+
+---
 
 **Version:** 2.0  
 **Status:** ✅ Active  

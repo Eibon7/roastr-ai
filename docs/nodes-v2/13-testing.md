@@ -1,6 +1,7 @@
 # GDD Node — Testing v2
 
 ---
+
 version: "2.0"
 node_id: testing-v2
 status: production
@@ -10,15 +11,16 @@ last_updated: 2025-12-05
 coverage: 0
 coverage_source: auto
 ssot_references:
-  - testing_config
-  - test_coverage_thresholds
-subnodes:
-  - ci-tests
-  - smoke-tests-specs
-  - e2e-tests
-  - unit-integration-tests
----
 
+- testing_config
+- test_coverage_thresholds
+  subnodes:
+- ci-tests
+- smoke-tests-specs
+- e2e-tests
+- unit-integration-tests
+
+---
 
 **Version:** 2.0  
 **Status:** ✅ Active  

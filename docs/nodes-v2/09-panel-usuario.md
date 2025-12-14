@@ -1,6 +1,7 @@
 # GDD Node — Panel de Usuario (Frontend v2)
 
 ---
+
 version: "2.0"
 node_id: frontend-user-app
 status: production
@@ -10,27 +11,28 @@ last_updated: 2025-12-05
 coverage: 75
 coverage_source: auto
 depends_on:
-  - roasting-engine
-  - shield-engine
-  - observabilidad
-  - integraciones-redes-sociales
-  - ssot-integration
-  - analysis-engine
-  - billing-integration
-ssot_references:
-  - plan_limits
-  - plan_capabilities
-  - feature_flags
-  - roast_tones
-  - shield_thresholds
-  - subscription_states
-subnodes:
-  - dashboard
-  - settings
-  - account-detail
-  - onboarding
----
 
+- roasting-engine
+- shield-engine
+- observabilidad
+- integraciones-redes-sociales
+- ssot-integration
+- analysis-engine
+- billing-integration
+  ssot_references:
+- plan_limits
+- plan_capabilities
+- feature_flags
+- roast_tones
+- shield_thresholds
+- subscription_states
+  subnodes:
+- dashboard
+- settings
+- account-detail
+- onboarding
+
+---
 
 **Version:** 2.0  
 **Status:** ✅ Active  

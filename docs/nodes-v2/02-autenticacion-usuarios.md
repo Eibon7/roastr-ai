@@ -1,6 +1,7 @@
 # GDD Node — Autenticación y Gestión de Usuarios v2
 
 ---
+
 version: "2.0"
 node_id: auth
 status: production
@@ -10,16 +11,17 @@ last_updated: 2025-12-05
 coverage: 0
 coverage_source: auto
 ssot_references:
-  - connection_status
-  - feature_flags
-  - oauth_pkce_flow
-  - oauth_scopes
-  - oauth_tokens
-  - plan_ids
-  - subscription_states
-  - token_refresh_rules
----
 
+- connection_status
+- feature_flags
+- oauth_pkce_flow
+- oauth_scopes
+- oauth_tokens
+- plan_ids
+- subscription_states
+- token_refresh_rules
+
+---
 
 **Version:** 2.0  
 **Status:** ✅ Active  

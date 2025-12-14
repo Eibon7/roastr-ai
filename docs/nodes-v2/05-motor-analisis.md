@@ -1,6 +1,7 @@
 # GDD Node — Motor de Análisis v2
 
 ---
+
 version: "2.0"
 node_id: analysis-engine
 status: production
@@ -10,36 +11,37 @@ last_updated: 2025-12-05
 coverage: 92
 coverage_source: auto
 depends_on:
-  - billing-integration
-  - observabilidad
-  - ssot-integration
-  - infraestructura
-required_by:
-  - roasting-engine
-  - shield-engine
-  - frontend-user-app
-workers:
-  - AnalyzeToxicity
-ssot_references:
-  - analysis_algorithms
-  - analysis_limits
-  - analysis_thresholds
-  - fallback_classifier_mapping
-  - gatekeeper
-  - gatekeeper_detection_rules
-  - persona_encryption
-  - persona_matching_algorithm
-  - persona_matching_thresholds
-  - persona_structure
-  - score_base_formula
-subnodes:
-  - perspective-api
-  - fallback-classifier
-  - persona-integration
-  - pattern-detection
-  - gatekeeper
----
 
+- billing-integration
+- observabilidad
+- ssot-integration
+- infraestructura
+  required_by:
+- roasting-engine
+- shield-engine
+- frontend-user-app
+  workers:
+- AnalyzeToxicity
+  ssot_references:
+- analysis_algorithms
+- analysis_limits
+- analysis_thresholds
+- fallback_classifier_mapping
+- gatekeeper
+- gatekeeper_detection_rules
+- persona_encryption
+- persona_matching_algorithm
+- persona_matching_thresholds
+- persona_structure
+- score_base_formula
+  subnodes:
+- perspective-api
+- fallback-classifier
+- persona-integration
+- pattern-detection
+- gatekeeper
+
+---
 
 **Version:** 2.0  
 **Status:** ✅ Active  
