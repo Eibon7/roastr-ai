@@ -51,17 +51,6 @@ Este nodo depende de los siguientes nodos:
 
 ## 7. Edge Cases
 
----
-
-## Related Nodes
-
-- infraestructura (depends_on)
-- billing-integration (depends_on)
-- observabilidad (depends_on)
-- ssot-integration (depends_on)
-- roasting-engine (required_by)
-- frontend-user-app (required_by)
-
 1. **Límite de cuentas alcanzado**:
    - Botón "Añadir cuenta" disabled
    - Backend valida hard limit
@@ -197,7 +186,7 @@ Este nodo usa los siguientes valores del SSOT:
 
 ---
 
-## 9. Test Matrix
+## 10. Test Matrix
 
 ### Unit Tests (Vitest):
 
@@ -227,7 +216,7 @@ Este nodo usa los siguientes valores del SSOT:
 
 ---
 
-## 10. Implementation Notes
+## 11. Implementation Notes
 
 ### X Adapter:
 
@@ -311,4 +300,4 @@ export function calculateSmartDelay(
 - X API Docs: https://developer.x.com/en/docs
 - YouTube API Docs: https://developers.google.com/youtube/v3
 
-## 11. Related Nodes
+## 12. Related Nodes
