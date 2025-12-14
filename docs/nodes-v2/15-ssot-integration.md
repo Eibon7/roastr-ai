@@ -1,5 +1,54 @@
 # GDD Node — SSOT Integration v2
 
+---
+
+version: "2.0"
+node_id: ssot-integration
+status: production
+priority: critical
+owner: Product Owner
+last_updated: 2025-12-05
+coverage: 100
+coverage_source: auto
+required_by:
+
+- roasting-engine
+- analysis-engine
+- shield-engine
+- integraciones-redes-sociales
+- billing-integration
+- frontend-user-app
+- frontend-admin
+- settings-loader-and-feature-flags
+  ssot_references:
+- plans_and_limits
+- billing-integration_polar
+- feature_flags
+- shield_thresholds
+- shield_weights
+- tones_roasting
+- integrations
+- workers
+- gdpr_retention
+- testing
+- plan_limits
+- roast_tones
+  subnodes:
+- settings-loader
+- feature-flags
+- plans-and-limits
+- shield-thresholds
+- shield-weights
+- tones-roasting
+- billing-integration-polar
+- workers-config
+- integrations-config
+- gdpr-retention
+- ssot-validator
+- cache-management
+
+---
+
 **Version:** 2.0  
 **Status:** ✅ Active  
 **Last Updated:** 2025-12-04

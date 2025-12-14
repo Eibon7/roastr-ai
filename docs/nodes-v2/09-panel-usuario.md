@@ -1,38 +1,50 @@
 # GDD Node — Panel de Usuario (Frontend v2)
 
-**Version:** 2.0  
-**Status:** ✅ Active  
-**Last Updated:** 2025-12-04
+---
+
+version: "2.0"
+node_id: frontend-user-app
+status: production
+priority: high
+owner: Front-end Dev
+last_updated: 2025-12-05
+coverage: 75
+coverage_source: auto
+depends_on:
+
+- roasting-engine
+- shield-engine
+- observabilidad
+- integraciones-redes-sociales
+- ssot-integration
+- analysis-engine
+- billing-integration
+  ssot_references:
+- plan_limits
+- plan_capabilities
+- feature_flags
+- roast_tones
+- shield_thresholds
+- subscription_states
+  subnodes:
+- dashboard
+- settings
+- account-detail
+- onboarding
 
 ---
 
 ## 1. Dependencies
 
-- [`roasting-engine`](./06-motor-roasting.md)
-- [`shield-engine`](./07-shield.md)
-- [`observabilidad`](./observabilidad.md)
-- [`integraciones-redes-sociales`](./04-integraciones.md)
-- [`ssot-integration`](./15-ssot-integration.md)
-- [`analysis-engine`](./05-motor-analisis.md)
-- [`billing`](./billing.md)
-
-- [`roasting-engine`](./06-motor-roasting.md)
-- [`shield-engine`](./07-shield.md)
-- [`observabilidad`](./observabilidad.md)
-- [`integraciones-redes-sociales`](./04-integraciones.md)
-- [`ssot-integration`](./15-ssot-integration.md)
-- [`analysis-engine`](./05-motor-analisis.md)
-- [`billing`](./billing.md)
-
 Este nodo depende de los siguientes nodos:
 
-- [`roasting-engine`](./06-motor-roasting.md)
-- [`shield-engine`](./07-shield.md)
-- [`observabilidad`](./observabilidad.md)
-- [`integraciones-redes-sociales`](./04-integraciones.md)
-- [`ssot-integration`](./15-ssot-integration.md)
-- [`analysis-engine`](./05-motor-analisis.md)
-- [`billing`](./billing.md)
+- [`roasting-engine`](./06-motor-roasting.md) - Generación de roasts
+- [`shield-engine`](./07-shield.md) - Moderación de contenido
+- [`observabilidad`](./observabilidad.md) - Logging y métricas
+- [`integraciones-redes-sociales`](./04-integraciones.md) - Integraciones con plataformas
+- [`ssot-integration`](./15-ssot-integration.md) - Configuración desde SSOT
+- [`analysis-engine`](./05-motor-analisis.md) - Análisis de toxicidad
+- [`billing-integration`](./billing.md) - Gestión de suscripciones y créditos
 
 ---
 

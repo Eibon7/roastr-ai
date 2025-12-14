@@ -1,5 +1,42 @@
 # GDD Node — Motor de Roasting v2
 
+---
+
+version: "2.0"
+node_id: roasting-engine
+status: production
+priority: critical
+owner: Back-end Dev
+last_updated: 2025-12-05
+coverage: 85
+coverage_source: auto
+depends_on:
+
+- analysis-engine
+- integraciones-redes-sociales
+- shield-engine
+- billing-integration
+- observabilidad
+- ssot-integration
+  required_by:
+- frontend-user-app
+  workers:
+- GenerateRoast
+- GenerateCorrectiveReply
+  ssot_references:
+- credit_consumption_rules
+- plan_limits
+- roast_tones
+- style_validator
+- tone_personal_allowed
+  subnodes:
+- prompt-architecture
+- tones
+- style-validator
+- corrective-replies
+
+---
+
 **Version:** 2.0  
 **Status:** ✅ Active  
 **Last Updated:** 2025-12-04
@@ -11,14 +48,14 @@
 - [`analysis-engine`](./05-motor-analisis.md)
 - [`integraciones-redes-sociales`](./04-integraciones.md)
 - [`shield-engine`](./07-shield.md)
-- [`billing`](./billing.md)
+- [`billing-integration`](./billing.md)
 - [`observabilidad`](./observabilidad.md)
 - [`ssot-integration`](./15-ssot-integration.md)
 
 - [`analysis-engine`](./05-motor-analisis.md)
 - [`integraciones-redes-sociales`](./04-integraciones.md)
 - [`shield-engine`](./07-shield.md)
-- [`billing`](./billing.md)
+- [`billing-integration`](./billing.md)
 - [`observabilidad`](./observabilidad.md)
 - [`ssot-integration`](./15-ssot-integration.md)
 
@@ -27,7 +64,7 @@ Este nodo depende de los siguientes nodos:
 - [`analysis-engine`](./05-motor-analisis.md)
 - [`integraciones-redes-sociales`](./04-integraciones.md)
 - [`shield-engine`](./07-shield.md)
-- [`billing`](./billing.md)
+- [`billing-integration`](./billing.md)
 - [`observabilidad`](./observabilidad.md)
 - [`ssot-integration`](./15-ssot-integration.md)
 
@@ -38,7 +75,7 @@ Este nodo depende de los siguientes nodos:
 - [`analysis-engine`](./05-motor-analisis.md) - Decisión "roast" o "correctiva"
 - [`integraciones-redes-sociales`](./04-integraciones.md) - Publicación en plataformas
 - [`shield-engine`](./07-shield.md) - Validación de contenido
-- [`billing`](./billing.md) - Créditos de roasts
+- [`billing-integration`](./billing.md) - Créditos de roasts
 - [`observabilidad`](./observabilidad.md) - Logging estructurado
 - [`ssot-integration`](./15-ssot-integration.md) - Configuración de tonos y límites
 

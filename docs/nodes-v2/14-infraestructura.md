@@ -1,20 +1,59 @@
 # GDD Node — Infraestructura v2
 
-**Version:** 2.0  
-**Status:** ✅ Active  
-**Last Updated:** 2025-12-04
+---
+
+version: "2.0"
+node_id: infraestructura
+status: production
+priority: critical
+owner: Back-end Dev
+last_updated: 2025-12-05
+coverage: 81
+coverage_source: auto
+required_by:
+
+- analysis-engine
+- shield-engine
+- integraciones-redes-sociales
+- billing-integration
+- workers
+ssot_references:
+
+- queue_configuration
+- worker_routing_table
+- rls_policies
+- rate_limits
+subnodes:
+
+- queue-management
+- database-rls
+- queue-configuration
+- base-worker
+- staging-production-isolation
+- deploy-pipeline
+- smoke-tests-pipeline
+- backups
+- rate-limits
 
 ---
 
-## 1. Dependencies
+## Nota sobre Subnodos
 
-- [`observabilidad`](./observabilidad.md)
+Los subnodos declarados en el frontmatter están definidos en `system-map-v2.yaml` pero aún no tienen archivos físicos en `docs/nodes-v2/infraestructura/`. Estos subnodos están planificados para documentación futura y no afectan la funcionalidad actual del nodo.
 
-- [`observabilidad`](./observabilidad.md)
+**Subnodos planificados:**
 
-Este nodo depende de los siguientes nodos:
+- queue-management
+- database-rls
+- queue-configuration
+- base-worker
+- staging-production-isolation
+- deploy-pipeline
+- smoke-tests-pipeline
+- backups
+- rate-limits
 
-- [`observabilidad`](./observabilidad.md)
+**Issue de seguimiento:** Crear subnodos cuando se implemente documentación detallada de cada área.
 
 ---
 
