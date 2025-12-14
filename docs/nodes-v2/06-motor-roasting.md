@@ -48,14 +48,14 @@ depends_on:
 - [`analysis-engine`](./05-motor-analisis.md)
 - [`integraciones-redes-sociales`](./04-integraciones.md)
 - [`shield-engine`](./07-shield.md)
-- [`billing`](./billing.md)
+- [`billing-integration`](./billing.md)
 - [`observabilidad`](./observabilidad.md)
 - [`ssot-integration`](./15-ssot-integration.md)
 
 - [`analysis-engine`](./05-motor-analisis.md)
 - [`integraciones-redes-sociales`](./04-integraciones.md)
 - [`shield-engine`](./07-shield.md)
-- [`billing`](./billing.md)
+- [`billing-integration`](./billing.md)
 - [`observabilidad`](./observabilidad.md)
 - [`ssot-integration`](./15-ssot-integration.md)
 
@@ -64,7 +64,7 @@ Este nodo depende de los siguientes nodos:
 - [`analysis-engine`](./05-motor-analisis.md)
 - [`integraciones-redes-sociales`](./04-integraciones.md)
 - [`shield-engine`](./07-shield.md)
-- [`billing`](./billing.md)
+- [`billing-integration`](./billing.md)
 - [`observabilidad`](./observabilidad.md)
 - [`ssot-integration`](./15-ssot-integration.md)
 
@@ -75,7 +75,7 @@ Este nodo depende de los siguientes nodos:
 - [`analysis-engine`](./05-motor-analisis.md) - Decisión "roast" o "correctiva"
 - [`integraciones-redes-sociales`](./04-integraciones.md) - Publicación en plataformas
 - [`shield-engine`](./07-shield.md) - Validación de contenido
-- [`billing`](./billing.md) - Créditos de roasts
+- [`billing-integration`](./billing.md) - Créditos de roasts
 - [`observabilidad`](./observabilidad.md) - Logging estructurado
 - [`ssot-integration`](./15-ssot-integration.md) - Configuración de tonos y límites
 

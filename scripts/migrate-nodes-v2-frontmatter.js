@@ -45,13 +45,33 @@ class FrontmatterMigrator {
     // Crear mapeo: node_id -> file path
     for (const [nodeId, nodeData] of Object.entries(this.systemMap.nodes || {})) {
       if (nodeData.docs && Array.isArray(nodeData.docs)) {
-        for (const docPath of nodeData.docs) {
-          // Normalizar path: docs/nodes-v2/06-motor-roasting.md -> 06-motor-roasting.md
-          const fileName = path.basename(docPath);
-          const fullPath = path.join(NODES_V2_DIR, fileName);
-          this.nodeIdToFileMap.set(nodeId, fullPath);
-          this.fileToNodeIdMap.set(fullPath, nodeId);
+        // Usar el primer doc como primario, advertir si hay múltiples
+        const primaryDoc = nodeData.docs[0];
+        if (nodeData.docs.length > 1) {
+          console.warn(
+            `⚠️  Node ${nodeId} tiene ${nodeData.docs.length} docs, usando ${primaryDoc} como primario`
+          );
         }
+
+        // Resolver path completo relativo al repo root
+        const normalized = primaryDoc.replace(/^\.?\//, '');
+        const fullPath = path.join(ROOT_DIR, normalized);
+
+        // Verificar que está en nodes-v2
+        if (!fullPath.startsWith(NODES_V2_DIR + path.sep) && fullPath !== NODES_V2_DIR) {
+          console.warn(`⚠️  Doc ${primaryDoc} no está en nodes-v2, saltando...`);
+          continue;
+        }
+
+        // Verificar duplicados
+        if (this.fileToNodeIdMap.has(fullPath) && this.fileToNodeIdMap.get(fullPath) !== nodeId) {
+          throw new Error(
+            `Doc path duplicado '${primaryDoc}' usado por '${this.fileToNodeIdMap.get(fullPath)}' y '${nodeId}'`
+          );
+        }
+
+        this.nodeIdToFileMap.set(nodeId, fullPath);
+        this.fileToNodeIdMap.set(fullPath, nodeId);
       }
     }
 
@@ -62,16 +82,27 @@ class FrontmatterMigrator {
    * Generar frontmatter YAML desde metadata del nodo
    */
   generateFrontmatter(nodeId, nodeData) {
+    // Validar campos requeridos - no inventar defaults
+    const requiredFields = ['status', 'priority', 'owner', 'last_updated', 'coverage'];
+    const missingFields = requiredFields.filter((field) => {
+      const value = nodeData[field];
+      return value === undefined || value === null || value === '';
+    });
+
+    if (missingFields.length > 0) {
+      throw new Error(
+        `Faltan campos requeridos en system-map-v2.yaml para node_id='${nodeId}': ${missingFields.join(', ')}`
+      );
+    }
+
     const frontmatter = {
       version: '2.0',
       node_id: nodeId,
-      status: nodeData.status || 'production',
-      priority: nodeData.priority || 'medium',
-      owner: nodeData.owner || 'Back-end Dev',
-      last_updated: nodeData.last_updated
-        ? new Date(nodeData.last_updated).toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0],
-      coverage: nodeData.coverage || 0,
+      status: nodeData.status,
+      priority: nodeData.priority,
+      owner: nodeData.owner,
+      last_updated: new Date(nodeData.last_updated).toISOString().split('T')[0],
+      coverage: nodeData.coverage,
       coverage_source: 'auto'
     };
 

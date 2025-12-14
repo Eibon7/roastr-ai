@@ -34,39 +34,17 @@ depends_on:
 
 ---
 
-**Version:** 2.0  
-**Status:** ✅ Active  
-**Last Updated:** 2025-12-04
-
----
-
 ## 1. Dependencies
-
-- [`roasting-engine`](./06-motor-roasting.md)
-- [`shield-engine`](./07-shield.md)
-- [`observabilidad`](./observabilidad.md)
-- [`integraciones-redes-sociales`](./04-integraciones.md)
-- [`ssot-integration`](./15-ssot-integration.md)
-- [`analysis-engine`](./05-motor-analisis.md)
-- [`billing`](./billing.md)
-
-- [`roasting-engine`](./06-motor-roasting.md)
-- [`shield-engine`](./07-shield.md)
-- [`observabilidad`](./observabilidad.md)
-- [`integraciones-redes-sociales`](./04-integraciones.md)
-- [`ssot-integration`](./15-ssot-integration.md)
-- [`analysis-engine`](./05-motor-analisis.md)
-- [`billing`](./billing.md)
 
 Este nodo depende de los siguientes nodos:
 
-- [`roasting-engine`](./06-motor-roasting.md)
-- [`shield-engine`](./07-shield.md)
-- [`observabilidad`](./observabilidad.md)
-- [`integraciones-redes-sociales`](./04-integraciones.md)
-- [`ssot-integration`](./15-ssot-integration.md)
-- [`analysis-engine`](./05-motor-analisis.md)
-- [`billing`](./billing.md)
+- [`roasting-engine`](./06-motor-roasting.md) - Generación de roasts
+- [`shield-engine`](./07-shield.md) - Moderación de contenido
+- [`observabilidad`](./observabilidad.md) - Logging y métricas
+- [`integraciones-redes-sociales`](./04-integraciones.md) - Integraciones con plataformas
+- [`ssot-integration`](./15-ssot-integration.md) - Configuración desde SSOT
+- [`analysis-engine`](./05-motor-analisis.md) - Análisis de toxicidad
+- [`billing-integration`](./billing.md) - Gestión de suscripciones y créditos
 
 ---
 

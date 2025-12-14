@@ -35,24 +35,6 @@ required_by:
 
 ---
 
-**Version:** 2.0  
-**Status:** ✅ Active  
-**Last Updated:** 2025-12-04
-
----
-
-## 1. Dependencies
-
-- [`observabilidad`](./observabilidad.md)
-
-- [`observabilidad`](./observabilidad.md)
-
-Este nodo depende de los siguientes nodos:
-
-- [`observabilidad`](./observabilidad.md)
-
----
-
 ### Servicios:
 
 - **GitHub Actions**: CI/CD pipeline

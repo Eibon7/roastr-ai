@@ -1,9 +1,10 @@
 # Plan de Implementación - ROA-259: Frontmatters v2 y Legacy para cada nodo
 
 **Issue:** ROA-259  
-**Fecha:** 2025-12-05  
-**Estado:** En progreso  
-**Rama:** `feature/ROA-259-auto`
+**Fecha:** 2025-12-14  
+**Estado:** En revisión  
+**Rama:** `feature/ROA-259-frontmatter-v2`  
+**PR:** #1131
 
 ---
 
@@ -171,7 +172,7 @@ node scripts/score-gdd-health.js --ci
 - ✅ Todos los nodos v2 tienen frontmatter YAML válido
 - ✅ Scripts de validación funcionan correctamente
 - ✅ Nodos legacy mantienen formato markdown (sin cambios)
-- ✅ Health score >= 87
+- ✅ Health score target: 87 (actualmente 84.5/100 - requiere mejora)
 - ✅ 0 errores en validaciones
 
 ---
