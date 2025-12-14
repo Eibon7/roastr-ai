@@ -166,7 +166,7 @@ class PostModificationValidator {
             { encoding: 'utf8' }
           );
           const issue = JSON.parse(issueData);
-          return this.parseScopeFromIssue(issue.body || issue.title || '');
+          return await this.parseScopeFromIssue(issue.body || issue.title || '');
         } catch (error) {
           this.log(`Could not fetch issue ${issueId} from GitHub: ${error.message}`, 'warning');
           return null;
@@ -183,7 +183,7 @@ class PostModificationValidator {
             { encoding: 'utf8' }
           );
           const issue = JSON.parse(issueData);
-          return this.parseScopeFromIssue(issue.body || issue.title || '');
+          return await this.parseScopeFromIssue(issue.body || issue.title || '');
         } catch (error) {
           this.log(`Could not fetch issue ${issueNumber} from GitHub: ${error.message}`, 'warning');
           return null;
@@ -204,7 +204,7 @@ class PostModificationValidator {
    * - "Scope: node1, node2"
    * - "Nodos: node1, node2"
    */
-  parseScopeFromIssue(issueText) {
+  async parseScopeFromIssue(issueText) {
     if (!issueText) {
       return null;
     }
@@ -214,7 +214,7 @@ class PostModificationValidator {
     const match1 = issueText.match(pattern1);
     if (match1) {
       const nodes = match1[1]
-        .split(/[,\n-]/)
+        .split(/[,\n;]+/)
         .map((n) => n.trim())
         .filter((n) => n.length > 0 && !n.match(/^(y|and|o|or)$/i));
       if (nodes.length > 0) {
@@ -237,27 +237,21 @@ class PostModificationValidator {
 
     // Patrón 3: Buscar IDs de nodos conocidos en el texto
     // Esto es un fallback menos preciso
-    const knownNodeIds = [
-      'roasting-engine',
-      'shield-engine',
-      'analysis-engine',
-      'billing-integration',
-      'infraestructura',
-      'observabilidad',
-      'workers',
-      'integraciones-redes-sociales',
-      'ssot-integration',
-      'frontend-user-app',
-      'admin-dashboard'
-    ];
+    // Derivar node IDs dinámicamente desde system-map-v2.yaml
+    if (!this.systemMap) {
+      this.systemMap = await this.loadSystemMap();
+    }
 
-    const foundNodes = knownNodeIds.filter((nodeId) =>
-      issueText.toLowerCase().includes(nodeId.toLowerCase())
-    );
+    if (this.systemMap && this.systemMap.nodes) {
+      const knownNodeIds = Object.keys(this.systemMap.nodes);
+      const foundNodes = knownNodeIds.filter((nodeId) =>
+        issueText.toLowerCase().includes(nodeId.toLowerCase())
+      );
 
-    if (foundNodes.length > 0) {
-      this.log(`Inferred scope from issue text (${foundNodes.length} nodes found)`, 'warning');
-      return foundNodes;
+      if (foundNodes.length > 0) {
+        this.log(`Inferred scope from issue text (${foundNodes.length} nodes found)`, 'warning');
+        return foundNodes;
+      }
     }
 
     return null;
