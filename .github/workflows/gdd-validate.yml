@@ -356,23 +356,6 @@ jobs:
               fi
             fi  # End of individual validations block (else branch)
             
-<<<<<<< HEAD
-=======
-              # 9. Detect Guardian References
-              if [ -f "scripts/detect-guardian-references.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
-                echo "✅ Detecting guardian references..."
-                set +e
-                node scripts/detect-guardian-references.js --ci
-                GUARDIAN_EXIT=$?
-                set -e
-                if [ "$GUARDIAN_EXIT" -ne 0 ]; then
-                  echo "⚠️ Guardian references detected (exit code: $GUARDIAN_EXIT)"
-                  echo "::warning::Guardian references detected. See logs for details."
-                fi
-              fi
-            fi  # End of individual validations block (else branch)
-            
->>>>>>> origin/main
             # Always run Legacy IDs and Guardian References checks (even if post-modification validator ran)
             # These are separate from the consolidated validator and should run regardless
             # Only run if post-modification validator was used (to avoid duplication with individual validations)
