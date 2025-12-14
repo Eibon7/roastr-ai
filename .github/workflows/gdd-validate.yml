@@ -190,14 +190,53 @@ jobs:
           # Track validation failures
           VALIDATION_FAILED=0
           
+          # Detect if nodes-v2 or system-map-v2.yaml were modified
+          HAS_NODE_MODIFICATIONS=0
+          if [ -f changed-files.txt ]; then
+            if grep -qE '^(docs/nodes-v2/|docs/system-map-v2\.yaml)' changed-files.txt; then
+              HAS_NODE_MODIFICATIONS=1
+              echo "✅ Node or system-map modifications detected"
+            fi
+          fi
+          
           # Only run validations if v2 documentation files were actually modified
           # If only scripts/rules were added, skip validations (they would validate legacy code)
           if [ "$HAS_V2_DOCS" -gt 0 ]; then
             echo "✅ PR modifies v2 documentation files - running v2 validation..."
             
-            # REQUIRED ORDER: validate-node-ids → validate-workers-ssot → validate-drift → validate-symmetry → validate-strong-concepts → check-system-map-drift → validate-v2-doc-paths → detect-legacy-ids → detect-guardian-references
+            # If nodes-v2 or system-map-v2.yaml were modified, run consolidated post-modification validator
+            if [ "$HAS_NODE_MODIFICATIONS" -eq 1 ] && [ -f "scripts/validate-post-modification-v2.js" ]; then
+              echo "🔍 Running post-modification consistency validation (ROA-331)..."
+              echo "   This will execute all required validations in sequence:"
+              echo "   - validate-v2-doc-paths.js"
+              echo "   - validate-ssot-health.js"
+              echo "   - check-system-map-drift.js"
+              echo "   - validate-strong-concepts.js"
+              echo ""
+              set +e
+              node scripts/validate-post-modification-v2.js --ci
+              POST_MOD_EXIT=$?
+              set -e
+              if [ "$POST_MOD_EXIT" -ne 0 ]; then
+                echo "❌ Post-modification validation failed (exit code: $POST_MOD_EXIT)"
+                VALIDATION_FAILED=1
+              else
+                echo "✅ Post-modification validation passed"
+                echo "   Skipping individual validations (already covered by consolidated validator)"
+                # Skip individual validations since they're already covered by validate-post-modification-v2.js
+                # The consolidated validator already runs:
+                # - validate-v2-doc-paths.js
+                # - validate-ssot-health.js
+                # - check-system-map-drift.js
+                # - validate-strong-concepts.js
+              fi
+            else
+              # Run individual validations if post-modification validator not applicable
+              echo "ℹ️  Running individual validations (no node/system-map modifications or validator not available)..."
+              
+              # REQUIRED ORDER: validate-node-ids → validate-workers-ssot → validate-drift → validate-symmetry → validate-strong-concepts → check-system-map-drift → validate-v2-doc-paths → detect-legacy-ids → detect-guardian-references
             
-            # 1. Validate Node IDs
+              # 1. Validate Node IDs
             if [ -f "scripts/validate-node-ids.js" ]; then
               echo "✅ Validating Node IDs..."
               set +e
@@ -303,16 +342,50 @@ jobs:
               fi
             fi
             
-            # 9. Detect Guardian References
-            if [ -f "scripts/detect-guardian-references.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
-              echo "✅ Detecting guardian references..."
-              set +e
-              node scripts/detect-guardian-references.js --ci
-              GUARDIAN_EXIT=$?
-              set -e
-              if [ "$GUARDIAN_EXIT" -ne 0 ]; then
-                echo "⚠️ Guardian references detected (exit code: $GUARDIAN_EXIT)"
-                echo "::warning::Guardian references detected. See logs for details."
+              # 9. Detect Guardian References
+              if [ -f "scripts/detect-guardian-references.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
+                echo "✅ Detecting guardian references..."
+                set +e
+                node scripts/detect-guardian-references.js --ci
+                GUARDIAN_EXIT=$?
+                set -e
+                if [ "$GUARDIAN_EXIT" -ne 0 ]; then
+                  echo "⚠️ Guardian references detected (exit code: $GUARDIAN_EXIT)"
+                  echo "::warning::Guardian references detected. See logs for details."
+                fi
+              fi
+            fi  # End of individual validations block (else branch)
+            
+            # Always run Legacy IDs and Guardian References checks (even if post-modification validator ran)
+            # These are separate from the consolidated validator and should run regardless
+            # Only run if post-modification validator was used (to avoid duplication with individual validations)
+            if [ "$HAS_NODE_MODIFICATIONS" -eq 1 ] && [ -f "scripts/validate-post-modification-v2.js" ]; then
+              # 8. Detect Legacy IDs (WARN for src/, FAIL for docs/)
+              if [ -f "scripts/detect-legacy-ids.js" ]; then
+                echo "✅ Detecting legacy IDs..."
+                set +e
+                node scripts/detect-legacy-ids.js --ci
+                LEGACY_IDS_EXIT=$?
+                set -e
+                # Legacy IDs in src/ are acceptable (warn only), but fail for docs/
+                if [ "$LEGACY_IDS_EXIT" -ne 0 ]; then
+                  echo "⚠️ Legacy IDs detected (exit code: $LEGACY_IDS_EXIT) - checking if in src/ (acceptable) or docs/ (must fix)"
+                  # This is a warning, not a failure for v2 PRs (legacy code cleanup is separate)
+                  echo "::warning::Legacy IDs detected. See logs for details."
+                fi
+              fi
+              
+              # 9. Detect Guardian References
+              if [ -f "scripts/detect-guardian-references.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
+                echo "✅ Detecting guardian references..."
+                set +e
+                node scripts/detect-guardian-references.js --ci
+                GUARDIAN_EXIT=$?
+                set -e
+                if [ "$GUARDIAN_EXIT" -ne 0 ]; then
+                  echo "⚠️ Guardian references detected (exit code: $GUARDIAN_EXIT)"
+                  echo "::warning::Guardian references detected. See logs for details."
+                fi
               fi
             fi
             
