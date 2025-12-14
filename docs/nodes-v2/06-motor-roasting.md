@@ -1,5 +1,40 @@
 # GDD Node — Motor de Roasting v2
 
+---
+version: "2.0"
+node_id: roasting-engine
+status: production
+priority: critical
+owner: Back-end Dev
+last_updated: 2025-12-05
+coverage: 85
+coverage_source: auto
+depends_on:
+  - analysis-engine
+  - integraciones-redes-sociales
+  - shield-engine
+  - billing-integration
+  - observabilidad
+  - ssot-integration
+required_by:
+  - frontend-user-app
+workers:
+  - GenerateRoast
+  - GenerateCorrectiveReply
+ssot_references:
+  - credit_consumption_rules
+  - plan_limits
+  - roast_tones
+  - style_validator
+  - tone_personal_allowed
+subnodes:
+  - prompt-architecture
+  - tones
+  - style-validator
+  - corrective-replies
+---
+
+
 **Version:** 2.0  
 **Status:** ✅ Active  
 **Last Updated:** 2025-12-04

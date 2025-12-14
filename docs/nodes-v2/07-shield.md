@@ -1,5 +1,40 @@
 # GDD Node — Shield (Sistema Antitrolls) v2
 
+---
+version: "2.0"
+node_id: shield-engine
+status: production
+priority: critical
+owner: Back-end Dev
+last_updated: 2025-12-05
+coverage: 78
+coverage_source: auto
+depends_on:
+  - billing-integration
+  - infraestructura
+  - observabilidad
+  - ssot-integration
+  - analysis-engine
+required_by:
+  - roasting-engine
+  - frontend-user-app
+workers:
+  - ShieldAction
+ssot_references:
+  - shield_decision_rules
+  - shield_decision_tree
+  - shield_thresholds
+  - shield_weights
+  - strike_level_types
+  - strike_system
+subnodes:
+  - decision-engine
+  - action-executor
+  - thresholds
+  - weights
+---
+
+
 **Version:** 2.0  
 **Status:** ✅ Active  
 **Last Updated:** 2025-12-04

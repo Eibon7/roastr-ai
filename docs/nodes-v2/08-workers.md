@@ -1,5 +1,37 @@
 # GDD Node — Workers del Sistema v2
 
+---
+version: "2.0"
+node_id: workers
+status: production
+priority: critical
+owner: Back-end Dev
+last_updated: 2025-12-05
+coverage: 60
+coverage_source: auto
+depends_on:
+  - infraestructura
+ssot_references:
+  - worker_logs
+  - worker_names
+  - worker_retries
+  - worker_routing
+  - worker_routing_table
+  - worker_tenancy
+subnodes:
+  - fetch-comments
+  - analyze-toxicity
+  - generate-roast
+  - generate-corrective-reply
+  - shield-action
+  - social-posting
+  - billing-integration-update
+  - cursor-reconciliation
+  - strike-cleanup
+  - worker-manager
+---
+
+
 **Version:** 2.0  
 **Status:** ✅ Active  
 **Last Updated:** 2025-12-04

@@ -1,5 +1,45 @@
 # GDD Node — Billing v2
 
+---
+version: "2.0"
+node_id: billing-integration
+status: production
+priority: critical
+owner: Back-end Dev
+last_updated: 2025-12-05
+coverage: 70
+coverage_source: auto
+depends_on:
+  - infraestructura
+  - observabilidad
+  - ssot-integration
+required_by:
+  - roasting-engine
+  - analysis-engine
+  - shield-engine
+  - integraciones-redes-sociales
+  - frontend-user-app
+  - frontend-admin
+workers:
+  - BillingUpdate
+ssot_references:
+  - billing-integration_provider
+  - subscription_states
+  - billing-integration_state_machine
+  - plan_limits
+  - credit_consumption_rules
+  - plan_ids
+  - plan_capabilities
+  - plan_trials
+subnodes:
+  - polar-integration
+  - cost-control
+  - usage-tracking
+  - plan-limits
+  - subscription-states
+---
+
+
 **Version:** 2.0  
 **Status:** ✅ Production  
 **Last Updated:** 2025-12-05  

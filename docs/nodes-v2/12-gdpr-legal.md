@@ -1,5 +1,26 @@
 # GDD Node — GDPR y Legal v2
 
+---
+version: "2.0"
+node_id: gdpr-and-legal
+status: production
+priority: critical
+owner: Product Owner
+last_updated: 2025-12-05
+coverage: 0
+coverage_source: auto
+ssot_references:
+  - gdpr_algorithms
+  - gdpr_allowed_log_structure
+  - gdpr_automatic_blocking
+  - gdpr_cleanup_algorithm
+  - gdpr_forbidden_data
+  - gdpr_retention
+subnodes:
+  - gdpr-retention
+---
+
+
 **Version:** 2.0  
 **Status:** ✅ Active  
 **Last Updated:** 2025-12-04

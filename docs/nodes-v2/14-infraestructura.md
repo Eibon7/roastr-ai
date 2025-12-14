@@ -1,5 +1,38 @@
 # GDD Node — Infraestructura v2
 
+---
+version: "2.0"
+node_id: infraestructura
+status: production
+priority: critical
+owner: Back-end Dev
+last_updated: 2025-12-05
+coverage: 81
+coverage_source: auto
+required_by:
+  - analysis-engine
+  - shield-engine
+  - integraciones-redes-sociales
+  - billing-integration
+  - workers
+ssot_references:
+  - queue_configuration
+  - worker_routing_table
+  - rls_policies
+  - rate_limits
+subnodes:
+  - queue-management
+  - database-rls
+  - queue-configuration
+  - base-worker
+  - staging-production-isolation
+  - deploy-pipeline
+  - smoke-tests-pipeline
+  - backups
+  - rate-limits
+---
+
+
 **Version:** 2.0  
 **Status:** ✅ Active  
 **Last Updated:** 2025-12-04

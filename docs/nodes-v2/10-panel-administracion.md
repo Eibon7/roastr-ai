@@ -1,5 +1,27 @@
 # GDD Node — Panel de Administración v2
 
+---
+version: "2.0"
+node_id: frontend-admin
+status: production
+priority: medium
+owner: Front-end Dev
+last_updated: 2025-12-05
+coverage: 60
+coverage_source: auto
+depends_on:
+  - ssot-integration
+  - billing-integration
+ssot_references:
+  - feature_flags
+  - plan_limits
+  - roast_tones
+  - shield_thresholds
+subnodes:
+  - admin-panel
+---
+
+
 **Version:** 2.0  
 **Status:** ✅ Active  
 **Last Updated:** 2025-12-04

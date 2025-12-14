@@ -1,5 +1,47 @@
 # GDD Node — Integraciones con Redes Sociales v2
 
+---
+version: "2.0"
+node_id: integraciones-redes-sociales
+status: production
+priority: high
+owner: Back-end Dev
+last_updated: 2025-12-05
+coverage: 82
+coverage_source: auto
+depends_on:
+  - infraestructura
+  - billing-integration
+  - observabilidad
+  - ssot-integration
+required_by:
+  - roasting-engine
+  - frontend-user-app
+workers:
+  - FetchComments
+  - SocialPosting
+ssot_references:
+  - connected_account_structure
+  - connection_status
+  - oauth_cleanup_rules
+  - oauth_pkce_flow
+  - oauth_scopes
+  - oauth_tokens
+  - platform_limits
+  - platform_oauth_config
+  - platform_x_constraints
+  - platform_youtube_constraints
+  - smart_delay_algorithm
+  - supported_platforms
+  - token_refresh_rules
+subnodes:
+  - twitter-integration
+  - youtube-integration
+  - platform-constraints
+  - base-integration
+---
+
+
 **Version:** 2.0  
 **Status:** ✅ Active  
 **Last Updated:** 2025-12-04
