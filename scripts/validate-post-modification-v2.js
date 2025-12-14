@@ -65,6 +65,8 @@ class PostModificationValidator {
     this.affectedNodes = [];
     this.nodeContext = {};
     this.systemMap = null;
+    this.warnings = [];
+    this.blockedOperations = [];
   }
 
   log(message, type = 'info') {
@@ -362,6 +364,181 @@ class PostModificationValidator {
   }
 
   /**
+   * Valida que el grafo es acíclico (DAG)
+   */
+  async validateAcyclicGraph() {
+    this.log('Validating acyclic graph (DAG)...', 'step');
+    this.log('');
+
+    if (!this.systemMap) {
+      this.systemMap = await this.loadSystemMap();
+      if (!this.systemMap) {
+        return { success: false, cycles: [] };
+      }
+    }
+
+    try {
+      const { SymmetryValidator } = require('./validate-symmetry.js');
+      const validator = new SymmetryValidator({ ci: this.isCIMode });
+      await validator.loadSystemMap();
+
+      // Usar el método detectCycles del validator
+      const dependsOnMap = {};
+      const nodeIds = Object.keys(this.systemMap.nodes || {});
+
+      nodeIds.forEach((id) => {
+        dependsOnMap[id] = new Set();
+      });
+
+      for (const [nodeId, nodeData] of Object.entries(this.systemMap.nodes || {})) {
+        if (nodeData.depends_on) {
+          const deps = Array.isArray(nodeData.depends_on) ? nodeData.depends_on : [nodeData.depends_on];
+          deps.forEach((dep) => {
+            dependsOnMap[nodeId].add(dep);
+          });
+        }
+      }
+
+      // Detectar ciclos usando DFS
+      const visited = new Set();
+      const recursionStack = new Set();
+      const cycles = [];
+
+      const hasCycle = (nodeId, path = []) => {
+        visited.add(nodeId);
+        recursionStack.add(nodeId);
+        path.push(nodeId);
+
+        const deps = dependsOnMap[nodeId] || new Set();
+        for (const depId of deps) {
+          if (!visited.has(depId)) {
+            if (hasCycle(depId, [...path])) {
+              return true;
+            }
+          } else if (recursionStack.has(depId)) {
+            // Cycle detected
+            const cycleStart = path.indexOf(depId);
+            cycles.push(path.slice(cycleStart).concat(depId));
+            return true;
+          }
+        }
+
+        recursionStack.delete(nodeId);
+        return false;
+      };
+
+      for (const nodeId of nodeIds) {
+        if (!visited.has(nodeId)) {
+          hasCycle(nodeId);
+        }
+      }
+
+      if (cycles.length > 0) {
+        this.log(`❌ Found ${cycles.length} cycle(s) in dependency graph`, 'error');
+        cycles.forEach((cycle, idx) => {
+          this.log(`  Cycle ${idx + 1}: ${cycle.join(' → ')}`, 'error');
+        });
+        this.log('');
+        return { success: false, cycles };
+      } else {
+        this.log('✅ Graph is acyclic (DAG)', 'success');
+        this.log('');
+        return { success: true, cycles: [] };
+      }
+    } catch (error) {
+      this.log(`Failed to validate acyclic graph: ${error.message}`, 'warning');
+      return { success: true, cycles: [] }; // No bloquear si falla
+    }
+  }
+
+  /**
+   * Detecta warnings y operaciones bloqueadas
+   */
+  detectWarningsAndBlockedOperations() {
+    // Warning: Modificaciones en múltiples nodos sin modificar system-map
+    if (this.affectedNodes.length > 1) {
+      const hasSystemMapChange = this.modifiedFiles.some((f) =>
+        f.file.includes('system-map-v2.yaml')
+      );
+      if (!hasSystemMapChange) {
+        this.warnings.push({
+          type: 'multi_node_modification',
+          message: `Multiple nodes modified (${this.affectedNodes.length}) without system-map-v2.yaml update. Consider updating system-map to reflect changes.`,
+          nodes: this.affectedNodes
+        });
+      }
+    }
+
+    // Warning: Nodos críticos modificados
+    if (this.systemMap && this.affectedNodes.length > 0) {
+      const criticalNodes = this.affectedNodes.filter((nodeName) => {
+        const nodeData = this.systemMap.nodes?.[nodeName];
+        return nodeData?.priority === 'critical';
+      });
+
+      if (criticalNodes.length > 0) {
+        this.warnings.push({
+          type: 'critical_node_modification',
+          message: `Critical node(s) modified: ${criticalNodes.join(', ')}. Ensure all dependencies are still valid.`,
+          nodes: criticalNodes
+        });
+      }
+    }
+
+    // Blocked: Ciclos detectados
+    const cycleResult = this.results.find((r) => r.name === 'Acyclic Graph' && !r.success);
+    if (cycleResult) {
+      this.blockedOperations.push({
+        type: 'circular_dependency',
+        message: 'Circular dependencies detected. System-map modifications are blocked until cycles are resolved.',
+        cycles: cycleResult.cycles || []
+      });
+    }
+
+    // Blocked: Validaciones críticas fallidas
+    const criticalFailures = this.results.filter(
+      (r) => !r.success && ['System Map Drift', 'Strong Concepts'].includes(r.name)
+    );
+    if (criticalFailures.length > 0) {
+      this.blockedOperations.push({
+        type: 'critical_validation_failed',
+        message: `Critical validations failed. System-map synchronization is blocked.`,
+        failed: criticalFailures.map((r) => r.name)
+      });
+    }
+  }
+
+  /**
+   * Analiza el impacto en health score
+   */
+  async analyzeHealthScoreImpact() {
+    this.log('Analyzing health score impact...', 'step');
+    this.log('');
+
+    try {
+      // Cargar health score actual
+      const { calculateMetrics } = require('./compute-health-v2-official.js');
+      const currentMetrics = calculateMetrics();
+
+      this.log(`Current Health Score: ${currentMetrics.health_score}/100`, 'info');
+      this.log(`  System Map Alignment: ${currentMetrics.system_map_alignment}%`, 'info');
+      this.log(`  SSOT Alignment: ${currentMetrics.ssot_alignment}%`, 'info');
+      this.log(`  Dependency Density: ${currentMetrics.dependency_density}%`, 'info');
+      this.log(`  Crosslink Score: ${currentMetrics.crosslink_score}%`, 'info');
+      this.log('');
+
+      return {
+        current: currentMetrics.health_score,
+        metrics: currentMetrics,
+        impact: 'unknown' // Se puede calcular comparando con versión anterior si es necesario
+      };
+    } catch (error) {
+      this.log(`Failed to analyze health score: ${error.message}`, 'warning');
+      return { current: null, metrics: null, impact: 'unknown' };
+    }
+  }
+
+  /**
    * Ejecuta todas las validaciones en secuencia
    */
   async validate() {
@@ -380,6 +557,27 @@ class PostModificationValidator {
     if (this.affectedNodes.length > 0) {
       this.nodeContext = await this.loadNodeContext(this.affectedNodes);
     }
+
+    // Fase 3.5: Validar grafo acíclico
+    const acyclicResult = await this.validateAcyclicGraph();
+    if (!acyclicResult.success) {
+      this.results.push({
+        name: 'Acyclic Graph',
+        script: 'internal',
+        success: false,
+        exitCode: 1,
+        stdout: '',
+        stderr: `Found ${acyclicResult.cycles.length} cycle(s)`,
+        cycles: acyclicResult.cycles
+      });
+    }
+
+    // Fase 3.6: Analizar impacto en health score
+    const healthImpact = await this.analyzeHealthScoreImpact();
+    this.healthImpact = healthImpact;
+
+    // Fase 3.7: Detectar warnings y operaciones bloqueadas
+    this.detectWarningsAndBlockedOperations();
 
     // Fase 4: Ejecutar validaciones
     this.log('Running all validations to ensure consistency after modifications...', 'info');
@@ -497,11 +695,66 @@ class PostModificationValidator {
         this.log('  • No system-map-v2.yaml changes detected', 'info');
         this.log('  • Node modifications are isolated to documentation', 'info');
       }
+
+      // Mostrar nodos relacionados que pueden necesitar revisión
+      const allRelatedNodes = new Set();
+      this.affectedNodes.forEach((nodeName) => {
+        const context = this.nodeContext[nodeName];
+        if (context) {
+          context.all_related.forEach((rel) => allRelatedNodes.add(rel));
+        }
+      });
+
+      if (allRelatedNodes.size > 0) {
+        this.log(`  • Related nodes that may need review: ${Array.from(allRelatedNodes).join(', ')}`, 'info');
+      }
       this.log('');
     }
 
-    // Sección 5: Recomendaciones
-    if (failed > 0) {
+    // Sección 4.5: Health Score Impact
+    if (this.healthImpact && this.healthImpact.current !== null) {
+      this.log('Health Score Impact:', 'info');
+      this.log(`  Current Health Score: ${this.healthImpact.current}/100`, 'info');
+      if (this.healthImpact.metrics) {
+        this.log(`  System Map Alignment: ${this.healthImpact.metrics.system_map_alignment}%`, 'info');
+        this.log(`  SSOT Alignment: ${this.healthImpact.metrics.ssot_alignment}%`, 'info');
+        this.log(`  Dependency Density: ${this.healthImpact.metrics.dependency_density}%`, 'info');
+        this.log(`  Crosslink Score: ${this.healthImpact.metrics.crosslink_score}%`, 'info');
+      }
+      this.log('');
+    }
+
+    // Sección 5: Warnings
+    if (this.warnings.length > 0) {
+      this.log('⚠️  Warnings:', 'warning');
+      this.warnings.forEach((warning, idx) => {
+        this.log(`  ${idx + 1}. [${warning.type}] ${warning.message}`, 'warning');
+        if (warning.nodes && warning.nodes.length > 0) {
+          this.log(`     Nodes: ${warning.nodes.join(', ')}`, 'warning');
+        }
+      });
+      this.log('');
+    }
+
+    // Sección 6: Operaciones Bloqueadas
+    if (this.blockedOperations.length > 0) {
+      this.log('🚫 Blocked Operations:', 'error');
+      this.blockedOperations.forEach((blocked, idx) => {
+        this.log(`  ${idx + 1}. [${blocked.type}] ${blocked.message}`, 'error');
+        if (blocked.cycles && blocked.cycles.length > 0) {
+          blocked.cycles.forEach((cycle, cIdx) => {
+            this.log(`     Cycle ${cIdx + 1}: ${cycle.join(' → ')}`, 'error');
+          });
+        }
+        if (blocked.failed && blocked.failed.length > 0) {
+          this.log(`     Failed validations: ${blocked.failed.join(', ')}`, 'error');
+        }
+      });
+      this.log('');
+    }
+
+    // Sección 7: Recomendaciones
+    if (failed > 0 || this.blockedOperations.length > 0) {
       this.log('Recommendations:', 'info');
       this.log('  1. Review the error messages above', 'info');
       this.log('  2. Fix the issues in the relevant files', 'info');
