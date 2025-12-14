@@ -7,22 +7,29 @@
  * o system-map-v2.yaml para asegurar consistencia.
  *
  * Este script ejecuta en secuencia:
- * 1. validate-v2-doc-paths.js - Valida paths de documentación
- * 2. validate-ssot-health.js - Valida sección 15 del SSOT
- * 3. check-system-map-drift.js - Valida drift del system-map
- * 4. validate-strong-concepts.js - Valida Strong Concepts
+ * 1. Detección de archivos modificados y mapeo a nodos
+ * 2. Carga de contexto de nodos (system-map, dependencias)
+ * 3. validate-v2-doc-paths.js - Valida paths de documentación
+ * 4. validate-ssot-health.js - Valida sección 15 del SSOT
+ * 5. check-system-map-drift.js - Valida drift del system-map
+ * 6. validate-strong-concepts.js - Valida Strong Concepts
+ * 7. Genera reporte completo con nodos afectados y análisis de impacto
  *
  * Usage:
  *   node scripts/validate-post-modification-v2.js
  *   node scripts/validate-post-modification-v2.js --ci  # Exit 1 on any failure
+ *   node scripts/validate-post-modification-v2.js --base main  # Compare against main branch
  */
 
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
+const fs = require('fs').promises;
 const path = require('path');
+const yaml = require('yaml');
 const logger = require('../src/utils/logger');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const SCRIPTS_DIR = path.join(ROOT_DIR, 'scripts');
+const SYSTEM_MAP_V2_PATH = path.join(ROOT_DIR, 'docs/system-map-v2.yaml');
 
 // Lista de validaciones a ejecutar en orden
 const VALIDATIONS = [
@@ -52,7 +59,12 @@ class PostModificationValidator {
   constructor(options = {}) {
     this.options = options;
     this.isCIMode = options.ci || false;
+    this.baseCommit = options.base || 'HEAD';
     this.results = [];
+    this.modifiedFiles = [];
+    this.affectedNodes = [];
+    this.nodeContext = {};
+    this.systemMap = null;
   }
 
   log(message, type = 'info') {
@@ -74,6 +86,210 @@ class PostModificationValidator {
     } else {
       logger.info(formattedMessage);
     }
+  }
+
+  /**
+   * Detecta archivos modificados usando git diff
+   */
+  async detectModifiedFiles() {
+    this.log('Detecting modified files...', 'step');
+    this.log('');
+
+    try {
+      let diff = '';
+
+      // Si baseCommit es HEAD, usar staged + unstaged changes
+      if (this.baseCommit === 'HEAD') {
+        diff = execSync('git diff --cached --name-status', { encoding: 'utf8' });
+        if (!diff.trim()) {
+          diff = execSync('git diff --name-status', { encoding: 'utf8' });
+        }
+      } else {
+        // Comparar con commit base
+        diff = execSync(`git diff ${this.baseCommit} --name-status`, { encoding: 'utf8' });
+      }
+
+      if (!diff.trim()) {
+        this.log('No changes detected', 'info');
+        return [];
+      }
+
+      const changes = diff
+        .trim()
+        .split('\n')
+        .map((line) => {
+          const [status, ...fileParts] = line.split('\t');
+          const file = fileParts.join('\t');
+          return { status, file };
+        })
+        .filter((change) => {
+          // Filtrar solo archivos relevantes para v2
+          return (
+            change.file.includes('docs/nodes-v2/') ||
+            change.file.includes('docs/system-map-v2.yaml') ||
+            change.file.includes('docs/SSOT-V2.md')
+          );
+        });
+
+      this.log(`Detected ${changes.length} modified file(s)`, 'info');
+      changes.forEach((change) => {
+        this.log(`  ${change.status} ${change.file}`, 'info');
+      });
+      this.log('');
+
+      return changes;
+    } catch (error) {
+      this.log(`Failed to detect modified files: ${error.message}`, 'warning');
+      return [];
+    }
+  }
+
+  /**
+   * Mapea archivos modificados a nodos
+   * Soporta tanto archivos directos como subnodos en subdirectorios
+   */
+  async mapFilesToNodes(files) {
+    this.log('Mapping files to affected nodes...', 'step');
+    this.log('');
+
+    if (files.length === 0) {
+      this.log('No files to map', 'info');
+      return [];
+    }
+
+    const affectedNodes = new Set();
+
+    // Cargar system-map para mapeo preciso
+    if (!this.systemMap) {
+      this.systemMap = await this.loadSystemMap();
+    }
+
+    // Mapeo directo desde paths de archivos
+    for (const fileChange of files) {
+      const file = fileChange.file;
+
+      // Caso 1: Archivo en docs/nodes-v2/<node-id>.md
+      const directMatch = file.match(/docs\/nodes-v2\/([^/]+)\.md$/);
+      if (directMatch) {
+        affectedNodes.add(directMatch[1]);
+        continue;
+      }
+
+      // Caso 2: Subnodo en docs/nodes-v2/<node-id>/<subnode>.md
+      const subnodeMatch = file.match(/docs\/nodes-v2\/([^/]+)\/.+\.md$/);
+      if (subnodeMatch) {
+        affectedNodes.add(subnodeMatch[1]);
+        continue;
+      }
+
+      // Caso 3: system-map-v2.yaml modificado
+      if (file.includes('system-map-v2.yaml')) {
+        // Si se modifica system-map, todos los nodos pueden estar afectados
+        // Pero por ahora solo marcamos que system-map fue modificado
+        // Los nodos específicos se detectarán por otros archivos modificados
+        continue;
+      }
+
+      // Caso 4: Mapeo desde system-map usando files del nodo
+      if (this.systemMap?.nodes) {
+        for (const [nodeName, nodeData] of Object.entries(this.systemMap.nodes)) {
+          const nodeFiles = nodeData.files || [];
+          const nodeDocs = nodeData.docs || [];
+
+          // Verificar si el archivo está en la lista de files del nodo
+          if (nodeFiles.some((nf) => file.includes(nf) || nf.includes(file))) {
+            affectedNodes.add(nodeName);
+            break;
+          }
+
+          // Verificar si el archivo está en la lista de docs del nodo
+          if (nodeDocs.some((doc) => file.includes(doc) || doc.includes(file))) {
+            affectedNodes.add(nodeName);
+            break;
+          }
+        }
+      }
+    }
+
+    const nodesArray = Array.from(affectedNodes).sort();
+
+    if (nodesArray.length > 0) {
+      this.log(`Affected nodes: ${nodesArray.join(', ')}`, 'success');
+    } else {
+      this.log('No nodes affected (files may not be mapped to nodes)', 'warning');
+    }
+    this.log('');
+
+    return nodesArray;
+  }
+
+  /**
+   * Carga system-map-v2.yaml
+   */
+  async loadSystemMap() {
+    try {
+      const content = await fs.readFile(SYSTEM_MAP_V2_PATH, 'utf8');
+      return yaml.parse(content);
+    } catch (error) {
+      this.log(`Failed to load system-map-v2.yaml: ${error.message}`, 'error');
+      return null;
+    }
+  }
+
+  /**
+   * Carga contexto de nodos (dependencias, relaciones)
+   */
+  async loadNodeContext(nodeNames) {
+    this.log('Loading node context (dependencies, relationships)...', 'step');
+    this.log('');
+
+    if (!this.systemMap) {
+      this.systemMap = await this.loadSystemMap();
+      if (!this.systemMap) {
+        return {};
+      }
+    }
+
+    const context = {};
+
+    for (const nodeName of nodeNames) {
+      const nodeData = this.systemMap.nodes?.[nodeName];
+      if (!nodeData) {
+        this.log(`Warning: Node "${nodeName}" not found in system-map-v2.yaml`, 'warning');
+        continue;
+      }
+
+      // Recopilar nodos relacionados
+      const relatedNodes = new Set();
+      if (nodeData.depends_on) {
+        nodeData.depends_on.forEach((dep) => relatedNodes.add(dep));
+      }
+      if (nodeData.required_by) {
+        nodeData.required_by.forEach((req) => relatedNodes.add(req));
+      }
+      if (nodeData.related) {
+        nodeData.related.forEach((rel) => relatedNodes.add(rel));
+      }
+
+      context[nodeName] = {
+        node: nodeData,
+        depends_on: nodeData.depends_on || [],
+        required_by: nodeData.required_by || [],
+        related: nodeData.related || [],
+        all_related: Array.from(relatedNodes),
+        docs: nodeData.docs || [],
+        files: nodeData.files || [],
+        workers: nodeData.workers || [],
+        ssot_references: nodeData.ssot_references || []
+      };
+    }
+
+    if (Object.keys(context).length > 0) {
+      this.log(`Loaded context for ${Object.keys(context).length} node(s)`, 'success');
+      this.log('');
+    }
+
+    return context;
   }
 
   /**
@@ -151,16 +367,30 @@ class PostModificationValidator {
   async validate() {
     this.log('🔍 GDD v2 Post-Modification Consistency Validation', 'step');
     this.log('');
+
+    // Fase 1: Detectar archivos modificados
+    this.modifiedFiles = await this.detectModifiedFiles();
+
+    // Fase 2: Mapear archivos a nodos
+    if (this.modifiedFiles.length > 0) {
+      this.affectedNodes = await this.mapFilesToNodes(this.modifiedFiles);
+    }
+
+    // Fase 3: Cargar contexto de nodos
+    if (this.affectedNodes.length > 0) {
+      this.nodeContext = await this.loadNodeContext(this.affectedNodes);
+    }
+
+    // Fase 4: Ejecutar validaciones
     this.log('Running all validations to ensure consistency after modifications...', 'info');
     this.log('');
 
-    // Ejecutar todas las validaciones
     for (const validation of VALIDATIONS) {
       const result = await this.runValidation(validation);
       this.results.push(result);
     }
 
-    // Generar resumen
+    // Fase 5: Generar resumen completo
     this.printSummary();
 
     // Determinar si todas pasaron
@@ -170,11 +400,47 @@ class PostModificationValidator {
   }
 
   /**
-   * Imprime resumen de resultados
+   * Imprime resumen completo de resultados
    */
   printSummary() {
     this.log('');
-    this.log('📊 Validation Summary', 'step');
+    this.log('📊 Post-Modification Consistency Report', 'step');
+    this.log('');
+
+    // Sección 1: Archivos modificados
+    if (this.modifiedFiles.length > 0) {
+      this.log('Modified Files:', 'info');
+      this.modifiedFiles.forEach((change) => {
+        this.log(`  ${change.status} ${change.file}`, 'info');
+      });
+      this.log('');
+    }
+
+    // Sección 2: Nodos afectados
+    if (this.affectedNodes.length > 0) {
+      this.log('Affected Nodes:', 'info');
+      this.affectedNodes.forEach((nodeName) => {
+        const context = this.nodeContext[nodeName];
+        if (context) {
+          this.log(`  • ${nodeName}`, 'info');
+          if (context.depends_on.length > 0) {
+            this.log(`    Depends on: ${context.depends_on.join(', ')}`, 'info');
+          }
+          if (context.required_by.length > 0) {
+            this.log(`    Required by: ${context.required_by.join(', ')}`, 'info');
+          }
+          if (context.all_related.length > 0) {
+            this.log(`    Related nodes: ${context.all_related.join(', ')}`, 'info');
+          }
+        } else {
+          this.log(`  • ${nodeName}`, 'info');
+        }
+      });
+      this.log('');
+    }
+
+    // Sección 3: Resumen de validaciones
+    this.log('Validation Results:', 'info');
     this.log('');
 
     const passed = this.results.filter((r) => r.success).length;
@@ -210,19 +476,60 @@ class PostModificationValidator {
       this.log('');
     }
 
+    // Sección 4: Impacto en system-map
+    if (this.affectedNodes.length > 0 && this.systemMap) {
+      this.log('System-Map Impact Analysis:', 'info');
+      this.log('');
+
+      let hasSystemMapChanges = false;
+      for (const nodeName of this.affectedNodes) {
+        const fileChange = this.modifiedFiles.find((f) =>
+          f.file.includes('system-map-v2.yaml')
+        );
+        if (fileChange) {
+          hasSystemMapChanges = true;
+          this.log(`  • System-map-v2.yaml was modified`, 'info');
+          break;
+        }
+      }
+
+      if (!hasSystemMapChanges) {
+        this.log('  • No system-map-v2.yaml changes detected', 'info');
+        this.log('  • Node modifications are isolated to documentation', 'info');
+      }
+      this.log('');
+    }
+
+    // Sección 5: Recomendaciones
+    if (failed > 0) {
+      this.log('Recommendations:', 'info');
+      this.log('  1. Review the error messages above', 'info');
+      this.log('  2. Fix the issues in the relevant files', 'info');
+      this.log('  3. Re-run this script to verify fixes', 'info');
+      if (this.affectedNodes.length > 0) {
+        this.log('  4. Verify related nodes are still consistent', 'info');
+        this.log(
+          `     Related nodes: ${this.affectedNodes
+            .flatMap((n) => this.nodeContext[n]?.all_related || [])
+            .filter((v, i, a) => a.indexOf(v) === i)
+            .join(', ')}`,
+          'info'
+        );
+      }
+      this.log('');
+    }
+
     // Estado final
     if (failed === 0) {
       this.log('✅ All validations passed! System is consistent.', 'success');
+      if (this.affectedNodes.length > 0) {
+        this.log(`✅ ${this.affectedNodes.length} node(s) validated successfully`, 'success');
+      }
     } else {
       this.log(
         `❌ ${failed} validation(s) failed. Please fix the issues before proceeding.`,
         'error'
       );
-      this.log('');
-      this.log('To fix issues:', 'info');
-      this.log('  1. Review the error messages above', 'info');
-      this.log('  2. Fix the issues in the relevant files', 'info');
-      this.log('  3. Re-run this script to verify fixes', 'info');
     }
 
     this.log('');
@@ -233,8 +540,10 @@ class PostModificationValidator {
 if (require.main === module) {
   const args = process.argv.slice(2);
   const isCI = args.includes('--ci');
+  const baseIndex = args.indexOf('--base');
+  const baseCommit = baseIndex >= 0 && args[baseIndex + 1] ? args[baseIndex + 1] : 'HEAD';
 
-  const validator = new PostModificationValidator({ ci: isCI });
+  const validator = new PostModificationValidator({ ci: isCI, base: baseCommit });
 
   validator
     .validate()
