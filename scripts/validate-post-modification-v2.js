@@ -116,7 +116,7 @@ class PostModificationValidator {
         this.log(`Issue ID from .issue_lock: ${this.issueId}`, 'info');
         return this.issueId;
       }
-    } catch (error) {
+    } catch {
       // .issue_lock no existe o no contiene issue ID
     }
 
@@ -139,7 +139,7 @@ class PostModificationValidator {
           return this.issueId;
         }
       }
-    } catch (error) {
+    } catch {
       // No se pudo detectar desde rama
     }
 
@@ -167,7 +167,7 @@ class PostModificationValidator {
           );
           const issue = JSON.parse(issueData);
           return this.parseScopeFromIssue(issue.body || issue.title || '');
-        } catch (error) {
+        } catch {
           this.log(`Could not fetch issue ${issueId} from GitHub: ${error.message}`, 'warning');
           return null;
         }
@@ -184,12 +184,12 @@ class PostModificationValidator {
           );
           const issue = JSON.parse(issueData);
           return this.parseScopeFromIssue(issue.body || issue.title || '');
-        } catch (error) {
+        } catch {
           this.log(`Could not fetch issue ${issueNumber} from GitHub: ${error.message}`, 'warning');
           return null;
         }
       }
-    } catch (error) {
+    } catch {
       this.log(`Failed to get issue scope: ${error.message}`, 'warning');
       return null;
     }
@@ -256,10 +256,7 @@ class PostModificationValidator {
     );
 
     if (foundNodes.length > 0) {
-      this.log(
-        `Inferred scope from issue text (${foundNodes.length} nodes found)`,
-        'warning'
-      );
+      this.log(`Inferred scope from issue text (${foundNodes.length} nodes found)`, 'warning');
       return foundNodes;
     }
 
@@ -316,12 +313,8 @@ class PostModificationValidator {
             return (
               file.file.includes(`nodes-v2/${node}.md`) ||
               file.file.includes(`nodes-v2/${node}/`) ||
-              (this.systemMap?.nodes?.[node]?.files || []).some((nf) =>
-                file.file.includes(nf)
-              ) ||
-              (this.systemMap?.nodes?.[node]?.docs || []).some((doc) =>
-                file.file.includes(doc)
-              )
+              (this.systemMap?.nodes?.[node]?.files || []).some((nf) => file.file.includes(nf)) ||
+              (this.systemMap?.nodes?.[node]?.docs || []).some((doc) => file.file.includes(doc))
             );
           })
           .map((f) => f.file);
@@ -371,7 +364,10 @@ class PostModificationValidator {
     }
 
     this.log('✅ Issue Scope Validation PASSED', 'success');
-    this.log(`  All ${this.affectedNodes.length} modified node(s) are within declared scope`, 'success');
+    this.log(
+      `  All ${this.affectedNodes.length} modified node(s) are within declared scope`,
+      'success'
+    );
     this.log('');
 
     this.scopeValidationResult = {
@@ -450,7 +446,7 @@ class PostModificationValidator {
       this.log('');
 
       return changes;
-    } catch (error) {
+    } catch {
       this.log(`Failed to detect modified files: ${error.message}`, 'warning');
       return [];
     }
@@ -542,7 +538,7 @@ class PostModificationValidator {
     try {
       const content = await fs.readFile(SYSTEM_MAP_V2_PATH, 'utf8');
       return yaml.parse(content);
-    } catch (error) {
+    } catch {
       this.log(`Failed to load system-map-v2.yaml: ${error.message}`, 'error');
       return null;
     }
@@ -752,7 +748,7 @@ class PostModificationValidator {
         this.log('');
         return { success: true, cycles: [] };
       }
-    } catch (error) {
+    } catch {
       this.log(`Failed to validate acyclic graph: ${error.message}`, 'warning');
       return { success: true, cycles: [] }; // No bloquear si falla
     }
@@ -840,7 +836,7 @@ class PostModificationValidator {
         metrics: currentMetrics,
         impact: 'unknown'
       };
-    } catch (error) {
+    } catch {
       this.log(`Failed to analyze health score: ${error.message}`, 'warning');
       return { current: null, metrics: null, impact: 'unknown' };
     }
@@ -975,14 +971,8 @@ class PostModificationValidator {
     if (this.scopeValidationResult && !this.scopeValidationResult.skipped) {
       this.log('Issue Scope Validation:', 'info');
       this.log(`  Issue ID: ${this.scopeValidationResult.issueId}`, 'info');
-      this.log(
-        `  Declared Scope: ${this.scopeValidationResult.declaredScope.join(', ')}`,
-        'info'
-      );
-      this.log(
-        `  Modified Nodes: ${this.scopeValidationResult.modifiedNodes.join(', ')}`,
-        'info'
-      );
+      this.log(`  Declared Scope: ${this.scopeValidationResult.declaredScope.join(', ')}`, 'info');
+      this.log(`  Modified Nodes: ${this.scopeValidationResult.modifiedNodes.join(', ')}`, 'info');
       if (this.scopeValidationResult.passed) {
         this.log(`  Result: ✅ PASS (all nodes in scope)`, 'success');
       } else {
