@@ -167,7 +167,7 @@ class PostModificationValidator {
           );
           const issue = JSON.parse(issueData);
           return this.parseScopeFromIssue(issue.body || issue.title || '');
-        } catch {
+        } catch (error) {
           this.log(`Could not fetch issue ${issueId} from GitHub: ${error.message}`, 'warning');
           return null;
         }
@@ -184,12 +184,12 @@ class PostModificationValidator {
           );
           const issue = JSON.parse(issueData);
           return this.parseScopeFromIssue(issue.body || issue.title || '');
-        } catch {
+        } catch (error) {
           this.log(`Could not fetch issue ${issueNumber} from GitHub: ${error.message}`, 'warning');
           return null;
         }
       }
-    } catch {
+    } catch (error) {
       this.log(`Failed to get issue scope: ${error.message}`, 'warning');
       return null;
     }
@@ -446,7 +446,7 @@ class PostModificationValidator {
       this.log('');
 
       return changes;
-    } catch {
+    } catch (error) {
       this.log(`Failed to detect modified files: ${error.message}`, 'warning');
       return [];
     }
@@ -538,7 +538,7 @@ class PostModificationValidator {
     try {
       const content = await fs.readFile(SYSTEM_MAP_V2_PATH, 'utf8');
       return yaml.parse(content);
-    } catch {
+    } catch (error) {
       this.log(`Failed to load system-map-v2.yaml: ${error.message}`, 'error');
       return null;
     }
@@ -748,7 +748,7 @@ class PostModificationValidator {
         this.log('');
         return { success: true, cycles: [] };
       }
-    } catch {
+    } catch (error) {
       this.log(`Failed to validate acyclic graph: ${error.message}`, 'warning');
       return { success: true, cycles: [] }; // No bloquear si falla
     }
@@ -836,7 +836,7 @@ class PostModificationValidator {
         metrics: currentMetrics,
         impact: 'unknown'
       };
-    } catch {
+    } catch (error) {
       this.log(`Failed to analyze health score: ${error.message}`, 'warning');
       return { current: null, metrics: null, impact: 'unknown' };
     }
