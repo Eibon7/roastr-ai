@@ -2,8 +2,8 @@
 
 **Issue:** ROA-330  
 **Título:** GDD v2 Node Post-Modification Consistency and System Map  
-**Fecha:** 2025-12-05  
-**Estado:** En implementación
+**Fecha:** 2025-12-14  
+**Estado:** Implementado (PR #1129)
 
 ---
 
@@ -95,7 +95,8 @@ class PostModificationValidator {
 - `scripts/validate-post-modification-v2.js`
 
 **Modificados:**
-- Ninguno (script independiente)
+- `scripts/validate-post-modification-v2.js` - Script principal de validación
+- `.github/workflows/gdd-validate.yml` - Integración en CI
 
 ---
 

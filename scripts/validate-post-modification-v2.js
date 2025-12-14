@@ -21,7 +21,7 @@
  *   node scripts/validate-post-modification-v2.js --base main  # Compare against main branch
  */
 
-const { spawn, execSync } = require('child_process');
+const { spawn, execFileSync } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
@@ -67,6 +67,7 @@ class PostModificationValidator {
     this.systemMap = null;
     this.warnings = [];
     this.blockedOperations = [];
+    this.systemMapModified = false;
   }
 
   log(message, type = 'info') {
@@ -102,13 +103,21 @@ class PostModificationValidator {
 
       // Si baseCommit es HEAD, usar staged + unstaged changes
       if (this.baseCommit === 'HEAD') {
-        diff = execSync('git diff --cached --name-status', { encoding: 'utf8' });
+        diff = execFileSync('git', ['diff', '--cached', '--name-status'], { encoding: 'utf8' });
         if (!diff.trim()) {
-          diff = execSync('git diff --name-status', { encoding: 'utf8' });
+          diff = execFileSync('git', ['diff', '--name-status'], { encoding: 'utf8' });
         }
       } else {
-        // Comparar con commit base
-        diff = execSync(`git diff ${this.baseCommit} --name-status`, { encoding: 'utf8' });
+        // Comparar con commit base - usar execFileSync para evitar shell injection
+        // Validar que baseCommit solo contiene caracteres seguros
+        if (!/^[a-zA-Z0-9._\-\^~:]+$/.test(this.baseCommit)) {
+          throw new Error(
+            `Invalid base commit: ${this.baseCommit}. Only alphanumeric and safe characters allowed.`
+          );
+        }
+        diff = execFileSync('git', ['diff', this.baseCommit, '--name-status'], {
+          encoding: 'utf8'
+        });
       }
 
       if (!diff.trim()) {
@@ -126,11 +135,17 @@ class PostModificationValidator {
         })
         .filter((change) => {
           // Filtrar solo archivos relevantes para v2
-          return (
+          const isRelevant =
             change.file.includes('docs/nodes-v2/') ||
             change.file.includes('docs/system-map-v2.yaml') ||
-            change.file.includes('docs/SSOT-V2.md')
-          );
+            change.file.includes('docs/SSOT-V2.md');
+
+          // Track si system-map fue modificado
+          if (isRelevant && change.file.includes('docs/system-map-v2.yaml')) {
+            this.systemMapModified = true;
+          }
+
+          return isRelevant;
         });
 
       this.log(`Detected ${changes.length} modified file(s)`, 'info');
@@ -392,7 +407,9 @@ class PostModificationValidator {
 
       for (const [nodeId, nodeData] of Object.entries(this.systemMap.nodes || {})) {
         if (nodeData.depends_on) {
-          const deps = Array.isArray(nodeData.depends_on) ? nodeData.depends_on : [nodeData.depends_on];
+          const deps = Array.isArray(nodeData.depends_on)
+            ? nodeData.depends_on
+            : [nodeData.depends_on];
           deps.forEach((dep) => {
             dependsOnMap[nodeId].add(dep);
           });
@@ -490,7 +507,8 @@ class PostModificationValidator {
     if (cycleResult) {
       this.blockedOperations.push({
         type: 'circular_dependency',
-        message: 'Circular dependencies detected. System-map modifications are blocked until cycles are resolved.',
+        message:
+          'Circular dependencies detected. System-map modifications are blocked until cycles are resolved.',
         cycles: cycleResult.cycles || []
       });
     }
@@ -675,38 +693,38 @@ class PostModificationValidator {
     }
 
     // Sección 4: Impacto en system-map
-    if (this.affectedNodes.length > 0 && this.systemMap) {
+    // Mostrar análisis incluso si solo system-map fue modificado (sin nodos mapeados)
+    if ((this.affectedNodes.length > 0 || this.systemMapModified) && this.systemMap) {
       this.log('System-Map Impact Analysis:', 'info');
       this.log('');
 
-      let hasSystemMapChanges = false;
-      for (const nodeName of this.affectedNodes) {
-        const fileChange = this.modifiedFiles.find((f) =>
-          f.file.includes('system-map-v2.yaml')
-        );
-        if (fileChange) {
-          hasSystemMapChanges = true;
-          this.log(`  • System-map-v2.yaml was modified`, 'info');
-          break;
+      if (this.systemMapModified) {
+        this.log(`  • System-map-v2.yaml was modified`, 'info');
+        if (this.affectedNodes.length === 0) {
+          this.log('  • No specific nodes mapped from file changes', 'info');
+          this.log('  • System-map changes may affect all nodes - review carefully', 'warning');
         }
-      }
-
-      if (!hasSystemMapChanges) {
+      } else {
         this.log('  • No system-map-v2.yaml changes detected', 'info');
         this.log('  • Node modifications are isolated to documentation', 'info');
       }
 
       // Mostrar nodos relacionados que pueden necesitar revisión
-      const allRelatedNodes = new Set();
-      this.affectedNodes.forEach((nodeName) => {
-        const context = this.nodeContext[nodeName];
-        if (context) {
-          context.all_related.forEach((rel) => allRelatedNodes.add(rel));
-        }
-      });
+      if (this.affectedNodes.length > 0) {
+        const allRelatedNodes = new Set();
+        this.affectedNodes.forEach((nodeName) => {
+          const context = this.nodeContext[nodeName];
+          if (context) {
+            context.all_related.forEach((rel) => allRelatedNodes.add(rel));
+          }
+        });
 
-      if (allRelatedNodes.size > 0) {
-        this.log(`  • Related nodes that may need review: ${Array.from(allRelatedNodes).join(', ')}`, 'info');
+        if (allRelatedNodes.size > 0) {
+          this.log(
+            `  • Related nodes that may need review: ${Array.from(allRelatedNodes).join(', ')}`,
+            'info'
+          );
+        }
       }
       this.log('');
     }
@@ -716,7 +734,10 @@ class PostModificationValidator {
       this.log('Health Score Impact:', 'info');
       this.log(`  Current Health Score: ${this.healthImpact.current}/100`, 'info');
       if (this.healthImpact.metrics) {
-        this.log(`  System Map Alignment: ${this.healthImpact.metrics.system_map_alignment}%`, 'info');
+        this.log(
+          `  System Map Alignment: ${this.healthImpact.metrics.system_map_alignment}%`,
+          'info'
+        );
         this.log(`  SSOT Alignment: ${this.healthImpact.metrics.ssot_alignment}%`, 'info');
         this.log(`  Dependency Density: ${this.healthImpact.metrics.dependency_density}%`, 'info');
         this.log(`  Crosslink Score: ${this.healthImpact.metrics.crosslink_score}%`, 'info');
