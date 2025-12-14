@@ -124,3 +124,13 @@ Este nodo depende de los siguientes nodos:
 ---
 
 ## 12. Related Nodes
+
+- infraestructura (depends_on)
+- observabilidad (depends_on)
+- ssot-integration (depends_on)
+- roasting-engine (required_by)
+- analysis-engine (required_by)
+- shield-engine (required_by)
+- integraciones-redes-sociales (required_by)
+- frontend-user-app (required_by)
+- frontend-admin (required_by)

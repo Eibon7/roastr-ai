@@ -199,3 +199,14 @@ Sistema de alertas por criticidad:
 
 **Última actualización:** 2025-12-08  
 **Mantenido por:** Back-end Dev
+
+---
+
+## Related Nodes
+
+- roasting-engine (required_by)
+- analysis-engine (required_by)
+- shield-engine (required_by)
+- integraciones-redes-sociales (required_by)
+- billing-integration (required_by)
+- frontend-user-app (required_by)

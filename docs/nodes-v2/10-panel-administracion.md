@@ -330,3 +330,8 @@ Este nodo usa y edita los siguientes valores del SSOT:
 **Nota:** Este nodo es el único que puede editar el SSOT (requiere role=superadmin).
 
 ---
+
+## Related Nodes
+
+- ssot-integration (depends_on)
+- billing-integration (depends_on)

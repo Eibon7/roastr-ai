@@ -236,3 +236,9 @@ Este nodo usa los siguientes valores del SSOT:
 - SSOT: `docs/SSOT/roastr-ssot-v2.md` (sección 10)
 
 ## 11. Related Nodes
+
+- analysis-engine (required_by)
+- shield-engine (required_by)
+- integraciones-redes-sociales (required_by)
+- billing-integration (required_by)
+- workers (required_by)

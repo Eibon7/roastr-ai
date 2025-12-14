@@ -39,4 +39,9 @@ describe('AnalyzeToxicityWorker - Minimal Contracts', () => {
     await expect(worker.updateCommentWithAnalysisDecision('comment', { analysis: { services_used: [] }, metadata: { decision: {} }, scores: {}, action_tags: [] }))
       .resolves.toBeUndefined();
   });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.clearAllMocks();
+  });
 });

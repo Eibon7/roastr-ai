@@ -292,3 +292,11 @@ Este nodo usa los siguientes valores del SSOT:
 ---
 
 ## 12. Related Nodes
+
+- billing-integration (depends_on)
+- infraestructura (depends_on)
+- observabilidad (depends_on)
+- ssot-integration (depends_on)
+- analysis-engine (depends_on)
+- roasting-engine (required_by)
+- frontend-user-app (required_by)

@@ -47,13 +47,6 @@ Este nodo depende de los siguientes nodos:
 - `ShieldAction`: Acciones de moderación
 - `CursorReconciliation`: Mantenimiento de cursors
 
-### Nodos Relacionados:
-
-- `02-autenticacion-usuarios.md` (OAuth flow)
-- `03-billing-polar.md` (Pausar si billing paused)
-- `05-motor-analisis.md` (Comentarios normalizados)
-- `08-workers.md` (Workers de ingestión y posting)
-
 ---
 
 ## 7. Edge Cases
@@ -193,7 +186,7 @@ Este nodo usa los siguientes valores del SSOT:
 
 ---
 
-## 9. Test Matrix
+## 10. Test Matrix
 
 ### Unit Tests (Vitest):
 
@@ -223,7 +216,7 @@ Este nodo usa los siguientes valores del SSOT:
 
 ---
 
-## 10. Implementation Notes
+## 11. Implementation Notes
 
 ### X Adapter:
 
@@ -307,4 +300,4 @@ export function calculateSmartDelay(
 - X API Docs: https://developer.x.com/en/docs
 - YouTube API Docs: https://developers.google.com/youtube/v3
 
-## 11. Related Nodes
+## 12. Related Nodes
