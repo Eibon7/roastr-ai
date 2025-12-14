@@ -327,21 +327,21 @@ jobs:
               fi
             fi
             
-            # 8. Detect Legacy IDs (WARN for src/, FAIL for docs/)
-            if [ -f "scripts/detect-legacy-ids.js" ]; then
-              echo "✅ Detecting legacy IDs..."
-              set +e
-              node scripts/detect-legacy-ids.js --ci
-              LEGACY_IDS_EXIT=$?
-              set -e
-              # Legacy IDs in src/ are acceptable (warn only), but fail for docs/
-              if [ "$LEGACY_IDS_EXIT" -ne 0 ]; then
-                echo "⚠️ Legacy IDs detected (exit code: $LEGACY_IDS_EXIT) - checking if in src/ (acceptable) or docs/ (must fix)"
-                # This is a warning, not a failure for v2 PRs (legacy code cleanup is separate)
-                echo "::warning::Legacy IDs detected. See logs for details."
+              # 8. Detect Legacy IDs (WARN for src/, FAIL for docs/)
+              if [ -f "scripts/detect-legacy-ids.js" ]; then
+                echo "✅ Detecting legacy IDs..."
+                set +e
+                node scripts/detect-legacy-ids.js --ci
+                LEGACY_IDS_EXIT=$?
+                set -e
+                # Legacy IDs in src/ are acceptable (warn only), but fail for docs/
+                if [ "$LEGACY_IDS_EXIT" -ne 0 ]; then
+                  echo "⚠️ Legacy IDs detected (exit code: $LEGACY_IDS_EXIT) - checking if in src/ (acceptable) or docs/ (must fix)"
+                  # This is a warning, not a failure for v2 PRs (legacy code cleanup is separate)
+                  echo "::warning::Legacy IDs detected. See logs for details."
+                fi
               fi
-            fi
-            
+              
               # 9. Detect Guardian References
               if [ -f "scripts/detect-guardian-references.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
                 echo "✅ Detecting guardian references..."
