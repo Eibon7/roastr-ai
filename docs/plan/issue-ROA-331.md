@@ -40,7 +40,6 @@ El script debe:
 **Cambios necesarios:**
 
 1. **Detectar modificaciones en nodos-v2 o system-map-v2.yaml:**
-   - Ya existe detección de archivos v2
    - Añadir detección específica para nodos-v2 y system-map-v2.yaml
 
 2. **Ejecutar `validate-post-modification-v2.js` cuando se detecten modificaciones:**
@@ -51,43 +50,6 @@ El script debe:
 3. **Mantener compatibilidad:**
    - Si el script consolidado falla, el workflow debe fallar
    - Mantener las validaciones individuales como fallback si es necesario
-
-**Estructura propuesta:**
-
-```yaml
-- name: Run Post-Modification Validation (v2)
-  if: steps.check_v2_only.outputs.v2_only == 'true' && steps.changes.outputs.has_node_modifications == 'true'
-  id: post_modification
-  run: |
-    echo "🔍 Running post-modification consistency validation..."
-    node scripts/validate-post-modification-v2.js --ci
-    echo "✅ Post-modification validation completed"
-```
-
-### 2. Detectar modificaciones específicas
-
-Añadir step para detectar si se modificaron nodos-v2 o system-map-v2.yaml:
-
-```yaml
-- name: Detect node/system-map modifications
-  if: steps.check_v2_only.outputs.v2_only == 'true'
-  id: node_changes
-  run: |
-    if grep -qE '^(docs/nodes-v2/|docs/system-map-v2\.yaml)' changed-files.txt; then
-      echo "has_node_modifications=true" >> $GITHUB_OUTPUT
-      echo "✅ Node or system-map modifications detected"
-    else
-      echo "has_node_modifications=false" >> $GITHUB_OUTPUT
-      echo "ℹ️  No node or system-map modifications"
-    fi
-```
-
-### 3. Integrar en el flujo de validación
-
-El script debe ejecutarse:
-- **Después** de las validaciones individuales (si se mantienen)
-- **O reemplazar** las validaciones individuales para nodos-v2/system-map-v2.yaml
-- **Antes** del cálculo de health score
 
 ---
 
