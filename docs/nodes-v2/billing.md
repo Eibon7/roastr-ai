@@ -92,33 +92,33 @@ Este nodo depende de los siguientes nodos:
 ### System Dependencies
 
 - **Polar (Billing Provider)**
-  - Checkout URL generation
-  - Payment processing
-  - Subscription management
-  - Webhook delivery
-  - Prorating calculations
+- Checkout URL generation
+- Payment processing
+- Subscription management
+- Webhook delivery
+- Prorating calculations
 
 - **Database (Supabase)**
-  - Subscription records
-  - Usage tracking tables
-  - State machine persistence
+- Subscription records
+- Usage tracking tables
+- State machine persistence
 
 - **Infrastructure Node**
-  - Queue system for async processing
-  - Database access patterns
-  - Multi-tenant isolation
+- Queue system for async processing
+- Database access patterns
+- Multi-tenant isolation
 
 - **Observability Node**
-  - Logging subscription events
-  - Tracking state transitions
-  - Monitoring payment failures
-  - Usage analytics
+- Logging subscription events
+- Tracking state transitions
+- Monitoring payment failures
+- Usage analytics
 
 - **SSOT Integration Node**
-  - Plan definitions and limits
-  - Subscription state definitions
-  - Credit consumption rules
-  - Plan capabilities
+- Plan definitions and limits
+- Subscription state definitions
+- Credit consumption rules
+- Plan capabilities
 
 ### Node Dependencies (GDD)
 
