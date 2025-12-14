@@ -349,7 +349,7 @@ jobs:
             echo '{"overall_score": 0, "status": "unknown"}' > gdd-health-v2.json
           }
           HEALTH_SCORE=$(jq -r '.overall_score // 0' gdd-health-v2.json 2>/dev/null || echo "0")
-          HEALTH_STATUS=$(jq -r '.status // "unknown" gdd-health-v2.json 2>/dev/null || echo "unknown")
+          HEALTH_STATUS=$(jq -r '.status // "unknown"' gdd-health-v2.json 2>/dev/null || echo "unknown")
           echo "score=$HEALTH_SCORE" >> $GITHUB_OUTPUT
           echo "health_status=$HEALTH_STATUS" >> $GITHUB_OUTPUT
           echo "Health Score: $HEALTH_SCORE/100 ($HEALTH_STATUS)"
