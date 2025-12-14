@@ -17,13 +17,13 @@ required_by:
 - integraciones-redes-sociales
 - billing-integration
 - workers
-  ssot_references:
+ssot_references:
 
 - queue_configuration
 - worker_routing_table
 - rls_policies
 - rate_limits
-  subnodes:
+subnodes:
 
 - queue-management
 - database-rls
