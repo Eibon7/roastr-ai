@@ -4,8 +4,64 @@
 
 docs/SSOT-V2.md
 
-# Note: This file exists in the current branch. After PR #1099 merge, 
+# Note: This file exists in the current branch. After PR #1099 merge,
+
 # the path may be updated to docs/roastr-ssot-v2.md if the SSOT structure changes.
+
+## 0. Activation Flow (MANDATORY)
+
+**BEFORE any task, code generation, or implementation:**
+
+Agents MUST execute the following activation flow:
+
+### 0.1 Pre-Task SSOT Verification
+
+1. **Verify SSOT exists and is accessible:**
+
+   ```bash
+   test -f docs/SSOT-V2.md && echo "SSOT exists" || echo "SSOT missing"
+   ```
+
+2. **Load SSOT file:**
+   - Read `docs/SSOT-V2.md` completely
+   - Identify relevant sections for the current task
+   - Note any TBD markers or incomplete sections
+
+3. **Validate SSOT integrity:**
+   - Check for required sections (Plans, Billing, Feature Flags, etc.)
+   - Verify no corrupted or malformed content
+   - Confirm SSOT version matches expected v2 structure
+
+### 0.2 SSOT Availability Handling
+
+**If SSOT is missing or inaccessible:**
+
+- STOP immediately
+- Output: "SSOT file not found. Cannot proceed without SSOT."
+- Request SSOT file restoration or creation
+
+**If SSOT is corrupted or incomplete:**
+
+- STOP immediately
+- Output: "SSOT integrity check failed. SSOT must be repaired before proceeding."
+- Report specific issues found
+
+**If SSOT exists and is valid:**
+
+- Proceed to section 2 (Mandatory Validation Workflow)
+- Reference SSOT sections in all subsequent operations
+
+### 0.3 Activation Checklist
+
+Before proceeding with any task, verify:
+
+- [ ] SSOT file exists at `docs/SSOT-V2.md`
+- [ ] SSOT is readable and parseable
+- [ ] Relevant SSOT sections identified for current task
+- [ ] No TBD markers in critical sections for this task
+- [ ] SSOT version is v2 (not legacy v1)
+
+**Only proceed if ALL checks pass.**
 
 ## 1. Forbidden
 
