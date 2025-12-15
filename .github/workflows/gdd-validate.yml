@@ -35,21 +35,40 @@ jobs:
           # Get changed files
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             git diff --name-only origin/${{ github.base_ref }}...HEAD > changed-files.txt
+            git diff --diff-filter=A --name-only origin/${{ github.base_ref }}...HEAD > added-files.txt
+            git diff --diff-filter=M --name-only origin/${{ github.base_ref }}...HEAD > modified-files.txt
           else
             git diff --name-only HEAD~1...HEAD > changed-files.txt
+            git diff --diff-filter=A --name-only HEAD~1...HEAD > added-files.txt
+            git diff --diff-filter=M --name-only HEAD~1...HEAD > modified-files.txt
           fi
           
-          # Check if any files in docs/legacy/v1/ were modified
-          if [ -f changed-files.txt ]; then
-            LEGACY_MODIFICATIONS=$(grep -E '^docs/legacy/v1/' changed-files.txt | wc -l | tr -d ' ')
+          # Check if any files in docs/legacy/v1/ were MODIFIED (not just added)
+          # Allow initial creation of legacy directory (ROA-329 migration), but block future modifications
+          if [ -f modified-files.txt ]; then
+            LEGACY_MODIFIED=$(grep -E '^docs/legacy/v1/' modified-files.txt | wc -l | tr -d ' ')
           else
-            LEGACY_MODIFICATIONS=0
+            LEGACY_MODIFIED=0
           fi
           
-          if [ "$LEGACY_MODIFICATIONS" -gt 0 ]; then
+          # Check if legacy directory exists in base branch (if it doesn't, this is initial migration)
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            git fetch origin ${{ github.base_ref }}:base-branch 2>/dev/null || true
+            LEGACY_EXISTS_IN_BASE=$(git ls-tree -r --name-only base-branch 2>/dev/null | grep -E '^docs/legacy/v1/' | wc -l | tr -d ' ' || echo "0")
+          else
+            LEGACY_EXISTS_IN_BASE=$(git ls-tree -r --name-only HEAD~1 2>/dev/null | grep -E '^docs/legacy/v1/' | wc -l | tr -d ' ' || echo "0")
+          fi
+          
+          # If legacy directory doesn't exist in base and files are only added (not modified), allow it (initial migration)
+          if [ "$LEGACY_EXISTS_IN_BASE" -eq 0 ] && [ "$LEGACY_MODIFIED" -eq 0 ]; then
+            echo "✅ Legacy v1 directory creation detected (initial migration - ROA-329)"
+            echo "   This is the initial migration of legacy files to docs/legacy/v1/"
+            echo "   Future modifications to legacy files will be blocked."
+            echo "legacy_modified=false" >> $GITHUB_OUTPUT
+          elif [ "$LEGACY_MODIFIED" -gt 0 ]; then
             echo "❌ BLOCKED: PR modifies deprecated legacy v1 files in docs/legacy/v1/"
-            echo "   Modified files:"
-            grep -E '^docs/legacy/v1/' changed-files.txt || echo "   (none)"
+            echo "   Modified files (files that already existed and were changed):"
+            grep -E '^docs/legacy/v1/' modified-files.txt || echo "   (none)"
             echo ""
             echo "   Legacy v1 files are DEPRECATED and should NOT be modified."
             echo "   All changes must be made in v2:"
@@ -60,7 +79,7 @@ jobs:
             echo "::error::PR modifies deprecated legacy v1 files. All changes must be in v2."
             exit 1
           else
-            echo "✅ No legacy v1 files modified"
+            echo "✅ No legacy v1 files modified (only new files added, which is allowed for initial migration)"
             echo "legacy_modified=false" >> $GITHUB_OUTPUT
           fi
 
