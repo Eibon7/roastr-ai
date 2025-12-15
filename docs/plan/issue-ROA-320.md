@@ -361,6 +361,58 @@
 
 ---
 
-**Última actualización:** 2025-12-11  
-**Estado:** 🟡 Planificación completa, listo para implementación
+## Scope Adjustment Note (Post-Implementation)
+
+**Fecha:** 2025-12-15  
+**Estado:** ✅ Implementación completada con ajuste de scope
+
+### Ajuste de Scope Realizado
+
+Durante la implementación de ROA-320, se realizó un ajuste consciente del scope original:
+
+#### Plan Original vs. Resultado Real
+
+**Plan Original:**
+- Anticipaba eliminación destructiva de documentos legacy (reducción estimada del 30-40%)
+- Incluía eliminación de planes obsoletos (>6 meses) y test evidence obsoletos (>3 meses)
+- Preveía consolidación y eliminación de documentos duplicados
+
+**Resultado Real:**
+- **230 elementos reclasificados** (147 planes de reviews + 83 test evidence de reviews)
+- **0 elementos eliminados** (ningún documento fue eliminado destructivamente)
+- **0 planes obsoletos identificados** según criterios (>6 meses)
+- **0 test evidence obsoletos identificados** según criterios (>3 meses)
+
+### Decisión Consciente: Reclasificación vs. Eliminación
+
+**Foco Real de la Implementación:**
+- ✅ **Reclasificación y aislamiento** de documentos legacy
+- ✅ **Organización estructural** en categorías claras (`docs/legacy/reviews/`, `docs/legacy/test-evidence/`)
+- ✅ **Separación clara** entre documentación activa y legacy
+- ❌ **Eliminación destructiva** pospuesta conscientemente
+
+**Razones del Ajuste:**
+1. **Preservación histórica:** Los documentos legacy tienen valor histórico y pueden ser útiles para referencia futura
+2. **Criterios estrictos:** La clasificación automática no identificó elementos que cumplieran estrictamente los criterios de eliminación
+3. **Prudencia:** Preferencia por aislamiento sobre eliminación para evitar pérdida de contexto
+4. **Git history:** Los documentos ya están en git history, por lo que la eliminación no reduce significativamente el tamaño del repositorio
+
+### Impacto del Ajuste
+
+**Métricas Reales:**
+- **Reducción de ruido:** 100% de CodeRabbit reviews removidos de `docs/plan/` y `docs/test-evidence/`
+- **Organización mejorada:** Estructura clara de documentación legacy vs. activa
+- **Tamaño:** Sin cambio (solo reorganización, no eliminación)
+- **Claridad:** Mejora significativa en la identificación de documentación relevante
+
+**Eliminación Futura:**
+La eliminación destructiva de documentos legacy se pospone para una fase futura, cuando:
+- Se establezcan criterios más específicos de eliminación
+- Se realice una revisión manual de documentos legacy
+- Se defina una política de retención documental
+
+---
+
+**Última actualización:** 2025-12-15  
+**Estado:** ✅ Implementación completada con ajuste de scope documentado
 
