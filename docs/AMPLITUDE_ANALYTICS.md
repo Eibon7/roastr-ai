@@ -1,5 +1,16 @@
 # Amplitude Analytics - Roastr.AI (V2-ready)
 
+> ⚠️ **DEPRECATED**: This document is kept for historical reference only.
+> 
+> **For the authoritative, up-to-date documentation, please refer to:**
+> 
+> 📚 **[docs/analytics/amplitude.md](./analytics/amplitude.md)**
+> 
+> That unified guide covers both frontend and backend v2 implementations,
+> naming conventions, standard properties, privacy decisions, and usage examples.
+
+---
+
 ## 📊 Descripción
 
 Amplitude Analytics está integrado en la aplicación Roastr.AI para rastrear interacciones de usuarios y métricas clave de producto.

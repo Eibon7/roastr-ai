@@ -44,6 +44,12 @@ export function initializeAmplitude(): boolean {
     return false;
   }
 
+  // Skip initialization in test environment (mirrors backend pattern)
+  if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) {
+    console.info('[Amplitude] Test environment detected. Analytics disabled.');
+    return false;
+  }
+
   // Get API key from environment
   const apiKey = import.meta.env.VITE_AMPLITUDE_API_KEY;
 
