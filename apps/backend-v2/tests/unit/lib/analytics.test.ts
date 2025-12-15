@@ -191,9 +191,8 @@ describe('Amplitude Analytics - Backend v2', () => {
   });
 
   it('should return correct initialization status', async () => {
-    const { initializeAmplitude, isAmplitudeInitialized } = await import(
-      '../../../src/lib/analytics'
-    );
+    const { initializeAmplitude, isAmplitudeInitialized } =
+      await import('../../../src/lib/analytics');
 
     // Before initialization
     expect(isAmplitudeInitialized()).toBe(false);
