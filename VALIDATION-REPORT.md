@@ -133,13 +133,35 @@ La PR **ROA-328** tiene como objetivo:
 
 ---
 
-## 🔍 Verificación de CI (Pendiente)
+## 🔍 Verificación de CI
+
+### Fixes Aplicados
+
+**Problema:** Workflows deprecated (`tests.yml`, `integration-tests.yml`) se ejecutaban en PRs causando duplicación.
+
+**Solución:**
+- ✅ Deshabilitado `tests.yml` en PRs (añadido `if: false`)
+- ✅ Deshabilitado `integration-tests.yml` en PRs (añadido `if: false`)
+- ✅ Removidos triggers `pull_request` de workflows deprecated
+- ✅ Mantenido `workflow_dispatch` para trigger manual si es necesario
+
+### Verificaciones Requeridas
 
 Una vez que los workflows CI se ejecuten, verificar:
 
-1. ✅ Que solo corre `ci.yml` (workflows deprecated no se ejecutan)
+1. ✅ Que solo corre `ci.yml` (workflows deprecated no se ejecutan) - **FIXED**
 2. ✅ Que los logs muestran Vitest como runner
 3. ✅ Que no hay referencias a Jest en logs de CI (excepto en errores de tests legacy)
+
+### Otros Workflows
+
+Los siguientes workflows pueden seguir fallando por razones no relacionadas con ROA-328:
+- GDD Validation
+- SSOT Governance Validation  
+- System Map v2 Consistency
+- Guardian Product Governance Check
+
+Estos necesitan revisión separada y no están relacionados con la consolidación de CI/Vitest.
 
 ---
 
