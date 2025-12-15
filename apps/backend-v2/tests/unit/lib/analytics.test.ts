@@ -9,7 +9,7 @@ import * as amplitudeModule from '@amplitude/analytics-node';
 vi.mock('@amplitude/analytics-node', () => ({
   init: vi.fn(),
   track: vi.fn(),
-  flush: vi.fn().mockResolvedValue(undefined),
+  flush: vi.fn().mockResolvedValue(undefined)
 }));
 
 describe('Amplitude Analytics - Backend v2', () => {
@@ -24,7 +24,7 @@ describe('Amplitude Analytics - Backend v2', () => {
       ...originalEnv,
       AMPLITUDE_API_KEY: 'test_amplitude_api_key',
       NODE_ENV: 'development',
-      APP_VERSION: '2.0.0',
+      APP_VERSION: '2.0.0'
     };
   });
 
@@ -40,7 +40,7 @@ describe('Amplitude Analytics - Backend v2', () => {
 
     expect(result).toBe(true);
     expect(amplitudeModule.init).toHaveBeenCalledWith('test_amplitude_api_key', {
-      serverZone: 'EU',
+      serverZone: 'EU'
     });
     expect(amplitudeModule.init).toHaveBeenCalledTimes(1);
   });
@@ -107,12 +107,12 @@ describe('Amplitude Analytics - Backend v2', () => {
       event: 'roast_generated',
       properties: {
         tone: 'canalla',
-        platform: 'twitter',
+        platform: 'twitter'
       },
       context: {
         flow: 'roasting',
-        request_id: 'req_xyz',
-      },
+        request_id: 'req_xyz'
+      }
     });
 
     expect(amplitudeModule.track).toHaveBeenCalledWith(
@@ -124,11 +124,11 @@ describe('Amplitude Analytics - Backend v2', () => {
         source: 'backend-v2',
         app_version: '2.0.0',
         flow: 'roasting',
-        request_id: 'req_xyz',
+        request_id: 'req_xyz'
       },
       {
         user_id: 'user_123',
-        device_id: undefined,
+        device_id: undefined
       }
     );
   });
@@ -142,11 +142,11 @@ describe('Amplitude Analytics - Backend v2', () => {
       deviceId: 'device_456',
       event: 'auth_login_attempt',
       properties: {
-        method: 'email_password',
+        method: 'email_password'
       },
       context: {
-        flow: 'auth',
-      },
+        flow: 'auth'
+      }
     });
 
     expect(amplitudeModule.track).toHaveBeenCalledWith(
@@ -156,11 +156,11 @@ describe('Amplitude Analytics - Backend v2', () => {
         env: 'development',
         source: 'backend-v2',
         app_version: '2.0.0',
-        flow: 'auth',
+        flow: 'auth'
       },
       {
         user_id: undefined,
-        device_id: 'device_456',
+        device_id: 'device_456'
       }
     );
   });
@@ -178,7 +178,7 @@ describe('Amplitude Analytics - Backend v2', () => {
     // Try to track event
     trackEvent({
       userId: 'user_123',
-      event: 'test_event',
+      event: 'test_event'
     });
 
     expect(amplitudeModule.track).not.toHaveBeenCalled();
@@ -249,7 +249,7 @@ describe('Amplitude Analytics - Backend v2', () => {
     initializeAmplitude();
     trackEvent({
       userId: 'user_123',
-      event: 'test_event',
+      event: 'test_event'
     });
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -261,4 +261,3 @@ describe('Amplitude Analytics - Backend v2', () => {
     consoleErrorSpy.mockRestore();
   });
 });
-

@@ -21,7 +21,7 @@ app.get('/health', (_req, res) => {
   res.json({
     status: 'healthy',
     version: process.env.APP_VERSION || '2.0.0',
-    timestamp: new Date().toISOString(),
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -33,4 +33,3 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 export default app;
-

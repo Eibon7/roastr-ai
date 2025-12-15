@@ -82,7 +82,7 @@ export function initializeAmplitude(): boolean {
   try {
     // Initialize Amplitude with EU server zone
     amplitude.init(apiKey, {
-      serverZone: 'EU', // GDPR compliant
+      serverZone: 'EU' // GDPR compliant
     });
 
     isInitialized = true;
@@ -128,7 +128,7 @@ export function trackEvent({
   deviceId,
   event,
   properties = {},
-  context = {},
+  context = {}
 }: TrackEventParams): void {
   // Skip if not initialized (test environment or missing API key)
   if (!isInitialized) {
@@ -143,7 +143,7 @@ export function trackEvent({
     const standardProps: StandardProperties = {
       env: process.env.NODE_ENV || 'development',
       source: 'backend-v2',
-      app_version: process.env.APP_VERSION || '2.0.0',
+      app_version: process.env.APP_VERSION || '2.0.0'
     };
 
     // Add flow if provided
@@ -160,18 +160,14 @@ export function trackEvent({
     const enrichedProperties = {
       ...properties,
       ...standardProps,
-      ...context,
+      ...context
     };
 
     // Track event with Amplitude
-    amplitude.track(
-      event,
-      enrichedProperties,
-      {
-        user_id: userId,
-        device_id: deviceId,
-      }
-    );
+    amplitude.track(event, enrichedProperties, {
+      user_id: userId,
+      device_id: deviceId
+    });
   } catch (error) {
     console.error('[Amplitude] Failed to track event:', event, error);
   }
@@ -205,4 +201,3 @@ export async function flushEvents(): Promise<void> {
     console.error('[Amplitude] Failed to flush events:', error);
   }
 }
-
