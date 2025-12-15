@@ -1,0 +1,2992 @@
+{
+  "reviews": {
+    "plans": [
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-634.md",
+        "name": "review-634.md",
+        "size": 8829,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3331472272.md",
+        "name": "review-3331472272.md",
+        "size": 23995,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3375358448.md",
+        "name": "review-3375358448.md",
+        "size": 17408,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3358102684.md",
+        "name": "review-3358102684.md",
+        "size": 14638,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3383902854.md",
+        "name": "review-3383902854.md",
+        "size": 20816,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-750.md",
+        "name": "review-750.md",
+        "size": 2579,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3345845777.md",
+        "name": "review-3345845777.md",
+        "size": 10168,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3350677071.md",
+        "name": "review-3350677071.md",
+        "size": 8065,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3387536267.md",
+        "name": "review-3387536267.md",
+        "size": 13408,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3392684317.md",
+        "name": "review-3392684317.md",
+        "size": 4066,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3349493593.md",
+        "name": "review-3349493593.md",
+        "size": 5534,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3329345492.md",
+        "name": "review-3329345492.md",
+        "size": 39928,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3414111177.md",
+        "name": "review-3414111177.md",
+        "size": 10136,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3430530237.md",
+        "name": "review-3430530237.md",
+        "size": 3267,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3356875608.md",
+        "name": "review-3356875608.md",
+        "size": 6553,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3367771800.md",
+        "name": "review-3367771800.md",
+        "size": 4171,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3331370158.md",
+        "name": "review-3331370158.md",
+        "size": 9352,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-coderabbit-pr399.md",
+        "name": "review-coderabbit-pr399.md",
+        "size": 5280,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3359091054.md",
+        "name": "review-3359091054.md",
+        "size": 20765,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3395447536.md",
+        "name": "review-3395447536.md",
+        "size": 3889,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3332682710.md",
+        "name": "review-3332682710.md",
+        "size": 9950,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-coderabbit-pr424.md",
+        "name": "review-coderabbit-pr424.md",
+        "size": 5569,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-807.md",
+        "name": "review-807.md",
+        "size": 3124,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-697.md",
+        "name": "review-697.md",
+        "size": 9697,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3376314227.md",
+        "name": "review-3376314227.md",
+        "size": 10393,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3343930442.md",
+        "name": "review-3343930442.md",
+        "size": 10232,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3438504879.md",
+        "name": "review-3438504879.md",
+        "size": 13895,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3354698973.md",
+        "name": "review-3354698973.md",
+        "size": 7660,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3345404358.md",
+        "name": "review-3345404358.md",
+        "size": 6987,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-734.md",
+        "name": "review-734.md",
+        "size": 7834,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3418172628.md",
+        "name": "review-3418172628.md",
+        "size": 8989,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3345599847.md",
+        "name": "review-3345599847.md",
+        "size": 9892,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3334552691.md",
+        "name": "review-3334552691.md",
+        "size": 19917,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3443936877.md",
+        "name": "review-3443936877.md",
+        "size": 3292,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3331703571.md",
+        "name": "review-3331703571.md",
+        "size": 10188,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3357403780.md",
+        "name": "review-3357403780.md",
+        "size": 7781,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3421415462.md",
+        "name": "review-3421415462.md",
+        "size": 12337,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3423197513.md",
+        "name": "review-3423197513.md",
+        "size": 16770,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3361623715.md",
+        "name": "review-3361623715.md",
+        "size": 4741,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3390008133.md",
+        "name": "review-3390008133.md",
+        "size": 38486,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3357480921.md",
+        "name": "review-3357480921.md",
+        "size": 8448,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3434733955.md",
+        "name": "review-3434733955.md",
+        "size": 10126,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3349006632.md",
+        "name": "review-3349006632.md",
+        "size": 10846,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3332873308.md",
+        "name": "review-3332873308.md",
+        "size": 14521,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3345744075.md",
+        "name": "review-3345744075.md",
+        "size": 13181,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3335075828.md",
+        "name": "review-3335075828.md",
+        "size": 20502,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3332951880.md",
+        "name": "review-3332951880.md",
+        "size": 6999,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-pr658-coderabbit.md",
+        "name": "review-pr658-coderabbit.md",
+        "size": 4394,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3388849333.md",
+        "name": "review-3388849333.md",
+        "size": 8442,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-pr-580.md",
+        "name": "review-pr-580.md",
+        "size": 13799,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3354462246.md",
+        "name": "review-3354462246.md",
+        "size": 8260,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3434156164.md",
+        "name": "review-3434156164.md",
+        "size": 18113,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3442639957.md",
+        "name": "review-3442639957.md",
+        "size": 5505,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3393083565.md",
+        "name": "review-3393083565.md",
+        "size": 3773,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3343936799.md",
+        "name": "review-3343936799.md",
+        "size": 25097,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3351792121.md",
+        "name": "review-3351792121.md",
+        "size": 24478,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3340694942.md",
+        "name": "review-3340694942.md",
+        "size": 9480,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3424304067.md",
+        "name": "review-3424304067.md",
+        "size": 11238,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3343796117.md",
+        "name": "review-3343796117.md",
+        "size": 5460,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3353714173.md",
+        "name": "review-3353714173.md",
+        "size": 10414,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3385986392.md",
+        "name": "review-3385986392.md",
+        "size": 7728,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3361554727.md",
+        "name": "review-3361554727.md",
+        "size": 7439,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3339877724.md",
+        "name": "review-3339877724.md",
+        "size": 6804,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3351087724.md",
+        "name": "review-3351087724.md",
+        "size": 18139,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3398441881.md",
+        "name": "review-3398441881.md",
+        "size": 5775,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3394182951.md",
+        "name": "review-3394182951.md",
+        "size": 7373,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3340617817.md",
+        "name": "review-3340617817.md",
+        "size": 9136,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3353894295.md",
+        "name": "review-3353894295.md",
+        "size": 17520,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3354598820.md",
+        "name": "review-3354598820.md",
+        "size": 13373,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3447741369.md",
+        "name": "review-3447741369.md",
+        "size": 9391,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-739.md",
+        "name": "review-739.md",
+        "size": 21017,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3492026232.md",
+        "name": "review-3492026232.md",
+        "size": 4691,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-pr660-coderabbit.md",
+        "name": "review-pr660-coderabbit.md",
+        "size": 8218,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3437824804.md",
+        "name": "review-3437824804.md",
+        "size": 8199,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3447497535.md",
+        "name": "review-3447497535.md",
+        "size": 2249,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-pr659-coderabbit.md",
+        "name": "review-pr659-coderabbit.md",
+        "size": 8845,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3483262842.md",
+        "name": "review-3483262842.md",
+        "size": 2007,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3344281711.md",
+        "name": "review-3344281711.md",
+        "size": 10706,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3438444180.md",
+        "name": "review-3438444180.md",
+        "size": 6321,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3430270803.md",
+        "name": "review-3430270803.md",
+        "size": 4614,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3436165706.md",
+        "name": "review-3436165706.md",
+        "size": 10782,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3380251863.md",
+        "name": "review-3380251863.md",
+        "size": 3093,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3352743882.md",
+        "name": "review-3352743882.md",
+        "size": 14206,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3353819519.md",
+        "name": "review-3353819519.md",
+        "size": 12604,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3353722960.md",
+        "name": "review-3353722960.md",
+        "size": 14824,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3432374344.md",
+        "name": "review-3432374344.md",
+        "size": 7158,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3346841401.md",
+        "name": "review-3346841401.md",
+        "size": 14034,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3380583406.md",
+        "name": "review-3380583406.md",
+        "size": 9525,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3499858197.md",
+        "name": "review-3499858197.md",
+        "size": 5264,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3398199357.md",
+        "name": "review-3398199357.md",
+        "size": 8224,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3356721323.md",
+        "name": "review-3356721323.md",
+        "size": 8810,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3405814750.md",
+        "name": "review-3405814750.md",
+        "size": 5353,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3346836919.md",
+        "name": "review-3346836919.md",
+        "size": 13643,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3392598742.md",
+        "name": "review-3392598742.md",
+        "size": 19101,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3341957615.md",
+        "name": "review-3341957615.md",
+        "size": 914,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3482267788.md",
+        "name": "review-3482267788.md",
+        "size": 4655,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3369275698.md",
+        "name": "review-3369275698.md",
+        "size": 11573,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3359215410.md",
+        "name": "review-3359215410.md",
+        "size": 6816,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-429-round2.md",
+        "name": "review-429-round2.md",
+        "size": 4701,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3342561607.md",
+        "name": "review-3342561607.md",
+        "size": 17122,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3438481794.md",
+        "name": "review-3438481794.md",
+        "size": 10714,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3495070964.md",
+        "name": "review-3495070964.md",
+        "size": 4881,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3354642078.md",
+        "name": "review-3354642078.md",
+        "size": 8069,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-738.md",
+        "name": "review-738.md",
+        "size": 1414,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-coderabbit-pr418.md",
+        "name": "review-coderabbit-pr418.md",
+        "size": 7732,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-pr426.md",
+        "name": "review-pr426.md",
+        "size": 2665,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3332619544.md",
+        "name": "review-3332619544.md",
+        "size": 6518,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3331601417.md",
+        "name": "review-3331601417.md",
+        "size": 19908,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3358126969.md",
+        "name": "review-3358126969.md",
+        "size": 5767,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3430606212.md",
+        "name": "review-3430606212.md",
+        "size": 7161,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-424.md",
+        "name": "review-424.md",
+        "size": 4350,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3332341165.md",
+        "name": "review-3332341165.md",
+        "size": 10934,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3388952901.md",
+        "name": "review-3388952901.md",
+        "size": 6427,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3375358448-PHASE2-DEFERRED.md",
+        "name": "review-3375358448-PHASE2-DEFERRED.md",
+        "size": 6866,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3331779367.md",
+        "name": "review-3331779367.md",
+        "size": 15775,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3436699322.md",
+        "name": "review-3436699322.md",
+        "size": 9387,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3482080476.md",
+        "name": "review-3482080476.md",
+        "size": 5627,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3360205391.md",
+        "name": "review-3360205391.md",
+        "size": 5967,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3393163096.md",
+        "name": "review-3393163096.md",
+        "size": 5689,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-830.md",
+        "name": "review-830.md",
+        "size": 1925,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-756.md",
+        "name": "review-756.md",
+        "size": 7820,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3395251465.md",
+        "name": "review-3395251465.md",
+        "size": 2778,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3394330716.md",
+        "name": "review-3394330716.md",
+        "size": 5642,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3345390254.md",
+        "name": "review-3345390254.md",
+        "size": 7643,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3447334692.md",
+        "name": "review-3447334692.md",
+        "size": 6047,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3359715479.md",
+        "name": "review-3359715479.md",
+        "size": 5040,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3481804716.md",
+        "name": "review-3481804716.md",
+        "size": 7088,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3332667107.md",
+        "name": "review-3332667107.md",
+        "size": 15576,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3332583632.md",
+        "name": "review-3332583632.md",
+        "size": 13718,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3344769061.md",
+        "name": "review-3344769061.md",
+        "size": 6193,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-825.md",
+        "name": "review-825.md",
+        "size": 3183,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3345472977.md",
+        "name": "review-3345472977.md",
+        "size": 9508,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3389496744.md",
+        "name": "review-3389496744.md",
+        "size": 26207,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3438516735.md",
+        "name": "review-3438516735.md",
+        "size": 22692,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3329352717.md",
+        "name": "review-3329352717.md",
+        "size": 20594,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3334825590.md",
+        "name": "review-3334825590.md",
+        "size": 20244,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-674-coderabbit.md",
+        "name": "review-674-coderabbit.md",
+        "size": 8201,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-coderabbit-831.md",
+        "name": "review-coderabbit-831.md",
+        "size": 2306,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-627.md",
+        "name": "review-627.md",
+        "size": 5871,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3482927553.md",
+        "name": "review-3482927553.md",
+        "size": 3346,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3332533239.md",
+        "name": "review-3332533239.md",
+        "size": 19257,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3390269939.md",
+        "name": "review-3390269939.md",
+        "size": 13507,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3340734951.md",
+        "name": "review-3340734951.md",
+        "size": 5013,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3505843498-completion.md",
+        "name": "review-3505843498-completion.md",
+        "size": 6841,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3332408741.md",
+        "name": "review-3332408741.md",
+        "size": 18303,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3343448532.md",
+        "name": "review-3343448532.md",
+        "size": 5951,
+        "category": "codeRabbit-review-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/review-3375470605-testing.md",
+        "name": "review-3375470605-testing.md",
+        "size": 35192,
+        "category": "codeRabbit-review-plan"
+      }
+    ],
+    "testEvidence": [
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3434733955",
+        "name": "review-3434733955",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3346841401",
+        "name": "review-3346841401",
+        "files": 5,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3331779367",
+        "name": "review-3331779367",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3442639957",
+        "name": "review-3442639957",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3353722960",
+        "name": "review-3353722960",
+        "files": 3,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3383902854",
+        "name": "review-3383902854",
+        "files": 5,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3331703571",
+        "name": "review-3331703571",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3356875608",
+        "name": "review-3356875608",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3430270803",
+        "name": "review-3430270803",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3344281711",
+        "name": "review-3344281711",
+        "files": 5,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-697",
+        "name": "review-697",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3329345492",
+        "name": "review-3329345492",
+        "files": 9,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3351792121",
+        "name": "review-3351792121",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3353894295",
+        "name": "review-3353894295",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3331472272",
+        "name": "review-3331472272",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3372030941",
+        "name": "review-3372030941",
+        "files": 3,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3334825590",
+        "name": "review-3334825590",
+        "files": 3,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3360205391",
+        "name": "review-3360205391",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3332667107",
+        "name": "review-3332667107",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-750",
+        "name": "review-750",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3332341165",
+        "name": "review-3332341165",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3394330716",
+        "name": "review-3394330716",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3414111177",
+        "name": "review-3414111177",
+        "files": 5,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-756",
+        "name": "review-756",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3345134973",
+        "name": "review-3345134973",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3380232959",
+        "name": "review-3380232959",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3332873308",
+        "name": "review-3332873308",
+        "files": 3,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3346836919",
+        "name": "review-3346836919",
+        "files": 8,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3345845777",
+        "name": "review-3345845777",
+        "files": 5,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3352743882",
+        "name": "review-3352743882",
+        "files": 4,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3398199357",
+        "name": "review-3398199357",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3351087724",
+        "name": "review-3351087724",
+        "files": 4,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3392598742",
+        "name": "review-3392598742",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3388952901",
+        "name": "review-3388952901",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3340617817",
+        "name": "review-3340617817",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3345744075",
+        "name": "review-3345744075",
+        "files": 5,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3345390254",
+        "name": "review-3345390254",
+        "files": 5,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3356721323",
+        "name": "review-3356721323",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3341957615",
+        "name": "review-3341957615",
+        "files": 8,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3335075828",
+        "name": "review-3335075828",
+        "files": 6,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3353819519",
+        "name": "review-3353819519",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3345472977",
+        "name": "review-3345472977",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3354462246",
+        "name": "review-3354462246",
+        "files": 3,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3357403780",
+        "name": "review-3357403780",
+        "files": 4,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3343448532",
+        "name": "review-3343448532",
+        "files": 4,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3359715479",
+        "name": "review-3359715479",
+        "files": 3,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3332682710",
+        "name": "review-3332682710",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3339877724",
+        "name": "review-3339877724",
+        "files": 3,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3354598820",
+        "name": "review-3354598820",
+        "files": 5,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3342561607",
+        "name": "review-3342561607",
+        "files": 4,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-634",
+        "name": "review-634",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3345404358",
+        "name": "review-3345404358",
+        "files": 4,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3359215410",
+        "name": "review-3359215410",
+        "files": 3,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3354698973",
+        "name": "review-3354698973",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3357480921",
+        "name": "review-3357480921",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3332619544",
+        "name": "review-3332619544",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3332951880",
+        "name": "review-3332951880",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/pr-475/review-3309563715",
+        "name": "review-3309563715",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3495070964",
+        "name": "review-3495070964",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3343796117",
+        "name": "review-3343796117",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3387536267",
+        "name": "review-3387536267",
+        "files": 4,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3343930442",
+        "name": "review-3343930442",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3385986392",
+        "name": "review-3385986392",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3331370158",
+        "name": "review-3331370158",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3331601417",
+        "name": "review-3331601417",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3350677071",
+        "name": "review-3350677071",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3343936799",
+        "name": "review-3343936799",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3358126969",
+        "name": "review-3358126969",
+        "files": 3,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-738",
+        "name": "review-738",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3499858197",
+        "name": "review-3499858197",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3349493593",
+        "name": "review-3349493593",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3354642078",
+        "name": "review-3354642078",
+        "files": 3,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3434156164",
+        "name": "review-3434156164",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3430530237",
+        "name": "review-3430530237",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3329352717",
+        "name": "review-3329352717",
+        "files": 3,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3393621565",
+        "name": "review-3393621565",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3358102684",
+        "name": "review-3358102684",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3349006632",
+        "name": "review-3349006632",
+        "files": 4,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3357562417",
+        "name": "review-3357562417",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3345599847",
+        "name": "review-3345599847",
+        "files": 4,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3344769061",
+        "name": "review-3344769061",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3342452985",
+        "name": "review-3342452985",
+        "files": 1,
+        "category": "codeRabbit-review-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/review-3394182951",
+        "name": "review-3394182951",
+        "files": 2,
+        "category": "codeRabbit-review-evidence"
+      }
+    ]
+  },
+  "plans": {
+    "obsolete": [],
+    "active": [
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-1043-PR-READY.md",
+        "name": "issue-1043-PR-READY.md",
+        "issueNum": "1043",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-ROA-320.md",
+        "name": "issue-ROA-320.md",
+        "issueNum": null,
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-887-manual-testing-checklist.md",
+        "name": "issue-887-manual-testing-checklist.md",
+        "issueNum": "887",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-435-spec14-validation-fix.md",
+        "name": "issue-435-spec14-validation-fix.md",
+        "issueNum": "435",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-808-agent-prompt.md",
+        "name": "issue-808-agent-prompt.md",
+        "issueNum": "808",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-485-followup.md",
+        "name": "issue-485-followup.md",
+        "issueNum": "485",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-ROA-330.md",
+        "name": "issue-ROA-330.md",
+        "issueNum": null,
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-1018.md",
+        "name": "issue-1018.md",
+        "issueNum": "1018",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-432-analysis.md",
+        "name": "issue-432-analysis.md",
+        "issueNum": "432",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-808-migration-summary.md",
+        "name": "issue-808-migration-summary.md",
+        "issueNum": "808",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-404-ui-implementation.md",
+        "name": "issue-404-ui-implementation.md",
+        "issueNum": "404",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-928.md",
+        "name": "issue-928.md",
+        "issueNum": "928",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-868.md",
+        "name": "issue-868.md",
+        "issueNum": "868",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-808-credenciales-polar.md",
+        "name": "issue-808-credenciales-polar.md",
+        "issueNum": "808",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-715-coderabbit-fixes.md",
+        "name": "issue-715-coderabbit-fixes.md",
+        "issueNum": "715",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-409.md",
+        "name": "issue-409.md",
+        "issueNum": "409",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-419.md",
+        "name": "issue-419.md",
+        "issueNum": "419",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-650-checkpoint.md",
+        "name": "issue-650-checkpoint.md",
+        "issueNum": "650",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-715-scope-explanation.md",
+        "name": "issue-715-scope-explanation.md",
+        "issueNum": "715",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-887-migration-guide.md",
+        "name": "issue-887-migration-guide.md",
+        "issueNum": "887",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-929.md",
+        "name": "issue-929.md",
+        "issueNum": "929",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-408.md",
+        "name": "issue-408.md",
+        "issueNum": "408",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-698.md",
+        "name": "issue-698.md",
+        "issueNum": "698",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-828.md",
+        "name": "issue-828.md",
+        "issueNum": "828",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-859.md",
+        "name": "issue-859.md",
+        "issueNum": "859",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-948.md",
+        "name": "issue-948.md",
+        "issueNum": "948",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-482-update-2025-11-07.md",
+        "name": "issue-482-update-2025-11-07.md",
+        "issueNum": "482",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-ROA-331.md",
+        "name": "issue-ROA-331.md",
+        "issueNum": null,
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-277.md",
+        "name": "issue-277.md",
+        "issueNum": "277",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-895.md",
+        "name": "issue-895.md",
+        "issueNum": "895",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-926.md",
+        "name": "issue-926.md",
+        "issueNum": "926",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-866.md",
+        "name": "issue-866.md",
+        "issueNum": "866",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-405-ui-implementation.md",
+        "name": "issue-405-ui-implementation.md",
+        "issueNum": "405",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-912.md",
+        "name": "issue-912.md",
+        "issueNum": "912",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-943.md",
+        "name": "issue-943.md",
+        "issueNum": "943",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-1020-final-summary.md",
+        "name": "issue-1020-final-summary.md",
+        "issueNum": "1020",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-401-spec8-round3.md",
+        "name": "issue-401-spec8-round3.md",
+        "issueNum": "401",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-594-598-808.md",
+        "name": "issue-594-598-808.md",
+        "issueNum": "594",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-1043.md",
+        "name": "issue-1043.md",
+        "issueNum": "1043",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-485-pr-instructions.md",
+        "name": "issue-485-pr-instructions.md",
+        "issueNum": "485",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-876.md",
+        "name": "issue-876.md",
+        "issueNum": "876",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-417.md",
+        "name": "issue-417.md",
+        "issueNum": "417",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-947.md",
+        "name": "issue-947.md",
+        "issueNum": "947",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-916.md",
+        "name": "issue-916.md",
+        "issueNum": "916",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-ui-shadcn-refactor.md",
+        "name": "issue-ui-shadcn-refactor.md",
+        "issueNum": null,
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-403.md",
+        "name": "issue-403.md",
+        "issueNum": "403",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-862.md",
+        "name": "issue-862.md",
+        "issueNum": "862",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-973.md",
+        "name": "issue-973.md",
+        "issueNum": "973",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-1090.md",
+        "name": "issue-1090.md",
+        "issueNum": "1090",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-1057.md",
+        "name": "issue-1057.md",
+        "issueNum": "1057",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-808-migration-plan.md",
+        "name": "issue-808-migration-plan.md",
+        "issueNum": "808",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-872.md",
+        "name": "issue-872.md",
+        "issueNum": "872",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-932.md",
+        "name": "issue-932.md",
+        "issueNum": "932",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-906.md",
+        "name": "issue-906.md",
+        "issueNum": "906",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-745.md",
+        "name": "issue-745.md",
+        "issueNum": "745",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-485.md",
+        "name": "issue-485.md",
+        "issueNum": "485",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-946.md",
+        "name": "issue-946.md",
+        "issueNum": "946",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-754.md",
+        "name": "issue-754.md",
+        "issueNum": "754",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-917.md",
+        "name": "issue-917.md",
+        "issueNum": "917",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-972.md",
+        "name": "issue-972.md",
+        "issueNum": "972",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-comment-3412385809.md",
+        "name": "issue-comment-3412385809.md",
+        "issueNum": null,
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-1023.md",
+        "name": "issue-1023.md",
+        "issueNum": "1023",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-933.md",
+        "name": "issue-933.md",
+        "issueNum": "933",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-412.md",
+        "name": "issue-412.md",
+        "issueNum": "412",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-595.md",
+        "name": "issue-595.md",
+        "issueNum": "595",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-715.md",
+        "name": "issue-715.md",
+        "issueNum": "715",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-484.md",
+        "name": "issue-484.md",
+        "issueNum": "484",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-477.md",
+        "name": "issue-477.md",
+        "issueNum": "477",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-406.md",
+        "name": "issue-406.md",
+        "issueNum": "406",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-894.md",
+        "name": "issue-894.md",
+        "issueNum": "894",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-653-completion-plan.md",
+        "name": "issue-653-completion-plan.md",
+        "issueNum": "653",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-927.md",
+        "name": "issue-927.md",
+        "issueNum": "927",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-802.md",
+        "name": "issue-802.md",
+        "issueNum": "802",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-942.md",
+        "name": "issue-942.md",
+        "issueNum": "942",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-1020-progress.md",
+        "name": "issue-1020-progress.md",
+        "issueNum": "1020",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-480.md",
+        "name": "issue-480.md",
+        "issueNum": "480",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-942-completion-summary.md",
+        "name": "issue-942-completion-summary.md",
+        "issueNum": "942",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-787.md",
+        "name": "issue-787.md",
+        "issueNum": "787",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-914.md",
+        "name": "issue-914.md",
+        "issueNum": "914",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-945.md",
+        "name": "issue-945.md",
+        "issueNum": "945",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-971.md",
+        "name": "issue-971.md",
+        "issueNum": "971",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-920.md",
+        "name": "issue-920.md",
+        "issueNum": "920",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-541.md",
+        "name": "issue-541.md",
+        "issueNum": "541",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-401.md",
+        "name": "issue-401.md",
+        "issueNum": "401",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-413-final-fixes.md",
+        "name": "issue-413-final-fixes.md",
+        "issueNum": "413",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-1020.md",
+        "name": "issue-1020.md",
+        "issueNum": "1020",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-868-complete-cleanup.md",
+        "name": "issue-868-complete-cleanup.md",
+        "issueNum": "868",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-930.md",
+        "name": "issue-930.md",
+        "issueNum": "930",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-633.md",
+        "name": "issue-633.md",
+        "issueNum": "633",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-487.md",
+        "name": "issue-487.md",
+        "issueNum": "487",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-716.md",
+        "name": "issue-716.md",
+        "issueNum": "716",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-406-remaining-13-tests.md",
+        "name": "issue-406-remaining-13-tests.md",
+        "issueNum": "406",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-924.md",
+        "name": "issue-924.md",
+        "issueNum": "924",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-801.md",
+        "name": "issue-801.md",
+        "issueNum": "801",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-642.md",
+        "name": "issue-642.md",
+        "issueNum": "642",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-910.md",
+        "name": "issue-910.md",
+        "issueNum": "910",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-942-breaking-changes.md",
+        "name": "issue-942-breaking-changes.md",
+        "issueNum": "942",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-401-spec8-round1.md",
+        "name": "issue-401-spec8-round1.md",
+        "issueNum": "401",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-435-spec14-fix.md",
+        "name": "issue-435-spec14-fix.md",
+        "issueNum": "435",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-712.md",
+        "name": "issue-712.md",
+        "issueNum": "712",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-504.md",
+        "name": "issue-504.md",
+        "issueNum": "504",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-480-assessment.md",
+        "name": "issue-480-assessment.md",
+        "issueNum": "480",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-406-changelog.md",
+        "name": "issue-406-changelog.md",
+        "issueNum": "406",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-925.md",
+        "name": "issue-925.md",
+        "issueNum": "925",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-684.md",
+        "name": "issue-684.md",
+        "issueNum": "684",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-896.md",
+        "name": "issue-896.md",
+        "issueNum": "896",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-404.md",
+        "name": "issue-404.md",
+        "issueNum": "404",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-940.md",
+        "name": "issue-940.md",
+        "issueNum": "940",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-583.md",
+        "name": "issue-583.md",
+        "issueNum": "583",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-885-stripe-tests-cleanup.md",
+        "name": "issue-885-stripe-tests-cleanup.md",
+        "issueNum": "885",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-942-format-fix.md",
+        "name": "issue-942-format-fix.md",
+        "issueNum": "942",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-593.md",
+        "name": "issue-593.md",
+        "issueNum": "593",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-841.md",
+        "name": "issue-841.md",
+        "issueNum": "841",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-482.md",
+        "name": "issue-482.md",
+        "issueNum": "482",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-713.md",
+        "name": "issue-713.md",
+        "issueNum": "713",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-414.md",
+        "name": "issue-414.md",
+        "issueNum": "414",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-632-worker-refactor.md",
+        "name": "issue-632-worker-refactor.md",
+        "issueNum": "632",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-915.md",
+        "name": "issue-915.md",
+        "issueNum": "915",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-944.md",
+        "name": "issue-944.md",
+        "issueNum": "944",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-525.md",
+        "name": "issue-525.md",
+        "issueNum": "525",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-540.md",
+        "name": "issue-540.md",
+        "issueNum": "540",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-892.md",
+        "name": "issue-892.md",
+        "issueNum": "892",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-ROA-259.md",
+        "name": "issue-ROA-259.md",
+        "issueNum": null,
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-1021.md",
+        "name": "issue-1021.md",
+        "issueNum": "1021",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-410.md",
+        "name": "issue-410.md",
+        "issueNum": "410",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-632.md",
+        "name": "issue-632.md",
+        "issueNum": "632",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-931.md",
+        "name": "issue-931.md",
+        "issueNum": "931",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-717.md",
+        "name": "issue-717.md",
+        "issueNum": "717",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-905.md",
+        "name": "issue-905.md",
+        "issueNum": "905",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-678.md",
+        "name": "issue-678.md",
+        "issueNum": "678",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-639.md",
+        "name": "issue-639.md",
+        "issueNum": "639",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-927-follow-up.md",
+        "name": "issue-927-follow-up.md",
+        "issueNum": "927",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-1043-implementation-summary.md",
+        "name": "issue-1043-implementation-summary.md",
+        "issueNum": "1043",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-1090-COMPLETION.md",
+        "name": "issue-1090-COMPLETION.md",
+        "issueNum": "1090",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-482-remaining-tests-implementation.md",
+        "name": "issue-482-remaining-tests-implementation.md",
+        "issueNum": "482",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-860-status.md",
+        "name": "issue-860-status.md",
+        "issueNum": "860",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-588.md",
+        "name": "issue-588.md",
+        "issueNum": "588",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-718.md",
+        "name": "issue-718.md",
+        "issueNum": "718",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-716-STATUS.md",
+        "name": "issue-716-STATUS.md",
+        "issueNum": "716",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-396.md",
+        "name": "issue-396.md",
+        "issueNum": "396",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-406-ingestor-integration.md",
+        "name": "issue-406-ingestor-integration.md",
+        "issueNum": "406",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-628.md",
+        "name": "issue-628.md",
+        "issueNum": "628",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-638.md",
+        "name": "issue-638.md",
+        "issueNum": "638",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/plan/issue-409-results.md",
+        "name": "issue-409-results.md",
+        "issueNum": "409",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "category": "active-plan"
+      }
+    ]
+  },
+  "testEvidence": {
+    "obsolete": [],
+    "active": [
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-639",
+        "name": "issue-639",
+        "issueNum": "639",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 2,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-405",
+        "name": "issue-405",
+        "issueNum": "405",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 3,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-comment-3412385809",
+        "name": "issue-comment-3412385809",
+        "issueNum": null,
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 6,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-896",
+        "name": "issue-896",
+        "issueNum": "896",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-404",
+        "name": "issue-404",
+        "issueNum": "404",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 3,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-638",
+        "name": "issue-638",
+        "issueNum": "638",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 2,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-698",
+        "name": "issue-698",
+        "issueNum": "698",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 6,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-653",
+        "name": "issue-653",
+        "issueNum": "653",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-801",
+        "name": "issue-801",
+        "issueNum": "801",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-525",
+        "name": "issue-525",
+        "issueNum": "525",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 2,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-717",
+        "name": "issue-717",
+        "issueNum": "717",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 2,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-540",
+        "name": "issue-540",
+        "issueNum": "540",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-929",
+        "name": "issue-929",
+        "issueNum": "929",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 9,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-943",
+        "name": "issue-943",
+        "issueNum": "943",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-928",
+        "name": "issue-928",
+        "issueNum": "928",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-910",
+        "name": "issue-910",
+        "issueNum": "910",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-583",
+        "name": "issue-583",
+        "issueNum": "583",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 4,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-745",
+        "name": "issue-745",
+        "issueNum": "745",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-787",
+        "name": "issue-787",
+        "issueNum": "787",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-774",
+        "name": "issue-774",
+        "issueNum": "774",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/2025-01-26/issue-405",
+        "name": "issue-405",
+        "issueNum": "405",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-406-completion",
+        "name": "issue-406-completion",
+        "issueNum": "406",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 3,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/2025-01-27/issue-405",
+        "name": "issue-405",
+        "issueNum": "405",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 2,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-417",
+        "name": "issue-417",
+        "issueNum": "417",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-419",
+        "name": "issue-419",
+        "issueNum": "419",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-442",
+        "name": "issue-442",
+        "issueNum": "442",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-480",
+        "name": "issue-480",
+        "issueNum": "480",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 3,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-615",
+        "name": "issue-615",
+        "issueNum": "615",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-411",
+        "name": "issue-411",
+        "issueNum": "411",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 3,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-633",
+        "name": "issue-633",
+        "issueNum": "633",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-866",
+        "name": "issue-866",
+        "issueNum": "866",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 2,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-406",
+        "name": "issue-406",
+        "issueNum": "406",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 2,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-895",
+        "name": "issue-895",
+        "issueNum": "895",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 2,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-860",
+        "name": "issue-860",
+        "issueNum": "860",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-588",
+        "name": "issue-588",
+        "issueNum": "588",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 5,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-915",
+        "name": "issue-915",
+        "issueNum": "915",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-914",
+        "name": "issue-914",
+        "issueNum": "914",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 4,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-1021",
+        "name": "issue-1021",
+        "issueNum": "1021",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 2,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-715",
+        "name": "issue-715",
+        "issueNum": "715",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 2,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-593",
+        "name": "issue-593",
+        "issueNum": "593",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-504",
+        "name": "issue-504",
+        "issueNum": "504",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 3,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-595",
+        "name": "issue-595",
+        "issueNum": "595",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 2,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-413",
+        "name": "issue-413",
+        "issueNum": "413",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 2,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-414",
+        "name": "issue-414",
+        "issueNum": "414",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 2,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-628",
+        "name": "issue-628",
+        "issueNum": "628",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 2,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-618",
+        "name": "issue-618",
+        "issueNum": "618",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 15,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-412",
+        "name": "issue-412",
+        "issueNum": "412",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-680",
+        "name": "issue-680",
+        "issueNum": "680",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 1,
+        "category": "active-test-evidence"
+      },
+      {
+        "path": "/Users/emiliopostigo/roastr-ai-worktrees/ROA-320/docs/test-evidence/issue-483",
+        "name": "issue-483",
+        "issueNum": "483",
+        "daysSinceModified": 0,
+        "isObsolete": false,
+        "files": 4,
+        "category": "active-test-evidence"
+      }
+    ]
+  },
+  "duplicates": []
+}
