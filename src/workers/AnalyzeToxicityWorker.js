@@ -1731,7 +1731,8 @@ class AnalyzeToxicityWorker extends BaseWorker {
 
     try {
       if (this.redis) {
-        await this.redis.rpush('roastr:jobs:generate_roast', JSON.stringify(responseJob));
+        // ROA-324: Normalized to v2_ prefix convention
+        await this.redis.rpush('v2_jobs:generate_roast', JSON.stringify(responseJob));
       } else {
         const { error } = await this.supabase.from('job_queue').insert([responseJob]);
 
