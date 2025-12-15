@@ -67,6 +67,10 @@ jobs:
       - name: Install backend dependencies
         run: npm ci
 
+      - name: Clean frontend cache (fix esbuild version mismatch)
+        working-directory: ./frontend
+        run: rm -rf node_modules
+
       - name: Install frontend dependencies
         working-directory: ./frontend
         run: npm ci
