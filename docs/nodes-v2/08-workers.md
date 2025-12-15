@@ -245,6 +245,23 @@ Este nodo depende de los siguientes nodos:
 - [ ] Ejecución diaria
 - [ ] Purga strikes > 90 días
 
+### Workers Auxiliares (SSOT 8.5 - ROA-324):
+
+Los siguientes workers soportan funcionalidades internas y no forman parte del flujo core:
+
+| Worker | Responsabilidad | Prioridad |
+|--------|-----------------|-----------|
+| AccountDeletion | GDPR: Eliminación completa de cuenta y datos | 5 (low) |
+| AlertNotification | Observabilidad: Envío de alertas y notificaciones | 5 (low) |
+| ExportCleanup | GDPR: Limpieza de archivos de exportación antiguos | 5 (low) |
+| GDPRRetention | GDPR: Purga automática de datos > 90 días | 5 (low) |
+| ModelAvailability | Infraestructura: Health check de modelos IA | 5 (low) |
+
+**Características:**
+- No consumen créditos de análisis/roasts
+- Ejecutan con prioridad baja (background)
+- Pueden deshabilitarse sin afectar flujo core
+
 ---
 
 ## 9. Test Matrix
