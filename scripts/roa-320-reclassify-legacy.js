@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * ROA-320: Script de Reclasificación de Documentos Legacy
- * 
+ *
  * Mueve documentos legacy a categorías apropiadas:
  * - CodeRabbit reviews → docs/legacy/reviews/
  * - Plans obsoletos → docs/legacy/plans/
@@ -10,7 +10,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+// execSync no usado en este script
 
 const DOCS_ROOT = path.join(__dirname, '../docs');
 const LEGACY_REVIEWS = path.join(DOCS_ROOT, 'legacy/reviews');
@@ -20,7 +20,9 @@ const LEGACY_TEST_EVIDENCE = path.join(DOCS_ROOT, 'legacy/test-evidence');
 // Cargar clasificación
 const classificationPath = path.join(DOCS_ROOT, 'CI-V2/ROA-320-CLASSIFICATION.json');
 if (!fs.existsSync(classificationPath)) {
-  console.error('❌ No se encontró el archivo de clasificación. Ejecuta primero roa-320-classify-legacy.js');
+  console.error(
+    '❌ No se encontró el archivo de clasificación. Ejecuta primero roa-320-classify-legacy.js'
+  );
   process.exit(1);
 }
 
@@ -41,13 +43,13 @@ function moveItem(source, dest, description) {
       stats.skipped++;
       return false;
     }
-    
+
     // Crear directorio destino si no existe
     const destDir = path.dirname(dest);
     if (!fs.existsSync(destDir)) {
       fs.mkdirSync(destDir, { recursive: true });
     }
-    
+
     // Mover
     fs.renameSync(source, dest);
     console.log(`✅ Movido: ${description}`);
@@ -63,8 +65,8 @@ function moveItem(source, dest, description) {
 // 1. Mover CodeRabbit review plans
 function moveReviewPlans() {
   console.log('\n📋 Moviendo CodeRabbit review plans...\n');
-  
-  classification.reviews.plans.forEach(plan => {
+
+  classification.reviews.plans.forEach((plan) => {
     const source = plan.path;
     const dest = path.join(LEGACY_REVIEWS, plan.name);
     moveItem(source, dest, `review plan: ${plan.name}`);
@@ -74,8 +76,8 @@ function moveReviewPlans() {
 // 2. Mover CodeRabbit review test evidence
 function moveReviewTestEvidence() {
   console.log('\n📋 Moviendo CodeRabbit review test evidence...\n');
-  
-  classification.reviews.testEvidence.forEach(evidence => {
+
+  classification.reviews.testEvidence.forEach((evidence) => {
     const source = evidence.path;
     const dest = path.join(LEGACY_TEST_EVIDENCE, evidence.name);
     moveItem(source, dest, `review test evidence: ${evidence.name}/`);
@@ -85,13 +87,13 @@ function moveReviewTestEvidence() {
 // 3. Mover plans obsoletos (opcional, solo si hay)
 function moveObsoletePlans() {
   console.log('\n📋 Moviendo plans obsoletos...\n');
-  
+
   if (classification.plans.obsolete.length === 0) {
     console.log('  ℹ️  No hay plans obsoletos para mover\n');
     return;
   }
-  
-  classification.plans.obsolete.forEach(plan => {
+
+  classification.plans.obsolete.forEach((plan) => {
     const source = plan.path;
     const dest = path.join(LEGACY_PLANS, plan.name);
     moveItem(source, dest, `obsolete plan: ${plan.name}`);
@@ -101,13 +103,13 @@ function moveObsoletePlans() {
 // 4. Mover test evidence obsoletos (opcional, solo si hay)
 function moveObsoleteTestEvidence() {
   console.log('\n📋 Moviendo test evidence obsoletos...\n');
-  
+
   if (classification.testEvidence.obsolete.length === 0) {
     console.log('  ℹ️  No hay test evidence obsoletos para mover\n');
     return;
   }
-  
-  classification.testEvidence.obsolete.forEach(evidence => {
+
+  classification.testEvidence.obsolete.forEach((evidence) => {
     const source = evidence.path;
     const dest = path.join(LEGACY_TEST_EVIDENCE, evidence.name);
     moveItem(source, dest, `obsolete test evidence: ${evidence.name}/`);
@@ -117,7 +119,7 @@ function moveObsoleteTestEvidence() {
 // 5. Generar reporte de reclasificación
 function generateReclassificationReport() {
   const reportPath = path.join(DOCS_ROOT, 'CI-V2/ROA-320-RECLASSIFICATION-REPORT.md');
-  
+
   const report = `# ROA-320: Reporte de Reclasificación de Documentos Legacy
 
 **Fecha:** ${new Date().toISOString().split('T')[0]}  
@@ -214,28 +216,28 @@ find docs/test-evidence -type d -name "review-*" | wc -l
 // Main
 function main() {
   console.log('🔄 ROA-320: Reclasificación de Documentos Legacy\n');
-  console.log('=' .repeat(60) + '\n');
-  
+  console.log('='.repeat(60) + '\n');
+
   // Crear directorios destino
-  [LEGACY_REVIEWS, LEGACY_PLANS, LEGACY_TEST_EVIDENCE].forEach(dir => {
+  [LEGACY_REVIEWS, LEGACY_PLANS, LEGACY_TEST_EVIDENCE].forEach((dir) => {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
       console.log(`📁 Creado directorio: ${dir}`);
     }
   });
-  
+
   console.log();
-  
+
   // Mover documentos
   moveReviewPlans();
   moveReviewTestEvidence();
   moveObsoletePlans();
   moveObsoleteTestEvidence();
-  
+
   // Generar reporte
   generateReclassificationReport();
-  
-  console.log('=' .repeat(60));
+
+  console.log('='.repeat(60));
   console.log('\n📊 Estadísticas Finales:');
   console.log(`  ✅ Movidos: ${stats.moved}`);
   console.log(`  ❌ Errores: ${stats.errors}`);
@@ -248,4 +250,3 @@ if (require.main === module) {
 }
 
 module.exports = { stats };
-

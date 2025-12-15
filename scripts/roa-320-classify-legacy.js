@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * ROA-320: Script de Clasificación de Documentos Legacy
- * 
+ *
  * Clasifica documentos legacy según criterios:
  * - CodeRabbit reviews → docs/legacy/reviews/
  * - Plans obsoletos → docs/legacy/plans/
@@ -19,7 +19,7 @@ const LEGACY_PLANS = path.join(DOCS_ROOT, 'legacy/plans');
 const LEGACY_TEST_EVIDENCE = path.join(DOCS_ROOT, 'legacy/test-evidence');
 
 // Crear directorios si no existen
-[LEGACY_REVIEWS, LEGACY_PLANS, LEGACY_TEST_EVIDENCE].forEach(dir => {
+[LEGACY_REVIEWS, LEGACY_PLANS, LEGACY_TEST_EVIDENCE].forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -45,61 +45,66 @@ const classification = {
 // 1. Clasificar CodeRabbit reviews
 function classifyCodeRabbitReviews() {
   console.log('📋 Clasificando CodeRabbit reviews...\n');
-  
+
   // Planes de reviews
-  const reviewPlans = execSync(`find ${DOCS_ROOT}/plan -name "review-*.md" -type f`, { encoding: 'utf8' })
+  const reviewPlans = execSync(`find ${DOCS_ROOT}/plan -name "review-*.md" -type f`, {
+    encoding: 'utf8'
+  })
     .trim()
     .split('\n')
-    .filter(f => f);
-  
-  classification.reviews.plans = reviewPlans.map(f => ({
+    .filter((f) => f);
+
+  classification.reviews.plans = reviewPlans.map((f) => ({
     path: f,
     name: path.basename(f),
     size: fs.statSync(f).size,
     category: 'codeRabbit-review-plan'
   }));
-  
+
   console.log(`  ✅ Encontrados ${reviewPlans.length} planes de reviews`);
-  
+
   // Test evidence de reviews
-  const reviewDirs = execSync(`find ${DOCS_ROOT}/test-evidence -type d -name "review-*"`, { encoding: 'utf8' })
+  const reviewDirs = execSync(`find ${DOCS_ROOT}/test-evidence -type d -name "review-*"`, {
+    encoding: 'utf8'
+  })
     .trim()
     .split('\n')
-    .filter(f => f);
-  
-  classification.reviews.testEvidence = reviewDirs.map(f => ({
+    .filter((f) => f);
+
+  classification.reviews.testEvidence = reviewDirs.map((f) => ({
     path: f,
     name: path.basename(f),
     files: fs.readdirSync(f).length,
     category: 'codeRabbit-review-evidence'
   }));
-  
+
   console.log(`  ✅ Encontrados ${reviewDirs.length} directorios de test evidence de reviews\n`);
 }
 
 // 2. Clasificar plans de issues
 function classifyIssuePlans() {
   console.log('📋 Clasificando plans de issues...\n');
-  
-  const issuePlans = execSync(`find ${DOCS_ROOT}/plan -name "issue-*.md" -type f`, { encoding: 'utf8' })
+
+  const issuePlans = execSync(`find ${DOCS_ROOT}/plan -name "issue-*.md" -type f`, {
+    encoding: 'utf8'
+  })
     .trim()
     .split('\n')
-    .filter(f => f);
-  
-  issuePlans.forEach(planPath => {
-    const content = fs.readFileSync(planPath, 'utf8');
+    .filter((f) => f);
+
+  issuePlans.forEach((planPath) => {
     const name = path.basename(planPath);
     const stats = fs.statSync(planPath);
     const mtime = stats.mtime;
     const daysSinceModified = (Date.now() - mtime.getTime()) / (1000 * 60 * 60 * 24);
-    
+
     // Extraer issue number del nombre
     const issueMatch = name.match(/issue[_-]?(\d+)/i);
     const issueNum = issueMatch ? issueMatch[1] : null;
-    
+
     // Clasificar como obsoleto si >6 meses
     const isObsolete = daysSinceModified > 180;
-    
+
     const entry = {
       path: planPath,
       name,
@@ -108,14 +113,14 @@ function classifyIssuePlans() {
       isObsolete,
       category: isObsolete ? 'obsolete-plan' : 'active-plan'
     };
-    
+
     if (isObsolete) {
       classification.plans.obsolete.push(entry);
     } else {
       classification.plans.active.push(entry);
     }
   });
-  
+
   console.log(`  ✅ Encontrados ${issuePlans.length} planes de issues`);
   console.log(`    - Obsoletos (>6 meses): ${classification.plans.obsolete.length}`);
   console.log(`    - Activos: ${classification.plans.active.length}\n`);
@@ -124,25 +129,27 @@ function classifyIssuePlans() {
 // 3. Clasificar test evidence de issues
 function classifyIssueTestEvidence() {
   console.log('📋 Clasificando test evidence de issues...\n');
-  
-  const issueDirs = execSync(`find ${DOCS_ROOT}/test-evidence -type d -name "issue-*"`, { encoding: 'utf8' })
+
+  const issueDirs = execSync(`find ${DOCS_ROOT}/test-evidence -type d -name "issue-*"`, {
+    encoding: 'utf8'
+  })
     .trim()
     .split('\n')
-    .filter(f => f);
-  
-  issueDirs.forEach(dirPath => {
+    .filter((f) => f);
+
+  issueDirs.forEach((dirPath) => {
     const name = path.basename(dirPath);
     const stats = fs.statSync(dirPath);
     const mtime = stats.mtime;
     const daysSinceModified = (Date.now() - mtime.getTime()) / (1000 * 60 * 60 * 24);
-    
+
     // Extraer issue number del nombre
     const issueMatch = name.match(/issue[_-]?(\d+)/i);
     const issueNum = issueMatch ? issueMatch[1] : null;
-    
+
     // Clasificar como obsoleto si >3 meses
     const isObsolete = daysSinceModified > 90;
-    
+
     const entry = {
       path: dirPath,
       name,
@@ -152,14 +159,14 @@ function classifyIssueTestEvidence() {
       files: fs.readdirSync(dirPath).length,
       category: isObsolete ? 'obsolete-test-evidence' : 'active-test-evidence'
     };
-  
+
     if (isObsolete) {
       classification.testEvidence.obsolete.push(entry);
     } else {
       classification.testEvidence.active.push(entry);
     }
   });
-  
+
   console.log(`  ✅ Encontrados ${issueDirs.length} directorios de test evidence de issues`);
   console.log(`    - Obsoletos (>3 meses): ${classification.testEvidence.obsolete.length}`);
   console.log(`    - Activos: ${classification.testEvidence.active.length}\n`);
@@ -169,11 +176,11 @@ function classifyIssueTestEvidence() {
 function generateClassificationReport() {
   const reportPath = path.join(DOCS_ROOT, 'CI-V2/ROA-320-CLASSIFICATION-REPORT.md');
   const reportDir = path.dirname(reportPath);
-  
+
   if (!fs.existsSync(reportDir)) {
     fs.mkdirSync(reportDir, { recursive: true });
   }
-  
+
   const report = `# ROA-320: Reporte de Clasificación de Documentos Legacy
 
 **Fecha:** ${new Date().toISOString().split('T')[0]}  
@@ -211,7 +218,7 @@ function generateClassificationReport() {
 **Total:** ${classification.reviews.plans.length} archivos
 
 \`\`\`
-${classification.reviews.plans.map(p => `- ${p.name} (${(p.size / 1024).toFixed(2)} KB)`).join('\n')}
+${classification.reviews.plans.map((p) => `- ${p.name} (${(p.size / 1024).toFixed(2)} KB)`).join('\n')}
 \`\`\`
 
 **Acción:** Mover a \`docs/legacy/reviews/\`
@@ -223,7 +230,7 @@ ${classification.reviews.plans.map(p => `- ${p.name} (${(p.size / 1024).toFixed(
 **Total:** ${classification.reviews.testEvidence.length} directorios
 
 \`\`\`
-${classification.reviews.testEvidence.map(e => `- ${e.name}/ (${e.files} archivos)`).join('\n')}
+${classification.reviews.testEvidence.map((e) => `- ${e.name}/ (${e.files} archivos)`).join('\n')}
 \`\`\`
 
 **Acción:** Mover a \`docs/legacy/test-evidence/\`
@@ -235,7 +242,7 @@ ${classification.reviews.testEvidence.map(e => `- ${e.name}/ (${e.files} archivo
 **Total:** ${classification.plans.obsolete.length} archivos
 
 \`\`\`
-${classification.plans.obsolete.map(p => `- ${p.name} (Issue #${p.issueNum || 'N/A'}, ${p.daysSinceModified} días)`).join('\n')}
+${classification.plans.obsolete.map((p) => `- ${p.name} (Issue #${p.issueNum || 'N/A'}, ${p.daysSinceModified} días)`).join('\n')}
 \`\`\`
 
 **Acción:** Mover a \`docs/legacy/plans/\` o eliminar
@@ -247,7 +254,7 @@ ${classification.plans.obsolete.map(p => `- ${p.name} (Issue #${p.issueNum || 'N
 **Total:** ${classification.testEvidence.obsolete.length} directorios
 
 \`\`\`
-${classification.testEvidence.obsolete.map(e => `- ${e.name}/ (Issue #${e.issueNum || 'N/A'}, ${e.daysSinceModified} días, ${e.files} archivos)`).join('\n')}
+${classification.testEvidence.obsolete.map((e) => `- ${e.name}/ (Issue #${e.issueNum || 'N/A'}, ${e.daysSinceModified} días, ${e.files} archivos)`).join('\n')}
 \`\`\`
 
 **Acción:** Mover a \`docs/legacy/test-evidence/\` o eliminar
@@ -273,19 +280,19 @@ ${classification.testEvidence.obsolete.map(e => `- ${e.name}/ (Issue #${e.issueN
 // Main
 function main() {
   console.log('🔍 ROA-320: Clasificación de Documentos Legacy\n');
-  console.log('=' .repeat(60) + '\n');
-  
+  console.log('='.repeat(60) + '\n');
+
   classifyCodeRabbitReviews();
   classifyIssuePlans();
   classifyIssueTestEvidence();
   generateClassificationReport();
-  
+
   // Guardar clasificación en JSON para uso posterior
   const jsonPath = path.join(DOCS_ROOT, 'CI-V2/ROA-320-CLASSIFICATION.json');
   fs.writeFileSync(jsonPath, JSON.stringify(classification, null, 2));
   console.log(`✅ Clasificación guardada en JSON: ${jsonPath}\n`);
-  
-  console.log('=' .repeat(60));
+
+  console.log('='.repeat(60));
   console.log('✅ Clasificación completada\n');
 }
 
@@ -294,4 +301,3 @@ if (require.main === module) {
 }
 
 module.exports = { classification };
-
