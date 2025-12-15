@@ -84,7 +84,7 @@ jobs:
     needs: [build-check, security-audit]
 
     env:
-      # Prevent OOM in Jest runs on CI runners
+      # Prevent OOM in Vitest runs on CI runners
       NODE_OPTIONS: "--max-old-space-size=8192"
       # Global Mock Mode - Forces all services to use mock data
       ENABLE_MOCK_MODE: true
