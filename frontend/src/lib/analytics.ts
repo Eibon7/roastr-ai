@@ -83,10 +83,64 @@ export function isAmplitudeInitialized(): boolean {
 }
 
 /**
- * Export the amplitude instance for custom tracking
+ * Track an event with automatic enrichment of standard properties
  *
- * This allows other parts of the application to use Amplitude's
- * tracking methods (e.g., amplitude.track(), amplitude.identify())
+ * This helper provides consistency with backend tracking and ensures
+ * all events include standard properties for filtering and analysis.
+ *
+ * Standard properties:
+ * - flow: Business flow (auth, billing, content, etc.)
+ * - source: Always 'frontend'
+ * - env: Current environment (development, production)
+ * - app_version: App version from package.json or env
+ *
+ * @param event - Event name in snake_case (e.g., 'auth_login_success')
+ * @param properties - Custom event properties
+ * @param context - Context information (flow, userId)
+ *
+ * @example
+ * trackEvent('auth_login_success', {
+ *   method: 'email_password',
+ *   redirect_to: '/dashboard',
+ * }, {
+ *   flow: 'auth',
+ *   userId: 'user-123',
+ * });
+ */
+export function trackEvent(
+  event: string,
+  properties: Record<string, any> = {},
+  context: { flow?: string; userId?: string } = {}
+): void {
+  if (!isInitialized) {
+    console.warn(`[Amplitude] Not initialized. Skipping event: ${event}`);
+    return;
+  }
+
+  const enrichedProperties = {
+    ...properties,
+    flow: context.flow || 'unknown', // Default flow if not provided
+    source: 'frontend',
+    env: import.meta.env.MODE || 'development',
+    app_version: import.meta.env.VITE_APP_VERSION || '2.0.0',
+  };
+
+  try {
+    if (context.userId) {
+      // Set user ID if provided
+      amplitude.setUserId(context.userId);
+    }
+    amplitude.track(event, enrichedProperties);
+  } catch (error) {
+    console.error(`[Amplitude] Failed to track event "${event}":`, error);
+  }
+}
+
+/**
+ * Export the amplitude instance for advanced use cases
+ *
+ * This allows direct access to Amplitude's SDK methods if needed,
+ * but prefer using the trackEvent helper for consistency.
  */
 export { amplitude };
 

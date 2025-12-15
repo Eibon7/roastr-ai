@@ -113,7 +113,7 @@ Optional:
 
 ## 📦 Project Structure
 
-```
+```plaintext
 apps/backend-v2/
 ├── src/
 │   ├── lib/

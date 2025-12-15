@@ -218,10 +218,10 @@ Tests implementados:
    - **Justificación**: Útil para debugging de magic link, OAuth, etc.
 
 3. **Session Replay en Auth Screens**:
-   - ❌ **DESHABILITADO** en login/register/recover
-   - **Razón**: Privacidad y seguridad
-   - **Justificación**: No grabar pantallas con inputs sensibles (contraseñas, emails)
-   - **GDPR**: Best practice de protección de datos
+   - ⚠️ **POLÍTICA ACTUALIZADA**: Ver `docs/analytics/amplitude.md` para política V2 final
+   - **Decisión final V2**: Session replay habilitado globalmente (SDK no permite control granular por ruta)
+   - **Seguro porque**: Autocapture NO captura valores de inputs sensibles (contraseñas, emails)
+   - **GDPR**: Cumple con best practices - no se graban datos sensibles
 
 4. **No PII por defecto**: 
    - Autocapture NO captura información personal identificable

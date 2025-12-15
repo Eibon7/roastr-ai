@@ -8,6 +8,8 @@ import * as amplitudeModule from '@amplitude/unified';
 // Mock the amplitude module
 vi.mock('@amplitude/unified', () => ({
   initAll: vi.fn(),
+  track: vi.fn(),
+  setUserId: vi.fn(),
 }));
 
 describe('Amplitude Analytics', () => {
@@ -75,6 +77,66 @@ describe('Amplitude Analytics', () => {
       '[Amplitude] Failed to initialize analytics:',
       expect.any(Error)
     );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('should track events with standard properties using trackEvent helper', async () => {
+    const { initializeAmplitude, trackEvent } = await import('../analytics');
+
+    initializeAmplitude();
+    trackEvent('auth_login_success', { method: 'email_password' }, { flow: 'auth', userId: 'user-123' });
+
+    expect(amplitudeModule.setUserId).toHaveBeenCalledWith('user-123');
+    expect(amplitudeModule.track).toHaveBeenCalledWith('auth_login_success', {
+      method: 'email_password',
+      flow: 'auth',
+      source: 'frontend',
+      env: 'test',
+      app_version: '2.0.0',
+    });
+  });
+
+  it('should track events without userId using trackEvent helper', async () => {
+    const { initializeAmplitude, trackEvent } = await import('../analytics');
+
+    initializeAmplitude();
+    trackEvent('page_view', { path: '/public' }, { flow: 'public' });
+
+    expect(amplitudeModule.track).toHaveBeenCalledWith('page_view', {
+      path: '/public',
+      flow: 'public',
+      source: 'frontend',
+      env: 'test',
+      app_version: '2.0.0',
+    });
+  });
+
+  it('should not track with trackEvent if not initialized', async () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { trackEvent } = await import('../analytics');
+
+    // Do not call initializeAmplitude()
+    trackEvent('some_event', { prop: 'value' });
+
+    expect(amplitudeModule.track).not.toHaveBeenCalled();
+    expect(consoleWarnSpy).toHaveBeenCalledWith('[Amplitude] Not initialized. Skipping event: some_event');
+
+    consoleWarnSpy.mockRestore();
+  });
+
+  it('should handle trackEvent errors gracefully', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(amplitudeModule.track).mockImplementationOnce(() => {
+      throw new Error('Track failed');
+    });
+
+    const { initializeAmplitude, trackEvent } = await import('../analytics');
+
+    initializeAmplitude();
+    trackEvent('failing_event', { prop: 'value' });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[Amplitude] Failed to track event "failing_event":', expect.any(Error));
 
     consoleErrorSpy.mockRestore();
   });
