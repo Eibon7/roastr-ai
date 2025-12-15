@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
+import { useEffect } from 'react';
 import { AuthProvider, useAuth } from '../auth-context';
 import { authApi } from '../api';
 
@@ -143,11 +144,13 @@ describe('AuthContext', () => {
       user: mockUser
     });
 
-    let loginFn: ((email: string, password: string) => Promise<void>) | null = null;
+    const loginFnRef = { current: null as ((email: string, password: string) => Promise<void>) | null };
 
     const LoginTestComponent = () => {
       const { login } = useAuth();
-      loginFn = login;
+      useEffect(() => {
+        loginFnRef.current = login;
+      }, [login]);
       return <div>Login Component</div>;
     };
 
@@ -158,12 +161,12 @@ describe('AuthContext', () => {
     );
 
     await waitFor(() => {
-      expect(loginFn).toBeDefined();
+      expect(loginFnRef.current).toBeDefined();
     });
 
-    if (loginFn) {
+    if (loginFnRef.current) {
       await act(async () => {
-        await loginFn!('test@example.com', 'password123');
+        await loginFnRef.current!('test@example.com', 'password123');
       });
 
       expect(authApi.login).toHaveBeenCalledWith('test@example.com', 'password123');
@@ -184,11 +187,13 @@ describe('AuthContext', () => {
       localStorage.removeItem('user');
     });
 
-    let logoutFn: (() => Promise<void>) | null = null;
+    const logoutFnRef = { current: null as (() => Promise<void>) | null };
 
     const LogoutTestComponent = () => {
       const { logout } = useAuth();
-      logoutFn = logout;
+      useEffect(() => {
+        logoutFnRef.current = logout;
+      }, [logout]);
       return <div>Logout Component</div>;
     };
 
@@ -199,12 +204,12 @@ describe('AuthContext', () => {
     );
 
     await waitFor(() => {
-      expect(logoutFn).toBeDefined();
+      expect(logoutFnRef.current).toBeDefined();
     });
 
-    if (logoutFn) {
+    if (logoutFnRef.current) {
       await act(async () => {
-        await logoutFn!();
+        await logoutFnRef.current!();
       });
 
       expect(authApi.logout).toHaveBeenCalled();
