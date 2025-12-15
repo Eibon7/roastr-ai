@@ -73,7 +73,7 @@ class CoverageHelper {
     }
 
     try {
-      const mapPath = path.join(this.rootDir, 'docs', 'system-map.yaml');
+      const mapPath = path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
       const content = await fs.readFile(mapPath, 'utf-8');
       this.systemMap = yaml.parse(content);
       return this.systemMap;
@@ -245,7 +245,7 @@ class CoverageHelper {
     }
 
     out('✓ Reading coverage data: coverage/coverage-summary.json');
-    out('✓ Reading system map: docs/system-map.yaml');
+    out('✓ Reading system map: docs/system-map-v2.yaml');
     out('');
     out('Analyzing nodes...');
     out('');
@@ -409,8 +409,8 @@ Examples:
 
 Requirements:
   - coverage/coverage-summary.json must exist (run: npm test -- --coverage)
-  - docs/system-map.yaml must have file mappings for each node
-  - docs/nodes/*.md files must exist
+  - docs/system-map-v2.yaml must have file mappings for each node
+  - docs/nodes-v2/**/*.md files must exist
     `);
     process.exit(0);
   }

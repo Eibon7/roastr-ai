@@ -154,9 +154,9 @@ class GDDUnlocker {
     // Backup critical files
     const filesToBackup = [
       '.gdd-maintenance',
-      'docs/system-map.yaml',
+      'docs/system-map-v2.yaml',
       'docs/GDD-FINAL-SUMMARY.md',
-      'docs/nodes/roast.md' // Sample node with protection metadata
+      'docs/nodes-v2/06-motor-roasting.md' // Sample node with protection metadata
     ];
 
     for (const file of filesToBackup) {

@@ -3,9 +3,14 @@
 /**
  * GDD Watcher
  *
- * Monitors changes in src/, docs/nodes/, system-map.yaml, spec.md
+ * Monitors changes in src/, docs/nodes-v2/, system-map-v2.yaml, spec.md
  * Automatically runs validation when changes are detected
  * Updates docs/system-validation.md and gdd-status.json in real-time
+ *
+ * ⚠️ NOTE: This script uses EXCLUSIVELY v2 documentation:
+ *   - docs/system-map-v2.yaml (NOT docs/system-map.yaml)
+ *   - docs/nodes-v2/** (NOT docs/nodes/)
+ *   - docs/legacy/v1/** is IGNORED
  *
  * Usage:
  *   node scripts/watch-gdd.js
@@ -106,8 +111,8 @@ class GDDWatcher {
     console.log('╠════════════════════════════════════════╣');
     console.log('║  Monitoring:                          ║');
     console.log('║    • src/**                           ║');
-    console.log('║    • docs/nodes/**                    ║');
-    console.log('║    • docs/system-map.yaml             ║');
+    console.log('║    • docs/nodes-v2/**                 ║');
+    console.log('║    • docs/system-map-v2.yaml           ║');
     console.log('║    • spec.md                          ║');
 
     if (this.agentsActive || this.telemetryEnabled) {

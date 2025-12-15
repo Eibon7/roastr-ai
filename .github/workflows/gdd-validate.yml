@@ -6,11 +6,10 @@ on:
       - main
       - develop
     paths:
-      - 'docs/nodes/**'
       - 'docs/nodes-v2/**'
       - 'docs/system-map-v2.yaml'
       - 'docs/SSOT-V2.md'
-      - 'system-map.yaml'
+      - 'docs/legacy/v1/**'
       - 'spec.md'
       - 'src/**'
       - 'scripts/**'
@@ -30,14 +29,51 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - name: Check if PR only affects v2
-        id: check_v2_only
+      - name: Check for legacy v1 modifications (BLOCK)
+        id: check_legacy_modifications
         run: |
           # Get changed files
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             git diff --name-only origin/${{ github.base_ref }}...HEAD > changed-files.txt
           else
             git diff --name-only HEAD~1...HEAD > changed-files.txt
+          fi
+          
+          # Check if any files in docs/legacy/v1/ were modified
+          if [ -f changed-files.txt ]; then
+            LEGACY_MODIFICATIONS=$(grep -E '^docs/legacy/v1/' changed-files.txt | wc -l | tr -d ' ')
+          else
+            LEGACY_MODIFICATIONS=0
+          fi
+          
+          if [ "$LEGACY_MODIFICATIONS" -gt 0 ]; then
+            echo "❌ BLOCKED: PR modifies deprecated legacy v1 files in docs/legacy/v1/"
+            echo "   Modified files:"
+            grep -E '^docs/legacy/v1/' changed-files.txt || echo "   (none)"
+            echo ""
+            echo "   Legacy v1 files are DEPRECATED and should NOT be modified."
+            echo "   All changes must be made in v2:"
+            echo "   - docs/nodes-v2/** (NOT docs/legacy/v1/nodes/)"
+            echo "   - docs/system-map-v2.yaml (NOT docs/legacy/v1/system-map.yaml)"
+            echo ""
+            echo "   See docs/legacy/v1/README.md for migration guide."
+            echo "::error::PR modifies deprecated legacy v1 files. All changes must be in v2."
+            exit 1
+          else
+            echo "✅ No legacy v1 files modified"
+            echo "legacy_modified=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if PR only affects v2
+        id: check_v2_only
+        run: |
+          # Get changed files (already done in previous step)
+          if [ ! -f changed-files.txt ]; then
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              git diff --name-only origin/${{ github.base_ref }}...HEAD > changed-files.txt
+            else
+              git diff --name-only HEAD~1...HEAD > changed-files.txt
+            fi
           fi
           
           # Count v2 files (explicit v2 paths)

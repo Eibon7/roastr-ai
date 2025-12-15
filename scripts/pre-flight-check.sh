@@ -59,19 +59,19 @@ echo "----------------------------"
 
 # Check if CLAUDE.md needs update
 if git diff --cached --name-only | grep -q "src/\|\.claude/agents/"; then
-  if git diff --cached --name-only | grep -q "CLAUDE.md\|spec.md\|docs/nodes/"; then
+  if git diff --cached --name-only | grep -q "CLAUDE.md\|spec.md\|docs/nodes-v2/"; then
     check_pass "Documentation appears updated"
   else
     check_warn "Changed src/ or agents/ but no doc updates - verify if needed"
   fi
 fi
 
-# Check for GDD compliance
+# Check for GDD compliance (v2)
 if git diff --cached --name-only | grep -q "src/"; then
-  if [ -d "docs/nodes" ]; then
-    check_pass "GDD nodes directory exists"
+  if [ -d "docs/nodes-v2" ]; then
+    check_pass "GDD nodes-v2 directory exists"
   else
-    check_warn "No GDD nodes directory found"
+    check_warn "No GDD nodes-v2 directory found"
   fi
 fi
 

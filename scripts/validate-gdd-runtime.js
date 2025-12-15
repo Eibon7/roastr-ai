@@ -3,8 +3,13 @@
 /**
  * GDD Runtime Validator
  *
- * Validates the coherence between system-map.yaml, docs/nodes/, spec.md, and src/
+ * Validates the coherence between system-map-v2.yaml, docs/nodes-v2/, spec.md, and src/
  * Detects inconsistencies, orphans, cycles, and drift
+ *
+ * ⚠️ NOTE: This script uses EXCLUSIVELY v2 documentation:
+ *   - docs/system-map-v2.yaml (NOT docs/system-map.yaml)
+ *   - docs/nodes-v2/** (NOT docs/nodes/)
+ *   - docs/legacy/v1/** is IGNORED
  *
  * Usage:
  *   node scripts/validate-gdd-runtime.js --full
@@ -98,54 +103,73 @@ class GDDValidator {
   }
 
   /**
-   * Load system-map.yaml
+   * Load system-map-v2.yaml
    */
   async loadSystemMap() {
-    this.log('📊 Loading system-map.yaml...', 'step');
+    this.log('📊 Loading system-map-v2.yaml...', 'step');
     try {
-      const filePath = path.join(this.rootDir, 'docs', 'system-map.yaml');
+      const filePath = path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
       const content = await fs.readFile(filePath, 'utf-8');
       const map = yaml.parse(content);
       this.log('   ✅ Loaded', 'success');
       return map;
     } catch (error) {
-      this.log('   ⚠️  system-map.yaml not found, creating empty map', 'warning');
+      this.log('   ⚠️  system-map-v2.yaml not found, creating empty map', 'warning');
       return { nodes: {} };
     }
   }
 
   /**
-   * Load all node files from docs/nodes/
+   * Load all node files from docs/nodes-v2/ (recursive traversal for subnodes)
    */
   async loadAllNodes() {
-    this.log('📄 Loading GDD nodes...', 'step');
-    const nodesDir = path.join(this.rootDir, 'docs', 'nodes');
+    this.log('📄 Loading GDD nodes from docs/nodes-v2/...', 'step');
+    const nodesDir = path.join(this.rootDir, 'docs', 'nodes-v2');
     const nodes = {};
 
     try {
-      const files = await fs.readdir(nodesDir);
-      const mdFiles = files.filter((f) => f.endsWith('.md') && f !== 'README.md');
+      // Recursive function to traverse subdirectories
+      const loadNodesRecursive = async (dir, basePath = '') => {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
 
-      for (const file of mdFiles) {
-        const filePath = path.join(nodesDir, file);
-        const content = await fs.readFile(filePath, 'utf-8');
-        const nodeName = file.replace('.md', '');
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          const relativePath = basePath ? `${basePath}/${entry.name}` : entry.name;
 
-        // Parse metadata from frontmatter or first section
-        const metadata = this.parseNodeMetadata(content);
+          if (entry.isDirectory()) {
+            // Recursively load subdirectories (subnodes)
+            await loadNodesRecursive(fullPath, relativePath);
+          } else if (entry.isFile() && entry.name.endsWith('.md') && entry.name !== 'README.md') {
+            // Load markdown file
+            const content = await fs.readFile(fullPath, 'utf-8');
+            // Extract node name from path (first directory or filename without .md)
+            const pathParts = relativePath.split('/');
+            const nodeName = pathParts.length > 1 ? pathParts[0] : entry.name.replace('.md', '');
 
-        nodes[nodeName] = {
-          file: `docs/nodes/${file}`,
-          content,
-          metadata,
-          name: nodeName
-        };
-      }
+            // Parse metadata from frontmatter or first section
+            const metadata = this.parseNodeMetadata(content);
 
+            // If node already exists, merge content (for subnodes)
+            if (nodes[nodeName]) {
+              // Append subnode content
+              nodes[nodeName].content += `\n\n---\n\n## ${relativePath}\n\n${content}`;
+            } else {
+              nodes[nodeName] = {
+                file: `docs/nodes-v2/${relativePath}`,
+                content,
+                metadata,
+                name: nodeName
+              };
+            }
+          }
+        }
+      };
+
+      await loadNodesRecursive(nodesDir);
       this.log(`   ✅ Loaded ${Object.keys(nodes).length} nodes`, 'success');
       return nodes;
     } catch (error) {
-      this.log('   ⚠️  docs/nodes/ not found', 'warning');
+      this.log(`   ⚠️  docs/nodes-v2/ not found: ${error.message}`, 'warning');
       return {};
     }
   }
@@ -289,7 +313,7 @@ class GDDValidator {
     this.log('🧩 Checking graph consistency...', 'step');
 
     if (!systemMap.nodes || Object.keys(systemMap.nodes).length === 0) {
-      this.log('   ⚠️  No nodes in system-map.yaml', 'warning');
+      this.log('   ⚠️  No nodes in system-map-v2.yaml', 'warning');
       return;
     }
 
@@ -299,7 +323,7 @@ class GDDValidator {
         this.results.missing_refs.push({
           type: 'missing_node',
           node: nodeName,
-          message: `Node ${nodeName} in system-map.yaml but file doesn't exist`
+          message: `Node ${nodeName} in system-map-v2.yaml but file doesn't exist`
         });
       }
 
@@ -384,7 +408,7 @@ class GDDValidator {
     // Check that all active nodes are referenced in spec.md
     for (const [nodeName, nodeData] of Object.entries(nodes)) {
       if (nodeData.metadata.status !== 'deprecated') {
-        const nodeRef = `docs/nodes/${nodeName}.md`;
+        const nodeRef = `docs/nodes-v2/${nodeName}.md`;
         if (!specContent.includes(nodeRef) && !specContent.includes(nodeName)) {
           this.results.missing_refs.push({
             type: 'node_not_in_spec',
@@ -423,7 +447,7 @@ class GDDValidator {
     this.log('🔗 Verifying bidirectional edges...', 'step');
 
     if (!systemMap.nodes) {
-      this.log('   ⚠️  No system-map.yaml', 'warning');
+      this.log('   ⚠️  No system-map-v2.yaml', 'warning');
       return;
     }
 
@@ -733,7 +757,7 @@ ${this.results.missing_refs
     if (this.results.orphans.length > 0) {
       markdown += `### 🔴 Orphan Nodes
 
-Nodes not referenced in system-map.yaml:
+Nodes not referenced in system-map-v2.yaml:
 
 ${this.results.orphans.map((node) => `- \`${node}\``).join('\n')}
 
