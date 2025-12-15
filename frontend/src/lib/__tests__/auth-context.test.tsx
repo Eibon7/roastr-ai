@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
-import { useRef } from 'react';
+import { useEffect } from 'react';
 import { AuthProvider, useAuth } from '../auth-context';
 import { authApi } from '../api';
 
@@ -148,7 +148,9 @@ describe('AuthContext', () => {
 
     const LoginTestComponent = () => {
       const { login } = useAuth();
-      loginFnRef.current = login;
+      useEffect(() => {
+        loginFnRef.current = login;
+      }, [login]);
       return <div>Login Component</div>;
     };
 
@@ -189,7 +191,9 @@ describe('AuthContext', () => {
 
     const LogoutTestComponent = () => {
       const { logout } = useAuth();
-      logoutFnRef.current = logout;
+      useEffect(() => {
+        logoutFnRef.current = logout;
+      }, [logout]);
       return <div>Logout Component</div>;
     };
 
