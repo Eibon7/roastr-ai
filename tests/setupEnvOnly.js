@@ -14,11 +14,14 @@ process.env.ENABLE_RQC = 'false';
 process.env.ENABLE_SHIELD = 'false';
 
 // Mock console to suppress logs in tests unless needed
+// Vitest setup - use vi instead of jest
+import { vi } from 'vitest';
+
 global.console = {
   ...console,
-  error: jest.fn(),
-  warn: jest.fn(),
-  log: jest.fn()
+  error: vi.fn(),
+  warn: vi.fn(),
+  log: vi.fn()
 };
 
 // Add polyfills for Node.js tests
@@ -26,19 +29,19 @@ global.TextEncoder = require('util').TextEncoder;
 global.TextDecoder = require('util').TextDecoder;
 
 // Mock fetch globally for all tests
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 // NOTE: Global mock for feature flags REMOVED (Issue #618)
 // Why: This global mock was interfering with integration tests that need
 // the real FeatureFlags behavior. Unit tests that need mocks should use
-// their own jest.mock() calls specific to their needs.
+// their own vi.mock() calls specific to their needs.
 //
 // If you need to mock flags in a unit test, add this to your test file:
-//   jest.mock('../../../src/config/flags', () => ({
-//     flags: { isEnabled: jest.fn(), ... }
+//   vi.mock('../../../src/config/flags', () => ({
+//     flags: { isEnabled: vi.fn(), ... }
 //   }));
 
-// Global test teardown to prevent Jest from hanging
+// Global test teardown to prevent Vitest from hanging
 afterAll(async () => {
   try {
     // Clean up AlertingService intervals

@@ -1,13 +1,21 @@
 name: Tests
 
+# ⚠️ DEPRECATED: This workflow is being consolidated into ci.yml (ROA-328)
+# Tests are now run in the main CI workflow using Vitest
+# This workflow is kept temporarily for backward compatibility
+# DISABLED: Not running on PRs to avoid duplicate execution
+
 on:
-  pull_request:
+  # Disabled for PRs - tests run in ci.yml instead
+  # pull_request:
   push:
     branches: [ main ]
+  workflow_dispatch: # Allow manual trigger if needed
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: false # Disabled - tests run in ci.yml (ROA-328)
     services:
       postgres:
         image: postgres:15
@@ -31,31 +39,38 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # V2 Test Scripts (pending implementation)
-      # TODO: Remove continue-on-error when scripts are implemented
-      # Tracking: Issue #1095 - v2 test infrastructure
+      # V2 Test Scripts (using Vitest - ROA-328)
       - name: Typecheck
         if: false  # Disabled until v2 TypeScript setup complete
         run: npm run typecheck
 
-      - name: Unit Tests
-        if: false  # Disabled until v2 Vitest unit tests complete
-        run: npm run test:unit
+      - name: Unit Tests (Vitest)
+        run: |
+          echo "🧪 Running unit tests with Vitest"
+          npm run test:unit || echo "⚠️ Unit tests not yet fully migrated to Vitest"
+        continue-on-error: true
 
-      - name: Integration Tests
-        if: false  # Disabled until v2 test infrastructure is ready
-        run: npm run test:integration || echo "⚠️ test:integration script not yet implemented (v2 pending)"
+      - name: Integration Tests (Vitest)
+        run: |
+          echo "🧪 Running integration tests with Vitest"
+          npm run test:integration || echo "⚠️ Integration tests not yet fully migrated to Vitest"
         continue-on-error: true
 
       - name: E2E Tests (critical paths)
         if: false  # Disabled until v2 Playwright E2E setup complete
         run: npm run test:e2e:ci
 
-      - name: Validate Coverage Threshold (≥90% required)
+      - name: Validate Coverage Threshold (≥90% required - Vitest)
         run: |
-          if [ -f "coverage/coverage-summary.json" ]; then
+          # Check for Vitest coverage (coverage-summary.json or coverage/coverage-summary.json)
+          COVERAGE_FILE="coverage/coverage-summary.json"
+          if [ ! -f "$COVERAGE_FILE" ]; then
+            COVERAGE_FILE="coverage-summary.json"
+          fi
+          
+          if [ -f "$COVERAGE_FILE" ]; then
             if command -v jq &> /dev/null; then
-              COVERAGE=$(jq -r '.total.lines.pct' coverage/coverage-summary.json 2>/dev/null || echo "0")
+              COVERAGE=$(jq -r '.total.lines.pct' "$COVERAGE_FILE" 2>/dev/null || echo "0")
               if [ "$COVERAGE" != "0" ] && [ "$COVERAGE" != "null" ]; then
                 echo "📊 Current coverage: ${COVERAGE}%"
                 COVERAGE_INT=$(echo "$COVERAGE" | cut -d. -f1)
@@ -73,7 +88,7 @@ jobs:
               echo "⚠️ jq not available, installing..."
               sudo apt-get update && sudo apt-get install -y jq
               # Retry with jq
-              COVERAGE=$(jq -r '.total.lines.pct' coverage/coverage-summary.json 2>/dev/null || echo "0")
+              COVERAGE=$(jq -r '.total.lines.pct' "$COVERAGE_FILE" 2>/dev/null || echo "0")
               if [ "$COVERAGE" != "0" ] && [ "$COVERAGE" != "null" ]; then
                 COVERAGE_INT=$(echo "$COVERAGE" | cut -d. -f1)
                 if [ "$COVERAGE_INT" -lt 90 ]; then
