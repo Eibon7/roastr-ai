@@ -10,7 +10,6 @@
 
 const fs = require('fs');
 const path = require('path');
-// execSync no usado en este script
 
 const DOCS_ROOT = path.join(__dirname, '../docs');
 const LEGACY_REVIEWS = path.join(DOCS_ROOT, 'legacy/reviews');
