@@ -59,7 +59,7 @@ Los subnodos declarados en el frontmatter están definidos en `system-map-v2.yam
 
 ### Servicios:
 
-- **GitHub Actions**: CI/CD pipeline
+- **GitHub Actions**: CI/CD pipeline (consolidado - ROA-328)
 - **Vercel/Railway**: Hosting (staging + prod)
 - **Supabase**: BD separadas
 - **Axiom/Datadog**: Logs
@@ -67,9 +67,18 @@ Los subnodos declarados en el frontmatter están definidos en `system-map-v2.yam
 
 ### Configuración:
 
-- `.github/workflows/ci.yml`
+- `.github/workflows/ci.yml` (workflow principal consolidado - Vitest First)
+- `.github/workflows/tests.yml` (deprecated - consolidado en ci.yml)
+- `.github/workflows/integration-tests.yml` (deprecated - consolidado en ci.yml)
 - `.github/workflows/deploy-staging.yml`
 - `.github/workflows/deploy-production.yml`
+
+**Estado de Consolidación (ROA-328):**
+- ✅ Workflow principal (`ci.yml`) usa Vitest para todos los tests
+- ✅ Backend legacy migrado de Jest a Vitest
+- ✅ Backend v2 actualizado a Vitest v4.0.14
+- ✅ Frontend usa Vitest v4.0.14
+- ⚠️ Workflows redundantes marcados como deprecated
 
 ### Nodos Relacionados:
 

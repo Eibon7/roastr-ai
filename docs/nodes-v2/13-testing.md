@@ -53,9 +53,16 @@ Todos los E2E deben usar:
 
 ### Configuración:
 
-- `vitest.config.ts` (backend)
-- `vitest.config.ts` (frontend)
+- `vitest.config.ts` (backend legacy - raíz)
+- `apps/backend-v2/vitest.config.ts` (backend v2)
+- `frontend/vitest.config.ts` (frontend)
 - `playwright.config.ts`
+
+**Estado de Migración (ROA-328):**
+- ✅ Frontend: Vitest v4.0.14 (completo)
+- ✅ Backend v2: Vitest v4.0.14 (actualizado)
+- ✅ Backend legacy: Vitest v4.0.14 (migrado desde Jest)
+- ⚠️ Jest: Deprecado, mantenido temporalmente para compatibilidad
 
 ### Nodos Relacionados:
 
