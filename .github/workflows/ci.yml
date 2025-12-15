@@ -59,12 +59,10 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-          # Disable npm cache to prevent esbuild binary version mismatch (ROA-328)
-          # The cache contains esbuild 0.27.1 but lockfile requires 0.25.12
-          # cache: 'npm'
-          # cache-dependency-path: |
-          #   ./package-lock.json
-          #   ./frontend/package-lock.json
+          cache: 'npm'
+          cache-dependency-path: |
+            ./package-lock.json
+            ./frontend/package-lock.json
 
       - name: Install backend dependencies
         run: npm ci
