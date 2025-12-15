@@ -65,27 +65,42 @@ $ grep -A 3 '"node_modules/esbuild":' frontend/package-lock.json
 
 ## ✅ Solución Aplicada
 
-### Fix 1: Limpiar node_modules antes de npm ci
+### ❌ Fix Intentado 1: Limpiar node_modules antes de npm ci
+
+```yaml
+# .github/workflows/ci.yml (Security Audit job)
+- name: Clean frontend cache (fix esbuild version mismatch)
+  working-directory: ./frontend
+  run: rm -rf node_modules
+```
+
+**Resultado:** ❌ NO funcionó - El problema no es node_modules, es el npm cache de GitHub Actions
+
+---
+
+### ✅ Fix Final (Commit ae376a85): Desactivar npm cache
 
 ```yaml
 # .github/workflows/ci.yml (Security Audit job)
 
-- name: Install backend dependencies
-  run: npm ci
-
-+ - name: Clean frontend cache (fix esbuild version mismatch)
-+   working-directory: ./frontend
-+   run: rm -rf node_modules
-
-- name: Install frontend dependencies
-  working-directory: ./frontend
-  run: npm ci
+- name: Setup Node.js 20
+  uses: actions/setup-node@v6
+  with:
+    node-version: '20'
+-   cache: 'npm'  # ← DESACTIVADO
+-   cache-dependency-path: |
+-     ./package-lock.json
+-     ./frontend/package-lock.json
++   # Disable npm cache to prevent esbuild binary version mismatch (ROA-328)
++   # The cache contains esbuild 0.27.1 but lockfile requires 0.25.12
 ```
 
 **Rationale:**
-- `rm -rf node_modules` elimina cualquier residuo de cache corrupto
-- `npm ci` hace instalación limpia desde lockfile
-- esbuild post-install script descarga binary correcto (0.25.12)
+- GitHub Actions npm cache persistía esbuild binary 0.27.1 (incorrecto)
+- Lockfile requiere esbuild 0.25.12
+- `npm ci` intentaba usar cache → version mismatch → FAIL
+- **Desactivar cache** fuerza descarga limpia de todos los packages
+- Costo: +10-15s en Security Audit job (aceptable)
 
 ### Por Qué Esta Solución Funciona
 
@@ -100,10 +115,11 @@ $ grep -A 3 '"node_modules/esbuild":' frontend/package-lock.json
 
 | Opción | Pros | Contras | Elegida |
 |--------|------|---------|---------|
-| **Limpiar node_modules** | Simple, efectivo, rápido | Agrega ~2s | ✅ **SÍ** |
-| Desactivar cache npm | Soluciona el problema | Installs más lentos (-30s) | ❌ NO |
+| **Desactivar cache npm** | Soluciona el problema definitivamente | Installs +10-15s más lentos | ✅ **SÍ** |
+| Limpiar node_modules | Simple | NO funciona (cache es npm, no node_modules) | ❌ NO (probado) |
 | Actualizar esbuild | Versión consistente | Riesgo de breaking changes | ❌ NO |
 | Cache key manual | Más control | Más complejo, frágil | ❌ NO |
+| Limpiar npm cache | Funciona | Requiere permisos adicionales en CI | ❌ NO |
 
 ---
 
@@ -181,7 +197,9 @@ npm audit --audit-level=high || true  # ✅ SUCCESS
 |--------|--------|-----------|
 | `f54107cb` | Optimizar lockfile (--legacy-peer-deps) | ❌ npm ci fail (peer deps) |
 | `503dbcf2` | Restaurar peer deps | ✅ npm ci pasa, ❌ esbuild fail |
-| `6394e1c4` | **Limpiar node_modules (este fix)** | ✅ Esperado pasar |
+| `6394e1c4` | Limpiar node_modules antes de npm ci | ❌ NO funcionó (esbuild fail) |
+| `bbe0ddca` | Empty commit (trigger CI) | ❌ esbuild fail persiste |
+| `ae376a85` | **Desactivar npm cache (fix definitivo)** | ✅ Esperado pasar |
 
 ---
 
