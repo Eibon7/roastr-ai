@@ -3,15 +3,19 @@ name: Tests
 # ⚠️ DEPRECATED: This workflow is being consolidated into ci.yml (ROA-328)
 # Tests are now run in the main CI workflow using Vitest
 # This workflow is kept temporarily for backward compatibility
+# DISABLED: Not running on PRs to avoid duplicate execution
 
 on:
-  pull_request:
+  # Disabled for PRs - tests run in ci.yml instead
+  # pull_request:
   push:
     branches: [ main ]
+  workflow_dispatch: # Allow manual trigger if needed
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: false # Disabled - tests run in ci.yml (ROA-328)
     services:
       postgres:
         image: postgres:15
