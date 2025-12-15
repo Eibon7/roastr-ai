@@ -1,4 +1,4 @@
-@import "tailwindcss" with (content: "./src/**/*.{js,jsx,ts,tsx,html}, ./index.html");
+@import "tailwindcss";
 
 @theme {
   --color-background: hsl(0 0% 100%);
