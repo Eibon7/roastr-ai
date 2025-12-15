@@ -1,3 +1,7 @@
+# ⚠️ DEPRECATED - DO NOT USE
+# This file is deprecated as of 2025-12-14 (Issue ROA-329)
+# Use docs/nodes-v2/ instead
+
 # Persona - User Personality & Style Configuration
 
 **Node ID:** `persona`

@@ -95,7 +95,7 @@ class SpecSynchronizer {
       ``,
       `### 📦 Affected GDD Nodes`,
       ``,
-      ...nodes.map((node) => `- [\`${node}\`](docs/nodes/${node}.md)`),
+      ...nodes.map((node) => `- [\`${node}\`](docs/nodes-v2/${node}.md)`),
       ``,
       `### 📝 Changes`,
       ``,

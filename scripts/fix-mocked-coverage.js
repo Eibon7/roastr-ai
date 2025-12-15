@@ -2,21 +2,28 @@
 /**
  * Fix invalid "Coverage Source: mocked" in GDD nodes
  * Replace with "Coverage Source: auto"
+ *
+ * ⚠️ DEPRECATED: This script references legacy v1 nodes in docs/nodes/
+ * These files have been moved to docs/legacy/v1/nodes/ (Issue ROA-329)
+ * This script is kept for historical reference only and should NOT be used.
+ * Use docs/nodes-v2/ instead.
  */
 
 const fs = require('fs');
 const path = require('path');
 
+// ⚠️ DEPRECATED: Legacy v1 nodes - DO NOT USE
+// These files are in docs/legacy/v1/nodes/ and should not be modified
 const files = [
-  'docs/nodes/billing.md',
-  'docs/nodes/cost-control.md',
-  'docs/nodes/guardian.md',
-  'docs/nodes/multi-tenant.md',
-  'docs/nodes/persona.md',
-  'docs/nodes/platform-constraints.md',
-  'docs/nodes/queue-system.md',
-  'docs/nodes/tone.md',
-  'docs/nodes/trainer.md'
+  'docs/legacy/v1/nodes/billing.md',
+  'docs/legacy/v1/nodes/cost-control.md',
+  'docs/legacy/v1/nodes/guardian.md',
+  'docs/legacy/v1/nodes/multi-tenant.md',
+  'docs/legacy/v1/nodes/persona.md',
+  'docs/legacy/v1/nodes/platform-constraints.md',
+  'docs/legacy/v1/nodes/queue-system.md',
+  'docs/legacy/v1/nodes/tone.md',
+  'docs/legacy/v1/nodes/trainer.md'
 ];
 
 let fixed = 0;

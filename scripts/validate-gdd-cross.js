@@ -131,26 +131,44 @@ class CrossValidationRunner {
    * Load all GDD nodes
    */
   async loadNodes() {
-    const nodesDir = path.join(this.rootDir, 'docs', 'nodes');
+    const nodesDir = path.join(this.rootDir, 'docs', 'nodes-v2');
     const nodes = {};
 
     try {
-      const files = await fs.readdir(nodesDir);
-      const mdFiles = files.filter((f) => f.endsWith('.md') && f !== 'README.md');
+      // Recursive function to traverse subdirectories
+      const loadNodesRecursive = async (dir, basePath = '') => {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
 
-      for (const file of mdFiles) {
-        const filePath = path.join(nodesDir, file);
-        const content = await fs.readFile(filePath, 'utf-8');
-        const nodeName = file.replace('.md', '');
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          const relativePath = basePath ? `${basePath}/${entry.name}` : entry.name;
 
-        nodes[nodeName] = {
-          file: `docs/nodes/${file}`,
-          content,
-          metadata: this.parseNodeMetadata(content),
-          name: nodeName
-        };
-      }
+          if (entry.isDirectory()) {
+            // Recursively load subdirectories (subnodes)
+            await loadNodesRecursive(fullPath, relativePath);
+          } else if (entry.isFile() && entry.name.endsWith('.md') && entry.name !== 'README.md') {
+            // Load markdown file
+            const content = await fs.readFile(fullPath, 'utf-8');
+            // Extract node name from path (first directory or filename without .md)
+            const pathParts = relativePath.split('/');
+            const nodeName = pathParts.length > 1 ? pathParts[0] : entry.name.replace('.md', '');
 
+            // If node already exists, merge content (for subnodes)
+            if (nodes[nodeName]) {
+              nodes[nodeName].content += `\n\n---\n\n## ${relativePath}\n\n${content}`;
+            } else {
+              nodes[nodeName] = {
+                file: `docs/nodes-v2/${relativePath}`,
+                content,
+                metadata: this.parseNodeMetadata(content),
+                name: nodeName
+              };
+            }
+          }
+        }
+      };
+
+      await loadNodesRecursive(nodesDir);
       return nodes;
     } catch (error) {
       throw new Error(`Failed to load nodes: ${error.message}`);

@@ -240,7 +240,7 @@ class AutoRepairEngine {
     // Backup files
     const filesToBackup = [
       'spec.md',
-      'docs/system-map.yaml',
+      'docs/system-map-v2.yaml',
       'gdd-status.json',
       'gdd-health.json',
       ...(await this.getNodeFiles())
@@ -278,14 +278,35 @@ class AutoRepairEngine {
   }
 
   /**
-   * Get all node file paths
+   * Get all node file paths from docs/nodes-v2/ (recursive traversal for subnodes)
    */
   async getNodeFiles() {
-    const nodesDir = path.join(this.rootDir, 'docs', 'nodes');
-    const files = await fs.readdir(nodesDir);
-    return files
-      .filter((f) => f.endsWith('.md') && f !== 'README.md')
-      .map((f) => `docs/nodes/${f}`);
+    const nodesDir = path.join(this.rootDir, 'docs', 'nodes-v2');
+    const files = [];
+
+    try {
+      // Recursive function to traverse subdirectories
+      const loadFilesRecursive = async (dir, basePath = '') => {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          const relativePath = basePath ? `${basePath}/${entry.name}` : entry.name;
+
+          if (entry.isDirectory()) {
+            // Recursively load subdirectories (subnodes)
+            await loadFilesRecursive(fullPath, relativePath);
+          } else if (entry.isFile() && entry.name.endsWith('.md') && entry.name !== 'README.md') {
+            files.push(`docs/nodes-v2/${relativePath}`);
+          }
+        }
+      };
+
+      await loadFilesRecursive(nodesDir);
+      return files;
+    } catch (error) {
+      return [];
+    }
   }
 
   /**
@@ -368,10 +389,10 @@ class AutoRepairEngine {
   }
 
   /**
-   * Load system-map.yaml
+   * Load system-map-v2.yaml
    */
   async loadSystemMap() {
-    const mapPath = path.join(this.rootDir, 'docs', 'system-map.yaml');
+    const mapPath = path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
     const content = await fs.readFile(mapPath, 'utf-8');
     return yaml.parse(content);
   }
@@ -523,7 +544,7 @@ class AutoRepairEngine {
                 depNode.used_by.sort();
 
                 // Save system-map preserving comments
-                const mapPath = path.join(this.rootDir, 'docs', 'system-map.yaml');
+                const mapPath = path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
                 const originalContent = await fs.readFile(mapPath, 'utf-8');
                 await this.saveSystemMapPreservingComments(systemMap, originalContent);
                 this.fixes.push({
@@ -549,7 +570,7 @@ class AutoRepairEngine {
         this.issues.autoFixable.push({
           type: 'orphan_node',
           node: nodeName,
-          description: `${nodeName}: Not in system-map.yaml`,
+          description: `${nodeName}: Not in system-map-v2.yaml`,
           fix: async () => {
             // Add to system-map with defaults
             if (!systemMap.nodes) {
@@ -564,12 +585,12 @@ class AutoRepairEngine {
               used_by: []
             };
 
-            const mapPath = path.join(this.rootDir, 'docs', 'system-map.yaml');
+            const mapPath = path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
             const originalContent = await fs.readFile(mapPath, 'utf-8');
             await this.saveSystemMapPreservingComments(systemMap, originalContent);
             this.fixes.push({
               node: nodeName,
-              description: `Added ${nodeName} to system-map.yaml`
+              description: `Added ${nodeName} to system-map-v2.yaml`
             });
           }
         });
@@ -582,7 +603,7 @@ class AutoRepairEngine {
    */
   async detectMissingSpecReferences(nodes, spec) {
     for (const nodeName of Object.keys(nodes)) {
-      const nodeRef = `docs/nodes/${nodeName}.md`;
+      const nodeRef = `docs/nodes-v2/${nodeName}.md`;
       if (!spec.includes(nodeRef) && !spec.includes(nodeName)) {
         this.issues.humanReview.push({
           type: 'missing_spec_ref',
@@ -694,7 +715,7 @@ class AutoRepairEngine {
   }
 
   /**
-   * Safely update system-map.yaml preserving comments
+   * Safely update system-map-v2.yaml preserving comments
    */
   async saveSystemMapPreservingComments(systemMap, originalContent) {
     const yamlLines = yaml.stringify(systemMap).split('\n');
@@ -716,7 +737,7 @@ class AutoRepairEngine {
         ? headerComments.join('\n') + '\n' + yamlLines.join('\n')
         : yamlLines.join('\n');
 
-    const mapPath = path.join(this.rootDir, 'docs', 'system-map.yaml');
+    const mapPath = path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
     await fs.writeFile(mapPath, finalContent);
   }
 

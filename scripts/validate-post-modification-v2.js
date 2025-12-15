@@ -13,7 +13,8 @@
  * 4. validate-ssot-health.js - Valida sección 15 del SSOT
  * 5. check-system-map-drift.js - Valida drift del system-map
  * 6. validate-strong-concepts.js - Valida Strong Concepts
- * 7. Genera reporte completo con nodos afectados y análisis de impacto
+ * 7. Validación de scope de issue (ROA-330)
+ * 8. Genera reporte completo con nodos afectados y análisis de impacto
  *
  * Usage:
  *   node scripts/validate-post-modification-v2.js
@@ -68,6 +69,9 @@ class PostModificationValidator {
     this.warnings = [];
     this.blockedOperations = [];
     this.systemMapModified = false;
+    this.issueId = null;
+    this.issueScope = null;
+    this.scopeValidationResult = null;
   }
 
   log(message, type = 'info') {
@@ -89,6 +93,287 @@ class PostModificationValidator {
     } else {
       logger.info(formattedMessage);
     }
+  }
+
+  /**
+   * Detecta issue ID desde nombre de rama o variables de entorno
+   */
+  async detectIssueId() {
+    // Opción 1: Variable de entorno (CI)
+    if (process.env.ISSUE_ID) {
+      this.issueId = process.env.ISSUE_ID;
+      this.log(`Issue ID from environment: ${this.issueId}`, 'info');
+      return this.issueId;
+    }
+
+    // Opción 2: Desde .issue_lock
+    try {
+      const issueLockPath = path.join(ROOT_DIR, '.issue_lock');
+      const lockContent = await fs.readFile(issueLockPath, 'utf8');
+      const match = lockContent.match(/ROA-(\d+)|issue-(\d+)/i);
+      if (match) {
+        this.issueId = match[1] ? `ROA-${match[1]}` : `issue-${match[2]}`;
+        this.log(`Issue ID from .issue_lock: ${this.issueId}`, 'info');
+        return this.issueId;
+      }
+    } catch {
+      // .issue_lock no existe o no contiene issue ID
+    }
+
+    // Opción 3: Desde nombre de rama
+    try {
+      const branchName = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
+        encoding: 'utf8'
+      }).trim();
+      const branchMatch = branchName.match(/ROA-(\d+)|issue-(\d+)|feature\/(?:ROA-|issue-)?(\d+)/i);
+      if (branchMatch) {
+        this.issueId = branchMatch[1]
+          ? `ROA-${branchMatch[1]}`
+          : branchMatch[2]
+            ? `issue-${branchMatch[2]}`
+            : branchMatch[3]
+              ? `ROA-${branchMatch[3]}`
+              : null;
+        if (this.issueId) {
+          this.log(`Issue ID from branch: ${this.issueId}`, 'info');
+          return this.issueId;
+        }
+      }
+    } catch {
+      // No se pudo detectar desde rama
+    }
+
+    this.log('No issue ID detected - scope validation will be skipped', 'warning');
+    return null;
+  }
+
+  /**
+   * Obtiene scope declarado de la issue desde Linear/GitHub
+   */
+  async getIssueScope(issueId) {
+    if (!issueId) {
+      return null;
+    }
+
+    try {
+      // Intentar obtener desde Linear (formato ROA-XXX)
+      if (issueId.startsWith('ROA-')) {
+        const issueNumber = issueId.replace('ROA-', '');
+        try {
+          const issueData = execFileSync(
+            'gh',
+            ['issue', 'view', issueNumber, '--json', 'body,title'],
+            { encoding: 'utf8' }
+          );
+          const issue = JSON.parse(issueData);
+          return await this.parseScopeFromIssue(issue.body || issue.title || '');
+        } catch (error) {
+          this.log(`Could not fetch issue ${issueId} from GitHub: ${error.message}`, 'warning');
+          return null;
+        }
+      }
+
+      // Para issues de GitHub (formato issue-XXX)
+      if (issueId.startsWith('issue-')) {
+        const issueNumber = issueId.replace('issue-', '');
+        try {
+          const issueData = execFileSync(
+            'gh',
+            ['issue', 'view', issueNumber, '--json', 'body,title'],
+            { encoding: 'utf8' }
+          );
+          const issue = JSON.parse(issueData);
+          return await this.parseScopeFromIssue(issue.body || issue.title || '');
+        } catch (error) {
+          this.log(`Could not fetch issue ${issueNumber} from GitHub: ${error.message}`, 'warning');
+          return null;
+        }
+      }
+    } catch (error) {
+      this.log(`Failed to get issue scope: ${error.message}`, 'warning');
+      return null;
+    }
+
+    return null;
+  }
+
+  /**
+   * Parsea scope de nodos desde descripción de issue
+   * Busca patrones como:
+   * - "Nodos afectados: node1, node2"
+   * - "Scope: node1, node2"
+   * - "Nodos: node1, node2"
+   */
+  async parseScopeFromIssue(issueText) {
+    if (!issueText) {
+      return null;
+    }
+
+    // Patrón 1: "Nodos afectados:" o "Nodos:" seguido de lista
+    const pattern1 = /(?:Nodos afectados|Nodos|Scope|Nodes)[:\s]+([^\n]+)/i;
+    const match1 = issueText.match(pattern1);
+    if (match1) {
+      const nodes = match1[1]
+        .split(/[,\n;]+/)
+        .map((n) => n.trim())
+        .filter((n) => n.length > 0 && !n.match(/^(y|and|o|or)$/i));
+      if (nodes.length > 0) {
+        return nodes;
+      }
+    }
+
+    // Patrón 2: Lista con bullets
+    const pattern2 = /(?:Nodos afectados|Nodos|Scope|Nodes)[:\s]*\n((?:[-*]\s*[^\n]+\n?)+)/i;
+    const match2 = issueText.match(pattern2);
+    if (match2) {
+      const nodes = match2[1]
+        .split('\n')
+        .map((line) => line.replace(/^[-*]\s*/, '').trim())
+        .filter((n) => n.length > 0);
+      if (nodes.length > 0) {
+        return nodes;
+      }
+    }
+
+    // Patrón 3: Buscar IDs de nodos conocidos en el texto
+    // Esto es un fallback menos preciso
+    // Derivar node IDs dinámicamente desde system-map-v2.yaml
+    if (!this.systemMap) {
+      this.systemMap = await this.loadSystemMap();
+    }
+
+    if (this.systemMap && this.systemMap.nodes) {
+      const knownNodeIds = Object.keys(this.systemMap.nodes);
+      const foundNodes = knownNodeIds.filter((nodeId) =>
+        issueText.toLowerCase().includes(nodeId.toLowerCase())
+      );
+
+      if (foundNodes.length > 0) {
+        this.log(`Inferred scope from issue text (${foundNodes.length} nodes found)`, 'warning');
+        return foundNodes;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Valida que los nodos modificados estén dentro del scope declarado
+   */
+  async validateIssueScope() {
+    this.log('Validating issue scope...', 'step');
+    this.log('');
+
+    // Detectar issue ID
+    this.issueId = await this.detectIssueId();
+    if (!this.issueId) {
+      this.log('No issue ID detected - skipping scope validation', 'info');
+      this.scopeValidationResult = {
+        passed: true,
+        skipped: true,
+        reason: 'No issue ID detected'
+      };
+      return true;
+    }
+
+    // Obtener scope declarado
+    this.issueScope = await this.getIssueScope(this.issueId);
+    if (!this.issueScope || this.issueScope.length === 0) {
+      this.log(
+        `Could not determine scope for issue ${this.issueId} - skipping scope validation`,
+        'warning'
+      );
+      this.scopeValidationResult = {
+        passed: true,
+        skipped: true,
+        reason: 'Could not determine issue scope'
+      };
+      return true;
+    }
+
+    this.log(`Issue ${this.issueId} declared scope: ${this.issueScope.join(', ')}`, 'info');
+
+    // Validar que todos los nodos modificados estén en scope
+    const outOfScope = this.affectedNodes.filter(
+      (node) => !this.issueScope.some((scopeNode) => scopeNode === node)
+    );
+
+    if (outOfScope.length > 0) {
+      // Encontrar archivos que provocaron cada nodo fuera de scope
+      const outOfScopeDetails = outOfScope.map((node) => {
+        const triggeringFiles = this.modifiedFiles
+          .filter((file) => {
+            // Verificar si el archivo pertenece a este nodo
+            return (
+              file.file.includes(`nodes-v2/${node}.md`) ||
+              file.file.includes(`nodes-v2/${node}/`) ||
+              (this.systemMap?.nodes?.[node]?.files || []).some((nf) => file.file.includes(nf)) ||
+              (this.systemMap?.nodes?.[node]?.docs || []).some((doc) => file.file.includes(doc))
+            );
+          })
+          .map((f) => f.file);
+
+        return {
+          node,
+          files: triggeringFiles.length > 0 ? triggeringFiles : ['unknown']
+        };
+      });
+
+      this.log('❌ Issue Scope Validation FAILED', 'error');
+      this.log('');
+      this.log('Modified nodes outside declared scope:', 'error');
+      outOfScopeDetails.forEach((detail) => {
+        this.log(`  - ${detail.node}`, 'error');
+        detail.files.forEach((file) => {
+          this.log(`    Triggered by: ${file}`, 'error');
+        });
+      });
+      this.log('');
+      this.log(`Declared scope: ${this.issueScope.join(', ')}`, 'info');
+      this.log(`Modified nodes: ${this.affectedNodes.join(', ')}`, 'info');
+      this.log('');
+      this.log(
+        'Action: Update issue description to include all affected nodes, or revert changes to out-of-scope nodes.',
+        'error'
+      );
+      this.log('');
+
+      this.scopeValidationResult = {
+        passed: false,
+        skipped: false,
+        issueId: this.issueId,
+        declaredScope: this.issueScope,
+        modifiedNodes: this.affectedNodes,
+        outOfScope: outOfScopeDetails
+      };
+
+      // Añadir a operaciones bloqueadas
+      this.blockedOperations.push({
+        type: 'scope_violation',
+        message: `Issue scope validation failed: ${outOfScope.length} node(s) outside declared scope`,
+        outOfScope: outOfScopeDetails
+      });
+
+      return false;
+    }
+
+    this.log('✅ Issue Scope Validation PASSED', 'success');
+    this.log(
+      `  All ${this.affectedNodes.length} modified node(s) are within declared scope`,
+      'success'
+    );
+    this.log('');
+
+    this.scopeValidationResult = {
+      passed: true,
+      skipped: false,
+      issueId: this.issueId,
+      declaredScope: this.issueScope,
+      modifiedNodes: this.affectedNodes,
+      outOfScope: []
+    };
+
+    return true;
   }
 
   /**
@@ -393,11 +678,6 @@ class PostModificationValidator {
     }
 
     try {
-      const { SymmetryValidator } = require('./validate-symmetry.js');
-      const validator = new SymmetryValidator({ ci: this.isCIMode });
-      await validator.loadSystemMap();
-
-      // Usar el método detectCycles del validator
       const dependsOnMap = {};
       const nodeIds = Object.keys(this.systemMap.nodes || {});
 
@@ -548,7 +828,7 @@ class PostModificationValidator {
       return {
         current: currentMetrics.health_score,
         metrics: currentMetrics,
-        impact: 'unknown' // Se puede calcular comparando con versión anterior si es necesario
+        impact: 'unknown'
       };
     } catch (error) {
       this.log(`Failed to analyze health score: ${error.message}`, 'warning');
@@ -596,6 +876,32 @@ class PostModificationValidator {
 
     // Fase 3.7: Detectar warnings y operaciones bloqueadas
     this.detectWarningsAndBlockedOperations();
+
+    // Fase 3.8: Validar scope de issue
+    const scopeValid = await this.validateIssueScope();
+    if (!scopeValid) {
+      // Si scope validation falla, añadir como resultado fallido
+      this.results.push({
+        name: 'Issue Scope Validation',
+        script: 'internal',
+        success: false,
+        exitCode: 1,
+        stdout: '',
+        stderr: `Issue ${this.issueId}: ${this.scopeValidationResult.outOfScope.length} node(s) outside declared scope`,
+        scopeResult: this.scopeValidationResult
+      });
+    } else if (this.scopeValidationResult && !this.scopeValidationResult.skipped) {
+      // Si pasó, añadir como resultado exitoso
+      this.results.push({
+        name: 'Issue Scope Validation',
+        script: 'internal',
+        success: true,
+        exitCode: 0,
+        stdout: `Issue ${this.issueId}: All nodes within declared scope`,
+        stderr: '',
+        scopeResult: this.scopeValidationResult
+      });
+    }
 
     // Fase 4: Ejecutar validaciones
     this.log('Running all validations to ensure consistency after modifications...', 'info');
@@ -655,6 +961,33 @@ class PostModificationValidator {
       this.log('');
     }
 
+    // Sección 2.5: Issue Scope Validation
+    if (this.scopeValidationResult && !this.scopeValidationResult.skipped) {
+      this.log('Issue Scope Validation:', 'info');
+      this.log(`  Issue ID: ${this.scopeValidationResult.issueId}`, 'info');
+      this.log(`  Declared Scope: ${this.scopeValidationResult.declaredScope.join(', ')}`, 'info');
+      this.log(`  Modified Nodes: ${this.scopeValidationResult.modifiedNodes.join(', ')}`, 'info');
+      if (this.scopeValidationResult.passed) {
+        this.log(`  Result: ✅ PASS (all nodes in scope)`, 'success');
+      } else {
+        this.log(`  Result: ❌ FAIL`, 'error');
+        if (this.scopeValidationResult.outOfScope.length > 0) {
+          this.log('  Out of Scope:', 'error');
+          this.scopeValidationResult.outOfScope.forEach((detail) => {
+            this.log(`    - ${detail.node}`, 'error');
+            detail.files.forEach((file) => {
+              this.log(`      Triggered by: ${file}`, 'error');
+            });
+          });
+        }
+      }
+      this.log('');
+    } else if (this.scopeValidationResult && this.scopeValidationResult.skipped) {
+      this.log('Issue Scope Validation:', 'info');
+      this.log(`  Status: ⏭️  SKIPPED (${this.scopeValidationResult.reason})`, 'info');
+      this.log('');
+    }
+
     // Sección 3: Resumen de validaciones
     this.log('Validation Results:', 'info');
     this.log('');
@@ -693,7 +1026,6 @@ class PostModificationValidator {
     }
 
     // Sección 4: Impacto en system-map
-    // Mostrar análisis incluso si solo system-map fue modificado (sin nodos mapeados)
     if ((this.affectedNodes.length > 0 || this.systemMapModified) && this.systemMap) {
       this.log('System-Map Impact Analysis:', 'info');
       this.log('');
@@ -769,6 +1101,15 @@ class PostModificationValidator {
         }
         if (blocked.failed && blocked.failed.length > 0) {
           this.log(`     Failed validations: ${blocked.failed.join(', ')}`, 'error');
+        }
+        if (blocked.outOfScope && blocked.outOfScope.length > 0) {
+          this.log('     Out of scope nodes:', 'error');
+          blocked.outOfScope.forEach((detail) => {
+            this.log(`       - ${detail.node}`, 'error');
+            detail.files.forEach((file) => {
+              this.log(`         Triggered by: ${file}`, 'error');
+            });
+          });
         }
       });
       this.log('');

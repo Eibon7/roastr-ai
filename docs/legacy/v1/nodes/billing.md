@@ -1,3 +1,7 @@
+# ⚠️ DEPRECATED - DO NOT USE
+# This file is deprecated as of 2025-12-14 (Issue ROA-329)
+# Use docs/nodes-v2/ instead
+
 # Billing Node
 
 **Estado:** ✅ Completado (DI refactor v2.0 - 17/17 tests passing)

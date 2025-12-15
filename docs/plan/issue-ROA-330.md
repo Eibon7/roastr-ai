@@ -124,3 +124,55 @@ class PostModificationValidator {
 - Este script complementa los scripts de validación existentes, no los reemplaza
 - Puede ser usado como parte de un workflow más amplio de validación post-modificación
 - Debe seguir el mismo patrón de logging que otros scripts de validación
+
+---
+
+## Ampliación Implementada: Issue Scope Validation
+
+### Estado: ✅ IMPLEMENTADO
+
+**Fecha:** 2025-12-14  
+**Commit:** 75c2a95c
+
+### Funcionalidad Añadida
+
+1. **Detección de Issue ID:**
+   - Desde variable de entorno `ISSUE_ID` (CI)
+   - Desde `.issue_lock` si existe
+   - Desde nombre de rama (patrón: `feature/ROA-XXX` o `feature/issue-XXX`)
+
+2. **Obtención de Scope Declarado:**
+   - Usa `gh issue view` para obtener descripción de issue
+   - Parsea scope desde múltiples formatos:
+     - "Nodos afectados: node1, node2"
+     - "Scope: node1, node2"
+     - Lista con bullets
+     - Fallback: inferir desde keywords en texto
+
+3. **Validación:**
+   - Verifica: `affectedNodes ⊆ scopeDeclared`
+   - Si hay nodos fuera de scope:
+     - Exit code 1 (bloquea merge en CI)
+     - Mensaje claro con nodo y archivo que lo provocó
+     - Añade a `blockedOperations`
+
+4. **Reporte:**
+   - Nueva sección "Issue Scope Validation" en Consistency Report
+   - Muestra: Issue ID, scope declarado, nodos modificados, resultado (PASS/FAIL)
+   - Si FAIL: lista de nodos fuera de scope con archivos que los provocaron
+
+### Archivos Modificados
+
+- `scripts/validate-post-modification-v2.js`:
+  - Añadidos métodos: `detectIssueId()`, `getIssueScope()`, `parseScopeFromIssue()`, `validateIssueScope()`
+  - Integrado en flujo de validación (Fase 3.8)
+  - Añadida sección al reporte (Sección 2.5)
+  - Añadidas funcionalidades: detección de archivos, mapeo a nodos, carga de contexto, validación DAG
+
+### Reglas Estrictas Cumplidas
+
+- ✅ NO implementa auto-sync de system-map
+- ✅ NO modifica system-map automáticamente
+- ✅ NO inventa relaciones
+- ✅ NO toca SSOT fuera de validación/lectura
+- ✅ NO introduce dependencias nuevas

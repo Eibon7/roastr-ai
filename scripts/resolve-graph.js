@@ -878,7 +878,7 @@ function main() {
     }
   }
 
-  const systemMapPath = path.join(process.cwd(), 'docs', 'system-map.yaml');
+  const systemMapPath = path.join(process.cwd(), 'docs', 'system-map-v2.yaml');
   const resolver = new GraphResolver(systemMapPath);
 
   try {

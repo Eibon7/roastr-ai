@@ -1,3 +1,7 @@
+# ⚠️ DEPRECATED - DO NOT USE
+# This file is deprecated as of 2025-12-14 (Issue ROA-329)
+# Use docs/system-map-v2.yaml instead
+
 # Roastr System Map - Graph Driven Development
 # Version: 2.0.0
 # Description: Complete dependency graph with bidirectional relationships
