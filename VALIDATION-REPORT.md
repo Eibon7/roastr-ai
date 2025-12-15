@@ -176,3 +176,49 @@ Estos necesitan revisión separada y no están relacionados con la consolidació
 
 **La PR está lista para revisión. Los workflows CI validarán la ejecución en el entorno de CI.**
 
+---
+
+## 🔧 Resolución de Conflictos
+
+**Fecha:** 2025-12-05  
+**Problema:** Conflicto en `frontend/package-lock.json` con main
+
+**Causa:**
+- Main había mergeado PR #1136 (Tailwind CSS bump 3.4.19 → 4.1.18)
+- Nuestros commits modificaban `frontend/package-lock.json`
+- Rebase necesario para sincronizar
+
+**Solución Aplicada:**
+```bash
+# 1. Fetch main actualizado
+git fetch origin main
+
+# 2. Rebase sobre main
+git rebase origin/main
+# → Conflicto detectado en frontend/package-lock.json
+
+# 3. Regenerar lockfile limpiamente
+cd frontend
+rm package-lock.json
+npm install --package-lock-only
+
+# 4. Continuar rebase
+git add frontend/package-lock.json
+git rebase --continue
+
+# 5. Force push (seguro)
+git push --force-with-lease origin feature/ROA-328-auto-clean
+```
+
+**Resultado:**
+- ✅ Rebase completado exitosamente
+- ✅ Conflicto resuelto regenerando lockfile
+- ✅ Historial limpio (9 commits rebased)
+- ✅ Push completado con `--force-with-lease`
+
+**Estado Actual:**
+- ✅ Rama sincronizada con main
+- ✅ Conflictos resueltos
+- ✅ PR #1148 actualizada
+- ✅ Esperando nueva ejecución de CI
+
