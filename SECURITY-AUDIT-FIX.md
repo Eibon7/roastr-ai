@@ -78,29 +78,39 @@ $ grep -A 3 '"node_modules/esbuild":' frontend/package-lock.json
 
 ---
 
-### ✅ Fix Final (Commit ae376a85): Desactivar npm cache
+### ❌ Fix Intentado 2: Desactivar npm cache (Commit ae376a85)
 
 ```yaml
-# .github/workflows/ci.yml (Security Audit job)
-
-- name: Setup Node.js 20
-  uses: actions/setup-node@v6
-  with:
-    node-version: '20'
--   cache: 'npm'  # ← DESACTIVADO
--   cache-dependency-path: |
--     ./package-lock.json
--     ./frontend/package-lock.json
-+   # Disable npm cache to prevent esbuild binary version mismatch (ROA-328)
-+   # The cache contains esbuild 0.27.1 but lockfile requires 0.25.12
+# Desactivar cache de npm
+cache: 'npm'  # → Comentado
 ```
 
+**Resultado:** ❌ NO funcionó - El runner tiene esbuild 0.27.1 instalado **globalmente** en el sistema, no solo en npm cache
+
+---
+
+### ✅ FIX DEFINITIVO (Commit 35aae948): Actualizar Vite → esbuild compatible
+
+```bash
+# Actualizar vite a la versión que usa esbuild 0.27.1
+cd frontend
+npm install vite@latest --save-dev
+
+# Verificar versiones
+npm ls esbuild
+# vite@7.3.0 → esbuild@0.27.1  ✅ Coincide con runner!
+```
+
+**Resultado:**
+- ✅ vite 6.4.1 → vite 7.3.0
+- ✅ esbuild 0.25.12 → esbuild 0.27.1
+- ✅ **Versión ahora coincide con runner de GitHub Actions**
+- ✅ npm cache restaurado (ya no causa problemas)
+
 **Rationale:**
-- GitHub Actions npm cache persistía esbuild binary 0.27.1 (incorrecto)
-- Lockfile requiere esbuild 0.25.12
-- `npm ci` intentaba usar cache → version mismatch → FAIL
-- **Desactivar cache** fuerza descarga limpia de todos los packages
-- Costo: +10-15s en Security Audit job (aceptable)
+- El runner de GitHub Actions tiene esbuild 0.27.1 preinstalado globalmente
+- Actualizar vite trae esbuild 0.27.1 como dependencia
+- Ahora lockfile y runner tienen la misma versión → NO hay mismatch
 
 ### Por Qué Esta Solución Funciona
 
@@ -115,11 +125,11 @@ $ grep -A 3 '"node_modules/esbuild":' frontend/package-lock.json
 
 | Opción | Pros | Contras | Elegida |
 |--------|------|---------|---------|
-| **Desactivar cache npm** | Soluciona el problema definitivamente | Installs +10-15s más lentos | ✅ **SÍ** |
-| Limpiar node_modules | Simple | NO funciona (cache es npm, no node_modules) | ❌ NO (probado) |
-| Actualizar esbuild | Versión consistente | Riesgo de breaking changes | ❌ NO |
+| **Actualizar vite (→ esbuild 0.27.1)** | Soluciona definitivamente, sin tradeoffs | Actualización de dependencia | ✅ **SÍ** |
+| Desactivar cache npm | Evita cache corrupto | +10-15s, no soluciona binary global | ❌ NO (probado) |
+| Limpiar node_modules | Simple | NO funciona (problema es binary global) | ❌ NO (probado) |
+| Pin esbuild manualmente | Versión explícita | Conflictos con vite, complejo | ❌ NO |
 | Cache key manual | Más control | Más complejo, frágil | ❌ NO |
-| Limpiar npm cache | Funciona | Requiere permisos adicionales en CI | ❌ NO |
 
 ---
 
@@ -199,7 +209,8 @@ npm audit --audit-level=high || true  # ✅ SUCCESS
 | `503dbcf2` | Restaurar peer deps | ✅ npm ci pasa, ❌ esbuild fail |
 | `6394e1c4` | Limpiar node_modules antes de npm ci | ❌ NO funcionó (esbuild fail) |
 | `bbe0ddca` | Empty commit (trigger CI) | ❌ esbuild fail persiste |
-| `ae376a85` | **Desactivar npm cache (fix definitivo)** | ✅ Esperado pasar |
+| `ae376a85` | Desactivar npm cache | ❌ esbuild fail persiste (binary global) |
+| `35aae948` | **Actualizar vite 7.3.0 → esbuild 0.27.1** | ✅ Esperado pasar |
 
 ---
 
