@@ -15,7 +15,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const yaml = require('js-yaml');
+const YAML = require('yaml');
 const { supabaseServiceClient } = require('../config/supabase');
 const { logger } = require('../utils/logger');
 
@@ -65,7 +65,8 @@ class SettingsLoaderV2 {
       }
 
       const fileContent = fs.readFileSync(this.yamlPath, 'utf8');
-      const config = yaml.load(fileContent) || {};
+      // YAML.parse returns null for empty files, ensure we return {} instead
+      const config = (fileContent.trim() ? YAML.parse(fileContent) : null) || {};
       
       // Update static cache with separate timestamp
       this.cache.static = { data: config, lastLoad: Date.now() };
