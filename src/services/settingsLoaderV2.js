@@ -21,11 +21,12 @@ const { logger } = require('../utils/logger');
 
 class SettingsLoaderV2 {
   constructor() {
+    // Separate timestamps per cache type to prevent serving stale merged config
+    // when static or dynamic updates independently
     this.cache = {
-      static: null,
-      dynamic: null,
-      merged: null,
-      lastLoad: null
+      static: { data: null, lastLoad: null },
+      dynamic: { data: null, lastLoad: null },
+      merged: { data: null, lastLoad: null }
     };
     this.cacheTTL = 60000; // 1 minute cache TTL
     // Try multiple possible paths for admin-controlled.yaml
@@ -52,22 +53,22 @@ class SettingsLoaderV2 {
    */
   loadStaticConfig() {
     try {
-      if (this.cache.static && Date.now() - this.cache.lastLoad < this.cacheTTL) {
-        return this.cache.static;
+      // Use static-specific timestamp to check if static cache is still valid
+      if (this.cache.static.data && this.cache.static.lastLoad && Date.now() - this.cache.static.lastLoad < this.cacheTTL) {
+        return this.cache.static.data;
       }
 
       if (!fs.existsSync(this.yamlPath)) {
         logger.warn('admin-controlled.yaml not found, using empty config');
-        this.cache.static = {};
-        this.cache.lastLoad = Date.now();
+        this.cache.static = { data: {}, lastLoad: Date.now() };
         return {};
       }
 
       const fileContent = fs.readFileSync(this.yamlPath, 'utf8');
       const config = yaml.load(fileContent) || {};
       
-      this.cache.static = config;
-      this.cache.lastLoad = Date.now();
+      // Update static cache with separate timestamp
+      this.cache.static = { data: config, lastLoad: Date.now() };
       
       return config;
     } catch (error) {
@@ -82,8 +83,9 @@ class SettingsLoaderV2 {
    */
   async loadDynamicConfig() {
     try {
-      if (this.cache.dynamic && Date.now() - this.cache.lastLoad < this.cacheTTL) {
-        return this.cache.dynamic;
+      // Use dynamic-specific timestamp to check if dynamic cache is still valid
+      if (this.cache.dynamic.data && this.cache.dynamic.lastLoad && Date.now() - this.cache.dynamic.lastLoad < this.cacheTTL) {
+        return this.cache.dynamic.data;
       }
 
       const { data, error } = await supabaseServiceClient
@@ -92,7 +94,7 @@ class SettingsLoaderV2 {
 
       if (error) {
         logger.error('Error loading dynamic config:', error);
-        this.cache.dynamic = {};
+        this.cache.dynamic = { data: {}, lastLoad: Date.now() };
         return {};
       }
 
@@ -116,8 +118,8 @@ class SettingsLoaderV2 {
         }
       }
 
-      this.cache.dynamic = dynamic;
-      this.cache.lastLoad = Date.now();
+      // Update dynamic cache with separate timestamp
+      this.cache.dynamic = { data: dynamic, lastLoad: Date.now() };
       
       return dynamic;
     } catch (error) {
@@ -159,15 +161,24 @@ class SettingsLoaderV2 {
    */
   async getMergedConfig() {
     try {
-      if (this.cache.merged && Date.now() - this.cache.lastLoad < this.cacheTTL) {
-        return this.cache.merged;
+      // Invalidate merged cache if it doesn't exist or if source caches are newer
+      // This ensures merged always reflects the latest static + dynamic combination
+      const shouldInvalidate = 
+        !this.cache.merged.data ||
+        !this.cache.merged.lastLoad ||
+        (this.cache.static.lastLoad && this.cache.static.lastLoad > this.cache.merged.lastLoad) ||
+        (this.cache.dynamic.lastLoad && this.cache.dynamic.lastLoad > this.cache.merged.lastLoad);
+
+      if (!shouldInvalidate && Date.now() - this.cache.merged.lastLoad < this.cacheTTL) {
+        return this.cache.merged.data;
       }
 
       const staticConfig = this.loadStaticConfig();
       const dynamicConfig = await this.loadDynamicConfig();
       const merged = this.mergeConfigs(staticConfig, dynamicConfig);
 
-      this.cache.merged = merged;
+      // Update merged cache with separate timestamp
+      this.cache.merged = { data: merged, lastLoad: Date.now() };
       return merged;
     } catch (error) {
       logger.error('Error getting merged config:', error);
@@ -197,13 +208,13 @@ class SettingsLoaderV2 {
 
   /**
    * Invalidate cache (force reload on next request)
+   * Resets all three subcaches with their independent timestamps
    */
   invalidateCache() {
     this.cache = {
-      static: null,
-      dynamic: null,
-      merged: null,
-      lastLoad: null
+      static: { data: null, lastLoad: null },
+      dynamic: { data: null, lastLoad: null },
+      merged: { data: null, lastLoad: null }
     };
   }
 }
