@@ -1,27 +1,23 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="11" failures="0" errors="0" time="0.049520833">
-    <testsuite name="tests/unit/routes/ssot.test.js" timestamp="2025-12-16T09:07:25.349Z" hostname="macbookpro.lan" tests="11" failures="0" errors="0" skipped="0" time="0.049520833">
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/plans &gt; should return valid plan IDs, trial config, limits, and capabilities" time="0.021500375">
+<testsuites name="vitest tests" tests="9" failures="0" errors="0" time="0.046456916">
+    <testsuite name="tests/unit/routes/v2-settings.test.js" timestamp="2025-12-16T09:50:35.114Z" hostname="macbookpro.lan" tests="9" failures="0" errors="0" skipped="0" time="0.046456916">
+        <testcase classname="tests/unit/routes/v2-settings.test.js" name="V2 Settings Public Routes - Contract Tests &gt; GET /api/v2/settings/public &gt; should return public settings with correct structure" time="0.021169125">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/plans &gt; should be accessible without authentication" time="0.003684709">
+        <testcase classname="tests/unit/routes/v2-settings.test.js" name="V2 Settings Public Routes - Contract Tests &gt; GET /api/v2/settings/public &gt; should be accessible without authentication" time="0.006070084">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/limits &gt; should return plan limits" time="0.002643625">
+        <testcase classname="tests/unit/routes/v2-settings.test.js" name="V2 Settings Public Routes - Contract Tests &gt; GET /api/v2/settings/tones &gt; should return tones with correct structure" time="0.002073584">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/features &gt; should return valid feature flags and semantics" time="0.002349167">
+        <testcase classname="tests/unit/routes/v2-settings.test.js" name="V2 Settings Public Routes - Contract Tests &gt; GET /api/v2/settings/tones &gt; should be accessible without authentication" time="0.001982">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/features &gt; should include all required feature flags from SSOT" time="0.002803417">
+        <testcase classname="tests/unit/routes/v2-settings.test.js" name="V2 Settings Public Routes - Contract Tests &gt; GET /api/v2/settings/roastr-persona/schema &gt; should return persona schema with correct structure" time="0.002592375">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/tones &gt; should return valid roast tones" time="0.002131834">
+        <testcase classname="tests/unit/routes/v2-settings.test.js" name="V2 Settings Public Routes - Contract Tests &gt; GET /api/v2/settings/roastr-persona/schema &gt; should be accessible without authentication" time="0.001374667">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/subscription-states &gt; should return valid subscription states" time="0.002475208">
+        <testcase classname="tests/unit/routes/v2-settings.test.js" name="V2 Settings Public Routes - Contract Tests &gt; GET /api/v2/settings/shield &gt; should return shield config with correct structure" time="0.001316875">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/platforms &gt; should return supported and planned platforms" time="0.001857334">
+        <testcase classname="tests/unit/routes/v2-settings.test.js" name="V2 Settings Public Routes - Contract Tests &gt; GET /api/v2/settings/shield &gt; should be accessible without authentication" time="0.001235666">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/all &gt; should return all SSOT data in a single response" time="0.004670958">
-        </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/all &gt; should include all required sections" time="0.001804708">
-        </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; Error handling &gt; should return 500 on service errors" time="0.001430292">
+        <testcase classname="tests/unit/routes/v2-settings.test.js" name="V2 Settings Public Routes - Contract Tests &gt; Error handling &gt; should handle SettingsLoader errors gracefully" time="0.007037292">
         </testcase>
     </testsuite>
 </testsuites>
