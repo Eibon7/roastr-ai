@@ -304,9 +304,6 @@ app.use('/api/ssot', ssotRoutes);
 // V2 Settings public routes (ROA-267: V2 Settings endpoints using SettingsLoader v2)
 app.use('/api/v2/settings', v2SettingsRoutes);
 
-// V2 Admin Settings routes (ROA-267: Admin-only settings endpoints)
-app.use('/api/v2/admin/settings', v2AdminSettingsRoutes);
-
 // Approval routes (authenticated)
 app.use('/api/approval', approvalRoutes);
 
