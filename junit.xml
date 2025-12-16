@@ -1,41 +1,27 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="17" failures="0" errors="0" time="2.569">
-  <testsuite name="API Health Smoke Tests" errors="0" failures="0" skipped="0" timestamp="2025-09-28T13:03:14" time="2.477" tests="11">
-    <testcase classname="API Health Smoke Tests Health Check Endpoints" name="GET /health should return 200" time="0.033">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Health Check Endpoints" name="GET /api/health should be accessible" time="0.008">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Auth Endpoints Accessibility" name="POST /api/auth/register should be accessible" time="0.019">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Auth Endpoints Accessibility" name="POST /api/auth/login should be accessible" time="0.004">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Billing Endpoints Accessibility" name="GET /api/billing/plans should be accessible" time="0.007">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Billing Endpoints Accessibility" name="POST /api/billing/create-checkout-session endpoint exists" time="0.005">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Integration Endpoints Accessibility" name="GET /api/user/integrations endpoint exists" time="0.004">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Integration Endpoints Accessibility" name="POST /api/user/integrations/connect endpoint exists" time="0.005">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Error Handling" name="Non-existent endpoints should return proper error" time="0.008">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Error Handling" name="Wrong HTTP method should return proper error" time="0.005">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Security Headers" name="Should include security headers" time="0.005">
-    </testcase>
-  </testsuite>
-  <testsuite name="Feature Flags Smoke Tests" errors="0" failures="0" skipped="0" timestamp="2025-09-28T13:03:17" time="0.022" tests="6">
-    <testcase classname="Feature Flags Smoke Tests" name="Feature flags should initialize without errors" time="0.001">
-    </testcase>
-    <testcase classname="Feature Flags Smoke Tests" name="Should be able to check flag status" time="0">
-    </testcase>
-    <testcase classname="Feature Flags Smoke Tests" name="Should return service status" time="0">
-    </testcase>
-    <testcase classname="Feature Flags Smoke Tests" name="Should return all flags" time="0.003">
-    </testcase>
-    <testcase classname="Feature Flags Smoke Tests" name="Should handle unknown flags gracefully" time="0.001">
-    </testcase>
-    <testcase classname="Feature Flags Smoke Tests" name="Feature flags should be consistent" time="0">
-    </testcase>
-  </testsuite>
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="11" failures="0" errors="0" time="0.051100792">
+    <testsuite name="tests/unit/routes/ssot.test.js" timestamp="2025-12-16T09:21:05.246Z" hostname="macbookpro.lan" tests="11" failures="0" errors="0" skipped="0" time="0.051100792">
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/plans &gt; should return valid plan IDs, trial config, limits, and capabilities" time="0.023097042">
+        </testcase>
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/plans &gt; should be accessible without authentication" time="0.003540417">
+        </testcase>
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/limits &gt; should return plan limits" time="0.00233275">
+        </testcase>
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/features &gt; should return valid feature flags and semantics" time="0.002388333">
+        </testcase>
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/features &gt; should include all required feature flags from SSOT" time="0.0028675">
+        </testcase>
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/tones &gt; should return valid roast tones" time="0.0023145">
+        </testcase>
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/subscription-states &gt; should return valid subscription states" time="0.00237675">
+        </testcase>
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/platforms &gt; should return supported and planned platforms" time="0.001839834">
+        </testcase>
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/all &gt; should return all SSOT data in a single response" time="0.004721125">
+        </testcase>
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/all &gt; should include all required sections" time="0.002406792">
+        </testcase>
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; Error handling &gt; should return 500 on service errors" time="0.001360875">
+        </testcase>
+    </testsuite>
 </testsuites>
