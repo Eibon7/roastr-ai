@@ -511,7 +511,8 @@ class FetchCommentsWorker extends BaseWorker {
         const pipeline = this.redis.pipeline();
 
         for (const job of analysisJobs) {
-          pipeline.rpush('roastr:jobs:analyze_toxicity', JSON.stringify(job));
+          // ROA-324: Normalized to v2_ prefix convention
+          pipeline.rpush('v2_jobs:analyze_toxicity', JSON.stringify(job));
         }
 
         await pipeline.exec();

@@ -467,6 +467,25 @@ type WorkerName =
   | 'StrikeCleanup';
 ```
 
+### 8.5 Workers auxiliares (internos)
+
+Estos workers soportan funcionalidades internas y no forman parte del flujo core de roasting:
+
+```ts
+type AuxiliaryWorkerName =
+  | 'AccountDeletion'      // GDPR: Eliminación de cuentas
+  | 'AlertNotification'    // Observabilidad: Notificaciones de alertas
+  | 'ExportCleanup'        // GDPR: Limpieza de exports
+  | 'GDPRRetention'        // GDPR: Retención y purga de datos (90 días)
+  | 'ModelAvailability';   // Infraestructura: Health check de modelos IA
+```
+
+**Reglas para workers auxiliares:**
+- No consumen créditos de análisis ni roasts.
+- Ejecutan en segundo plano con prioridad baja (priority: 5).
+- Logs estructurados obligatorios (sin datos sensibles).
+- Pueden ser deshabilitados individualmente sin afectar el flujo core.
+
 ### 8.2 Tenancy
 
 - Todos los payloads deben incluir `userId` + `accountId`.

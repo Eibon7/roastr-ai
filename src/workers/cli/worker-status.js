@@ -103,10 +103,23 @@ class WorkerStatusMonitor {
       ];
       const stats = {};
 
+      // ROA-324: Check all priorities (1-5) to match queueService.getQueueKey() format
       for (const queueType of queueTypes) {
-        const queueKey = `roastr:jobs:${queueType}`;
-        const length = await this.redis.llen(queueKey);
-        stats[queueType] = { pending: length };
+        let totalPending = 0;
+        const byPriority = {};
+
+        // Check all priority levels (1=critical, 2=high, 3=medium, 4=normal, 5=low)
+        for (let priority = 1; priority <= 5; priority++) {
+          const queueKey = `v2_jobs:${queueType}:p${priority}`;
+          const length = await this.redis.llen(queueKey);
+          byPriority[priority] = length;
+          totalPending += length;
+        }
+
+        stats[queueType] = {
+          pending: totalPending,
+          byPriority
+        };
       }
 
       return stats;
@@ -248,7 +261,22 @@ class WorkerStatusMonitor {
     if (status.redisQueues) {
       output += '\n🔄 Redis Job Queues:\n';
       Object.entries(status.redisQueues).forEach(([queueType, stats]) => {
-        output += `   ${queueType.padEnd(20)} | Pending: ${stats.pending}\n`;
+        if (stats.byPriority) {
+          // Show breakdown by priority if available
+          const priorityBreakdown = Object.entries(stats.byPriority)
+            .filter(([_, count]) => count > 0)
+            .map(([priority, count]) => `p${priority}:${count}`)
+            .join(', ');
+          output += `   ${queueType.padEnd(20)} | Total: ${stats.pending}`;
+          if (priorityBreakdown) {
+            output += ` (${priorityBreakdown})\n`;
+          } else {
+            output += '\n';
+          }
+        } else {
+          // Fallback for old format
+          output += `   ${queueType.padEnd(20)} | Pending: ${stats.pending}\n`;
+        }
       });
     }
 

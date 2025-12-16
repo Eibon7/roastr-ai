@@ -79,6 +79,8 @@ const sponsorsRoutes = require('./routes/sponsors')(); // Issue #859: Brand Safe
 const aiModesRoutes = require('./routes/ai-modes'); // Issue #920: AI modes endpoint
 const usageCurrentRoutes = require('./routes/usage/current'); // Issue #1066: Usage current endpoint
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
+const ssotRoutes = require('./routes/ssot'); // ROA-267: Public SSOT endpoints for frontend v2 (legacy)
+const v2SettingsRoutes = require('./routes/v2/settings'); // ROA-267: V2 Settings endpoints using SettingsLoader v2
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -294,6 +296,12 @@ app.use('/api/stylecards', stylecardsRoutes);
 
 // Configuration routes (authenticated)
 app.use('/api/config', configRoutes);
+
+// SSOT public routes (ROA-267: Public SSOT endpoints for frontend v2 - legacy)
+app.use('/api/ssot', ssotRoutes);
+
+// V2 Settings public routes (ROA-267: V2 Settings endpoints using SettingsLoader v2)
+app.use('/api/v2/settings', v2SettingsRoutes);
 
 // Approval routes (authenticated)
 app.use('/api/approval', approvalRoutes);

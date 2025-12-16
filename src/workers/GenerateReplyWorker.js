@@ -1436,7 +1436,9 @@ class GenerateReplyWorker extends BaseWorker {
 
     try {
       if (this.redis) {
-        await this.redis.rpush('roastr:jobs:social_posting', JSON.stringify(postJob));
+        // ROA-324: Normalized to v2_ prefix convention - use dynamic priority
+        const queueKey = `v2_jobs:social_posting:p${postJob.priority}`;
+        await this.redis.rpush(queueKey, JSON.stringify(postJob));
       } else {
         const { error } = await this.supabase.from('job_queue').insert([postJob]);
 

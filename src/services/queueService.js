@@ -65,10 +65,10 @@ class QueueService {
     this.supabase = null;
     this.isRedisAvailable = false;
 
-    // Queue name prefixes for organization
-    this.queuePrefix = 'roastr:jobs';
-    this.dlqPrefix = 'roastr:dlq';
-    this.metricsPrefix = 'roastr:metrics';
+    // Queue name prefixes for organization (v2 naming convention - ROA-324)
+    this.queuePrefix = 'v2_jobs';
+    this.dlqPrefix = 'v2_dlq';
+    this.metricsPrefix = 'v2_metrics';
 
     // Priority levels mapping
     this.priorityQueues = {

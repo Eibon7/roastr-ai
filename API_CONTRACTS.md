@@ -17,6 +17,259 @@ Most endpoints require authentication via JWT token in `Authorization` header:
 Authorization: Bearer <jwt_token>
 ```
 
+**Note:** SSOT endpoints (`/api/ssot/*`) are **public** and do not require authentication.
+
+## 📚 SSOT Public Endpoints (ROA-267)
+
+### GET /api/ssot/plans
+
+Get valid plan IDs, trial configuration, limits, and capabilities.
+
+**Authentication:** Not required (public endpoint)
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "valid_ids": ["starter", "pro", "plus"],
+    "trial_config": {
+      "starter": { "trial_enabled": true, "trial_days": 30 },
+      "pro": { "trial_enabled": true, "trial_days": 7 },
+      "plus": { "trial_enabled": false, "trial_days": 0 }
+    },
+    "limits": {
+      "starter": {
+        "analysis_limit": 1000,
+        "roast_limit": 5,
+        "accounts_per_platform": 1,
+        "sponsors_allowed": false,
+        "tone_personal_allowed": false
+      },
+      "pro": {
+        "analysis_limit": 10000,
+        "roast_limit": 1000,
+        "accounts_per_platform": 2,
+        "sponsors_allowed": false,
+        "tone_personal_allowed": true
+      },
+      "plus": {
+        "analysis_limit": 100000,
+        "roast_limit": 5000,
+        "accounts_per_platform": 2,
+        "sponsors_allowed": true,
+        "tone_personal_allowed": true
+      }
+    },
+    "capabilities": {
+      "starter": {
+        "shield": "básico",
+        "tones": ["flanders", "balanceado", "canalla"],
+        "roastr_persona": true,
+        "tone_personal": false,
+        "sponsors": false
+      },
+      "pro": {
+        "shield": "completo",
+        "tones": ["flanders", "balanceado", "canalla", "personal"],
+        "multi_account": true,
+        "roastr_persona": true,
+        "tone_personal": true,
+        "sponsors": false
+      },
+      "plus": {
+        "shield": "completo",
+        "tones": ["flanders", "balanceado", "canalla", "personal"],
+        "multi_account": true,
+        "roastr_persona": true,
+        "tone_personal": true,
+        "sponsors": true
+      }
+    }
+  },
+  "source": "SSOT-V2.md section 1",
+  "timestamp": "2025-12-05T20:00:00.000Z"
+}
+```
+
+### GET /api/ssot/limits
+
+Get monthly functional limits by plan.
+
+**Authentication:** Not required (public endpoint)
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "starter": {
+      "analysis_limit": 1000,
+      "roast_limit": 5,
+      "accounts_per_platform": 1,
+      "sponsors_allowed": false,
+      "tone_personal_allowed": false
+    },
+    "pro": {
+      "analysis_limit": 10000,
+      "roast_limit": 1000,
+      "accounts_per_platform": 2,
+      "sponsors_allowed": false,
+      "tone_personal_allowed": true
+    },
+    "plus": {
+      "analysis_limit": 100000,
+      "roast_limit": 5000,
+      "accounts_per_platform": 2,
+      "sponsors_allowed": true,
+      "tone_personal_allowed": true
+    }
+  },
+  "source": "SSOT-V2.md section 1.3",
+  "timestamp": "2025-12-05T20:00:00.000Z"
+}
+```
+
+### GET /api/ssot/features
+
+Get valid feature flags and their semantics.
+
+**Authentication:** Not required (public endpoint)
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "valid_flags": [
+      "autopost_enabled",
+      "manual_approval_enabled",
+      "enable_shield",
+      "enable_roast",
+      ...
+    ],
+    "semantics": {
+      "autopost_enabled": {
+        "actors": ["user", "account"],
+        "description": "Permite auto-approve de roasts"
+      },
+      ...
+    }
+  },
+  "source": "SSOT-V2.md section 3",
+  "timestamp": "2025-12-05T20:00:00.000Z"
+}
+```
+
+### GET /api/ssot/tones
+
+Get valid roast tones.
+
+**Authentication:** Not required (public endpoint)
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "valid_tones": ["flanders", "balanceado", "canalla", "personal"],
+    "descriptions": {
+      "flanders": "amable, diminutivos, humor blanco",
+      "balanceado": "estándar, sarcasmo suave, elegante",
+      "canalla": "humor afilado, ironía, sin degradación",
+      "personal": "derivado rule-based del estilo del usuario (solo Pro/Plus, beta)"
+    }
+  },
+  "source": "SSOT-V2.md section 6.1",
+  "timestamp": "2025-12-05T20:00:00.000Z"
+}
+```
+
+### GET /api/ssot/subscription-states
+
+Get valid subscription states.
+
+**Authentication:** Not required (public endpoint)
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "valid_states": [
+      "trialing",
+      "expired_trial_pending_payment",
+      "payment_retry",
+      "active",
+      "canceled_pending",
+      "paused"
+    ],
+    "descriptions": {
+      "trialing": "Usuario en período de prueba",
+      "active": "Suscripción activa",
+      "paused": "Servicio pausado",
+      ...
+    }
+  },
+  "source": "SSOT-V2.md section 2.2",
+  "timestamp": "2025-12-05T20:00:00.000Z"
+}
+```
+
+### GET /api/ssot/platforms
+
+Get supported and planned platforms.
+
+**Authentication:** Not required (public endpoint)
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "supported": ["x", "youtube"],
+    "planned": ["instagram", "facebook", "discord", "twitch", "reddit", "tiktok", "bluesky"],
+    "notes": {
+      "supported": "Plataformas implementadas en v2 MVP",
+      "planned": "Plataformas planificadas pero no implementadas en v2"
+    }
+  },
+  "source": "SSOT-V2.md section 7",
+  "timestamp": "2025-12-05T20:00:00.000Z"
+}
+```
+
+### GET /api/ssot/all
+
+Get all SSOT data in a single response (convenience endpoint).
+
+**Authentication:** Not required (public endpoint)
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "plans": { ... },
+    "subscription": { ... },
+    "features": { ... },
+    "tones": { ... },
+    "platforms": { ... },
+    "version": "2.0.0",
+    "timestamp": "2025-12-05T20:00:00.000Z"
+  },
+  "source": "SSOT-V2.md",
+  "timestamp": "2025-12-05T20:00:00.000Z"
+}
+```
+
 ## 📋 Plan Management API
 
 ### GET /api/plan/available

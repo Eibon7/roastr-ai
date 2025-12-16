@@ -114,9 +114,9 @@ class WorkersSSOTValidator {
     // Allowed list comes from system-map + SSOT; start empty
     this.officialWorkers.clear();
 
-    // Try to extract from SSOT section if present
+    // Try to extract from SSOT section if present (ROA-324: Fixed regex for SSOT format)
     const workersSection = ssotContent.match(
-      /## 8\. Workers.*?### 8\.1 Workers oficiales v2([\s\S]*?)(?=###|##|$)/
+      /## 8\. Workers[^\n]*\n+### 8\.1 Workers oficiales v2([\s\S]*?)(?=###|## |$)/
     );
 
     if (workersSection) {
@@ -161,6 +161,7 @@ class WorkersSSOTValidator {
 
     // Fallback: add hardcoded allowed list if still empty
     if (this.officialWorkers.size === 0) {
+      // Official core workers (SSOT 8.1)
       [
         'FetchComments',
         'AnalyzeToxicity',
@@ -171,6 +172,15 @@ class WorkersSSOTValidator {
         'BillingUpdate',
         'CursorReconciliation',
         'StrikeCleanup'
+      ].forEach((w) => this.officialWorkers.add(w));
+
+      // Auxiliary workers (SSOT 8.5 - ROA-324)
+      [
+        'AccountDeletion',
+        'AlertNotification',
+        'ExportCleanup',
+        'GDPRRetention',
+        'ModelAvailability'
       ].forEach((w) => this.officialWorkers.add(w));
     }
 
