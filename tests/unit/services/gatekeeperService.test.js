@@ -460,38 +460,6 @@ describe('GatekeeperService', () => {
     });
 
     test('should detect repeated phrases', () => {
-      // Mock config with lower threshold and higher weight for repeated phrases
-      settingsLoader.getValue.mockImplementationOnce(async (key) => {
-        if (key === 'gatekeeper') {
-          return {
-            ...mockConfig,
-            thresholds: {
-              ...mockConfig.thresholds,
-              suspicious: 0.2 // Lower threshold
-            },
-            heuristics: {
-              ...mockConfig.heuristics,
-              repeatedPhrases: 0.5 // Higher weight
-            }
-          };
-        }
-        return undefined;
-      });
-      
-      // Create new service instance with mocked config
-      const testService = new GatekeeperService();
-      testService.loadGatekeeperConfig().then(() => {
-        const repeatedText = 'do this do this do this do this';
-        const result = testService.detectPromptInjection(repeatedText);
-
-        // Contract: Indicator should be true when repeated phrases detected
-        expect(result.indicators.repeatedPhrases).toBe(true);
-        // Contract: Score should be > 0 if threshold is met (but may be 0 if not)
-        // Verify indicator is set instead of asserting score
-        expect(result.score).toBeGreaterThanOrEqual(0);
-      });
-      
-      // Use existing service for consistency
       const repeatedText = 'do this do this do this do this';
       const result = gatekeeperService.detectPromptInjection(repeatedText);
 
