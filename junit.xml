@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="11" failures="0" errors="0" time="0.051100792">
-    <testsuite name="tests/unit/routes/ssot.test.js" timestamp="2025-12-16T09:21:05.246Z" hostname="macbookpro.lan" tests="11" failures="0" errors="0" skipped="0" time="0.051100792">
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/plans &gt; should return valid plan IDs, trial config, limits, and capabilities" time="0.023097042">
+<testsuites name="vitest tests" tests="11" failures="0" errors="0" time="0.049520833">
+    <testsuite name="tests/unit/routes/ssot.test.js" timestamp="2025-12-16T09:07:25.349Z" hostname="macbookpro.lan" tests="11" failures="0" errors="0" skipped="0" time="0.049520833">
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/plans &gt; should return valid plan IDs, trial config, limits, and capabilities" time="0.021500375">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/plans &gt; should be accessible without authentication" time="0.003540417">
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/plans &gt; should be accessible without authentication" time="0.003684709">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/limits &gt; should return plan limits" time="0.00233275">
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/limits &gt; should return plan limits" time="0.002643625">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/features &gt; should return valid feature flags and semantics" time="0.002388333">
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/features &gt; should return valid feature flags and semantics" time="0.002349167">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/features &gt; should include all required feature flags from SSOT" time="0.0028675">
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/features &gt; should include all required feature flags from SSOT" time="0.002803417">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/tones &gt; should return valid roast tones" time="0.0023145">
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/tones &gt; should return valid roast tones" time="0.002131834">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/subscription-states &gt; should return valid subscription states" time="0.00237675">
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/subscription-states &gt; should return valid subscription states" time="0.002475208">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/platforms &gt; should return supported and planned platforms" time="0.001839834">
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/platforms &gt; should return supported and planned platforms" time="0.001857334">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/all &gt; should return all SSOT data in a single response" time="0.004721125">
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/all &gt; should return all SSOT data in a single response" time="0.004670958">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/all &gt; should include all required sections" time="0.002406792">
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; GET /api/ssot/all &gt; should include all required sections" time="0.001804708">
         </testcase>
-        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; Error handling &gt; should return 500 on service errors" time="0.001360875">
+        <testcase classname="tests/unit/routes/ssot.test.js" name="SSOT Public Routes &gt; Error handling &gt; should return 500 on service errors" time="0.001430292">
         </testcase>
     </testsuite>
 </testsuites>
