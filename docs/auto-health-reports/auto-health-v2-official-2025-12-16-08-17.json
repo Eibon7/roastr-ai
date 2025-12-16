@@ -1,0 +1,12 @@
+{
+  "system_map_alignment": 100,
+  "ssot_alignment": 100,
+  "dependency_density": 100,
+  "crosslink_score": 100,
+  "narrative_consistency": 100,
+  "health_score": 100,
+  "nodes_detected": 15,
+  "nodes_total": 15,
+  "nodes_missing": 0,
+  "timestamp": "2025-12-16T08:17:11.555Z"
+}
