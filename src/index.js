@@ -78,9 +78,10 @@ const creditsRoutes = require('./routes/credits'); // QW9: Add credits router
 const sponsorsRoutes = require('./routes/sponsors')(); // Issue #859: Brand Safety for Sponsors (Plan Plus) - Factory function
 const aiModesRoutes = require('./routes/ai-modes'); // Issue #920: AI modes endpoint
 const usageCurrentRoutes = require('./routes/usage/current'); // Issue #1066: Usage current endpoint
-const { authenticateToken, optionalAuth } = require('./middleware/auth');
 const ssotRoutes = require('./routes/ssot'); // ROA-267: Public SSOT endpoints for frontend v2 (legacy)
 const v2SettingsRoutes = require('./routes/v2/settings'); // ROA-267: V2 Settings endpoints using SettingsLoader v2
+const v2AdminSettingsRoutes = require('./routes/v2/admin/settings'); // ROA-267: V2 Admin Settings endpoints
+const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
 const port = process.env.PORT || 3000;
