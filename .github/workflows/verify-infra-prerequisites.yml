@@ -9,6 +9,11 @@ jobs:
   verify-prerequisites:
     name: Verify Infrastructure Prerequisites
     runs-on: ubuntu-latest
+    # Allow workflow to access secrets even in PRs from forks
+    # This is safe because we're only doing read-only verification
+    permissions:
+      contents: read
+      pull-requests: read
 
     steps:
       - name: Checkout code
