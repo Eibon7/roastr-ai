@@ -17,22 +17,31 @@ Aplicar la migración `031_create_admin_settings.sql` en Supabase para crear la 
 - Verificaciones post-migración (tabla, estructura, RLS, triggers)
 - Referencias a documentación relacionada
 
-### 3. Script de Verificación Automática
-- **Archivo:** `scripts/verify-admin-settings-table.js`
+### 3. Verificador Genérico de Prerequisitos de Infraestructura
+- **Archivo principal:** `scripts/verify-infra-prerequisites.js`
+- **Check de admin_settings:** `scripts/infra-checks/admin-settings.check.js`
+- Arquitectura genérica y extensible para futuros checks
 - Verifica automáticamente que la tabla existe y está correctamente configurada
 - Read-only: no modifica la base de datos
-- Usable en CI para garantizar que la migración está aplicada
+- Integrado en CI para garantizar que la migración está aplicada
 
-### 4. Guía de Pasos
+### 4. Integración CI
+- **Workflow:** `.github/workflows/verify-infra-prerequisites.yml`
+- Ejecuta verificación automática en PRs a `main`
+- Usa secrets existentes (SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+### 5. Guía de Pasos
 - **Archivo:** `MIGRATION-STEPS.md`
 - Instrucciones detalladas paso a paso para aplicar la migración
 - Checklist de verificación completo
 
-## ✅ Verificación Automática de Migración
+## ✅ Verificación de Prerequisitos de Infraestructura
 
-La migración `031_create_admin_settings.sql` puede ser aplicada manualmente, y su existencia es verificada automáticamente mediante el script `verify-admin-settings-table.js`.
+**IMPORTANTE:** Este PR provee tooling y CI verification para confirmar que la migración ha sido aplicada. **La aplicación de la migración es manual** (Supabase Dashboard / CLI).
 
-**El script verifica:**
+La migración `031_create_admin_settings.sql` debe ser aplicada manualmente, y su existencia es verificada automáticamente mediante el verificador genérico de prerequisitos de infraestructura.
+
+**El verificador (read-only) valida:**
 - ✅ Existencia de la tabla `admin_settings`
 - ✅ Estructura de columnas correcta (key, value, created_at, updated_at)
 - ✅ RLS habilitado
@@ -42,7 +51,7 @@ La migración `031_create_admin_settings.sql` puede ser aplicada manualmente, y 
 - `exit 0`: Todas las verificaciones pasaron
 - `exit 1`: Una o más verificaciones fallaron (migración puede no estar aplicada)
 
-**El script es read-only** y no modifica la base de datos. El sistema confía en la verificación automática, no en suposiciones humanas.
+**El verificador es read-only** y no modifica la base de datos. No ejecuta migraciones automáticamente. El sistema confía en la verificación automática para confirmar que la migración manual ha sido aplicada correctamente.
 
 ## 📋 Validaciones Ejecutadas
 
