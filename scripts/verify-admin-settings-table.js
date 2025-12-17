@@ -31,7 +31,8 @@ require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_SERVICE_KEY =
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   console.error('❌ ERROR: Missing required environment variables');
@@ -68,10 +69,10 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
  */
 async function verifyTableExists() {
   console.log('🔍 Checking if table exists...');
-  
+
   try {
     // Try to select from the table (read-only operation)
-    const { data, error, count } = await supabase
+    const { error, count } = await supabase
       .from(TABLE_NAME)
       .select('*', { count: 'exact', head: true });
 
@@ -120,7 +121,7 @@ async function verifyColumnStructure() {
       // If RPC doesn't work, try alternative: query via direct SQL
       // For now, we'll verify by trying to select each column
       console.log('⚠️  Cannot query information_schema directly, verifying via column access...');
-      
+
       const columnChecks = [];
       for (const expectedCol of EXPECTED_COLUMNS) {
         try {
@@ -128,7 +129,7 @@ async function verifyColumnStructure() {
             .from(TABLE_NAME)
             .select(expectedCol.name)
             .limit(0);
-          
+
           if (colError) {
             console.error(`❌ Column '${expectedCol.name}' not accessible: ${colError.message}`);
             columnChecks.push(false);
@@ -141,8 +142,8 @@ async function verifyColumnStructure() {
           columnChecks.push(false);
         }
       }
-      
-      return columnChecks.every(check => check === true);
+
+      return columnChecks.every((check) => check === true);
     }
 
     if (!data || data.length === 0) {
@@ -150,7 +151,7 @@ async function verifyColumnStructure() {
       return false;
     }
 
-    const foundColumns = data.map(row => ({
+    const foundColumns = data.map((row) => ({
       name: row.column_name,
       type: row.data_type,
       nullable: row.is_nullable === 'YES'
@@ -159,7 +160,7 @@ async function verifyColumnStructure() {
     // Verify all expected columns exist
     let allColumnsExist = true;
     for (const expectedCol of EXPECTED_COLUMNS) {
-      const found = foundColumns.find(col => col.name === expectedCol.name);
+      const found = foundColumns.find((col) => col.name === expectedCol.name);
       if (!found) {
         console.error(`❌ Column '${expectedCol.name}' not found`);
         allColumnsExist = false;
@@ -239,21 +240,18 @@ async function verifyPolicies() {
     if (error) {
       console.error(`⚠️  Cannot query policies directly: ${error.message}`);
       console.log('   Attempting alternative verification...');
-      
+
       // Alternative: Try to verify policies by testing access
       // Since we're using service_role, we should have access
       // If we can read/write, policies likely exist
       try {
-        const { error: testError } = await supabase
-          .from(TABLE_NAME)
-          .select('key')
-          .limit(1);
-        
+        const { error: testError } = await supabase.from(TABLE_NAME).select('key').limit(1);
+
         if (testError && testError.code === 'PGRST301') {
           console.error('❌ Service role cannot access table - policies may be missing');
           return false;
         }
-        
+
         console.log('✅ Service role can access table (policies likely exist)');
         return true;
       } catch (testErr) {
@@ -267,14 +265,14 @@ async function verifyPolicies() {
       return false;
     }
 
-    const foundPolicies = data.map(row => row.policyname);
+    const foundPolicies = data.map((row) => row.policyname);
     console.log(`   Found ${foundPolicies.length} policy/policies`);
 
     // Check for expected policies
     let allPoliciesExist = true;
     for (const expectedPolicy of EXPECTED_POLICIES) {
       if (foundPolicies.includes(expectedPolicy)) {
-        const policyData = data.find(p => p.policyname === expectedPolicy);
+        const policyData = data.find((p) => p.policyname === expectedPolicy);
         console.log(`✅ Policy '${expectedPolicy}' exists (cmd: ${policyData.cmd})`);
       } else {
         console.error(`❌ Policy '${expectedPolicy}' not found`);
@@ -319,7 +317,7 @@ async function verifyAdminSettingsTable() {
   console.log('📊 Verification Summary');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-  const allPassed = Object.values(results).every(result => result === true);
+  const allPassed = Object.values(results).every((result) => result === true);
 
   console.log(`Table exists:           ${results.tableExists ? '✅' : '❌'}`);
   console.log(`Column structure:       ${results.columnsCorrect ? '✅' : '❌'}`);
@@ -343,4 +341,3 @@ verifyAdminSettingsTable().catch((error) => {
   console.error(error.stack);
   process.exit(1);
 });
-
