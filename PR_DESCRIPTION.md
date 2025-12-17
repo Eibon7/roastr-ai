@@ -1,161 +1,63 @@
-# ROA-320: Fase 3 de Limpieza Documental - Reclasificación y Eliminación de Legacy
+# ROA-268: Aplicar migración admin-settings en Supabase (issue #1090)
 
-**Issue:** [ROA-320](https://linear.app/roastrai/issue/ROA-320)  
-**Tipo:** Documentación / Limpieza  
-**Prioridad:** Media
+## 🎯 Objetivo
 
----
+Aplicar la migración `031_create_admin_settings.sql` en Supabase para crear la tabla `admin_settings` que forma parte de la infraestructura SSOT v2.
 
-## 📋 Resumen
+## ✅ Cambios Realizados
 
-Esta PR completa la **Fase 3 de Limpieza Documental** reclasificando y organizando documentos legacy que ya no son relevantes para el desarrollo activo.
+### 1. Script Helper de Migración
+- **Archivo:** `scripts/apply-admin-settings-migration.js`
+- Proporciona instrucciones paso a paso para aplicar la migración manualmente
+- Incluye preview del SQL, enlaces al SQL Editor y comandos de verificación
 
-### Objetivos Cumplidos
+### 2. Documentación de Migración
+- **Archivo:** `docs/deployment/admin-settings-migration-ROA-268.md`
+- Guía completa con instrucciones de aplicación
+- Verificaciones post-migración (tabla, estructura, RLS, triggers)
+- Referencias a documentación relacionada
 
-✅ **230 elementos legacy reclasificados:**
-- 147 planes de CodeRabbit reviews → `docs/legacy/reviews/`
-- 83 directorios de test evidence de reviews → `docs/legacy/test-evidence/`
+### 3. Guía de Pasos
+- **Archivo:** `MIGRATION-STEPS.md`
+- Instrucciones detalladas paso a paso para aplicar la migración
+- Checklist de verificación completo
 
-✅ **Estructura de documentación mejorada:**
-- Documentos legacy claramente separados de activos
-- Organización por categorías (reviews, plans, test-evidence)
+## ✅ Migración Aplicada
 
-✅ **Validaciones v2 pasadas:**
-- Health Score = 100/100 (mantenido)
-- Todas las validaciones v2 pasan sin errores
+La migración `031_create_admin_settings.sql` ha sido aplicada exitosamente en Supabase:
 
----
+- ✅ Tabla `admin_settings` creada
+- ✅ RLS habilitado con 4 políticas (SELECT, INSERT, UPDATE, DELETE)
+- ✅ Trigger para auto-actualizar `updated_at`
+- ✅ Índice en `updated_at` creado
+- ✅ Comentarios de documentación añadidos
 
-## 📊 Cambios Realizados
+## 📋 Validaciones Ejecutadas
 
-### Archivos Movidos
+- ✅ `validate-v2-doc-paths.js --ci` - Todos los paths declarados existen
+- ✅ `validate-ssot-health.js --ci` - Health Score: 100/100
+- ✅ `check-system-map-drift.js --ci` - System-map drift check passed
+- ✅ `validate-strong-concepts.js --ci` - All Strong Concepts properly owned
 
-- **147 planes de reviews** de `docs/plan/review-*.md` → `docs/legacy/reviews/`
-- **83 directorios de test evidence** de `docs/test-evidence/review-*/` → `docs/legacy/test-evidence/`
+## 🔗 Relacionado
 
-### Archivos Creados
+- **Issue original:** #1090
+- **Plan de implementación:** `docs/plan/issue-1090.md`
+- **Completion report:** `docs/plan/issue-1090-COMPLETION.md`
+- **SSOT Architecture:** `docs/architecture/sources-of-truth.md`
 
-- `docs/plan/issue-ROA-320.md` - Plan de implementación
-- `docs/CI-V2/ROA-320-CLASSIFICATION-REPORT.md` - Reporte de clasificación
-- `docs/CI-V2/ROA-320-RECLASSIFICATION-REPORT.md` - Reporte de reclasificación
-- `docs/CI-V2/ROA-320-FINAL-REPORT.md` - Reporte final completo
-- `scripts/roa-320-classify-legacy.js` - Script de clasificación
-- `scripts/roa-320-reclassify-legacy.js` - Script de reclasificación
+## 📝 Notas
 
-### Estructura de Directorios
+- La migración es idempotente (usa `IF NOT EXISTS`)
+- Solo `service_role` puede acceder por seguridad (RLS)
+- La tabla está inicialmente vacía, los valores se añadirán dinámicamente
+- Esta migración completa la infraestructura SSOT v2
 
-```
-docs/
-├── legacy/
-│   ├── reviews/          # 147 planes de CodeRabbit reviews
-│   ├── test-evidence/    # 83 directorios de test evidence de reviews
-│   └── plans/            # (vacío - ningún plan obsoleto según criterios)
-├── plan/                 # Solo planes activos (reviews removidos)
-└── test-evidence/        # Solo test evidence activos (reviews removidos)
-```
+## ✅ Checklist Pre-Merge
 
----
-
-## ✅ Validaciones
-
-### Scripts v2 Ejecutados
-
-- ✅ `validate-v2-doc-paths.js` → Todos los paths existen
-- ✅ `validate-ssot-health.js` → Health Score = 100/100
-- ✅ `check-system-map-drift.js` → Sin drift crítico
-- ✅ `validate-strong-concepts.js` → Strong Concepts válidos
-
-### Health Score
-
-```
-System Map Alignment: 100%
-SSOT Alignment: 100%
-Dependency Density: 100%
-Crosslink Score: 100%
-Narrative Consistency: 100%
-Health Score: 100/100
-```
-
----
-
-## 📝 Criterios de Reclasificación
-
-### CodeRabbit Reviews
-
-**Criterio:** Documentos de CodeRabbit reviews (meta-documentación, no features)
-
-- Planes: `docs/plan/review-*.md` → `docs/legacy/reviews/`
-- Test evidence: `docs/test-evidence/review-*/` → `docs/legacy/test-evidence/`
-
-### Plans Obsoletos
-
-**Criterio:** Plans de issues cerradas >6 meses
-
-- Ningún plan obsoleto encontrado según criterios
-
-### Test Evidence Obsoletos
-
-**Criterio:** Test evidence de issues cerradas >3 meses
-
-- Ningún test evidence obsoleto encontrado según criterios
-
----
-
-## 🔗 Referencias
-
-- **Plan de implementación:** `docs/plan/issue-ROA-320.md`
-- **Reporte final:** `docs/CI-V2/ROA-320-FINAL-REPORT.md`
-- **ROA-318 (Fase 2):** `docs/CI-V2/LEGACY-CLEANUP-FINAL-REPORT.md`
-- **ROA-323:** `docs/CI-V2/ROA-323-FINAL-MIGRATION-REPORT.md`
-
----
-
-## 🎯 Impacto
-
-### Positivo
-
-- ✅ **Claridad mejorada:** Documentos activos vs legacy claramente separados
-- ✅ **Mantenibilidad:** Más fácil encontrar documentación relevante
-- ✅ **Organización:** Estructura de documentación más clara
-- ✅ **Validaciones:** Todas las validaciones v2 pasan
-
-### Neutral
-
-- ⚠️ **Tamaño:** No se redujo el tamaño total (solo se reorganizó)
-- ⚠️ **Historial:** Documentos legacy mantenidos (no eliminados)
-
----
-
-## ✅ Checklist Pre-PR
-
-- [x] Solo commits de esta issue en esta rama
-- [x] Ningún commit de esta rama en otras ramas
-- [x] Ningún commit de otras ramas en esta
-- [x] Rebase/merge con main limpio
-- [x] Historial limpio
-- [x] Solo cambios relevantes a la issue
-- [x] Rama tiene nombre correcto (`feature/ROA-320-clean`)
-- [x] Issue asociada incluida en la descripción
-- [x] No hay valores hardcoded cubiertos por SSOT
-- [x] No hay "console.log" salvo debugging temporal
-
----
-
-## 📊 Métricas
-
-### Antes
-
-- CodeRabbit reviews en `docs/plan/`: 147 archivos
-- CodeRabbit reviews en `docs/test-evidence/`: 83 directorios
-- Estructura: Documentos legacy mezclados con activos
-
-### Después
-
-- CodeRabbit reviews en `docs/plan/`: 0 archivos ✅
-- CodeRabbit reviews en `docs/test-evidence/`: 0 directorios ✅
-- Documentos legacy organizados en `docs/legacy/`
-- Estructura: Documentos legacy claramente separados de activos
-
----
-
-**Última actualización:** 2025-12-15
+- [x] Migración aplicada en Supabase
+- [x] Validaciones v2 pasando
+- [x] Documentación completa
+- [x] Script helper funcional
+- [ ] CodeRabbit review (pendiente)
+- [ ] Tests pasando (si aplica)
