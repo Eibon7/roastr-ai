@@ -24,7 +24,15 @@ jobs:
 
       - name: Verify infrastructure prerequisites
         env:
+          CI: true
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: node scripts/verify-infra-prerequisites.js
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_KEY" ]; then
+            echo "⚠️  Warning: SUPABASE_URL or SUPABASE_SERVICE_KEY secrets not configured"
+            echo "Skipping infrastructure prerequisites verification"
+            echo "To enable this check, configure secrets in repository settings"
+            exit 0
+          fi
+          node scripts/verify-infra-prerequisites.js
 

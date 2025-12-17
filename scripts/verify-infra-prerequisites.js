@@ -26,7 +26,10 @@
  * Related: ROA-268
  */
 
+// Load .env file if it exists (for local development)
+// In CI, variables come from GitHub Secrets via env: in workflow
 require('dotenv').config();
+
 const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -36,7 +39,12 @@ const SUPABASE_SERVICE_KEY =
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   console.error('❌ ERROR: Missing required environment variables');
   console.error('   Required: SUPABASE_URL, SUPABASE_SERVICE_KEY (or SUPABASE_SERVICE_ROLE_KEY)');
-  console.error('   Add them to your .env file');
+  if (process.env.CI) {
+    console.error('   In CI: Ensure secrets are configured in GitHub repository settings');
+    console.error('   Secrets needed: SUPABASE_URL, SUPABASE_SERVICE_KEY');
+  } else {
+    console.error('   Local: Add them to your .env file');
+  }
   process.exit(1);
 }
 
