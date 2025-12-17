@@ -86,7 +86,7 @@ console.log('   -- Should return 0 (empty table is expected initially)\n');
 
 console.log('6. Verify table structure:');
 console.log('   SELECT column_name, data_type FROM information_schema.columns');
-console.log('   WHERE table_name = \'admin_settings\';\n');
+console.log("   WHERE table_name = 'admin_settings';\n");
 
 console.log('7. Test RLS policies:');
 console.log('   -- Should only allow service_role access\n');
@@ -119,4 +119,3 @@ console.log('- SSOT Architecture: docs/architecture/sources-of-truth.md');
 console.log('- Backend v2: apps/backend-v2/src/lib/loadSettings.ts\n');
 
 process.exit(0);
-
