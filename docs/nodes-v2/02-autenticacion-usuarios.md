@@ -262,6 +262,127 @@ export function transitionOnboardingState(
 - Spec v2: `docs/spec/roastr-spec-v2.md` (sección 2)
 - SSOT: `docs/SSOT/roastr-ssot-v2.md` (secciones 1.9, 2.3, 2.4)
 
+---
+
+## 10.1. Auth Events Taxonomy v2 (ROA-357)
+
+**ROA-357:** Taxonomía jerárquica v2 para eventos de autenticación
+
+### Estructura
+
+La taxonomía v2 organiza eventos de autenticación en una estructura jerárquica:
+
+```
+auth/{category}/{subcategory}/{action}
+```
+
+### Categorías
+
+#### 1. Session (`auth.session.*`)
+
+Eventos relacionados con sesiones de usuario:
+
+- **login**
+  - `auth.session.login.success` - Login exitoso
+  - `auth.session.login.failed` - Login fallido
+  - `auth.session.login.blocked` - Login bloqueado (rate limit, actividad sospechosa)
+- **logout**
+  - `auth.session.logout.manual` - Logout manual
+  - `auth.session.logout.automatic` - Logout automático (timeout, sesión expirada)
+- **refresh**
+  - `auth.session.refresh.success` - Token de sesión refrescado exitosamente
+  - `auth.session.refresh.failed` - Fallo al refrescar token
+- **expired**
+  - `auth.session.expired` - Sesión expirada
+
+#### 2. Registration (`auth.registration.*`)
+
+Eventos relacionados con registro de usuarios:
+
+- **signup**
+  - `auth.registration.signup.success` - Registro exitoso
+  - `auth.registration.signup.failed` - Registro fallido
+- **email_verification**
+  - `auth.registration.email_verification.sent` - Link de verificación enviado
+  - `auth.registration.email_verification.verified` - Email verificado exitosamente
+  - `auth.registration.email_verification.expired` - Link de verificación expirado
+
+#### 3. Password (`auth.password.*`)
+
+Eventos relacionados con gestión de contraseñas:
+
+- **reset**
+  - `auth.password.reset.requested` - Reset de contraseña solicitado
+  - `auth.password.reset.completed` - Reset de contraseña completado
+  - `auth.password.reset.failed` - Reset de contraseña fallido
+- **change**
+  - `auth.password.change.success` - Contraseña cambiada exitosamente
+  - `auth.password.change.failed` - Cambio de contraseña fallido
+
+#### 4. Magic Link (`auth.magic_link.*`)
+
+Eventos relacionados con magic links:
+
+- **login**
+  - `auth.magic_link.login.sent` - Magic link para login enviado
+  - `auth.magic_link.login.used` - Magic link para login usado exitosamente
+  - `auth.magic_link.login.expired` - Magic link para login expirado
+- **signup**
+  - `auth.magic_link.signup.sent` - Magic link para signup enviado
+  - `auth.magic_link.signup.used` - Magic link para signup usado exitosamente
+  - `auth.magic_link.signup.expired` - Magic link para signup expirado
+
+#### 5. OAuth (`auth.oauth.*`)
+
+Eventos relacionados con flujos OAuth:
+
+- `auth.oauth.initiated` - Flujo OAuth iniciado
+- **callback**
+  - `auth.oauth.callback.success` - Callback OAuth exitoso
+  - `auth.oauth.callback.failed` - Callback OAuth fallido
+- **token_refresh**
+  - `auth.oauth.token_refresh.success` - Token OAuth refrescado exitosamente
+  - `auth.oauth.token_refresh.failed` - Fallo al refrescar token OAuth
+
+### Compatibilidad v1 → v2
+
+Los eventos v1 siguen funcionando y se mapean automáticamente a v2:
+
+| v1 Event ID | v2 Event ID |
+|------------|-------------|
+| `auth.login` | `auth.session.login.success` |
+| `auth.logout` | `auth.session.logout.manual` |
+| `auth.failed_login` | `auth.session.login.failed` |
+| `auth.reset_request` | `auth.password.reset.requested` |
+| `auth.reset_complete` | `auth.password.reset.completed` |
+
+### Uso
+
+```javascript
+const { auditLogger } = require('../services/auditLogService');
+
+// Usar eventos v2 directamente
+await auditLogger.logEvent('auth.session.login.success', {
+  userId: user.id,
+  ipAddress: req.ip,
+  userAgent: req.get('User-Agent')
+});
+
+// O usar helpers (recomendado)
+await auditLogger.logUserLogin(userId, ipAddress, userAgent);
+await auditLogger.logUserLoginFailed(userId, ipAddress, userAgent, 'invalid_credentials');
+await auditLogger.logUserSignup(userId, email, true);
+await auditLogger.logPasswordResetRequested(userId, email);
+```
+
+### Implementación
+
+- **Módulo:** `src/config/authEventsTaxonomy.js`
+- **Servicio:** `src/services/auditLogService.js` (actualizado con soporte v2)
+- **Documentación:** Este nodo GDD
+
+---
+
 ## 11. SSOT References
 
 Este nodo usa los siguientes valores del SSOT:
