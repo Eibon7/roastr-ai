@@ -257,10 +257,46 @@ export function transitionOnboardingState(
 // Expiran en 5 minutos
 ```
 
+### Auth Error Taxonomy v2:
+
+```javascript
+// src/utils/authErrorTaxonomy.js
+// Sistema completo de taxonomía de errores de autenticación
+
+// Categorías de errores:
+// - AUTH_*: Errores de autenticación (401)
+// - AUTHZ_*: Errores de autorización (403)
+// - SESSION_*: Errores de sesión
+// - TOKEN_*: Errores de tokens
+// - ACCOUNT_*: Errores de cuenta
+
+// Uso en middleware y servicios:
+const { AuthError, AUTH_ERROR_CODES } = require('../utils/authErrorTaxonomy');
+
+// Crear error con código específico
+const error = new AuthError(AUTH_ERROR_CODES.TOKEN_EXPIRED);
+
+// Clasificar errores de Supabase
+const authError = createAuthErrorFromSupabase(supabaseError);
+
+// Verificar si es retryable
+if (isRetryableError(error)) {
+  const delay = getRetryDelay(error);
+  // Retry después de delay
+}
+```
+
+**Archivos relacionados:**
+- `src/utils/authErrorTaxonomy.js` - Taxonomía completa de errores
+- `src/middleware/auth.js` - Middleware usando taxonomía
+- `src/services/authService.js` - Servicio usando taxonomía
+- `tests/unit/authErrorTaxonomy.test.js` - Tests completos
+
 ### Referencias:
 
 - Spec v2: `docs/spec/roastr-spec-v2.md` (sección 2)
 - SSOT: `docs/SSOT/roastr-ssot-v2.md` (secciones 1.9, 2.3, 2.4)
+- Auth Error Taxonomy: `src/utils/authErrorTaxonomy.js` (ROA-372)
 
 ## 11. SSOT References
 
