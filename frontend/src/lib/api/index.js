@@ -16,6 +16,7 @@ import * as accountsApi from './accounts';
 import * as roastsApi from './roasts';
 import * as shieldApi from './shield';
 import * as billingApi from './billing';
+import * as ssotApi from './ssot';
 
 // Export client for direct access
 export { apiClient, default as client } from './client';
@@ -31,7 +32,8 @@ export {
   accountsApi,
   roastsApi,
   shieldApi,
-  billingApi
+  billingApi,
+  ssotApi
 };
 
 // Re-export convenience methods from client

@@ -1,0 +1,178 @@
+name: GDD Issue Cleanup
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  cleanup-stale-issues:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      issues: write
+      pull-requests: read
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Get all open GDD issues
+        id: get_issues
+        run: |
+          gh issue list --label "gdd" --state open --json number,title,createdAt,body --limit 100 > issues.json
+          echo "issues_file=issues.json" >> $GITHUB_OUTPUT
+          cat issues.json | jq 'length' | xargs echo "total_issues=" >> $GITHUB_OUTPUT
+
+      - name: Cleanup validation issues with merged PRs
+        id: cleanup_validation
+        run: |
+          echo "🧹 Cleaning up validation issues with merged PRs..."
+          
+          CLOSED_COUNT=0
+          CLOSED_ISSUES=()
+          
+          # Process each issue
+          for issue_num in $(cat issues.json | jq -r '.[] | select(.title | test("\\[GDD\\] Validation Failed - PR #")) | .number'); do
+            # Extract PR number from title
+            PR_NUM=$(gh issue view $issue_num --json title | jq -r '.title' | grep -oP 'PR #\K\d+')
+            
+            if [ -n "$PR_NUM" ]; then
+              # Check PR status
+              PR_STATUS=$(gh pr view $PR_NUM --json state,mergedAt,closedAt 2>/dev/null | jq -r '.state' || echo "NOT_FOUND")
+              
+              if [ "$PR_STATUS" == "MERGED" ] || [ "$PR_STATUS" == "CLOSED" ]; then
+                echo "✅ Closing issue #$issue_num (PR #$PR_NUM is $PR_STATUS)"
+                
+                # Get PR merge/close date
+                if [ "$PR_STATUS" == "MERGED" ]; then
+                  MERGE_DATE=$(gh pr view $PR_NUM --json mergedAt | jq -r '.mergedAt' | cut -d'T' -f1)
+                else
+                  MERGE_DATE=$(gh pr view $PR_NUM --json closedAt | jq -r '.closedAt' | cut -d'T' -f1)
+                fi
+                
+                # Close issue with comment
+                gh issue close $issue_num --comment "✅ **Issue cerrada automáticamente**
+
+El PR relacionado (#$PR_NUM) fue $PR_STATUS el $MERGE_DATE. 
+La validación GDD ya no aplica a este PR.
+
+Esta issue fue cerrada automáticamente por el workflow de limpieza de issues obsoletas.
+
+---
+*Cerrado automáticamente el $(date +%Y-%m-%d) por GDD Issue Cleanup workflow*"
+                
+                CLOSED_COUNT=$((CLOSED_COUNT + 1))
+                CLOSED_ISSUES+=("#$issue_num")
+              else
+                echo "⏳ Keeping issue #$issue_num (PR #$PR_NUM status: $PR_STATUS)"
+              fi
+            else
+              echo "⚠️  Could not extract PR number from issue #$issue_num"
+            fi
+          done
+          
+          echo "closed_count=$CLOSED_COUNT" >> $GITHUB_OUTPUT
+          echo "closed_issues=${CLOSED_ISSUES[*]}" >> $GITHUB_OUTPUT
+
+      - name: Check auto-monitor alerts
+        id: check_auto_monitor
+        run: |
+          echo "🔍 Checking auto-monitor alerts..."
+          
+          # Try to get health score from script output
+          HEALTH_SCORE=""
+          HEALTH_OUTPUT=$(node scripts/score-gdd-health.js --ci 2>&1 || echo "")
+          
+          # Extract health score from output (multiple patterns)
+          if echo "$HEALTH_OUTPUT" | grep -q "Health Score:"; then
+            HEALTH_SCORE=$(echo "$HEALTH_OUTPUT" | grep -oP 'Health Score:\s*\K[\d.]+' | head -1 || echo "")
+          fi
+          
+          # Fallback: try to read from gdd-health-v2.json if it exists
+          if [ -z "$HEALTH_SCORE" ] && [ -f "gdd-health-v2.json" ]; then
+            HEALTH_SCORE=$(cat gdd-health-v2.json | jq -r '.overall_score // .health_score // empty' 2>/dev/null || echo "")
+          fi
+          
+          if [ -n "$HEALTH_SCORE" ]; then
+            echo "current_health=$HEALTH_SCORE" >> $GITHUB_OUTPUT
+            
+            # Check if health is above threshold (87) using awk for floating point comparison
+            THRESHOLD=87
+            IS_ABOVE=$(echo "$HEALTH_SCORE $THRESHOLD" | awk '{if ($1 >= $2) print "true"; else print "false"}')
+            
+            if [ "$IS_ABOVE" == "true" ]; then
+              echo "✅ Health score ($HEALTH_SCORE) is above threshold ($THRESHOLD)"
+              echo "should_close_alerts=true" >> $GITHUB_OUTPUT
+            else
+              echo "⚠️  Health score ($HEALTH_SCORE) is below threshold ($THRESHOLD)"
+              echo "should_close_alerts=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "⚠️  Could not determine health score"
+            echo "should_close_alerts=false" >> $GITHUB_OUTPUT
+            echo "current_health=unknown" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Close resolved auto-monitor alerts
+        if: steps.check_auto_monitor.outputs.should_close_alerts == 'true'
+        run: |
+          echo "✅ Closing auto-monitor alerts (health score recovered)"
+          
+          for issue_num in $(cat issues.json | jq -r '.[] | select(.title | test("\\[GDD\\] Auto-Monitor Alert")) | .number'); do
+            CURRENT_HEALTH=$(echo "${{ steps.check_auto_monitor.outputs.current_health }}")
+            
+            echo "✅ Closing issue #$issue_num (health score: $CURRENT_HEALTH >= 87)"
+            
+            gh issue close $issue_num --comment "✅ **Issue cerrada automáticamente**
+
+El health score del sistema GDD se ha recuperado por encima del threshold.
+
+**Métricas actuales:**
+- Health Score: $CURRENT_HEALTH/100 (threshold: 87)
+- Status: HEALTHY
+
+Esta issue fue cerrada automáticamente por el workflow de limpieza de issues obsoletas.
+
+---
+*Cerrado automáticamente el $(date +%Y-%m-%d) por GDD Issue Cleanup workflow*"
+          done
+
+      - name: Generate job summary
+        run: |
+          echo "## 🧹 GDD Issue Cleanup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date -u +%Y-%m-%d)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Issues Processed" >> $GITHUB_STEP_SUMMARY
+          echo "- Total open GDD issues: ${{ steps.get_issues.outputs.total_issues }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Validation issues closed: ${{ steps.cleanup_validation.outputs.closed_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.cleanup_validation.outputs.closed_count }}" != "0" ]; then
+            echo "### Closed Issues" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.cleanup_validation.outputs.closed_issues }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ steps.check_auto_monitor.outputs.should_close_alerts }}" == "true" ]; then
+            echo "### Auto-Monitor Alerts" >> $GITHUB_STEP_SUMMARY
+            echo "- Health score recovered: ${{ steps.check_auto_monitor.outputs.current_health }}/100" >> $GITHUB_STEP_SUMMARY
+            echo "- Auto-monitor alerts closed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Generated by GDD Issue Cleanup workflow*" >> $GITHUB_STEP_SUMMARY
+

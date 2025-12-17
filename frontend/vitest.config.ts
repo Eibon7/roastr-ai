@@ -9,6 +9,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: true,
+    env: {
+      VITE_AMPLITUDE_API_KEY: 'test_amplitude_api_key',
+    },
     exclude: [
       'node_modules/',
       'dist/',
