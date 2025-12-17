@@ -17,20 +17,32 @@ Aplicar la migración `031_create_admin_settings.sql` en Supabase para crear la 
 - Verificaciones post-migración (tabla, estructura, RLS, triggers)
 - Referencias a documentación relacionada
 
-### 3. Guía de Pasos
+### 3. Script de Verificación Automática
+- **Archivo:** `scripts/verify-admin-settings-table.js`
+- Verifica automáticamente que la tabla existe y está correctamente configurada
+- Read-only: no modifica la base de datos
+- Usable en CI para garantizar que la migración está aplicada
+
+### 4. Guía de Pasos
 - **Archivo:** `MIGRATION-STEPS.md`
 - Instrucciones detalladas paso a paso para aplicar la migración
 - Checklist de verificación completo
 
-## ✅ Migración Aplicada
+## ✅ Verificación Automática de Migración
 
-La migración `031_create_admin_settings.sql` ha sido aplicada exitosamente en Supabase:
+La migración `031_create_admin_settings.sql` puede ser aplicada manualmente, y su existencia es verificada automáticamente mediante el script `verify-admin-settings-table.js`.
 
-- ✅ Tabla `admin_settings` creada
-- ✅ RLS habilitado con 4 políticas (SELECT, INSERT, UPDATE, DELETE)
-- ✅ Trigger para auto-actualizar `updated_at`
-- ✅ Índice en `updated_at` creado
-- ✅ Comentarios de documentación añadidos
+**El script verifica:**
+- ✅ Existencia de la tabla `admin_settings`
+- ✅ Estructura de columnas correcta (key, value, created_at, updated_at)
+- ✅ RLS habilitado
+- ✅ Políticas RLS existentes para service_role (SELECT, INSERT, UPDATE, DELETE)
+
+**Comportamiento:**
+- `exit 0`: Todas las verificaciones pasaron
+- `exit 1`: Una o más verificaciones fallaron (migración puede no estar aplicada)
+
+**El script es read-only** y no modifica la base de datos. El sistema confía en la verificación automática, no en suposiciones humanas.
 
 ## 📋 Validaciones Ejecutadas
 
@@ -55,9 +67,10 @@ La migración `031_create_admin_settings.sql` ha sido aplicada exitosamente en S
 
 ## ✅ Checklist Pre-Merge
 
-- [x] Migración aplicada en Supabase
+- [x] Script de verificación automática creado
+- [x] Verificación read-only (no modifica DB)
+- [x] Documentación actualizada para reflejar verificación automática
 - [x] Validaciones v2 pasando
-- [x] Documentación completa
 - [x] Script helper funcional
 - [ ] CodeRabbit review (pendiente)
 - [ ] Tests pasando (si aplica)

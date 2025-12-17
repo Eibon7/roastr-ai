@@ -19,10 +19,12 @@ Aplicar la migración `031_create_admin_settings.sql` en Supabase para crear la 
 - Archivo: `database/migrations/031_create_admin_settings.sql`
 - Código backend v2 listo para usar la tabla
 - Script helper: `scripts/apply-admin-settings-migration.js`
+- Script de verificación: `scripts/verify-admin-settings-table.js`
 
-❌ **Database migration not applied:**
-- Tabla `admin_settings` no existe en Supabase
-- Migración pendiente de aplicar manualmente
+✅ **Verificación automática disponible:**
+- El sistema puede verificar automáticamente si la tabla existe y está correctamente configurada
+- Ejecutar: `node scripts/verify-admin-settings-table.js`
+- El script es read-only y no modifica la base de datos
 
 ---
 
@@ -77,40 +79,50 @@ supabase migration apply 031_create_admin_settings
 
 ---
 
-## 🔍 Verificación Post-Migración
+## 🔍 Verificación Automática
 
-### 1. Verificar que la tabla existe
+### Verificación Automática (Recomendado)
+
+El sistema incluye un script de verificación automática que valida:
+
+- ✅ Existencia de la tabla `admin_settings`
+- ✅ Estructura de columnas correcta (key, value, created_at, updated_at)
+- ✅ RLS habilitado
+- ✅ Políticas RLS existentes para service_role
+
+**Ejecutar verificación:**
+
+```bash
+node scripts/verify-admin-settings-table.js
+```
+
+**Comportamiento:**
+- `exit 0`: Todas las verificaciones pasaron
+- `exit 1`: Una o más verificaciones fallaron
+
+**El script es read-only** y no modifica la base de datos.
+
+### Verificación Manual (Alternativa)
+
+Si prefieres verificar manualmente, puedes ejecutar estas queries en el SQL Editor:
 
 ```sql
+-- 1. Verificar que la tabla existe
 SELECT table_name 
 FROM information_schema.tables 
 WHERE table_schema = 'public' 
   AND table_name = 'admin_settings';
-```
 
-### 2. Verificar estructura de columnas
-
-```sql
+-- 2. Verificar estructura de columnas
 SELECT column_name, data_type, is_nullable
 FROM information_schema.columns
 WHERE table_name = 'admin_settings'
 ORDER BY ordinal_position;
-```
 
-### 3. Verificar RLS policies
-
-```sql
+-- 3. Verificar RLS policies
 SELECT policyname, cmd, roles
 FROM pg_policies
 WHERE tablename = 'admin_settings';
-```
-
-### 4. Verificar trigger
-
-```sql
-SELECT trigger_name, event_manipulation, action_statement
-FROM information_schema.triggers
-WHERE event_object_table = 'admin_settings';
 ```
 
 ---
@@ -128,6 +140,11 @@ WHERE event_object_table = 'admin_settings';
 - ✅ Sistema SSOT v2 completamente funcional
 - ✅ Backend v2 puede cargar settings desde BD
 - ✅ Admin panel puede modificar settings en runtime
+
+**Verificación del estado:**
+- El sistema verifica automáticamente que la tabla existe y está correctamente configurada
+- CI puede fallar si la migración no está aplicada
+- No se asume el estado, se verifica objetivamente
 
 ---
 
