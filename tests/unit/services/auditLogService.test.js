@@ -661,4 +661,195 @@ describe('AuditLogService', () => {
       expect(auditLogger.eventTypes).toBeDefined();
     });
   });
+
+  // ROA-357: Tests for v2 taxonomy support
+  describe('v2 Taxonomy Support (ROA-357)', () => {
+    beforeEach(() => {
+      flags.isEnabled.mockReturnValue(true);
+    });
+
+    describe('v2 event logging', () => {
+      test('should log v2 event directly', async () => {
+        const result = await auditLogService.logEvent(
+          'auth.session.login.success',
+          { userId: 'user-123', ipAddress: '127.0.0.1' }
+        );
+
+        expect(result).toBe(true);
+        expect(mockFrom.insert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event_type: 'auth.session.login.success',
+            severity: 'info',
+            description: 'User successfully logged in'
+          })
+        );
+      });
+
+      test('should map v1 event to v2 automatically', async () => {
+        const result = await auditLogService.logEvent('auth.login', {
+          userId: 'user-123',
+          ipAddress: '127.0.0.1'
+        });
+
+        expect(result).toBe(true);
+        expect(mockFrom.insert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event_type: 'auth.session.login.success'
+          })
+        );
+      });
+
+      test('should support v2 password reset events', async () => {
+        const result = await auditLogService.logEvent(
+          'auth.password.reset.requested',
+          { userId: 'user-123', email: 'test@example.com' }
+        );
+
+        expect(result).toBe(true);
+        expect(mockFrom.insert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event_type: 'auth.password.reset.requested',
+            severity: 'warning'
+          })
+        );
+      });
+    });
+
+    describe('v2 helper methods', () => {
+      test('logUserLogin should use v2 event', async () => {
+        const result = await auditLogService.logUserLogin(
+          'user-123',
+          '127.0.0.1',
+          'Mozilla/5.0'
+        );
+
+        expect(result).toBe(true);
+        expect(mockFrom.insert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event_type: 'auth.session.login.success'
+          })
+        );
+      });
+
+      test('logUserLoginFailed should log failed login', async () => {
+        const result = await auditLogService.logUserLoginFailed(
+          'user-123',
+          '127.0.0.1',
+          'Mozilla/5.0',
+          'invalid_credentials'
+        );
+
+        expect(result).toBe(true);
+        expect(mockFrom.insert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event_type: 'auth.session.login.failed',
+            severity: 'warning'
+          })
+        );
+      });
+
+      test('logUserLogout should support manual and automatic', async () => {
+        await auditLogService.logUserLogout('user-123', '127.0.0.1', 'Mozilla/5.0', 'manual');
+        expect(mockFrom.insert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event_type: 'auth.session.logout.manual'
+          })
+        );
+
+        await auditLogService.logUserLogout('user-123', '127.0.0.1', 'Mozilla/5.0', 'automatic');
+        expect(mockFrom.insert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event_type: 'auth.session.logout.automatic'
+          })
+        );
+      });
+
+      test('logUserSignup should log registration events', async () => {
+        await auditLogService.logUserSignup('user-123', 'test@example.com', true);
+        expect(mockFrom.insert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event_type: 'auth.registration.signup.success'
+          })
+        );
+
+        await auditLogService.logUserSignup('user-123', 'test@example.com', false);
+        expect(mockFrom.insert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event_type: 'auth.registration.signup.failed'
+          })
+        );
+      });
+
+      test('logPasswordResetRequested should log reset request', async () => {
+        const result = await auditLogService.logPasswordResetRequested(
+          'user-123',
+          'test@example.com'
+        );
+
+        expect(result).toBe(true);
+        expect(mockFrom.insert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event_type: 'auth.password.reset.requested'
+          })
+        );
+      });
+
+      test('logPasswordResetCompleted should log reset completion', async () => {
+        const result = await auditLogService.logPasswordResetCompleted(
+          'user-123',
+          'test@example.com'
+        );
+
+        expect(result).toBe(true);
+        expect(mockFrom.insert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event_type: 'auth.password.reset.completed'
+          })
+        );
+      });
+
+      test('logMagicLinkLoginSent should log magic link sent', async () => {
+        const result = await auditLogService.logMagicLinkLoginSent(
+          'user-123',
+          'test@example.com'
+        );
+
+        expect(result).toBe(true);
+        expect(mockFrom.insert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event_type: 'auth.magic_link.login.sent'
+          })
+        );
+      });
+
+      test('logOAuthInitiated should log OAuth initiation', async () => {
+        const result = await auditLogService.logOAuthInitiated('google', 'user-123');
+
+        expect(result).toBe(true);
+        expect(mockFrom.insert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event_type: 'auth.oauth.initiated'
+          })
+        );
+      });
+    });
+
+    describe('backward compatibility', () => {
+      test('should still support v1 events', async () => {
+        const result = await auditLogService.logEvent('auth.login', {
+          userId: 'user-123'
+        });
+
+        expect(result).toBe(true);
+        // Should be mapped to v2 but still work
+        expect(mockFrom.insert).toHaveBeenCalled();
+      });
+
+      test('should maintain v1 event types in eventTypes object', () => {
+        expect(auditLogService.eventTypes['auth.login']).toBeDefined();
+        expect(auditLogService.eventTypes['auth.logout']).toBeDefined();
+        expect(auditLogService.eventTypes['auth.failed_login']).toBeDefined();
+      });
+    });
+  });
 });
