@@ -4,6 +4,8 @@
 
 Aplicar la migración `031_create_admin_settings.sql` en Supabase para crear la tabla `admin_settings` que forma parte de la infraestructura SSOT v2.
 
+**Nota:** Este PR se enfoca únicamente en el trabajo original de ROA-268. El validador genérico de infraestructura está en PR #1163.
+
 ## ✅ Cambios Realizados
 
 ### 1. Script Helper de Migración
@@ -17,31 +19,22 @@ Aplicar la migración `031_create_admin_settings.sql` en Supabase para crear la 
 - Verificaciones post-migración (tabla, estructura, RLS, triggers)
 - Referencias a documentación relacionada
 
-### 3. Verificador Genérico de Prerequisitos de Infraestructura
-- **Archivo principal:** `scripts/verify-infra-prerequisites.js`
-- **Check de admin_settings:** `scripts/infra-checks/admin-settings.check.js`
-- Arquitectura genérica y extensible para futuros checks
+### 3. Script de Verificación Automática
+- **Archivo:** `scripts/verify-admin-settings-table.js`
 - Verifica automáticamente que la tabla existe y está correctamente configurada
 - Read-only: no modifica la base de datos
-- Integrado en CI para garantizar que la migración está aplicada
+- Usable en CI para garantizar que la migración está aplicada
 
-### 4. Integración CI
-- **Workflow:** `.github/workflows/verify-infra-prerequisites.yml`
-- Ejecuta verificación automática en PRs a `main`
-- Usa secrets existentes (SUPABASE_URL, SUPABASE_SERVICE_KEY)
-
-### 5. Guía de Pasos
+### 4. Guía de Pasos
 - **Archivo:** `MIGRATION-STEPS.md`
 - Instrucciones detalladas paso a paso para aplicar la migración
 - Checklist de verificación completo
 
-## ✅ Verificación de Prerequisitos de Infraestructura
+## ✅ Verificación Automática de Migración
 
-**IMPORTANTE:** Este PR provee tooling y CI verification para confirmar que la migración ha sido aplicada. **La aplicación de la migración es manual** (Supabase Dashboard / CLI).
+La migración `031_create_admin_settings.sql` puede ser aplicada manualmente, y su existencia es verificada automáticamente mediante el script `verify-admin-settings-table.js`.
 
-La migración `031_create_admin_settings.sql` debe ser aplicada manualmente, y su existencia es verificada automáticamente mediante el verificador genérico de prerequisitos de infraestructura.
-
-**El verificador (read-only) valida:**
+**El script verifica:**
 - ✅ Existencia de la tabla `admin_settings`
 - ✅ Estructura de columnas correcta (key, value, created_at, updated_at)
 - ✅ RLS habilitado
@@ -51,7 +44,7 @@ La migración `031_create_admin_settings.sql` debe ser aplicada manualmente, y s
 - `exit 0`: Todas las verificaciones pasaron
 - `exit 1`: Una o más verificaciones fallaron (migración puede no estar aplicada)
 
-**El verificador es read-only** y no modifica la base de datos. No ejecuta migraciones automáticamente. El sistema confía en la verificación automática para confirmar que la migración manual ha sido aplicada correctamente.
+**El script es read-only** y no modifica la base de datos. El sistema confía en la verificación automática, no en suposiciones humanas.
 
 ## 📋 Validaciones Ejecutadas
 
@@ -66,6 +59,7 @@ La migración `031_create_admin_settings.sql` debe ser aplicada manualmente, y s
 - **Plan de implementación:** `docs/plan/issue-1090.md`
 - **Completion report:** `docs/plan/issue-1090-COMPLETION.md`
 - **SSOT Architecture:** `docs/architecture/sources-of-truth.md`
+- **Validador genérico de infraestructura:** PR #1163
 
 ## 📝 Notas
 
