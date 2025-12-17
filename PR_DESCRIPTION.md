@@ -4,6 +4,8 @@
 
 Aplicar la migración `031_create_admin_settings.sql` en Supabase para crear la tabla `admin_settings` que forma parte de la infraestructura SSOT v2.
 
+**Nota:** Este PR se enfoca únicamente en el trabajo original de ROA-268. El validador genérico de infraestructura está en PR #1163.
+
 ## ✅ Cambios Realizados
 
 ### 1. Script Helper de Migración
@@ -57,6 +59,7 @@ La migración `031_create_admin_settings.sql` puede ser aplicada manualmente, y 
 - **Plan de implementación:** `docs/plan/issue-1090.md`
 - **Completion report:** `docs/plan/issue-1090-COMPLETION.md`
 - **SSOT Architecture:** `docs/architecture/sources-of-truth.md`
+- **Validador genérico de infraestructura:** PR #1163
 
 ## 📝 Notas
 

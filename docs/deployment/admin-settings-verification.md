@@ -4,6 +4,8 @@
 
 Este documento describe cómo usar el script de verificación automática para garantizar que la tabla `admin_settings` existe y está correctamente configurada en Supabase.
 
+**Nota:** Este documento describe el script específico de ROA-268. Para el verificador genérico de infraestructura, ver PR #1163.
+
 ## 📋 Script de Verificación
 
 **Archivo:** `scripts/verify-admin-settings-table.js`
@@ -159,5 +161,5 @@ ALTER TABLE admin_settings ENABLE ROW LEVEL SECURITY;
 ---
 
 **Última actualización:** 2025-12-17  
-**Relacionado:** ROA-268, Issue #1090
-
+**Relacionado:** ROA-268, Issue #1090  
+**Validador genérico:** PR #1163
