@@ -10,6 +10,9 @@ const {
   resetRateLimit
 } = require('../middleware/rateLimiter');
 const { passwordChangeRateLimiter } = require('../middleware/passwordChangeRateLimiter');
+// ROA-359: Auth Rate Limiting v2
+const { authRateLimiterV2 } = require('../middleware/authRateLimiterV2');
+const { flags } = require('../config/flags');
 const { validatePassword } = require('../utils/passwordValidator');
 const passwordValidationService = require('../services/passwordValidationService');
 const {
@@ -22,8 +25,13 @@ const { registerSchema, loginSchema, formatZodError } = require('../validators/z
 
 const router = express.Router();
 
-// Apply rate limiting to authentication endpoints
-router.use(loginRateLimiter);
+// ROA-359: Apply rate limiting v2 if enabled, otherwise use v1
+if (flags.isEnabled('ENABLE_AUTH_RATE_LIMIT_V2')) {
+  router.use(authRateLimiterV2);
+} else {
+  // Apply legacy rate limiting to authentication endpoints
+  router.use(loginRateLimiter);
+}
 
 /**
  * POST /api/auth/register
