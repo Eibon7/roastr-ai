@@ -2,6 +2,7 @@
  * Audit Log Service
  *
  * Tracks critical system events for security and compliance
+ * ROA-357: Updated to support Auth Events Taxonomy v2
  */
 
 const { logger } = require('../utils/logger');
@@ -9,17 +10,29 @@ const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
 const fs = require('fs').promises;
 const path = require('path');
+const {
+  getFlatEventTypes,
+  getEventConfig,
+  mapV1ToV2,
+  isValidV2EventId
+} = require('../config/authEventsTaxonomy');
 
 class AuditLogService {
   constructor() {
     this.logFile = path.join(process.cwd(), 'data', 'audit.log');
+    
+    // ROA-357: Combine v1 events (for backward compatibility) with v2 taxonomy
+    const v2AuthEvents = getFlatEventTypes();
     this.eventTypes = {
-      // Authentication events
+      // Authentication events v1 (legacy - maintained for backward compatibility)
       'auth.login': { severity: 'info', description: 'User login' },
       'auth.logout': { severity: 'info', description: 'User logout' },
       'auth.reset_request': { severity: 'warning', description: 'Password reset requested' },
       'auth.reset_complete': { severity: 'info', description: 'Password reset completed' },
       'auth.failed_login': { severity: 'warning', description: 'Failed login attempt' },
+      
+      // Authentication events v2 (ROA-357: New hierarchical taxonomy)
+      ...v2AuthEvents,
 
       // Billing events
       'billing.checkout_created': { severity: 'info', description: 'Checkout session created' },
@@ -65,10 +78,43 @@ class AuditLogService {
 
   /**
    * Log an audit event
+   * ROA-357: Supports both v1 and v2 event formats
+   * 
+   * @param {string} eventType - Event type (v1 or v2 format)
+   * @param {object} details - Event details
+   * @returns {Promise<boolean>} Success status
    */
   async logEvent(eventType, details = {}) {
     try {
-      const eventConfig = this.eventTypes[eventType];
+      // ROA-357: Try v2 taxonomy first, then fallback to v1
+      let eventConfig = null;
+      
+      // Check if it's a v2 event
+      if (eventType.startsWith('auth.') && isValidV2EventId(eventType)) {
+        const v2Config = getEventConfig(eventType);
+        if (v2Config) {
+          eventConfig = v2Config;
+        }
+      }
+      
+      // Fallback to v1 or other event types
+      if (!eventConfig) {
+        eventConfig = this.eventTypes[eventType];
+      }
+      
+      // If still not found, try mapping v1 to v2
+      if (!eventConfig && eventType.startsWith('auth.')) {
+        const v2EventId = mapV1ToV2(eventType);
+        if (v2EventId) {
+          const v2Config = getEventConfig(v2EventId);
+          if (v2Config) {
+            eventConfig = v2Config;
+            // Log with v2 event ID for better taxonomy
+            eventType = v2EventId;
+          }
+        }
+      }
+      
       if (!eventConfig) {
         logger.warn('Unknown audit event type:', eventType);
         return false;
@@ -236,12 +282,196 @@ class AuditLogService {
 
   /**
    * Helper methods for common events
+   * ROA-357: Updated to use v2 taxonomy
    */
+  
+  // Session events
   async logUserLogin(userId, ipAddress, userAgent) {
-    return this.logEvent('auth.login', {
+    // Use v2 event ID
+    return this.logEvent('auth.session.login.success', {
       userId,
       ipAddress,
       userAgent
+    });
+  }
+  
+  async logUserLoginFailed(userId, ipAddress, userAgent, reason = 'invalid_credentials') {
+    return this.logEvent('auth.session.login.failed', {
+      userId,
+      ipAddress,
+      userAgent,
+      reason
+    });
+  }
+  
+  async logUserLoginBlocked(userId, ipAddress, userAgent, reason) {
+    return this.logEvent('auth.session.login.blocked', {
+      userId,
+      ipAddress,
+      userAgent,
+      reason
+    });
+  }
+  
+  async logUserLogout(userId, ipAddress, userAgent, type = 'manual') {
+    const eventId = type === 'automatic' 
+      ? 'auth.session.logout.automatic'
+      : 'auth.session.logout.manual';
+    return this.logEvent(eventId, {
+      userId,
+      ipAddress,
+      userAgent
+    });
+  }
+  
+  async logSessionExpired(userId, ipAddress) {
+    return this.logEvent('auth.session.expired', {
+      userId,
+      ipAddress
+    });
+  }
+  
+  async logSessionRefresh(userId, success = true) {
+    const eventId = success 
+      ? 'auth.session.refresh.success'
+      : 'auth.session.refresh.failed';
+    return this.logEvent(eventId, {
+      userId
+    });
+  }
+  
+  // Registration events
+  async logUserSignup(userId, email, success = true) {
+    const eventId = success
+      ? 'auth.registration.signup.success'
+      : 'auth.registration.signup.failed';
+    return this.logEvent(eventId, {
+      userId,
+      email
+    });
+  }
+  
+  async logEmailVerificationSent(userId, email) {
+    return this.logEvent('auth.registration.email_verification.sent', {
+      userId,
+      email
+    });
+  }
+  
+  async logEmailVerificationVerified(userId, email) {
+    return this.logEvent('auth.registration.email_verification.verified', {
+      userId,
+      email
+    });
+  }
+  
+  async logEmailVerificationExpired(userId, email) {
+    return this.logEvent('auth.registration.email_verification.expired', {
+      userId,
+      email
+    });
+  }
+  
+  // Password events
+  async logPasswordResetRequested(userId, email) {
+    return this.logEvent('auth.password.reset.requested', {
+      userId,
+      email
+    });
+  }
+  
+  async logPasswordResetCompleted(userId, email) {
+    return this.logEvent('auth.password.reset.completed', {
+      userId,
+      email
+    });
+  }
+  
+  async logPasswordResetFailed(userId, email, reason) {
+    return this.logEvent('auth.password.reset.failed', {
+      userId,
+      email,
+      reason
+    });
+  }
+  
+  async logPasswordChange(userId, success = true, reason = null) {
+    const eventId = success
+      ? 'auth.password.change.success'
+      : 'auth.password.change.failed';
+    return this.logEvent(eventId, {
+      userId,
+      reason
+    });
+  }
+  
+  // Magic link events
+  async logMagicLinkLoginSent(userId, email) {
+    return this.logEvent('auth.magic_link.login.sent', {
+      userId,
+      email
+    });
+  }
+  
+  async logMagicLinkLoginUsed(userId, email) {
+    return this.logEvent('auth.magic_link.login.used', {
+      userId,
+      email
+    });
+  }
+  
+  async logMagicLinkLoginExpired(userId, email) {
+    return this.logEvent('auth.magic_link.login.expired', {
+      userId,
+      email
+    });
+  }
+  
+  async logMagicLinkSignupSent(email) {
+    return this.logEvent('auth.magic_link.signup.sent', {
+      email
+    });
+  }
+  
+  async logMagicLinkSignupUsed(userId, email) {
+    return this.logEvent('auth.magic_link.signup.used', {
+      userId,
+      email
+    });
+  }
+  
+  async logMagicLinkSignupExpired(email) {
+    return this.logEvent('auth.magic_link.signup.expired', {
+      email
+    });
+  }
+  
+  // OAuth events
+  async logOAuthInitiated(provider, userId = null) {
+    return this.logEvent('auth.oauth.initiated', {
+      provider,
+      userId
+    });
+  }
+  
+  async logOAuthCallback(provider, userId, success = true, error = null) {
+    const eventId = success
+      ? 'auth.oauth.callback.success'
+      : 'auth.oauth.callback.failed';
+    return this.logEvent(eventId, {
+      provider,
+      userId,
+      error
+    });
+  }
+  
+  async logOAuthTokenRefresh(provider, userId, success = true) {
+    const eventId = success
+      ? 'auth.oauth.token_refresh.success'
+      : 'auth.oauth.token_refresh.failed';
+    return this.logEvent(eventId, {
+      provider,
+      userId
     });
   }
 

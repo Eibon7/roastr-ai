@@ -1,14 +1,14 @@
 metadata:
   version: 2.0.0
   created: '2025-12-05T18:31:11.772Z'
-  last_updated: '2025-12-05T19:37:47.846Z'
+  last_updated: '2025-12-07T00:00:00.000Z'
   total_nodes: 15
   critical_nodes: 11
   high_priority_nodes: 3
   production_nodes: 15
   development_nodes: 0
   pr: null
-  changes: 'Integrity correction: Removed 46 legacy V1 references, recomputed bidirectional dependencies, validated subnodes/filesystem sync - ROA-258'
+  changes: 'Polish and CodeRabbit nits: Standardized date formats, replaced TODO descriptions with real descriptions, standardized node structure - ROA-316'
   protected: false
   last_verified: '2025-12-05T19:37:47.846Z'
   ssot_alignment: true
@@ -108,7 +108,7 @@ nodes:
     status: production
     priority: critical
     owner: Back-end Dev
-    last_updated: 2025-12-05T00:00:00.000Z
+    last_updated: '2025-12-05T00:00:00.000Z'
     coverage: 78
     depends_on:
       - billing-integration
@@ -384,7 +384,7 @@ nodes:
     status: production
     priority: medium
     owner: Front-end Dev
-    last_updated: 2025-12-05T00:00:00.000Z
+    last_updated: '2025-12-05T00:00:00.000Z'
     coverage: 60
     depends_on:
       - ssot-integration
@@ -410,7 +410,7 @@ nodes:
     status: production
     priority: critical
     owner: Product Owner
-    last_updated: 2025-12-05T00:00:00.000Z
+    last_updated: '2025-12-05T00:00:00.000Z'
     coverage: 100
     depends_on: []
     used_by:
@@ -481,7 +481,7 @@ nodes:
     status: production
     priority: critical
     owner: Back-end Dev
-    last_updated: 2025-12-05T00:00:00.000Z
+    last_updated: '2025-12-05T00:00:00.000Z'
     coverage: 60
     depends_on:
       - infraestructura
@@ -556,7 +556,7 @@ nodes:
       - strike-cleanup
       - worker-manager
   auth:
-    description: 'TODO: Authentication and authorization system'
+    description: Authentication and authorization system with Supabase Auth, OAuth PKCE flow, magic links, and user profile management
     status: production
     priority: critical
     owner: Back-end Dev
@@ -566,8 +566,6 @@ nodes:
     used_by: []
     required_by: []
     related: []
-    notes:
-      - 'TBD – No documented dependencies in SSOT/Spec'
     docs:
       - docs/nodes-v2/02-autenticacion-usuarios.md
     files: []
@@ -582,7 +580,7 @@ nodes:
       - token_refresh_rules
     subnodes: []
   settings-loader-and-feature-flags:
-    description: 'TODO: Settings loader and feature flags management system'
+    description: Settings loader and feature flags management system with SSOT integration, admin settings, and dynamic feature toggling
     status: production
     priority: high
     owner: Back-end Dev
@@ -600,7 +598,7 @@ nodes:
       - feature_flags
     subnodes: []
   gdpr-and-legal:
-    description: 'TODO: GDPR compliance and legal requirements system'
+    description: GDPR compliance and legal requirements system with data retention policies, automatic blocking, encrypted persona storage, and cleanup algorithms
     status: production
     priority: critical
     owner: Product Owner
@@ -610,8 +608,6 @@ nodes:
     used_by: []
     required_by: []
     related: []
-    notes:
-      - 'TBD – No documented dependencies in SSOT/Spec'
     docs:
       - docs/nodes-v2/12-gdpr-legal.md
     files: []
@@ -625,7 +621,7 @@ nodes:
     subnodes:
       - gdpr-retention
   testing-v2:
-    description: 'TODO: Comprehensive testing system (unit, integration, E2E)'
+    description: Comprehensive testing system with Vitest framework, Supabase test database, Playwright E2E tests, and coverage thresholds
     status: production
     priority: critical
     owner: Test Engineer
@@ -635,8 +631,6 @@ nodes:
     used_by: []
     required_by: []
     related: []
-    notes:
-      - 'TBD – No documented dependencies in SSOT/Spec'
     docs:
       - docs/nodes-v2/13-testing.md
     files: []

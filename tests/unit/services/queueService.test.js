@@ -101,9 +101,9 @@ describe('QueueService', () => {
   describe('Constructor and Configuration', () => {
     test('should initialize with correct default properties', () => {
       expect(queueService).toBeDefined();
-      expect(queueService.queuePrefix).toBe('roastr:jobs');
-      expect(queueService.dlqPrefix).toBe('roastr:dlq');
-      expect(queueService.metricsPrefix).toBe('roastr:metrics');
+      expect(queueService.queuePrefix).toBe('v2_jobs');
+      expect(queueService.dlqPrefix).toBe('v2_dlq');
+      expect(queueService.metricsPrefix).toBe('v2_metrics');
       expect(queueService.options).toBeDefined();
       expect(queueService.options.maxRetries).toBe(3);
       expect(queueService.options.retryDelay).toBe(5000);
@@ -137,14 +137,14 @@ describe('QueueService', () => {
       const key1 = queueService.getQueueKey('fetch_comments', 1);
       const key2 = queueService.getQueueKey('shield_action', 5);
 
-      expect(key1).toBe('roastr:jobs:fetch_comments:p1');
-      expect(key2).toBe('roastr:jobs:shield_action:p5');
+      expect(key1).toBe('v2_jobs:fetch_comments:p1');
+      expect(key2).toBe('v2_jobs:shield_action:p5');
     });
 
     test('should handle default priority', () => {
       const key = queueService.getQueueKey('analyze_toxicity');
 
-      expect(key).toBe('roastr:jobs:analyze_toxicity:p5');
+      expect(key).toBe('v2_jobs:analyze_toxicity:p5');
     });
 
     test('should handle various job types', () => {
@@ -152,7 +152,7 @@ describe('QueueService', () => {
 
       types.forEach((type) => {
         const key = queueService.getQueueKey(type, 3);
-        expect(key).toBe(`roastr:jobs:${type}:p3`);
+        expect(key).toBe(`v2_jobs:${type}:p3`);
       });
     });
   });
@@ -566,7 +566,7 @@ describe('QueueService', () => {
         await queueService.moveToDeadLetterQueue(job, error);
 
         expect(mockRedis.lpush).toHaveBeenCalledWith(
-          'roastr:dlq:test_queue',
+          'v2_dlq:test_queue',
           expect.stringContaining('job-123')
         );
       });
@@ -739,7 +739,7 @@ describe('QueueService', () => {
         await queueService.completeJobInRedis(job, result);
 
         expect(mockRedis.setex).toHaveBeenCalledWith(
-          'roastr:jobs:completed:test_queue:job-123',
+          'v2_jobs:completed:test_queue:job-123',
           86400, // 24 hour TTL
           expect.any(String)
         );
@@ -1171,8 +1171,8 @@ describe('QueueService', () => {
 
         await queueService.incrementMetric('completed', 'test_queue');
 
-        expect(mockRedis.incr).toHaveBeenCalledWith('roastr:metrics:completed:test_queue');
-        expect(mockRedis.expire).toHaveBeenCalledWith('roastr:metrics:completed:test_queue', 86400);
+        expect(mockRedis.incr).toHaveBeenCalledWith('v2_metrics:completed:test_queue');
+        expect(mockRedis.expire).toHaveBeenCalledWith('v2_metrics:completed:test_queue', 86400);
       });
 
       it('should do nothing when Redis unavailable', async () => {
@@ -1206,13 +1206,13 @@ describe('QueueService', () => {
       it('should generate correct Redis key with priority', () => {
         const key = queueService.getQueueKey('test_queue', 1);
 
-        expect(key).toBe('roastr:jobs:test_queue:p1');
+        expect(key).toBe('v2_jobs:test_queue:p1');
       });
 
       it('should use default priority 5 when not specified', () => {
         const key = queueService.getQueueKey('test_queue');
 
-        expect(key).toBe('roastr:jobs:test_queue:p5');
+        expect(key).toBe('v2_jobs:test_queue:p5');
       });
 
       it('should handle different queue types', () => {
