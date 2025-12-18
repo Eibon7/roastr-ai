@@ -131,14 +131,14 @@ export function setUserProperties(properties: UserProperties): void {
   }
 
   try {
-    // Use Identify class to build user properties
-    const identifyObj: Record<string, any> = {};
+    // Build identify event with user properties
+    const identifyEvent = new amplitude.Identify();
     Object.entries(properties).forEach(([key, value]) => {
       if (value !== undefined) {
-        identifyObj[key] = value;
+        identifyEvent.set(key, value);
       }
     });
-    amplitude.identify(identifyObj);
+    amplitude.identify(identifyEvent);
   } catch (error) {
     console.error('[Amplitude] Failed to set user properties:', error);
   }
