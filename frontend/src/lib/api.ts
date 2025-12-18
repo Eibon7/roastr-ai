@@ -265,6 +265,10 @@ export interface User {
   is_admin?: boolean;
   /** ID of the organization the user belongs to */
   organization_id?: string;
+  /** User's subscription plan */
+  plan?: string;
+  /** Encrypted persona data (if user has configured persona) */
+  lo_que_me_define_encrypted?: string | null;
 }
 
 /**

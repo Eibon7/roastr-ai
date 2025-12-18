@@ -17,7 +17,7 @@
  * - GDPR compliant
  */
 
-import * as amplitude from '@amplitude/unified';
+import * as amplitude from '@amplitude/analytics-browser';
 
 let isInitialized = false;
 
@@ -49,7 +49,7 @@ export function initializeAmplitude(): boolean {
   }
 
   try {
-    amplitude.init(apiKey, {
+    amplitude.init(apiKey, undefined, {
       defaultTracking: {
         sessions: true,
         pageViews: true,
@@ -129,7 +129,13 @@ export function setUserProperties(properties: UserProperties): void {
   }
 
   try {
-    amplitude.setUserProperties(properties);
+    const identify = new amplitude.Identify();
+    Object.entries(properties).forEach(([key, value]) => {
+      if (value !== undefined) {
+        identify.set(key, value);
+      }
+    });
+    amplitude.identify(identify);
   } catch (error) {
     console.error('[Amplitude] Failed to set user properties:', error);
   }
