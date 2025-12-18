@@ -265,6 +265,8 @@ export interface User {
   is_admin?: boolean;
   /** ID of the organization the user belongs to */
   organization_id?: string;
+  /** User's subscription plan */
+  plan?: string;
 }
 
 /**
