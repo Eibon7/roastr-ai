@@ -9,17 +9,16 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as amplitude from '@amplitude/analytics-browser';
+import * as amplitude from '@amplitude/unified';
 
 // Mock Amplitude SDK
-vi.mock('@amplitude/analytics-browser', () => ({
-  init: vi.fn(),
+vi.mock('@amplitude/unified', () => ({
+  initAll: vi.fn(),
   setUserId: vi.fn(),
-  identify: vi.fn(),
-  reset: vi.fn(),
-  Identify: vi.fn(() => ({
+  identify: vi.fn(() => ({
     set: vi.fn().mockReturnThis()
-  }))
+  })),
+  reset: vi.fn()
 }));
 
 // Import after mocking
