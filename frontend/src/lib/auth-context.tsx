@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authApi, type User, type ApiError } from './api';
-import { setUserId, setUserProperties, reset, type UserProperties } from './analytics-identity';
+import { setUserId, setUserProperties, reset } from './analytics-identity';
 
 /**
  * Authentication context type definition
