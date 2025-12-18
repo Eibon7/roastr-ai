@@ -18,6 +18,8 @@ const PersonaService = require('../services/PersonaService');
 const { logger } = require('../utils/logger');
 const { createPersonaSchema } = require('../validators/zod/persona.schema');
 const { formatZodError, isZodError } = require('../validators/zod/formatZodError');
+// ROA-356: Import analytics cache service for cache invalidation on persona changes
+const analyticsCacheService = require('../services/analyticsCacheService');
 
 const router = express.Router();
 
@@ -139,6 +141,10 @@ router.post('/api/persona', authenticateToken, async (req, res) => {
       userPlan
     );
 
+    // ROA-356: Invalidate analytics cache when persona changes
+    // This ensures analytics reflect the latest persona data
+    analyticsCacheService.invalidateAnalyticsCache(userId);
+
     res.json({
       success: true,
       data: result
@@ -206,6 +212,10 @@ router.delete('/api/persona', authenticateToken, async (req, res) => {
     const userId = req.user.id;
 
     await PersonaService.deletePersona(userId);
+
+    // ROA-356: Invalidate analytics cache when persona is deleted
+    // This ensures analytics reflect the latest persona data (now empty)
+    analyticsCacheService.invalidateAnalyticsCache(userId);
 
     // 204 No Content (successful deletion)
     res.status(204).send();
