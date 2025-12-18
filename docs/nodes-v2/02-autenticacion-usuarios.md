@@ -267,7 +267,7 @@ Esta taxonomía (AUTH_, AUTHZ_, SESSION_, TOKEN_, ACCOUNT_*) se considera "defin
 
 Esta sección describe el uso esperado y **NO es la fuente canónica**.
 
-**Tracking:** ROA-XXX (issue dedicada para "Define Auth Error Taxonomy in SSOT v2")
+**Tracking:** ROA-372 (issue dedicada para "Define Auth Error Taxonomy in SSOT v2")
 
 ---
 
