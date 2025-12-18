@@ -19,6 +19,11 @@ const auditService = require('./auditService');
 const { applyPlanLimits } = require('./subscriptionService');
 const passwordHistoryService = require('./passwordHistoryService');
 const planLimitsService = require('./planLimitsService');
+const {
+  AUTH_ERROR_CODES,
+  AuthError,
+  createAuthErrorFromSupabase
+} = require('../utils/authErrorTaxonomy');
 
 class AuthService {
   /**
@@ -41,11 +46,21 @@ class AuthService {
       });
 
       if (authError) {
-        throw new Error(`Signup failed: ${authError.message}`);
+        const error = createAuthErrorFromSupabase(
+          authError,
+          AUTH_ERROR_CODES.AUTH_SERVICE_UNAVAILABLE
+        );
+        error.log({ email, operation: 'signup' });
+        throw error;
       }
 
       if (!authData.user) {
-        throw new Error('User creation failed');
+        const error = new AuthError(
+          AUTH_ERROR_CODES.SESSION_CREATION_FAILED,
+          'User creation failed'
+        );
+        error.log({ email, operation: 'signup' });
+        throw error;
       }
 
       // Create user record in users table
@@ -65,7 +80,17 @@ class AuthService {
         logger.error('Failed to create user record:', userError.message);
         // Try to cleanup auth user if possible
         await supabaseServiceClient.auth.admin.deleteUser(authData.user.id);
-        throw new Error(`Failed to create user profile: ${userError.message}`);
+        const error = new AuthError(
+          AUTH_ERROR_CODES.DATABASE_ERROR,
+          'Failed to create user profile'
+        );
+        error.log({
+          email,
+          userId: authData.user.id,
+          operation: 'signup',
+          dbError: userError.message
+        });
+        throw error;
       }
 
       logger.info('User signed up successfully:', {
@@ -79,8 +104,18 @@ class AuthService {
         profile: userData
       };
     } catch (error) {
+      // Re-throw AuthError as-is
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      // Wrap unexpected errors
       logger.error('Signup error:', error.message);
-      throw error;
+      const authError = new AuthError(
+        AUTH_ERROR_CODES.AUTH_SERVICE_UNAVAILABLE,
+        'Signup failed'
+      );
+      authError.log({ email, originalError: error.message });
+      throw authError;
     }
   }
 
@@ -102,7 +137,12 @@ class AuthService {
       });
 
       if (error) {
-        throw new Error(`Magic link signup failed: ${error.message}`);
+        const authError = createAuthErrorFromSupabase(
+          error,
+          AUTH_ERROR_CODES.AUTH_SERVICE_UNAVAILABLE
+        );
+        authError.log({ email, operation: 'signup_magic_link' });
+        throw authError;
       }
 
       logger.info('Magic link sent for signup:', { email });
@@ -132,7 +172,12 @@ class AuthService {
       });
 
       if (error) {
-        throw new Error(`Sign in failed: ${error.message}`);
+        const authError = createAuthErrorFromSupabase(
+          error,
+          AUTH_ERROR_CODES.INVALID_CREDENTIALS
+        );
+        authError.log({ email, operation: 'signin' });
+        throw authError;
       }
 
       // Get user profile
@@ -177,7 +222,12 @@ class AuthService {
       });
 
       if (error) {
-        throw new Error(`Magic link sign in failed: ${error.message}`);
+        const authError = createAuthErrorFromSupabase(
+          error,
+          AUTH_ERROR_CODES.AUTH_SERVICE_UNAVAILABLE
+        );
+        authError.log({ email, operation: 'signin_magic_link' });
+        throw authError;
       }
 
       logger.info('Magic link sent for sign in:', { email });
@@ -319,7 +369,12 @@ class AuthService {
       } = await userClient.auth.getUser();
 
       if (authError || !user) {
-        throw new Error('Invalid or expired token');
+        const error = createAuthErrorFromSupabase(
+          authError,
+          AUTH_ERROR_CODES.TOKEN_INVALID
+        );
+        error.log({ operation: 'updateProfile' });
+        throw error;
       }
 
       // Update user profile
@@ -331,7 +386,12 @@ class AuthService {
         .single();
 
       if (error) {
-        throw new Error(`Profile update failed: ${error.message}`);
+        const authError = new AuthError(
+          AUTH_ERROR_CODES.DATABASE_ERROR,
+          'Profile update failed'
+        );
+        authError.log({ userId: user.id, operation: 'updateProfile', dbError: error.message });
+        throw authError;
       }
 
       logger.info('User profile updated:', { userId: user.id, updates: Object.keys(updates) });
@@ -360,7 +420,12 @@ class AuthService {
       });
 
       if (error) {
-        throw new Error(`Password update failed: ${error.message}`);
+        const authError = createAuthErrorFromSupabase(
+          error,
+          AUTH_ERROR_CODES.AUTH_SERVICE_UNAVAILABLE
+        );
+        authError.log({ operation: 'updatePassword' });
+        throw authError;
       }
 
       logger.info('Password updated successfully');
