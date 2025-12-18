@@ -1,6 +1,26 @@
 import * as React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authApi, type User, type ApiError } from './api';
+import { setUserId, setUserProperties, reset, type UserProperties } from './analytics-identity';
+
+/**
+ * Build user properties for Amplitude from User object
+ * All values come from backend/session (no hardcoded values)
+ *
+ * @param user - User object from authentication
+ * @returns User properties for Amplitude (snake_case)
+ */
+function buildUserProperties(user: User): UserProperties {
+  return {
+    plan: user.plan || 'free',
+    role: user.is_admin ? 'admin' : 'user',
+    has_roastr_persona: !!(user as any).lo_que_me_define_encrypted,
+    is_admin: user.is_admin || false,
+    is_trial: user.plan?.toLowerCase().includes('trial') || false,
+    auth_provider: 'email_password', // Extensible for OAuth, magic link
+    locale: navigator.language?.split('-')[0] || 'en'
+  };
+}
 
 /**
  * Authentication context type definition
@@ -138,6 +158,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * and resets the auth state.
    */
   const logout = async () => {
+    // ROA-356: Clear Amplitude identity
+    setUserId(undefined);
+    reset();
+
     authApi.logout();
     setUser(null);
   };
