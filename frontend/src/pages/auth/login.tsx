@@ -3,6 +3,9 @@
  *
  * Authentication page that allows users to log in with email/password
  * or use demo mode for testing without backend.
+ *
+ * V2-ready: This tracking implementation serves as an example for the Auth: Login flow.
+ * It will be refined within the full Auth flow migration.
  */
 
 import { useState } from 'react';
@@ -14,6 +17,7 @@ import { AuthLayout } from '@/components/layout/auth-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth-context';
 import { Loader2, Sparkles } from 'lucide-react';
+import { trackEvent } from '@/lib/analytics';
 
 /**
  * LoginPage Component
@@ -54,9 +58,26 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
+      
+      // Track successful login (V2 convention: snake_case + helper)
+      trackEvent('auth_login_success', {
+        method: 'email_password',
+        redirect_to: from
+      }, {
+        flow: 'auth'
+      });
+      
       // Redirect to the page user was trying to access, or /app
       navigate(from, { replace: true });
     } catch (err) {
+      // Track failed login attempt (V2 convention: snake_case + helper)
+      trackEvent('auth_login_failed', {
+        method: 'email_password',
+        error: err instanceof Error ? err.message : 'Unknown error'
+      }, {
+        flow: 'auth'
+      });
+      
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
     } finally {
       setLoading(false);
@@ -90,6 +111,15 @@ export default function LoginPage() {
 
       // Simular delay de red
       await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Track demo login (V2 convention: snake_case + helper)
+      trackEvent('auth_login_success', {
+        method: 'demo_mode',
+        user_type: 'demo_admin',
+        redirect_to: '/admin/dashboard'
+      }, {
+        flow: 'auth'
+      });
 
       // Forzar recarga para que el AuthContext detecte el usuario
       window.location.href = '/admin/dashboard';
