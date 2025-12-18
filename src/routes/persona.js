@@ -143,7 +143,16 @@ router.post('/api/persona', authenticateToken, async (req, res) => {
 
     // ROA-356: Invalidate analytics cache when persona changes
     // This ensures analytics reflect the latest persona data
-    analyticsCacheService.invalidateAnalyticsCache(userId);
+    // Non-blocking: errors in cache invalidation don't fail the persona update
+    try {
+      analyticsCacheService.invalidateAnalyticsCache(userId);
+    } catch (cacheError) {
+      logger.warn('Failed to invalidate analytics cache after persona update', {
+        userId: req.user?.id,
+        error: cacheError.message
+      });
+      // Continue - don't fail the request
+    }
 
     res.json({
       success: true,
@@ -215,7 +224,16 @@ router.delete('/api/persona', authenticateToken, async (req, res) => {
 
     // ROA-356: Invalidate analytics cache when persona is deleted
     // This ensures analytics reflect the latest persona data (now empty)
-    analyticsCacheService.invalidateAnalyticsCache(userId);
+    // Non-blocking: errors in cache invalidation don't fail the persona deletion
+    try {
+      analyticsCacheService.invalidateAnalyticsCache(userId);
+    } catch (cacheError) {
+      logger.warn('Failed to invalidate analytics cache after persona deletion', {
+        userId: req.user?.id,
+        error: cacheError.message
+      });
+      // Continue - don't fail the request
+    }
 
     // 204 No Content (successful deletion)
     res.status(204).send();
