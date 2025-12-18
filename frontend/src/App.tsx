@@ -5,7 +5,9 @@
  * Sets up routing, theme, authentication, and all global providers.
  */
 
+import * as React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense } from 'react';
 import { ThemeProvider } from '@/lib/theme-provider';
 import { AuthProvider } from '@/lib/auth-context';
 import { Toaster } from '@/components/ui/sonner';
@@ -30,6 +32,11 @@ import MetricsPage from '@/pages/admin/metrics';
 import AppHomePage from '@/pages/app/home';
 import NotFound from '@/pages/NotFound';
 
+// DEV-only pages - lazy loaded only in development
+const AuthUIPreviewPage = import.meta.env.DEV
+  ? React.lazy(() => import('@/pages/dev/auth-ui-preview'))
+  : null;
+
 /**
  * App Component
  *
@@ -52,6 +59,18 @@ function App() {
             {/* Auth routes (public) */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/recover" element={<RecoverPage />} />
+
+            {/* DEV-only routes - only available in development */}
+            {import.meta.env.DEV && AuthUIPreviewPage && (
+              <Route
+                path="/dev/auth-ui-preview"
+                element={
+                  <Suspense fallback={<div className="p-8">Loading preview...</div>}>
+                    <AuthUIPreviewPage />
+                  </Suspense>
+                }
+              />
+            )}
 
             {/* App routes (user routes) - Protected with AuthGuard */}
             <Route

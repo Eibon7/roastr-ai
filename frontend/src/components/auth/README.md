@@ -174,3 +174,60 @@ export default function LoginPage() {
 - ✅ Tests unitarios incluidos
 - ✅ Consistentes con el design system de Roastr.ai
 
+## Decisiones de Diseño
+
+### Input Genérico
+
+**Decisión:** No se expone un componente `AuthInput` genérico por separado.
+
+**Razón:** Los componentes especializados (`EmailInput`, `PasswordInput`) son suficientes para los casos de uso de autenticación. Cada uno tiene atributos específicos (autoComplete, tipo, toggle de visibilidad) que serían difíciles de unificar en un componente genérico sin perder funcionalidad o añadir complejidad innecesaria.
+
+**Uso:** Para casos específicos de autenticación, usa `EmailInput` o `PasswordInput`. Para otros casos de uso fuera de auth, usa directamente `<Input />` de shadcn/ui.
+
+### Error Display (AuthError)
+
+**Decisión:** El display de errores está integrado en `AuthForm`, no es un componente standalone.
+
+**Razón:** Los errores de autenticación son siempre contextuales al formulario completo, no a campos individuales. Integrarlo en `AuthForm` proporciona una estructura consistente y simplifica el uso.
+
+**Uso:** Para mostrar errores en formularios de autenticación:
+```tsx
+<AuthForm error={errorMessage} onSubmit={handleSubmit}>
+  {/* campos del formulario */}
+</AuthForm>
+```
+
+Para errores de campos individuales, usa `hasError` prop en `EmailInput` y `PasswordInput`.
+
+### Accesibilidad
+
+Todos los componentes implementan:
+- `aria-invalid` en inputs cuando hay error (WCAG 2.1)
+- `role="alert"` en mensajes de error
+- Labels asociados correctamente con inputs
+- Navegación por teclado completa
+- Estados de focus visibles
+
+## Visual Validation (DEV)
+
+Los componentes han sido verificados visualmente en un entorno de preview local
+(`/dev/auth-ui-preview`) para confirmar:
+
+- ✅ Uso exclusivo de shadcn/ui (Input, Button, Label, Card)
+- ✅ Estados de error correctos (border-destructive, aria-invalid)
+- ✅ Estados de loading correctos (spinner Loader2, disabled state)
+- ✅ Estados de focus visibles (keyboard navigation)
+- ✅ Labels correctamente asociados (htmlFor/id)
+- ✅ Sin CSS custom ni HTML nativo
+- ✅ Funcionamiento correcto en light/dark/system theme
+
+**Nota:** Esta ruta es solo para desarrollo (`/dev/auth-ui-preview`) y no forma parte del producto final. 
+Solo está disponible cuando `import.meta.env.DEV === true`.
+
+Para acceder al preview:
+```bash
+cd frontend
+npm run dev
+# Navega a: http://localhost:5173/dev/auth-ui-preview
+```
+
