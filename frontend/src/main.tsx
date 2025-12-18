@@ -4,7 +4,7 @@ import App from './App.tsx';
 import './index.css';
 
 // Initialize Amplitude Analytics (client-side only)
-import { initializeAmplitude } from './lib/analytics';
+import { initializeAmplitude } from './lib/analytics-identity';
 
 // Initialize Amplitude before rendering the app
 initializeAmplitude();

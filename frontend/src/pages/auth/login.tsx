@@ -17,7 +17,7 @@ import { AuthLayout } from '@/components/layout/auth-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth-context';
 import { Loader2, Sparkles } from 'lucide-react';
-import { trackEvent } from '@/lib/analytics';
+import { trackEvent } from '@/lib/analytics-identity';
 
 /**
  * LoginPage Component
