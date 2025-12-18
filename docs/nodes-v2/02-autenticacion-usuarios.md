@@ -259,6 +259,18 @@ export function transitionOnboardingState(
 
 ### Auth Error Taxonomy v2:
 
+
+
+⚠️ **TBD — Auth Error Taxonomy**
+
+Esta taxonomía (AUTH_, AUTHZ_, SESSION_, TOKEN_, ACCOUNT_*) se considera "definida" solo cuando esté formalizada en SSOT-V2.
+
+Esta sección describe el uso esperado y **NO es la fuente canónica**.
+
+**Tracking:** ROA-XXX (issue dedicada para "Define Auth Error Taxonomy in SSOT v2")
+
+---
+
 ```javascript
 // src/utils/authErrorTaxonomy.js
 // Sistema completo de taxonomía de errores de autenticación
