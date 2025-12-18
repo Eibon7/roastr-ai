@@ -17,7 +17,8 @@ import { AuthLayout } from '@/components/layout/auth-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth-context';
 import { Loader2, Sparkles } from 'lucide-react';
-import { trackEvent } from '@/lib/analytics';
+// ROA-356: trackEvent not implemented yet - will be added in future PR
+// import { trackEvent } from '@/lib/analytics-identity';
 
 /**
  * LoginPage Component
@@ -59,24 +60,14 @@ export default function LoginPage() {
     try {
       await login(email, password);
       
-      // Track successful login (V2 convention: snake_case + helper)
-      trackEvent('auth_login_success', {
-        method: 'email_password',
-        redirect_to: from
-      }, {
-        flow: 'auth'
-      });
+      // ROA-356: Identity sync handled automatically in auth-context.tsx
+      // trackEvent('auth_login_success', {...}) - not in scope
       
       // Redirect to the page user was trying to access, or /app
       navigate(from, { replace: true });
     } catch (err) {
-      // Track failed login attempt (V2 convention: snake_case + helper)
-      trackEvent('auth_login_failed', {
-        method: 'email_password',
-        error: err instanceof Error ? err.message : 'Unknown error'
-      }, {
-        flow: 'auth'
-      });
+      // ROA-356: trackEvent not in scope
+      // trackEvent('auth_login_failed', {...})
       
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
     } finally {
@@ -112,14 +103,8 @@ export default function LoginPage() {
       // Simular delay de red
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Track demo login (V2 convention: snake_case + helper)
-      trackEvent('auth_login_success', {
-        method: 'demo_mode',
-        user_type: 'demo_admin',
-        redirect_to: '/admin/dashboard'
-      }, {
-        flow: 'auth'
-      });
+      // ROA-356: Demo mode identity sync not in scope
+      // trackEvent('auth_login_success', {...})
 
       // Forzar recarga para que el AuthContext detecte el usuario
       window.location.href = '/admin/dashboard';

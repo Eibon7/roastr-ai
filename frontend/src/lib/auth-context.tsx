@@ -3,8 +3,6 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { authApi, type User, type ApiError } from './api';
 import { setUserId, setUserProperties, reset } from './analytics-identity';
 
-// Removed buildUserProperties - not used in current implementation
-
 /**
  * Authentication context type definition
  *

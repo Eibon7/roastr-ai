@@ -13,10 +13,17 @@ import * as amplitude from '@amplitude/unified';
 
 // Mock Amplitude SDK
 vi.mock('@amplitude/unified', () => ({
-  init: vi.fn(),
+  initAll: vi.fn(),
   setUserId: vi.fn(),
-  setUserProperties: vi.fn(),
+  identify: vi.fn(),
   reset: vi.fn()
+}));
+
+// Mock Identify class from @amplitude/analytics-browser
+vi.mock('@amplitude/analytics-browser', () => ({
+  Identify: vi.fn().mockImplementation(() => ({
+    set: vi.fn().mockReturnThis()
+  }))
 }));
 
 // Import after mocking
@@ -36,7 +43,7 @@ describe('Analytics Identity Sync (ROA-356)', () => {
 
       // Amplitude SDK methods should not be called
       expect(amplitude.setUserId).not.toHaveBeenCalled();
-      expect(amplitude.setUserProperties).not.toHaveBeenCalled();
+      expect(amplitude.identify).not.toHaveBeenCalled();
       expect(amplitude.reset).not.toHaveBeenCalled();
     });
 
