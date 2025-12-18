@@ -37,6 +37,7 @@ const EmailInput = React.forwardRef<HTMLInputElement, EmailInputProps>(
           hasError && 'border-destructive focus-visible:ring-destructive',
           className
         )}
+        aria-invalid={hasError}
         ref={ref}
         {...props}
       />

@@ -23,6 +23,7 @@ describe('EmailInput', () => {
 
     const input = screen.getByRole('textbox');
     expect(input).toHaveClass('border-destructive');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
   });
 
   it('does not show error state when hasError is false', () => {
@@ -30,6 +31,14 @@ describe('EmailInput', () => {
 
     const input = screen.getByRole('textbox');
     expect(input).not.toHaveClass('border-destructive');
+    expect(input).toHaveAttribute('aria-invalid', 'false');
+  });
+
+  it('does not set aria-invalid when hasError is undefined', () => {
+    render(<EmailInput id="email" />);
+
+    const input = screen.getByRole('textbox');
+    expect(input).not.toHaveAttribute('aria-invalid');
   });
 
   it('forwards ref correctly', () => {

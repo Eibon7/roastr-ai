@@ -11,6 +11,11 @@ export interface PasswordInputProps
    * @default true
    */
   showToggle?: boolean;
+  /**
+   * Whether to show validation error state
+   * @default false
+   */
+  hasError?: boolean;
 }
 
 /**
@@ -26,11 +31,12 @@ export interface PasswordInputProps
  *   placeholder="Enter your password"
  *   value={password}
  *   onChange={(e) => setPassword(e.target.value)}
+ *   hasError={!!passwordError}
  * />
  * ```
  */
 const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
-  ({ className, showToggle = true, ...props }, ref) => {
+  ({ className, showToggle = true, hasError, ...props }, ref) => {
     const [showPassword, setShowPassword] = React.useState(false);
 
     const toggleVisibility = () => {
@@ -41,7 +47,12 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
       <div className="relative">
         <Input
           type={showPassword ? 'text' : 'password'}
-          className={cn('pr-10', className)}
+          className={cn(
+            'pr-10',
+            hasError && 'border-destructive focus-visible:ring-destructive',
+            className
+          )}
+          aria-invalid={hasError}
           ref={ref}
           {...props}
         />

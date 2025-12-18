@@ -54,5 +54,28 @@ describe('PasswordInput', () => {
     const input = screen.getByPlaceholderText('Enter password') as HTMLInputElement;
     expect(input).toBeRequired();
   });
+
+  it('shows error state when hasError is true', () => {
+    render(<PasswordInput id="password" hasError />);
+
+    const input = screen.getByRole('textbox', { hidden: true });
+    expect(input).toHaveClass('border-destructive');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('does not show error state when hasError is false', () => {
+    render(<PasswordInput id="password" hasError={false} />);
+
+    const input = screen.getByRole('textbox', { hidden: true });
+    expect(input).not.toHaveClass('border-destructive');
+    expect(input).toHaveAttribute('aria-invalid', 'false');
+  });
+
+  it('does not set aria-invalid when hasError is undefined', () => {
+    render(<PasswordInput id="password" />);
+
+    const input = screen.getByRole('textbox', { hidden: true });
+    expect(input).not.toHaveAttribute('aria-invalid');
+  });
 });
 
