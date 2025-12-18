@@ -18,6 +18,7 @@
  */
 
 import * as amplitude from '@amplitude/unified';
+import { Identify } from '@amplitude/analytics-browser';
 
 let isInitialized = false;
 
@@ -132,7 +133,7 @@ export function setUserProperties(properties: UserProperties): void {
 
   try {
     // Build identify event with user properties
-    const identifyEvent = new amplitude.Identify();
+    const identifyEvent = new Identify();
     Object.entries(properties).forEach(([key, value]) => {
       if (value !== undefined) {
         identifyEvent.set(key, value);
