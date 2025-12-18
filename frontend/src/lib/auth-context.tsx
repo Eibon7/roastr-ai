@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authApi, type User, type ApiError } from './api';
-import { setUserId, reset } from './analytics-identity';
+import { setUserId, setUserProperties, reset } from './analytics-identity';
 
 // Removed buildUserProperties - not used in current implementation
 
@@ -125,6 +125,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('auth_token', response.token);
         localStorage.setItem('user', JSON.stringify(response.user));
         setUser(response.user);
+
+        // ROA-356: Sync identity with Amplitude
+        setUserId(response.user.id);
+        setUserProperties({
+          plan: response.user.plan || 'free',
+          role: response.user.is_admin ? 'admin' : 'user',
+          has_roastr_persona: !!(response.user as any).lo_que_me_define_encrypted,
+          is_admin: response.user.is_admin || false,
+          is_trial: response.user.plan?.toLowerCase().includes('trial') || false,
+          auth_provider: 'email_password',
+          locale: navigator.language?.split('-')[0] || 'en'
+        });
       } else {
         throw new Error('Login failed');
       }

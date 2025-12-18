@@ -18,6 +18,7 @@
  */
 
 import * as amplitude from '@amplitude/unified';
+import { Identify } from '@amplitude/analytics-browser';
 
 let isInitialized = false;
 
@@ -50,7 +51,15 @@ export function initializeAmplitude(): boolean {
 
   try {
     amplitude.initAll(apiKey, {
-      serverZone: 'EU' // GDPR compliance
+      serverZone: 'EU', // GDPR compliance
+      analytics: {
+        autocapture: {
+          sessions: true,
+          pageViews: true,
+          formInteractions: true,
+          fileDownloads: true
+        }
+      }
     });
 
     isInitialized = true;
@@ -123,20 +132,14 @@ export function setUserProperties(properties: UserProperties): void {
   }
 
   try {
-    // Use identify() to set user properties in Amplitude Unified SDK
-    // Build properties object and use identify with it
-    const identifyProps: Record<string, any> = {};
-    if (properties.plan) identifyProps.plan = properties.plan;
-    if (properties.role) identifyProps.role = properties.role;
-    if (properties.has_roastr_persona !== undefined) identifyProps.has_roastr_persona = properties.has_roastr_persona;
-    if (properties.is_admin !== undefined) identifyProps.is_admin = properties.is_admin;
-    if (properties.is_trial !== undefined) identifyProps.is_trial = properties.is_trial;
-    if (properties.auth_provider) identifyProps.auth_provider = properties.auth_provider;
-    if (properties.locale) identifyProps.locale = properties.locale;
-    
-    // Use identify() with the properties object
-    // Note: This is a simplified approach - Amplitude Unified SDK may require different API
-    amplitude.identify(identifyProps as any);
+    // Build identify event with user properties
+    const identifyEvent = new Identify();
+    Object.entries(properties).forEach(([key, value]) => {
+      if (value !== undefined) {
+        identifyEvent.set(key, value);
+      }
+    });
+    amplitude.identify(identifyEvent);
   } catch (error) {
     console.error('[Amplitude] Failed to set user properties:', error);
   }

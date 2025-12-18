@@ -267,6 +267,8 @@ export interface User {
   organization_id?: string;
   /** User's subscription plan */
   plan?: string;
+  /** Encrypted persona data (if user has configured persona) */
+  lo_que_me_define_encrypted?: string | null;
 }
 
 /**
