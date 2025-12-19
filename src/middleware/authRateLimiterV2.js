@@ -14,6 +14,8 @@ const crypto = require('crypto');
 const { flags } = require('../config/flags');
 const { logger } = require('../utils/logger');
 const settingsLoader = require('../services/settingsLoaderV2');
+const { detectAbuse } = require('../services/abuseDetectionService');
+const auditLogService = require('../services/auditLogService');
 
 /**
  * Fallback rate limit configuration (used only if SSOT is unavailable)
@@ -168,6 +170,7 @@ class RateLimitStoreV2 {
 
   /**
    * Initialize Redis/Upstash connection
+   * ROA-359: FASE 6 - Ensure store is ready before middleware execution
    */
   async initializeRedis() {
     try {
@@ -180,23 +183,36 @@ class RateLimitStoreV2 {
           token: redisToken
         });
 
-        // Test connection
-        await this.redis.ping();
+        // Test connection with timeout
+        const pingPromise = this.redis.ping();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Redis ping timeout')), 5000)
+        );
+        
+        await Promise.race([pingPromise, timeoutPromise]);
         this.isRedisAvailable = true;
 
-        logger.info('Auth Rate Limiter v2: Redis/Upstash initialized', {
-          url: redisUrl ? redisUrl.replace(/\/\/.*@/, '//***@') : 'not configured'
+        logger.info('Auth Rate Limiter v2: Redis/Upstash inicializado', {
+          url: redisUrl ? redisUrl.replace(/\/\/.*@/, '//***@') : 'no configurado'
         });
       } else {
-        logger.warn('Auth Rate Limiter v2: Redis not configured, using memory store');
+        logger.warn('Auth Rate Limiter v2: Redis no configurado, usando almacenamiento en memoria');
         this.isRedisAvailable = false;
       }
     } catch (error) {
-      logger.warn('Auth Rate Limiter v2: Redis initialization failed, using memory fallback', {
+      logger.warn('Auth Rate Limiter v2: Fallo en inicialización de Redis, usando fallback en memoria', {
         error: error.message
       });
       this.isRedisAvailable = false;
     }
+  }
+  
+  /**
+   * Check if store is ready (Redis initialized or memory fallback available)
+   * ROA-359: FASE 6 - Explicit readiness check
+   */
+  isReady() {
+    return this.isRedisAvailable || this.memoryStore !== null;
   }
 
   /**
@@ -247,7 +263,7 @@ class RateLimitStoreV2 {
         const count = await this.redis.get(key);
         return count ? parseInt(count, 10) : 0;
       } catch (error) {
-        logger.warn('Auth Rate Limiter v2: Redis get failed, falling back to memory', {
+        logger.warn('Auth Rate Limiter v2: Error en Redis get, usando fallback en memoria', {
           error: error.message,
           key
         });
@@ -269,7 +285,7 @@ class RateLimitStoreV2 {
         await this.redis.pexpire(key, windowMs);
         return count;
       } catch (error) {
-        logger.warn('Auth Rate Limiter v2: Redis increment failed, falling back to memory', {
+        logger.warn('Auth Rate Limiter v2: Error en Redis increment, usando fallback en memoria', {
           error: error.message,
           key
         });
@@ -320,6 +336,16 @@ class RateLimitStoreV2 {
         const parsed = JSON.parse(blockInfo);
         const now = Date.now();
 
+        // ROA-359: Handle permanent blocks (expiresAt is null)
+        if (parsed.expiresAt === null) {
+          return {
+            blocked: true,
+            expiresAt: null,
+            remainingMs: null,
+            offenseCount: parsed.offenseCount || 1
+          };
+        }
+
         if (now > parsed.expiresAt) {
           await this.redis.del(key);
           return { blocked: false };
@@ -332,7 +358,7 @@ class RateLimitStoreV2 {
           offenseCount: parsed.offenseCount || 1
         };
       } catch (error) {
-        logger.warn('Auth Rate Limiter v2: Redis get block failed, falling back to memory', {
+        logger.warn('Auth Rate Limiter v2: Error en Redis get block, usando fallback en memoria', {
           error: error.message,
           key
         });
@@ -341,6 +367,16 @@ class RateLimitStoreV2 {
 
         const parsed = typeof blockInfo === 'string' ? JSON.parse(blockInfo) : blockInfo;
         const now = Date.now();
+
+        // ROA-359: Handle permanent blocks (expiresAt is null)
+        if (parsed.expiresAt === null) {
+          return {
+            blocked: true,
+            expiresAt: null,
+            remainingMs: null,
+            offenseCount: parsed.offenseCount || 1
+          };
+        }
 
         if (now > parsed.expiresAt) {
           this.memoryStore.delete(key);
@@ -361,6 +397,16 @@ class RateLimitStoreV2 {
 
     const parsed = typeof blockInfo === 'string' ? JSON.parse(blockInfo) : blockInfo;
     const now = Date.now();
+
+    // ROA-359: Handle permanent blocks (expiresAt is null)
+    if (parsed.expiresAt === null) {
+      return {
+        blocked: true,
+        expiresAt: null,
+        remainingMs: null,
+        offenseCount: parsed.offenseCount || 1
+      };
+    }
 
     if (now > parsed.expiresAt) {
       this.memoryStore.delete(key);
@@ -396,7 +442,7 @@ class RateLimitStoreV2 {
           await this.redis.set(key, JSON.stringify(blockInfo));
           return blockInfo;
         } catch (error) {
-          logger.warn('Auth Rate Limiter v2: Redis set block failed, falling back to memory', {
+          logger.warn('Auth Rate Limiter v2: Error en Redis set block, usando fallback en memoria', {
             error: error.message,
             key
           });
@@ -421,11 +467,11 @@ class RateLimitStoreV2 {
         await this.redis.set(key, JSON.stringify(blockInfo));
         await this.redis.pexpire(key, blockDuration);
         return blockInfo;
-      } catch (error) {
-        logger.warn('Auth Rate Limiter v2: Redis set block failed, falling back to memory', {
-          error: error.message,
-          key
-        });
+        } catch (error) {
+          logger.warn('Auth Rate Limiter v2: Error en Redis set block, usando fallback en memoria', {
+            error: error.message,
+            key
+          });
         this.memoryStore.set(key, blockInfo);
           
           // ROA-359: Clear existing timer before creating new one
@@ -468,7 +514,7 @@ class RateLimitStoreV2 {
       try {
         await this.redis.del(ipKey, emailKey);
       } catch (error) {
-        logger.warn('Auth Rate Limiter v2: Redis del failed, falling back to memory', {
+        logger.warn('Auth Rate Limiter v2: Error en Redis del, usando fallback en memoria', {
           error: error.message
         });
         this.memoryStore.delete(ipKey);
@@ -512,6 +558,61 @@ class RateLimitStoreV2 {
 
 // Singleton store
 const store = new RateLimitStoreV2();
+
+/**
+ * Metrics counter for rate limiting
+ * ROA-359: AC5 - Internal metrics (logs/contadores)
+ */
+const metrics = {
+  rateLimitHits: 0,
+  blocksActive: 0,
+  abuseEvents: 0,
+  lastReset: Date.now(),
+  
+  incrementRateLimitHits() {
+    this.rateLimitHits++;
+    logger.debug('Auth Rate Limiter v2: Metric - rate_limit_hits_total', {
+      value: this.rateLimitHits
+    });
+  },
+  
+  incrementBlocksActive() {
+    this.blocksActive++;
+    logger.debug('Auth Rate Limiter v2: Metric - auth_blocks_active', {
+      value: this.blocksActive
+    });
+  },
+  
+  decrementBlocksActive() {
+    this.blocksActive = Math.max(0, this.blocksActive - 1);
+    logger.debug('Auth Rate Limiter v2: Metric - auth_blocks_active', {
+      value: this.blocksActive
+    });
+  },
+  
+  incrementAbuseEvents() {
+    this.abuseEvents++;
+    logger.debug('Auth Rate Limiter v2: Metric - auth_abuse_events_total', {
+      value: this.abuseEvents
+    });
+  },
+  
+  getMetrics() {
+    return {
+      auth_rate_limit_hits_total: this.rateLimitHits,
+      auth_blocks_active: this.blocksActive,
+      auth_abuse_events_total: this.abuseEvents,
+      last_reset: this.lastReset
+    };
+  },
+  
+  reset() {
+    this.rateLimitHits = 0;
+    this.blocksActive = 0;
+    this.abuseEvents = 0;
+    this.lastReset = Date.now();
+  }
+};
 
 /**
  * Get client IP from request
@@ -585,6 +686,12 @@ function authRateLimiterV2(req, res, next) {
     return next();
   }
 
+  // ROA-359: FASE 6 - Check if store is ready
+  if (!store.isReady()) {
+    logger.warn('Auth Rate Limiter v2: Store no está listo, permitiendo request');
+    return next();
+  }
+
   // ROA-359: AC6 - Load configuration from SSOT (async, cached)
   Promise.all([
     getRateLimitConfig(),
@@ -592,45 +699,107 @@ function authRateLimiterV2(req, res, next) {
   ]).then(([rateLimitConfig, progressiveBlockDurations]) => {
     const config = rateLimitConfig[authType] || rateLimitConfig.password || FALLBACK_RATE_LIMIT_CONFIG.password;
 
-  // Check blocks
-  const ipBlockKey = store.getIPBlockKey(ip, authType);
-  const emailBlockKey = store.getEmailBlockKey(email, authType);
+    // ROA-359: AC2 - Detect abuse patterns (async, non-blocking)
+    const abuseDetectionPromise = flags.isEnabled('ENABLE_ABUSE_DETECTION') !== false
+      ? detectAbuse(ip, email, authType, {
+          multiIPThreshold: 3,
+          multiEmailThreshold: 5,
+          burstThreshold: 10,
+          slowAttackThreshold: 20
+        })
+      : Promise.resolve({ riskScore: 0, multiIPAbuse: false, multiEmailAbuse: false, burstAttack: false, slowAttack: false });
 
-    return Promise.all([store.isBlocked(ipBlockKey), store.isBlocked(emailBlockKey)])
-    .then(([ipBlock, emailBlock]) => {
+    // Check blocks
+    const ipBlockKey = store.getIPBlockKey(ip, authType);
+    const emailBlockKey = store.getEmailBlockKey(email, authType);
+
+    return Promise.all([store.isBlocked(ipBlockKey), store.isBlocked(emailBlockKey), abuseDetectionPromise])
+    .then(([ipBlock, emailBlock, abusePatterns]) => {
+      // ROA-359: AC2 - If abuse detected with high risk, accelerate blocking
+      if (abusePatterns.riskScore >= 50) {
+        logger.warn('Auth Rate Limiter v2: Patrón de abuso detectado', {
+          ip,
+          email: email.substring(0, 3) + '***',
+          authType,
+          riskScore: abusePatterns.riskScore,
+          patterns: {
+            multiIP: abusePatterns.multiIPAbuse,
+            multiEmail: abusePatterns.multiEmailAbuse,
+            burst: abusePatterns.burstAttack,
+            slow: abusePatterns.slowAttack
+          }
+        });
+        
+        // ROA-359: AC3 - Log abuse detection event
+        auditLogService.logEvent('auth.abuse.detected', {
+          ip,
+          email: email.substring(0, 3) + '***',
+          authType,
+          riskScore: abusePatterns.riskScore,
+          patterns: abusePatterns,
+          requestId: req.id || crypto.randomUUID()
+        }).catch(err => logger.error('Error logging abuse event', { error: err.message }));
+        
+        metrics.incrementAbuseEvents();
+      }
+
       if (ipBlock.blocked) {
         const remainingMinutes = Math.ceil(ipBlock.remainingMs / (60 * 1000));
-        logger.warn('Auth Rate Limiter v2: IP blocked', {
+        logger.warn('Auth Rate Limiter v2: IP bloqueado', {
           ip,
           authType,
           remainingMs: ipBlock.remainingMs,
           offenseCount: ipBlock.offenseCount
         });
 
+        // ROA-359: AC3 - Log block event
+        auditLogService.logEvent('auth.rate_limit.blocked', {
+          ip,
+          email: email.substring(0, 3) + '***',
+          authType,
+          reason: 'ip_blocked',
+          offenseCount: ipBlock.offenseCount,
+          blockedUntil: ipBlock.expiresAt ? new Date(ipBlock.expiresAt).toISOString() : null,
+          source: 'ip',
+          requestId: req.id || crypto.randomUUID()
+        }).catch(err => logger.error('Error logging block event', { error: err.message }));
+
         return res.status(429).json({
           success: false,
-          error: 'Too many authentication attempts. Please try again later.',
+          error: 'Demasiados intentos de autenticación. Por favor, inténtalo de nuevo más tarde.',
           code: 'AUTH_RATE_LIMIT_EXCEEDED',
           retryAfter: remainingMinutes,
-          message: 'For security reasons, please wait before attempting to authenticate again.'
+          message: 'Por razones de seguridad, por favor espera antes de intentar autenticarte de nuevo.'
         });
       }
 
       if (emailBlock.blocked) {
         const remainingMinutes = Math.ceil(emailBlock.remainingMs / (60 * 1000));
-        logger.warn('Auth Rate Limiter v2: Email blocked', {
+        logger.warn('Auth Rate Limiter v2: Email bloqueado', {
           email: email.substring(0, 3) + '***',
           authType,
           remainingMs: emailBlock.remainingMs,
           offenseCount: emailBlock.offenseCount
         });
 
+        // ROA-359: AC3 - Log block event
+        auditLogService.logEvent('auth.rate_limit.blocked', {
+          ip,
+          email: email.substring(0, 3) + '***',
+          authType,
+          reason: 'email_blocked',
+          offenseCount: emailBlock.offenseCount,
+          blockedUntil: emailBlock.expiresAt ? new Date(emailBlock.expiresAt).toISOString() : null,
+          source: 'email',
+          requestId: req.id || crypto.randomUUID()
+        }).catch(err => logger.error('Error logging block event', { error: err.message }));
+
         return res.status(429).json({
           success: false,
-          error: 'Too many authentication attempts. Please try again later.',
+          error: 'Demasiados intentos de autenticación. Por favor, inténtalo de nuevo más tarde.',
           code: 'AUTH_RATE_LIMIT_EXCEEDED',
           retryAfter: remainingMinutes,
-          message: 'For security reasons, please wait before attempting to authenticate again.'
+          message: 'Por razones de seguridad, por favor espera antes de intentar autenticarte de nuevo.'
         });
       }
 
@@ -654,22 +823,52 @@ function authRateLimiterV2(req, res, next) {
               store.setBlock(ipBlockKey, ipOffenses + 1, progressiveBlockDurations),
               store.setBlock(emailBlockKey, emailOffenses + 1, progressiveBlockDurations)
             ]).then(() => {
-              logger.warn('Auth Rate Limiter v2: Rate limit exceeded, blocking', {
+              const newOffenseCount = ipOffenses + 1;
+              logger.warn('Auth Rate Limiter v2: Límite de rate excedido, bloqueando', {
                 ip,
                 email: email.substring(0, 3) + '***',
                 authType,
                 ipAttempts,
                 emailAttempts,
-                ipOffenses: ipOffenses + 1,
+                ipOffenses: newOffenseCount,
                 emailOffenses: emailOffenses + 1
               });
 
+              // ROA-359: AC3 - Log rate limit hit event
+              auditLogService.logEvent('auth.rate_limit.hit', {
+                ip,
+                email: email.substring(0, 3) + '***',
+                authType,
+                ipAttempts,
+                emailAttempts,
+                offenseCount: newOffenseCount,
+                requestId: req.id || crypto.randomUUID()
+              }).catch(err => logger.error('Error logging rate limit hit', { error: err.message }));
+
+              // ROA-359: AC3 - Log block event
+              auditLogService.logEvent('auth.rate_limit.blocked', {
+                ip,
+                email: email.substring(0, 3) + '***',
+                authType,
+                reason: 'rate_limit_exceeded',
+                offenseCount: newOffenseCount,
+                blockedUntil: progressiveBlockDurations[Math.min(newOffenseCount - 1, progressiveBlockDurations.length - 1)] 
+                  ? new Date(Date.now() + (progressiveBlockDurations[Math.min(newOffenseCount - 1, progressiveBlockDurations.length - 1)] || config.blockDurationMs)).toISOString()
+                  : 'permanent',
+                source: 'rate_limit',
+                requestId: req.id || crypto.randomUUID()
+              }).catch(err => logger.error('Error logging block event', { error: err.message }));
+
+              // ROA-359: AC5 - Update metrics
+              metrics.incrementRateLimitHits();
+              metrics.incrementBlocksActive();
+
               return res.status(429).json({
                 success: false,
-                error: 'Too many failed attempts. Account temporarily locked.',
+                error: 'Demasiados intentos fallidos. Cuenta temporalmente bloqueada.',
                 code: 'AUTH_RATE_LIMIT_EXCEEDED',
                 retryAfter: Math.ceil(config.blockDurationMs / (60 * 1000)),
-                message: 'For security reasons, this account has been temporarily locked. Please try again later.'
+                message: 'Por razones de seguridad, esta cuenta ha sido temporalmente bloqueada. Por favor, inténtalo de nuevo más tarde.'
               });
             });
           });
@@ -701,16 +900,72 @@ function authRateLimiterV2(req, res, next) {
                     });
                   }
 
+                  // ROA-359: AC2 - Check abuse patterns if enabled
+                  if (flags.isEnabled('ENABLE_ABUSE_DETECTION') !== false) {
+                    detectAbuse(ip, email, authType).then(abusePatterns => {
+                      if (abusePatterns.riskScore >= 50) {
+                        // Accelerate blocking for high-risk abuse
+                        logger.warn('Auth Rate Limiter v2: Abuso detectado, acelerando bloqueo', {
+                          ip,
+                          email: email.substring(0, 3) + '***',
+                          authType,
+                          riskScore: abusePatterns.riskScore
+                        });
+                        
+                        auditLogService.logEvent('auth.abuse.detected', {
+                          ip,
+                          email: email.substring(0, 3) + '***',
+                          authType,
+                          riskScore: abusePatterns.riskScore,
+                          patterns: abusePatterns,
+                          requestId: req.id || crypto.randomUUID()
+                        }).catch(err => logger.error('Error logging abuse event', { error: err.message }));
+                        
+                        metrics.incrementAbuseEvents();
+                      }
+                    }).catch(err => logger.error('Error in abuse detection', { error: err.message }));
+                  }
+
                   // Check if should block now
                   if (newIpAttempts >= config.maxAttempts || newEmailAttempts >= config.maxAttempts) {
                     Promise.all([
                       store.getOffenseCount(ipBlockKey),
                       store.getOffenseCount(emailBlockKey)
                     ]).then(([ipOffenses, emailOffenses]) => {
+                      const newOffenseCount = ipOffenses + 1;
                       Promise.all([
-                        store.setBlock(ipBlockKey, ipOffenses + 1, progressiveBlockDurations),
+                        store.setBlock(ipBlockKey, newOffenseCount, progressiveBlockDurations),
                         store.setBlock(emailBlockKey, emailOffenses + 1, progressiveBlockDurations)
                       ]).then(() => {
+                        // ROA-359: AC3 - Log rate limit hit
+                        auditLogService.logEvent('auth.rate_limit.hit', {
+                          ip,
+                          email: email.substring(0, 3) + '***',
+                          authType,
+                          ipAttempts: newIpAttempts,
+                          emailAttempts: newEmailAttempts,
+                          offenseCount: newOffenseCount,
+                          requestId: req.id || crypto.randomUUID()
+                        }).catch(err => logger.error('Error logging rate limit hit', { error: err.message }));
+
+                        // ROA-359: AC3 - Log block event
+                        auditLogService.logEvent('auth.rate_limit.blocked', {
+                          ip,
+                          email: email.substring(0, 3) + '***',
+                          authType,
+                          reason: 'rate_limit_exceeded',
+                          offenseCount: newOffenseCount,
+                          blockedUntil: progressiveBlockDurations[Math.min(newOffenseCount - 1, progressiveBlockDurations.length - 1)]
+                            ? new Date(Date.now() + (progressiveBlockDurations[Math.min(newOffenseCount - 1, progressiveBlockDurations.length - 1)] || config.blockDurationMs)).toISOString()
+                            : 'permanent',
+                          source: 'rate_limit',
+                          requestId: req.id || crypto.randomUUID()
+                        }).catch(err => logger.error('Error logging block event', { error: err.message }));
+
+                        // ROA-359: AC5 - Update metrics
+                        metrics.incrementRateLimitHits();
+                        metrics.incrementBlocksActive();
+
                         // Override response (ROA-359: AC6 - use SSOT config)
                         res.statusCode = 429;
                         const blockDuration = progressiveBlockDurations[Math.min(ipOffenses, progressiveBlockDurations.length - 1)] || config.blockDurationMs;
@@ -718,10 +973,10 @@ function authRateLimiterV2(req, res, next) {
 
                         const blockResponse = JSON.stringify({
                           success: false,
-                          error: 'Too many failed attempts. Account temporarily locked.',
+                          error: 'Demasiados intentos fallidos. Cuenta temporalmente bloqueada.',
                           code: 'AUTH_RATE_LIMIT_EXCEEDED',
                           retryAfter: remainingMinutes,
-                          message: 'For security reasons, this account has been temporarily locked. Please try again later.'
+                          message: 'Por razones de seguridad, esta cuenta ha sido temporalmente bloqueada. Por favor, inténtalo de nuevo más tarde.'
                         });
 
                         chunk = blockResponse;
@@ -733,8 +988,25 @@ function authRateLimiterV2(req, res, next) {
               } else if (isSuccess) {
                 // Reset attempts on success
                 store.resetAttempts(ipKey, emailKey).then(() => {
+                  // ROA-359: AC3 - Log unblock event if was previously blocked
+                  Promise.all([store.isBlocked(ipBlockKey), store.isBlocked(emailBlockKey)])
+                    .then(([ipBlock, emailBlock]) => {
+                      if (ipBlock.blocked || emailBlock.blocked) {
+                        auditLogService.logEvent('auth.rate_limit.unblocked', {
+                          ip,
+                          email: email.substring(0, 3) + '***',
+                          authType,
+                          reason: 'successful_auth',
+                          requestId: req.id || crypto.randomUUID()
+                        }).catch(err => logger.error('Error logging unblock event', { error: err.message }));
+                        
+                        metrics.decrementBlocksActive();
+                      }
+                    })
+                    .catch(() => {}); // Ignore errors in unblock check
+
                   if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-                    logger.info('Auth Rate Limiter v2: Successful auth, reset attempts', {
+                    logger.info('Auth Rate Limiter v2: Autenticación exitosa, intentos reseteados', {
                       ip,
                       email: email.substring(0, 3) + '***',
                       authType
@@ -750,7 +1022,7 @@ function authRateLimiterV2(req, res, next) {
           next();
         }
       }).catch((error) => {
-        logger.error('Auth Rate Limiter v2: Error checking rate limits', {
+        logger.error('Auth Rate Limiter v2: Error verificando límites de rate', {
           error: error.message,
           ip,
           email: email ? email.substring(0, 3) + '***' : 'unknown',
@@ -760,7 +1032,7 @@ function authRateLimiterV2(req, res, next) {
         next();
       });
       }).catch((error) => {
-        logger.error('Auth Rate Limiter v2: Error loading configuration from SSOT', {
+        logger.error('Auth Rate Limiter v2: Error cargando configuración desde SSOT', {
           error: error.message,
           ip,
           email: email ? email.substring(0, 3) + '***' : 'unknown',
@@ -771,7 +1043,7 @@ function authRateLimiterV2(req, res, next) {
       });
     })
     .catch((error) => {
-      logger.error('Auth Rate Limiter v2: Error checking blocks', {
+      logger.error('Auth Rate Limiter v2: Error verificando bloques', {
         error: error.message,
         ip,
         email: email ? email.substring(0, 3) + '***' : 'unknown',
@@ -782,12 +1054,21 @@ function authRateLimiterV2(req, res, next) {
     });
 }
 
+/**
+ * Get metrics for monitoring
+ * ROA-359: AC5 - Expose internal metrics
+ */
+function getMetrics() {
+  return metrics.getMetrics();
+}
+
 module.exports = {
   authRateLimiterV2,
   RateLimitStoreV2,
   getRateLimitConfig,
   getProgressiveBlockDurations,
   invalidateConfigCache,
+  getMetrics,
   FALLBACK_RATE_LIMIT_CONFIG,
   FALLBACK_PROGRESSIVE_BLOCK_DURATIONS,
   getClientIP,
