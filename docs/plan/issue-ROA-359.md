@@ -81,10 +81,35 @@
 - [ ] Tracking de efectividad de bloqueos
 
 ### AC6: Configuración y Feature Flags
-- [ ] Configuración de límites desde SSOT
-- [ ] Feature flags para habilitar/deshabilitar rate limiting
+- [x] Configuración de límites desde SSOT ✅ **IMPLEMENTED**
+- [x] Feature flags para habilitar/deshabilitar rate limiting ✅ **IMPLEMENTED**
 - [ ] Feature flags para habilitar/deshabilitar abuse detection
-- [ ] Configuración de duraciones de bloqueo
+- [x] Configuración de duraciones de bloqueo ✅ **IMPLEMENTED**
+
+**AC6 Implementation Details (ROA-359):**
+
+**Keys SSOT leídas:**
+- `rate_limit.auth` → Configuración de rate limits por tipo de autenticación:
+  - `password`: windowMs, maxAttempts, blockDurationMs
+  - `magic_link`: windowMs, maxAttempts, blockDurationMs
+  - `oauth`: windowMs, maxAttempts, blockDurationMs
+  - `password_reset`: windowMs, maxAttempts, blockDurationMs
+- `rate_limit.auth.block_durations` → Array de duraciones progresivas:
+  - `[0]`: 15 minutos (1ra infracción)
+  - `[1]`: 1 hora (2da infracción)
+  - `[2]`: 24 horas (3ra infracción)
+  - `[3]`: null (permanente, 4ta+ infracción)
+
+**Fallbacks (solo si SSOT no disponible):**
+- `FALLBACK_RATE_LIMIT_CONFIG`: Valores por defecto documentados en código (mismos valores que SSOT sección 7.4)
+- `FALLBACK_PROGRESSIVE_BLOCK_DURATIONS`: Valores por defecto documentados en código (mismos valores que SSOT sección 7.4)
+
+**Características:**
+- ✅ Configuración cargada desde SSOT v2 usando `SettingsLoaderV2`
+- ✅ Cache de configuración para performance (invalida cuando SSOT cambia via `invalidateConfigCache()`)
+- ✅ **NO hay valores hardcodeados activos** - todos vienen de SSOT o fallbacks documentados
+- ✅ Feature flag `ENABLE_RATE_LIMIT` ya implementado
+- ✅ Hot-reload: Cambios en SSOT se reflejan sin redeploy (cache invalidation)
 
 ---
 

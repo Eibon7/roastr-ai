@@ -13,11 +13,13 @@ const { Redis } = require('@upstash/redis');
 const crypto = require('crypto');
 const { flags } = require('../config/flags');
 const { logger } = require('../utils/logger');
+const settingsLoader = require('../services/settingsLoaderV2');
 
 /**
- * Rate limit configuration by auth type
+ * Fallback rate limit configuration (used only if SSOT is unavailable)
+ * ROA-359: AC6 - These are fallbacks, not active values
  */
-const RATE_LIMIT_CONFIG = {
+const FALLBACK_RATE_LIMIT_CONFIG = {
   password: {
     windowMs: 15 * 60 * 1000, // 15 minutes
     maxAttempts: 5,
@@ -41,14 +43,113 @@ const RATE_LIMIT_CONFIG = {
 };
 
 /**
- * Progressive block durations (escalation)
+ * Fallback progressive block durations (used only if SSOT is unavailable)
+ * ROA-359: AC6 - These are fallbacks, not active values
  */
-const PROGRESSIVE_BLOCK_DURATIONS = [
+const FALLBACK_PROGRESSIVE_BLOCK_DURATIONS = [
   15 * 60 * 1000, // 15 minutes (1st offense)
   60 * 60 * 1000, // 1 hour (2nd offense)
   24 * 60 * 60 * 1000, // 24 hours (3rd offense)
   null // Permanent (4th+ offense, requires manual intervention)
 ];
+
+/**
+ * Load rate limit configuration from SSOT v2
+ * ROA-359: AC6 - Configuration loaded from SSOT, no hardcoded values
+ * @returns {Promise<Object>} Rate limit configuration
+ */
+async function loadRateLimitConfig() {
+  try {
+    const config = await settingsLoader.getValue('rate_limit.auth');
+    if (config && typeof config === 'object') {
+      logger.debug('Auth Rate Limiter v2: Configuration loaded from SSOT');
+      return config;
+    }
+    logger.warn('Auth Rate Limiter v2: SSOT config not found, using fallback');
+    return FALLBACK_RATE_LIMIT_CONFIG;
+  } catch (error) {
+    logger.error('Auth Rate Limiter v2: Error loading config from SSOT, using fallback', {
+      error: error.message
+    });
+    return FALLBACK_RATE_LIMIT_CONFIG;
+  }
+}
+
+/**
+ * Load progressive block durations from SSOT v2
+ * ROA-359: AC6 - Configuration loaded from SSOT, no hardcoded values
+ * @returns {Promise<Array>} Progressive block durations
+ */
+async function loadProgressiveBlockDurations() {
+  try {
+    const durations = await settingsLoader.getValue('rate_limit.auth.block_durations');
+    if (Array.isArray(durations) && durations.length > 0) {
+      logger.debug('Auth Rate Limiter v2: Block durations loaded from SSOT');
+      return durations;
+    }
+    logger.warn('Auth Rate Limiter v2: SSOT block durations not found, using fallback');
+    return FALLBACK_PROGRESSIVE_BLOCK_DURATIONS;
+  } catch (error) {
+    logger.error('Auth Rate Limiter v2: Error loading block durations from SSOT, using fallback', {
+      error: error.message
+    });
+    return FALLBACK_PROGRESSIVE_BLOCK_DURATIONS;
+  }
+}
+
+// Cache for loaded configuration (reload on cache invalidation)
+let cachedRateLimitConfig = null;
+let cachedBlockDurations = null;
+let configLoadPromise = null;
+let blockDurationsLoadPromise = null;
+
+/**
+ * Get rate limit configuration (with caching)
+ * ROA-359: AC6 - Loads from SSOT, caches for performance
+ */
+async function getRateLimitConfig() {
+  if (cachedRateLimitConfig) {
+    return cachedRateLimitConfig;
+  }
+  if (!configLoadPromise) {
+    configLoadPromise = loadRateLimitConfig().then(config => {
+      cachedRateLimitConfig = config;
+      configLoadPromise = null;
+      return config;
+    });
+  }
+  return configLoadPromise;
+}
+
+/**
+ * Get progressive block durations (with caching)
+ * ROA-359: AC6 - Loads from SSOT, caches for performance
+ */
+async function getProgressiveBlockDurations() {
+  if (cachedBlockDurations) {
+    return cachedBlockDurations;
+  }
+  if (!blockDurationsLoadPromise) {
+    blockDurationsLoadPromise = loadProgressiveBlockDurations().then(durations => {
+      cachedBlockDurations = durations;
+      blockDurationsLoadPromise = null;
+      return durations;
+    });
+  }
+  return blockDurationsLoadPromise;
+}
+
+/**
+ * Invalidate configuration cache (call when SSOT changes)
+ * ROA-359: AC6 - Allows hot-reload of configuration
+ */
+function invalidateConfigCache() {
+  cachedRateLimitConfig = null;
+  cachedBlockDurations = null;
+  configLoadPromise = null;
+  blockDurationsLoadPromise = null;
+  settingsLoader.invalidateCache();
+}
 
 /**
  * Storage abstraction for rate limiting
@@ -59,6 +160,9 @@ class RateLimitStoreV2 {
     this.redis = null;
     this.memoryStore = new Map();
     this.isRedisAvailable = false;
+    // ROA-359: Timer registry to prevent memory leaks
+    this.attemptTimers = new Map(); // Track timers for attempt keys
+    this.blockTimers = new Map(); // Track timers for block keys
     this.initializeRedis();
   }
 
@@ -156,6 +260,7 @@ class RateLimitStoreV2 {
 
   /**
    * Increment attempt count
+   * ROA-359: Memory leak fix - tracks timers to prevent leaks
    */
   async incrementAttempt(key, windowMs) {
     if (this.isRedisAvailable && this.redis) {
@@ -170,14 +275,36 @@ class RateLimitStoreV2 {
         });
         const count = (this.memoryStore.get(key) || 0) + 1;
         this.memoryStore.set(key, count);
-        setTimeout(() => this.memoryStore.delete(key), windowMs);
+        
+        // ROA-359: Clear existing timer before creating new one
+        if (this.attemptTimers.has(key)) {
+          clearTimeout(this.attemptTimers.get(key));
+        }
+        
+        const timer = setTimeout(() => {
+          this.memoryStore.delete(key);
+          this.attemptTimers.delete(key);
+        }, windowMs);
+        
+        this.attemptTimers.set(key, timer);
         return count;
       }
     }
 
     const count = (this.memoryStore.get(key) || 0) + 1;
     this.memoryStore.set(key, count);
-    setTimeout(() => this.memoryStore.delete(key), windowMs);
+    
+    // ROA-359: Clear existing timer before creating new one
+    if (this.attemptTimers.has(key)) {
+      clearTimeout(this.attemptTimers.get(key));
+    }
+    
+    const timer = setTimeout(() => {
+      this.memoryStore.delete(key);
+      this.attemptTimers.delete(key);
+    }, windowMs);
+    
+    this.attemptTimers.set(key, timer);
     return count;
   }
 
@@ -250,10 +377,11 @@ class RateLimitStoreV2 {
 
   /**
    * Set block with progressive duration
+   * ROA-359: Memory leak fix - tracks timers to prevent leaks
    */
-  async setBlock(key, offenseCount) {
-    const blockIndex = Math.min(offenseCount - 1, PROGRESSIVE_BLOCK_DURATIONS.length - 1);
-    const blockDuration = PROGRESSIVE_BLOCK_DURATIONS[blockIndex];
+  async setBlock(key, offenseCount, progressiveBlockDurations) {
+    const blockIndex = Math.min(offenseCount - 1, progressiveBlockDurations.length - 1);
+    const blockDuration = progressiveBlockDurations[blockIndex];
 
     // Permanent block (requires manual intervention)
     if (blockDuration === null) {
@@ -299,18 +427,41 @@ class RateLimitStoreV2 {
           key
         });
         this.memoryStore.set(key, blockInfo);
-        setTimeout(() => this.memoryStore.delete(key), blockDuration);
+          
+          // ROA-359: Clear existing timer before creating new one
+          if (this.blockTimers.has(key)) {
+            clearTimeout(this.blockTimers.get(key));
+          }
+          
+          const timer = setTimeout(() => {
+            this.memoryStore.delete(key);
+            this.blockTimers.delete(key);
+          }, blockDuration);
+          
+          this.blockTimers.set(key, timer);
         return blockInfo;
       }
     }
 
     this.memoryStore.set(key, blockInfo);
-    setTimeout(() => this.memoryStore.delete(key), blockDuration);
+      
+      // ROA-359: Clear existing timer before creating new one
+      if (this.blockTimers.has(key)) {
+        clearTimeout(this.blockTimers.get(key));
+      }
+      
+      const timer = setTimeout(() => {
+        this.memoryStore.delete(key);
+        this.blockTimers.delete(key);
+      }, blockDuration);
+      
+      this.blockTimers.set(key, timer);
     return blockInfo;
   }
 
   /**
    * Reset attempts (on successful auth)
+   * ROA-359: Memory leak fix - cleans up timers when resetting
    */
   async resetAttempts(ipKey, emailKey) {
     if (this.isRedisAvailable && this.redis) {
@@ -322,10 +473,30 @@ class RateLimitStoreV2 {
         });
         this.memoryStore.delete(ipKey);
         this.memoryStore.delete(emailKey);
+        
+        // ROA-359: Clean up timers
+        if (this.attemptTimers.has(ipKey)) {
+          clearTimeout(this.attemptTimers.get(ipKey));
+          this.attemptTimers.delete(ipKey);
+        }
+        if (this.attemptTimers.has(emailKey)) {
+          clearTimeout(this.attemptTimers.get(emailKey));
+          this.attemptTimers.delete(emailKey);
+        }
       }
     } else {
       this.memoryStore.delete(ipKey);
       this.memoryStore.delete(emailKey);
+      
+      // ROA-359: Clean up timers
+      if (this.attemptTimers.has(ipKey)) {
+        clearTimeout(this.attemptTimers.get(ipKey));
+        this.attemptTimers.delete(ipKey);
+      }
+      if (this.attemptTimers.has(emailKey)) {
+        clearTimeout(this.attemptTimers.get(emailKey));
+        this.attemptTimers.delete(emailKey);
+      }
     }
   }
 
@@ -414,13 +585,18 @@ function authRateLimiterV2(req, res, next) {
     return next();
   }
 
-  const config = RATE_LIMIT_CONFIG[authType] || RATE_LIMIT_CONFIG.password;
+  // ROA-359: AC6 - Load configuration from SSOT (async, cached)
+  Promise.all([
+    getRateLimitConfig(),
+    getProgressiveBlockDurations()
+  ]).then(([rateLimitConfig, progressiveBlockDurations]) => {
+    const config = rateLimitConfig[authType] || rateLimitConfig.password || FALLBACK_RATE_LIMIT_CONFIG.password;
 
   // Check blocks
   const ipBlockKey = store.getIPBlockKey(ip, authType);
   const emailBlockKey = store.getEmailBlockKey(email, authType);
 
-  Promise.all([store.isBlocked(ipBlockKey), store.isBlocked(emailBlockKey)])
+    return Promise.all([store.isBlocked(ipBlockKey), store.isBlocked(emailBlockKey)])
     .then(([ipBlock, emailBlock]) => {
       if (ipBlock.blocked) {
         const remainingMinutes = Math.ceil(ipBlock.remainingMs / (60 * 1000));
@@ -473,10 +649,10 @@ function authRateLimiterV2(req, res, next) {
             store.getOffenseCount(ipBlockKey),
             store.getOffenseCount(emailBlockKey)
           ]).then(([ipOffenses, emailOffenses]) => {
-            // Set blocks with progressive duration
+            // Set blocks with progressive duration (ROA-359: AC6 - use SSOT config)
             Promise.all([
-              store.setBlock(ipBlockKey, ipOffenses + 1),
-              store.setBlock(emailBlockKey, emailOffenses + 1)
+              store.setBlock(ipBlockKey, ipOffenses + 1, progressiveBlockDurations),
+              store.setBlock(emailBlockKey, emailOffenses + 1, progressiveBlockDurations)
             ]).then(() => {
               logger.warn('Auth Rate Limiter v2: Rate limit exceeded, blocking', {
                 ip,
@@ -532,12 +708,12 @@ function authRateLimiterV2(req, res, next) {
                       store.getOffenseCount(emailBlockKey)
                     ]).then(([ipOffenses, emailOffenses]) => {
                       Promise.all([
-                        store.setBlock(ipBlockKey, ipOffenses + 1),
-                        store.setBlock(emailBlockKey, emailOffenses + 1)
+                        store.setBlock(ipBlockKey, ipOffenses + 1, progressiveBlockDurations),
+                        store.setBlock(emailBlockKey, emailOffenses + 1, progressiveBlockDurations)
                       ]).then(() => {
-                        // Override response
+                        // Override response (ROA-359: AC6 - use SSOT config)
                         res.statusCode = 429;
-                        const blockDuration = PROGRESSIVE_BLOCK_DURATIONS[Math.min(ipOffenses, PROGRESSIVE_BLOCK_DURATIONS.length - 1)] || config.blockDurationMs;
+                        const blockDuration = progressiveBlockDurations[Math.min(ipOffenses, progressiveBlockDurations.length - 1)] || config.blockDurationMs;
                         const remainingMinutes = blockDuration ? Math.ceil(blockDuration / (60 * 1000)) : null;
 
                         const blockResponse = JSON.stringify({
@@ -583,6 +759,16 @@ function authRateLimiterV2(req, res, next) {
         // Fail open - allow request if rate limiting fails
         next();
       });
+      }).catch((error) => {
+        logger.error('Auth Rate Limiter v2: Error loading configuration from SSOT', {
+          error: error.message,
+          ip,
+          email: email ? email.substring(0, 3) + '***' : 'unknown',
+          authType
+        });
+        // Fail open - allow request if config loading fails
+        next();
+      });
     })
     .catch((error) => {
       logger.error('Auth Rate Limiter v2: Error checking blocks', {
@@ -599,8 +785,11 @@ function authRateLimiterV2(req, res, next) {
 module.exports = {
   authRateLimiterV2,
   RateLimitStoreV2,
-  RATE_LIMIT_CONFIG,
-  PROGRESSIVE_BLOCK_DURATIONS,
+  getRateLimitConfig,
+  getProgressiveBlockDurations,
+  invalidateConfigCache,
+  FALLBACK_RATE_LIMIT_CONFIG,
+  FALLBACK_PROGRESSIVE_BLOCK_DURATIONS,
   getClientIP,
   detectAuthType
 };
