@@ -4,9 +4,13 @@ const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient } = require('../config/supabase');
 const planLimitsService = require('../services/planLimitsService');
+// ROA-356: Import analytics cache service
+const analyticsCacheService = require('../services/analyticsCacheService');
 
 // Enhanced secure in-memory cache for analytics data (Issue #164)
 const analyticsCache = new Map();
+// ROA-356: Index to track cache keys by userId for efficient invalidation
+const userIdCacheIndex = new Map(); // userId -> Set<cacheKeys>
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes TTL
 const MAX_CACHE_SIZE = 1000; // Maximum cache entries
 
@@ -30,14 +34,28 @@ const getCacheKey = (endpoint, userId, params) => {
 const getCachedData = (key) => {
   const cached = analyticsCache.get(key);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    // Update access count for LRU tracking
+    cached.accessCount++;
     return cached.data;
   }
-  analyticsCache.delete(key); // Remove expired entry
+  // Remove expired entry and clean up index
+  analyticsCache.delete(key);
+  // Clean up userId index if this key was indexed
+  for (const [userId, keys] of userIdCacheIndex.entries()) {
+    if (keys.has(key)) {
+      keys.delete(key);
+      if (keys.size === 0) {
+        userIdCacheIndex.delete(userId);
+      }
+      break;
+    }
+  }
   return null;
 };
 
 // Issue #164: LRU cache eviction policy for better memory management
-const setCachedData = (key, data) => {
+// ROA-356: Enhanced to track userId for cache invalidation
+const setCachedData = (key, data, userId = null) => {
   // Implement LRU eviction when cache is full
   if (analyticsCache.size >= MAX_CACHE_SIZE) {
     // Find and remove the oldest entry (LRU eviction)
@@ -52,7 +70,17 @@ const setCachedData = (key, data) => {
     }
 
     if (oldestKey) {
+      // Remove from cache and clean up index
       analyticsCache.delete(oldestKey);
+      for (const [uid, keys] of userIdCacheIndex.entries()) {
+        if (keys.has(oldestKey)) {
+          keys.delete(oldestKey);
+          if (keys.size === 0) {
+            userIdCacheIndex.delete(uid);
+          }
+          break;
+        }
+      }
       logger.debug('LRU cache eviction', {
         evictedKey: oldestKey,
         cacheSize: analyticsCache.size,
@@ -65,14 +93,27 @@ const setCachedData = (key, data) => {
   analyticsCache.set(key, {
     data,
     timestamp: Date.now(),
-    accessCount: 1
+    accessCount: 1,
+    userId: userId // Store userId for tracking
   });
+
+  // ROA-356: Index this cache key by userId for efficient invalidation
+  if (userId) {
+    if (!userIdCacheIndex.has(userId)) {
+      userIdCacheIndex.set(userId, new Set());
+    }
+    userIdCacheIndex.get(userId).add(key);
+  }
 };
 
 // Clear cache function for testing
 const clearCache = () => {
   analyticsCache.clear();
+  userIdCacheIndex.clear();
 };
+
+// ROA-356: Initialize cache service with cache structures
+analyticsCacheService.initialize(analyticsCache, userIdCacheIndex);
 
 const router = express.Router();
 
@@ -1017,7 +1058,8 @@ router.get('/roastr-persona-insights', async (req, res) => {
     };
 
     // Issue #162: Cache the response for future requests
-    setCachedData(cacheKey, responseData);
+    // ROA-356: Include userId for cache invalidation tracking
+    setCachedData(cacheKey, responseData, user.id);
 
     res.status(200).json(responseData);
   } catch (error) {
@@ -1178,7 +1220,8 @@ router.get('/dashboard', async (req, res) => {
       data: dashboardData
     };
 
-    setCachedData(cacheKey, response);
+    // ROA-356: Include userId for cache invalidation tracking
+    setCachedData(cacheKey, response, user.id);
     res.status(200).json(response);
   } catch (error) {
     logger.error('Dashboard analytics error:', error);
@@ -1271,6 +1314,7 @@ router.get('/export', async (req, res) => {
 // Expose cache clearing function for tests
 if (process.env.NODE_ENV === 'test') {
   router.__clearAnalyticsCache = clearCache;
+  router.__invalidateAnalyticsCache = analyticsCacheService.invalidateAnalyticsCache;
 }
 
 module.exports = router;

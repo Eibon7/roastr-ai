@@ -15,10 +15,15 @@ import * as amplitude from '@amplitude/unified';
 vi.mock('@amplitude/unified', () => ({
   initAll: vi.fn(),
   setUserId: vi.fn(),
-  identify: vi.fn(() => ({
-    set: vi.fn().mockReturnThis()
-  })),
+  identify: vi.fn(),
   reset: vi.fn()
+}));
+
+// Mock Identify class from @amplitude/analytics-browser
+vi.mock('@amplitude/analytics-browser', () => ({
+  Identify: vi.fn().mockImplementation(() => ({
+    set: vi.fn().mockReturnThis()
+  }))
 }));
 
 // Import after mocking

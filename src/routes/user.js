@@ -16,6 +16,8 @@ const EmbeddingsService = require('../services/embeddingsService');
 const PersonaInputSanitizer = require('../services/personaInputSanitizer');
 const transparencyService = require('../services/transparencyService');
 const { normalizeTone, VALID_TONES } = require('../config/tones');
+// ROA-356: Import analytics cache service for cache invalidation on persona changes
+const analyticsCacheService = require('../services/analyticsCacheService');
 const {
   accountDeletionLimiter,
   dataExportLimiter,
@@ -2434,6 +2436,19 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
         action: 'updated'
       });
 
+      // ROA-356: Invalidate analytics cache when persona changes via user route
+      // This ensures analytics reflect the latest persona data
+      // Non-blocking: errors in cache invalidation don't fail the persona update
+      try {
+        analyticsCacheService.invalidateAnalyticsCache(userId);
+      } catch (cacheError) {
+        logger.warn('Failed to invalidate analytics cache after persona update', {
+          userId: SafeUtils.safeUserIdPrefix(userId),
+          error: cacheError.message
+        });
+        // Continue - don't fail the request
+      }
+
       // Prepare response (decrypt for immediate return)
       let responseLoQueMeDefine = null;
       if (updatedUser.lo_que_me_define_encrypted) {
@@ -2600,6 +2615,19 @@ router.delete(
           deletedAt: timestamp,
           fieldsCleared: Object.keys(updateData).filter((key) => key.includes('encrypted'))
         });
+
+        // ROA-356: Invalidate analytics cache when persona is deleted via user route
+        // This ensures analytics reflect the latest persona data (now empty)
+        // Non-blocking: errors in cache invalidation don't fail the persona deletion
+        try {
+          analyticsCacheService.invalidateAnalyticsCache(userId);
+        } catch (cacheError) {
+          logger.warn('Failed to invalidate analytics cache after persona deletion', {
+            userId: SafeUtils.safeUserIdPrefix(userId),
+            error: cacheError.message
+          });
+          // Continue - don't fail the request
+        }
 
         res.json({
           success: true,
