@@ -744,12 +744,16 @@ function authRateLimiterV2(req, res, next) {
       }
 
       if (ipBlock.blocked) {
-        const remainingMinutes = Math.ceil(ipBlock.remainingMs / (60 * 1000));
+        // ROA-359: Check if block is permanent (expiresAt === null)
+        const isPermanent = ipBlock.expiresAt === null;
+        const remainingMinutes = isPermanent ? null : Math.ceil(ipBlock.remainingMs / (60 * 1000));
+        
         logger.warn('Auth Rate Limiter v2: IP bloqueado', {
           ip,
           authType,
           remainingMs: ipBlock.remainingMs,
-          offenseCount: ipBlock.offenseCount
+          offenseCount: ipBlock.offenseCount,
+          isPermanent
         });
 
         // ROA-359: AC3 - Log block event
@@ -759,27 +763,39 @@ function authRateLimiterV2(req, res, next) {
           authType,
           reason: 'ip_blocked',
           offenseCount: ipBlock.offenseCount,
-          blockedUntil: ipBlock.expiresAt ? new Date(ipBlock.expiresAt).toISOString() : null,
+          blockedUntil: isPermanent ? 'permanent' : (ipBlock.expiresAt ? new Date(ipBlock.expiresAt).toISOString() : null),
           source: 'ip',
           requestId: req.id || crypto.randomUUID()
         }).catch(err => logger.error('Error logging block event', { error: err.message }));
 
-        return res.status(429).json({
+        const responseBody = {
           success: false,
           error: 'Demasiados intentos de autenticación. Por favor, inténtalo de nuevo más tarde.',
           code: 'AUTH_RATE_LIMIT_EXCEEDED',
-          retryAfter: remainingMinutes,
-          message: 'Por razones de seguridad, por favor espera antes de intentar autenticarte de nuevo.'
-        });
+          message: isPermanent
+            ? 'Por razones de seguridad, esta IP ha sido bloqueada permanentemente. Contacta al soporte.'
+            : 'Por razones de seguridad, por favor espera antes de intentar autenticarte de nuevo.'
+        };
+
+        // Only include retryAfter if not permanent
+        if (!isPermanent && remainingMinutes !== null) {
+          responseBody.retryAfter = remainingMinutes;
+        }
+
+        return res.status(429).json(responseBody);
       }
 
       if (emailBlock.blocked) {
-        const remainingMinutes = Math.ceil(emailBlock.remainingMs / (60 * 1000));
+        // ROA-359: Check if block is permanent (expiresAt === null)
+        const isPermanent = emailBlock.expiresAt === null;
+        const remainingMinutes = isPermanent ? null : Math.ceil(emailBlock.remainingMs / (60 * 1000));
+        
         logger.warn('Auth Rate Limiter v2: Email bloqueado', {
           email: email.substring(0, 3) + '***',
           authType,
           remainingMs: emailBlock.remainingMs,
-          offenseCount: emailBlock.offenseCount
+          offenseCount: emailBlock.offenseCount,
+          isPermanent
         });
 
         // ROA-359: AC3 - Log block event
@@ -789,18 +805,26 @@ function authRateLimiterV2(req, res, next) {
           authType,
           reason: 'email_blocked',
           offenseCount: emailBlock.offenseCount,
-          blockedUntil: emailBlock.expiresAt ? new Date(emailBlock.expiresAt).toISOString() : null,
+          blockedUntil: isPermanent ? 'permanent' : (emailBlock.expiresAt ? new Date(emailBlock.expiresAt).toISOString() : null),
           source: 'email',
           requestId: req.id || crypto.randomUUID()
         }).catch(err => logger.error('Error logging block event', { error: err.message }));
 
-        return res.status(429).json({
+        const responseBody = {
           success: false,
           error: 'Demasiados intentos de autenticación. Por favor, inténtalo de nuevo más tarde.',
           code: 'AUTH_RATE_LIMIT_EXCEEDED',
-          retryAfter: remainingMinutes,
-          message: 'Por razones de seguridad, por favor espera antes de intentar autenticarte de nuevo.'
-        });
+          message: isPermanent
+            ? 'Por razones de seguridad, esta cuenta ha sido bloqueada permanentemente. Contacta al soporte.'
+            : 'Por razones de seguridad, por favor espera antes de intentar autenticarte de nuevo.'
+        };
+
+        // Only include retryAfter if not permanent
+        if (!isPermanent && remainingMinutes !== null) {
+          responseBody.retryAfter = remainingMinutes;
+        }
+
+        return res.status(429).json(responseBody);
       }
 
       // Check rate limits
@@ -824,6 +848,12 @@ function authRateLimiterV2(req, res, next) {
               store.setBlock(emailBlockKey, emailOffenses + 1, progressiveBlockDurations)
             ]).then(() => {
               const newOffenseCount = ipOffenses + 1;
+              
+              // ROA-359: Calculate actual block duration from progressiveBlockDurations
+              const blockDurationIndex = Math.min(newOffenseCount - 1, progressiveBlockDurations.length - 1);
+              const blockDurationMs = progressiveBlockDurations[blockDurationIndex];
+              const isPermanent = blockDurationMs === null;
+              
               logger.warn('Auth Rate Limiter v2: Límite de rate excedido, bloqueando', {
                 ip,
                 email: email.substring(0, 3) + '***',
@@ -831,7 +861,9 @@ function authRateLimiterV2(req, res, next) {
                 ipAttempts,
                 emailAttempts,
                 ipOffenses: newOffenseCount,
-                emailOffenses: emailOffenses + 1
+                emailOffenses: emailOffenses + 1,
+                blockDurationMs: isPermanent ? 'permanent' : blockDurationMs,
+                isPermanent
               });
 
               // ROA-359: AC3 - Log rate limit hit event
@@ -852,9 +884,9 @@ function authRateLimiterV2(req, res, next) {
                 authType,
                 reason: 'rate_limit_exceeded',
                 offenseCount: newOffenseCount,
-                blockedUntil: progressiveBlockDurations[Math.min(newOffenseCount - 1, progressiveBlockDurations.length - 1)] 
-                  ? new Date(Date.now() + (progressiveBlockDurations[Math.min(newOffenseCount - 1, progressiveBlockDurations.length - 1)] || config.blockDurationMs)).toISOString()
-                  : 'permanent',
+                blockedUntil: isPermanent 
+                  ? 'permanent'
+                  : new Date(Date.now() + blockDurationMs).toISOString(),
                 source: 'rate_limit',
                 requestId: req.id || crypto.randomUUID()
               }).catch(err => logger.error('Error logging block event', { error: err.message }));
@@ -863,13 +895,26 @@ function authRateLimiterV2(req, res, next) {
               metrics.incrementRateLimitHits();
               metrics.incrementBlocksActive();
 
-              return res.status(429).json({
+              // ROA-359: Calculate retryAfter from actual block duration (not config.blockDurationMs)
+              const retryAfterMinutes = isPermanent 
+                ? undefined // Don't include retryAfter for permanent blocks
+                : Math.ceil(blockDurationMs / (60 * 1000));
+
+              const responseBody = {
                 success: false,
                 error: 'Demasiados intentos fallidos. Cuenta temporalmente bloqueada.',
                 code: 'AUTH_RATE_LIMIT_EXCEEDED',
-                retryAfter: Math.ceil(config.blockDurationMs / (60 * 1000)),
-                message: 'Por razones de seguridad, esta cuenta ha sido temporalmente bloqueada. Por favor, inténtalo de nuevo más tarde.'
-              });
+                message: isPermanent
+                  ? 'Por razones de seguridad, esta cuenta ha sido bloqueada permanentemente. Contacta al soporte.'
+                  : 'Por razones de seguridad, esta cuenta ha sido temporalmente bloqueada. Por favor, inténtalo de nuevo más tarde.'
+              };
+
+              // Only include retryAfter if not permanent
+              if (!isPermanent) {
+                responseBody.retryAfter = retryAfterMinutes;
+              }
+
+              return res.status(429).json(responseBody);
             });
           });
         } else {
@@ -968,16 +1013,26 @@ function authRateLimiterV2(req, res, next) {
 
                         // Override response (ROA-359: AC6 - use SSOT config)
                         res.statusCode = 429;
-                        const blockDuration = progressiveBlockDurations[Math.min(ipOffenses, progressiveBlockDurations.length - 1)] || config.blockDurationMs;
-                        const remainingMinutes = blockDuration ? Math.ceil(blockDuration / (60 * 1000)) : null;
+                        const blockDurationIndex = Math.min(ipOffenses, progressiveBlockDurations.length - 1);
+                        const blockDuration = progressiveBlockDurations[blockDurationIndex];
+                        const isPermanent = blockDuration === null;
+                        const remainingMinutes = isPermanent ? null : (blockDuration ? Math.ceil(blockDuration / (60 * 1000)) : null);
 
-                        const blockResponse = JSON.stringify({
+                        const blockResponseObj = {
                           success: false,
                           error: 'Demasiados intentos fallidos. Cuenta temporalmente bloqueada.',
                           code: 'AUTH_RATE_LIMIT_EXCEEDED',
-                          retryAfter: remainingMinutes,
-                          message: 'Por razones de seguridad, esta cuenta ha sido temporalmente bloqueada. Por favor, inténtalo de nuevo más tarde.'
-                        });
+                          message: isPermanent
+                            ? 'Por razones de seguridad, esta cuenta ha sido bloqueada permanentemente. Contacta al soporte.'
+                            : 'Por razones de seguridad, esta cuenta ha sido temporalmente bloqueada. Por favor, inténtalo de nuevo más tarde.'
+                        };
+
+                        // Only include retryAfter if not permanent
+                        if (!isPermanent && remainingMinutes !== null) {
+                          blockResponseObj.retryAfter = remainingMinutes;
+                        }
+
+                        const blockResponse = JSON.stringify(blockResponseObj);
 
                         chunk = blockResponse;
                         encoding = 'utf8';

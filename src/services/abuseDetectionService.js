@@ -23,6 +23,10 @@ class AbuseDetectionStore {
     this.redis = null;
     this.memoryStore = new Map();
     this.isRedisAvailable = false;
+    // ROA-359: Timer registry to prevent memory leaks
+    this.trackingTimers = new Map(); // Track timers for tracking keys (IPs/emails)
+    this.burstTimers = new Map(); // Track timers for burst detection keys
+    this.slowAttackTimers = new Map(); // Track timers for slow attack keys
     this.initializeRedis();
   }
 
@@ -80,6 +84,7 @@ class AbuseDetectionStore {
 
   /**
    * Track IP for email
+   * ROA-359: Memory leak fix - tracks timers to prevent leaks
    */
   async trackIPForEmail(email, ip, ttlMs = 24 * 60 * 60 * 1000) {
     const key = this.getEmailIPsKey(email);
@@ -92,18 +97,41 @@ class AbuseDetectionStore {
         const ips = this.memoryStore.get(key) || new Set();
         ips.add(ip);
         this.memoryStore.set(key, ips);
-        setTimeout(() => this.memoryStore.delete(key), ttlMs);
+        
+        // ROA-359: Clear existing timer before creating new one
+        if (this.trackingTimers.has(key)) {
+          clearTimeout(this.trackingTimers.get(key));
+        }
+        
+        const timer = setTimeout(() => {
+          this.memoryStore.delete(key);
+          this.trackingTimers.delete(key);
+        }, ttlMs);
+        
+        this.trackingTimers.set(key, timer);
       }
     } else {
       const ips = this.memoryStore.get(key) || new Set();
       ips.add(ip);
       this.memoryStore.set(key, ips);
-      setTimeout(() => this.memoryStore.delete(key), ttlMs);
+      
+      // ROA-359: Clear existing timer before creating new one
+      if (this.trackingTimers.has(key)) {
+        clearTimeout(this.trackingTimers.get(key));
+      }
+      
+      const timer = setTimeout(() => {
+        this.memoryStore.delete(key);
+        this.trackingTimers.delete(key);
+      }, ttlMs);
+      
+      this.trackingTimers.set(key, timer);
     }
   }
 
   /**
    * Track email for IP
+   * ROA-359: Memory leak fix - tracks timers to prevent leaks
    */
   async trackEmailForIP(ip, email, ttlMs = 24 * 60 * 60 * 1000) {
     const key = this.getIPEmailsKey(ip);
@@ -118,13 +146,35 @@ class AbuseDetectionStore {
         const emails = this.memoryStore.get(key) || new Set();
         emails.add(emailHash);
         this.memoryStore.set(key, emails);
-        setTimeout(() => this.memoryStore.delete(key), ttlMs);
+        
+        // ROA-359: Clear existing timer before creating new one
+        if (this.trackingTimers.has(key)) {
+          clearTimeout(this.trackingTimers.get(key));
+        }
+        
+        const timer = setTimeout(() => {
+          this.memoryStore.delete(key);
+          this.trackingTimers.delete(key);
+        }, ttlMs);
+        
+        this.trackingTimers.set(key, timer);
       }
     } else {
       const emails = this.memoryStore.get(key) || new Set();
       emails.add(emailHash);
       this.memoryStore.set(key, emails);
-      setTimeout(() => this.memoryStore.delete(key), ttlMs);
+      
+      // ROA-359: Clear existing timer before creating new one
+      if (this.trackingTimers.has(key)) {
+        clearTimeout(this.trackingTimers.get(key));
+      }
+      
+      const timer = setTimeout(() => {
+        this.memoryStore.delete(key);
+        this.trackingTimers.delete(key);
+      }, ttlMs);
+      
+      this.trackingTimers.set(key, timer);
     }
   }
 
@@ -168,6 +218,7 @@ class AbuseDetectionStore {
 
   /**
    * Record burst attempt
+   * ROA-359: Memory leak fix - tracks timers to prevent leaks
    */
   async recordBurstAttempt(ip, email, authType, windowMs = 60 * 1000) {
     const key = this.getBurstKey(ip, email, authType);
@@ -180,13 +231,36 @@ class AbuseDetectionStore {
         logger.warn('Abuse Detection: Redis burst record failed', { error: error.message });
         const count = (this.memoryStore.get(key) || 0) + 1;
         this.memoryStore.set(key, count);
-        setTimeout(() => this.memoryStore.delete(key), windowMs);
+        
+        // ROA-359: Clear existing timer before creating new one
+        if (this.burstTimers.has(key)) {
+          clearTimeout(this.burstTimers.get(key));
+        }
+        
+        const timer = setTimeout(() => {
+          this.memoryStore.delete(key);
+          this.burstTimers.delete(key);
+        }, windowMs);
+        
+        this.burstTimers.set(key, timer);
         return count;
       }
     }
+    
     const count = (this.memoryStore.get(key) || 0) + 1;
     this.memoryStore.set(key, count);
-    setTimeout(() => this.memoryStore.delete(key), windowMs);
+    
+    // ROA-359: Clear existing timer before creating new one
+    if (this.burstTimers.has(key)) {
+      clearTimeout(this.burstTimers.get(key));
+    }
+    
+    const timer = setTimeout(() => {
+      this.memoryStore.delete(key);
+      this.burstTimers.delete(key);
+    }, windowMs);
+    
+    this.burstTimers.set(key, timer);
     return count;
   }
 
@@ -209,6 +283,7 @@ class AbuseDetectionStore {
 
   /**
    * Record slow attack attempt (distributed over longer window)
+   * ROA-359: Memory leak fix - tracks timers to prevent leaks
    */
   async recordSlowAttackAttempt(ip, email, authType, windowMs = 60 * 60 * 1000) {
     const key = this.getSlowAttackKey(ip, email, authType);
@@ -221,13 +296,36 @@ class AbuseDetectionStore {
         logger.warn('Abuse Detection: Redis slow attack record failed', { error: error.message });
         const count = (this.memoryStore.get(key) || 0) + 1;
         this.memoryStore.set(key, count);
-        setTimeout(() => this.memoryStore.delete(key), windowMs);
+        
+        // ROA-359: Clear existing timer before creating new one
+        if (this.slowAttackTimers.has(key)) {
+          clearTimeout(this.slowAttackTimers.get(key));
+        }
+        
+        const timer = setTimeout(() => {
+          this.memoryStore.delete(key);
+          this.slowAttackTimers.delete(key);
+        }, windowMs);
+        
+        this.slowAttackTimers.set(key, timer);
         return count;
       }
     }
+    
     const count = (this.memoryStore.get(key) || 0) + 1;
     this.memoryStore.set(key, count);
-    setTimeout(() => this.memoryStore.delete(key), windowMs);
+    
+    // ROA-359: Clear existing timer before creating new one
+    if (this.slowAttackTimers.has(key)) {
+      clearTimeout(this.slowAttackTimers.get(key));
+    }
+    
+    const timer = setTimeout(() => {
+      this.memoryStore.delete(key);
+      this.slowAttackTimers.delete(key);
+    }, windowMs);
+    
+    this.slowAttackTimers.set(key, timer);
     return count;
   }
 
