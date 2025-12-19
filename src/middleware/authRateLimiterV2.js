@@ -924,8 +924,9 @@ async function authRateLimiterV2Pre(req, res, next) {
 /**
  * Post-Auth Middleware: Process results AFTER route execution
  * ROA-359: Deterministic, synchronous result processing
+ * Returns void - checks res.headersSent to determine if response was sent
  */
-async function authRateLimiterV2Post(req, res, next) {
+async function authRateLimiterV2Post(req, res) {
   // Initialize res.locals if not present
   if (!res.locals) {
     res.locals = {};
@@ -933,7 +934,7 @@ async function authRateLimiterV2Post(req, res, next) {
   
   // Only process if we have rate limit context
   if (!res.locals.rateLimitContext) {
-    return next();
+    return;
   }
 
   const {
@@ -1102,12 +1103,11 @@ async function authRateLimiterV2Post(req, res, next) {
         }
 
         res.status(429).json(blockResponseObj);
-        return; // Don't call next() - response already sent
+        return; // Response already sent, exit function
       }
     }
     // If not auth failure or success, do nothing (e.g., 5xx errors, validation errors)
-
-    next();
+    // Function returns normally, allowing original response to be sent
   } catch (error) {
     logger.error('Auth Rate Limiter v2: Error en post-auth middleware', {
       error: error.message,
@@ -1115,8 +1115,8 @@ async function authRateLimiterV2Post(req, res, next) {
       email: email ? email.substring(0, 3) + '***' : 'unknown',
       authType
     });
-    // Fail open - continue with response
-    next();
+    // Fail open - allow original response to be sent
+    // Don't throw - let the response proceed normally
   }
 }
 
@@ -1158,7 +1158,7 @@ function authRateLimiterV2(req, res, next) {
       return originalStatus(code);
     };
 
-    res.json = function(body) {
+    res.json = async function(body) {
       responseBody = body;
       
       // Determine auth result from response
@@ -1189,15 +1189,17 @@ function authRateLimiterV2(req, res, next) {
       res.locals.authSuccess = authSuccess;
       res.locals.authFailureCode = authFailureCode;
 
-      // Process post-auth synchronously before sending response
-      authRateLimiterV2Post(req, res, () => {
-        // If post-auth middleware sent a response (429), don't send original
-        if (res.headersSent) {
-          return;
-        }
-        // Send original response
-        originalJson(responseBody);
-      });
+      // ROA-359: Process post-auth with await to ensure deterministic execution
+      // Wait for post-auth to complete before sending response
+      await authRateLimiterV2Post(req, res);
+
+      // If post-auth middleware sent a response (429), don't send original
+      if (res.headersSent) {
+        return;
+      }
+      
+      // Send original response only after post-auth completes
+      originalJson(responseBody);
     };
 
     next();
