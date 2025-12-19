@@ -346,9 +346,13 @@ const store = new RateLimitStoreV2();
  * Get client IP from request
  */
 function getClientIP(req) {
+  if (!req) {
+    return '127.0.0.1';
+  }
+  
   return (
     req.ip ||
-    req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+    (req.headers && req.headers['x-forwarded-for']?.split(',')[0]?.trim()) ||
     req.connection?.remoteAddress ||
     req.socket?.remoteAddress ||
     '127.0.0.1'
