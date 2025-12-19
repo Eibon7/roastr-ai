@@ -448,6 +448,82 @@ Lista de redes planificadas:
 - **Resend**: email transaccional v2.
 - **SendGrid / Stripe / otras**: solo v1 (legacy), no usarse en nuevos flujos.
 
+### 7.4 Rate Limiting de Autenticación (ROA-359)
+
+**Configuración oficial de rate limits para endpoints de autenticación:**
+
+```ts
+type AuthRateLimitConfig = {
+  password: {
+    windowMs: 900000;      // 15 minutos
+    maxAttempts: 5;
+    blockDurationMs: 900000; // 15 minutos
+  };
+  magic_link: {
+    windowMs: 3600000;     // 1 hora
+    maxAttempts: 3;
+    blockDurationMs: 3600000; // 1 hora
+  };
+  oauth: {
+    windowMs: 900000;      // 15 minutos
+    maxAttempts: 10;
+    blockDurationMs: 900000; // 15 minutos
+  };
+  password_reset: {
+    windowMs: 3600000;     // 1 hora
+    maxAttempts: 3;
+    blockDurationMs: 3600000; // 1 hora
+  };
+};
+```
+
+**Bloqueo progresivo (escalación):**
+
+```ts
+type ProgressiveBlockDurations = [
+  900000,      // 15 minutos (1ra infracción)
+  3600000,     // 1 hora (2da infracción)
+  86400000,    // 24 horas (3ra infracción)
+  null         // Permanente (4ta+ infracción, requiere intervención manual)
+];
+```
+
+**Almacenamiento:**
+- **Producción**: Redis/Upstash (preferido)
+- **Fallback**: Memoria (solo desarrollo/testing)
+- **Keys**: `auth:ratelimit:ip:${authType}:${ip}` y `auth:ratelimit:email:${authType}:${emailHash}`
+
+**Feature Flags:**
+- `ENABLE_AUTH_RATE_LIMIT_V2`: Habilita rate limiting v2 (reemplaza v1)
+- `ENABLE_RATE_LIMIT`: Habilita rate limiting general (requerido para v2)
+
+### 7.5 Abuse Detection Thresholds (ROA-359)
+
+**Configuración oficial de thresholds para detección de abuse patterns:**
+
+```ts
+type AbuseDetectionThresholds = {
+  multi_ip: number;        // Número de IPs diferentes para mismo email (default: 3)
+  multi_email: number;     // Número de emails diferentes para misma IP (default: 5)
+  burst: number;           // Intentos en ventana corta (1 minuto) para trigger burst attack (default: 10)
+  slow_attack: number;     // Intentos en ventana larga (1 hora) para trigger slow attack (default: 20)
+};
+```
+
+**Valores por defecto (fallback si SSOT no disponible):**
+- `multi_ip`: 3
+- `multi_email`: 5
+- `burst`: 10
+- `slow_attack`: 20
+
+**Almacenamiento:**
+- Configuración cargada desde SSOT v2 via `settingsLoaderV2`
+- Keys SSOT: `abuse_detection.thresholds.multi_ip`, `abuse_detection.thresholds.multi_email`, etc.
+- Fallback seguro si SSOT no disponible
+
+**Feature Flags:**
+- `ENABLE_ABUSE_DETECTION`: Habilita detección de abuse patterns (requerido para thresholds)
+
 ---
 
 ## 8. Workers & Procesos asíncronos

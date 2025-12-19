@@ -192,6 +192,36 @@ const AUTH_EVENTS_TAXONOMY_V2 = {
         v1Mapping: null
       }
     }
+  },
+  // ROA-359: Rate limiting and abuse events
+  rate_limit: {
+    hit: {
+      severity: 'warning',
+      description: 'Rate limit threshold exceeded',
+      v1Mapping: null
+    },
+    blocked: {
+      severity: 'warning',
+      description: 'Authentication blocked due to rate limit',
+      v1Mapping: null
+    },
+    unblocked: {
+      severity: 'info',
+      description: 'Rate limit block expired, authentication unblocked',
+      v1Mapping: null
+    }
+  },
+  abuse: {
+    detected: {
+      severity: 'error',
+      description: 'Abuse pattern detected (multi-IP, burst, slow attack)',
+      v1Mapping: null
+    },
+    blocked: {
+      severity: 'error',
+      description: 'Authentication blocked due to abuse detection',
+      v1Mapping: null
+    }
   }
 };
 
