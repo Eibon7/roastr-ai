@@ -352,14 +352,23 @@ const abuseStore = new AbuseDetectionStore();
 /**
  * Detect abuse patterns
  * ROA-359: AC2 - Basic abuse detection without ML
+ * ROA-359: Thresholds must be provided via config parameter (loaded from SSOT v2)
  */
 async function detectAbuse(ip, email, authType, config = {}) {
+  // ROA-359: Thresholds come from SSOT v2, no hardcoded defaults
+  // Fallback defensive check only if undefined (should not happen if SSOT is properly configured)
   const {
-    multiIPThreshold = 3, // Different IPs for same email
-    multiEmailThreshold = 5, // Different emails for same IP
-    burstThreshold = 10, // Attempts in 1 minute
-    slowAttackThreshold = 20 // Attempts in 1 hour
+    multiIPThreshold,
+    multiEmailThreshold,
+    burstThreshold,
+    slowAttackThreshold
   } = config;
+
+  // Defensive fallback only if threshold is undefined (not if it's 0 or null)
+  const multiIP = multiIPThreshold !== undefined ? multiIPThreshold : 3;
+  const multiEmail = multiEmailThreshold !== undefined ? multiEmailThreshold : 5;
+  const burst = burstThreshold !== undefined ? burstThreshold : 10;
+  const slowAttack = slowAttackThreshold !== undefined ? slowAttackThreshold : 20;
 
   const patterns = {
     multiIPAbuse: false,
@@ -376,28 +385,28 @@ async function detectAbuse(ip, email, authType, config = {}) {
 
     // Check multi-IP abuse (same email, different IPs)
     const ipsForEmail = await abuseStore.getIPsForEmail(email);
-    if (ipsForEmail.length >= multiIPThreshold) {
+    if (ipsForEmail.length >= multiIP) {
       patterns.multiIPAbuse = true;
       patterns.riskScore += 30;
     }
 
     // Check multi-email abuse (same IP, different emails)
     const emailsForIP = await abuseStore.getEmailsForIP(ip);
-    if (emailsForIP.length >= multiEmailThreshold) {
+    if (emailsForIP.length >= multiEmail) {
       patterns.multiEmailAbuse = true;
       patterns.riskScore += 30;
     }
 
     // Check burst attack
     const burstCount = await abuseStore.recordBurstAttempt(ip, email, authType, 60 * 1000);
-    if (burstCount >= burstThreshold) {
+    if (burstCount >= burst) {
       patterns.burstAttack = true;
       patterns.riskScore += 40;
     }
 
     // Check slow attack
     const slowCount = await abuseStore.recordSlowAttackAttempt(ip, email, authType, 60 * 60 * 1000);
-    if (slowCount >= slowAttackThreshold) {
+    if (slowCount >= slowAttack) {
       patterns.slowAttack = true;
       patterns.riskScore += 20;
     }

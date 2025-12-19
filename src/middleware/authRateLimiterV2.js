@@ -99,6 +99,47 @@ async function loadProgressiveBlockDurations() {
   }
 }
 
+/**
+ * Fallback abuse detection thresholds (used only if SSOT is unavailable)
+ * ROA-359: These are fallbacks, not active values
+ */
+const FALLBACK_ABUSE_DETECTION_THRESHOLDS = {
+  multi_ip: 3,
+  multi_email: 5,
+  burst: 10,
+  slow_attack: 20
+};
+
+/**
+ * Load abuse detection thresholds from SSOT v2
+ * ROA-359: Configuration loaded from SSOT, no hardcoded values
+ * @returns {Promise<Object>} Abuse detection thresholds
+ */
+async function getAbuseDetectionConfig() {
+  try {
+    const thresholds = await settingsLoader.getValue('abuse_detection.thresholds');
+    if (thresholds && typeof thresholds === 'object') {
+      // Ensure all required thresholds are present, use fallback for missing ones
+      const config = {
+        multi_ip: thresholds.multi_ip ?? FALLBACK_ABUSE_DETECTION_THRESHOLDS.multi_ip,
+        multi_email: thresholds.multi_email ?? FALLBACK_ABUSE_DETECTION_THRESHOLDS.multi_email,
+        burst: thresholds.burst ?? FALLBACK_ABUSE_DETECTION_THRESHOLDS.burst,
+        slow_attack: thresholds.slow_attack ?? FALLBACK_ABUSE_DETECTION_THRESHOLDS.slow_attack
+      };
+      
+      logger.debug('Auth Rate Limiter v2: Abuse detection thresholds loaded from SSOT');
+      return config;
+    }
+    logger.warn('Auth Rate Limiter v2: SSOT abuse detection thresholds not found, using fallback');
+    return FALLBACK_ABUSE_DETECTION_THRESHOLDS;
+  } catch (error) {
+    logger.error('Auth Rate Limiter v2: Error loading abuse detection thresholds from SSOT, using fallback', {
+      error: error.message
+    });
+    return FALLBACK_ABUSE_DETECTION_THRESHOLDS;
+  }
+}
+
 // Cache for loaded configuration (reload on cache invalidation)
 let cachedRateLimitConfig = null;
 let cachedBlockDurations = null;
@@ -695,17 +736,19 @@ function authRateLimiterV2(req, res, next) {
   // ROA-359: AC6 - Load configuration from SSOT (async, cached)
   Promise.all([
     getRateLimitConfig(),
-    getProgressiveBlockDurations()
-  ]).then(([rateLimitConfig, progressiveBlockDurations]) => {
+    getProgressiveBlockDurations(),
+    getAbuseDetectionConfig()
+  ]).then(([rateLimitConfig, progressiveBlockDurations, abuseDetectionConfig]) => {
     const config = rateLimitConfig[authType] || rateLimitConfig.password || FALLBACK_RATE_LIMIT_CONFIG.password;
 
     // ROA-359: AC2 - Detect abuse patterns (async, non-blocking)
+    // ROA-359: Thresholds loaded from SSOT v2, no hardcoded values
     const abuseDetectionPromise = flags.isEnabled('ENABLE_ABUSE_DETECTION') !== false
       ? detectAbuse(ip, email, authType, {
-          multiIPThreshold: 3,
-          multiEmailThreshold: 5,
-          burstThreshold: 10,
-          slowAttackThreshold: 20
+          multiIPThreshold: abuseDetectionConfig.multi_ip,
+          multiEmailThreshold: abuseDetectionConfig.multi_email,
+          burstThreshold: abuseDetectionConfig.burst,
+          slowAttackThreshold: abuseDetectionConfig.slow_attack
         })
       : Promise.resolve({ riskScore: 0, multiIPAbuse: false, multiEmailAbuse: false, burstAttack: false, slowAttack: false });
 
@@ -1122,10 +1165,12 @@ module.exports = {
   RateLimitStoreV2,
   getRateLimitConfig,
   getProgressiveBlockDurations,
+  getAbuseDetectionConfig,
   invalidateConfigCache,
   getMetrics,
   FALLBACK_RATE_LIMIT_CONFIG,
   FALLBACK_PROGRESSIVE_BLOCK_DURATIONS,
+  FALLBACK_ABUSE_DETECTION_THRESHOLDS,
   getClientIP,
   detectAuthType
 };

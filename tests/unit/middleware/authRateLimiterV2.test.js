@@ -42,6 +42,13 @@ const mockBlockDurations = [
   null
 ];
 
+const mockAbuseDetectionThresholds = {
+  multi_ip: 3,
+  multi_email: 5,
+  burst: 10,
+  slow_attack: 20
+};
+
 vi.mock('../../../src/services/settingsLoaderV2', () => ({
   default: {
     getValue: vi.fn((key) => {
@@ -50,6 +57,9 @@ vi.mock('../../../src/services/settingsLoaderV2', () => ({
       }
       if (key === 'rate_limit.auth.block_durations') {
         return Promise.resolve(mockBlockDurations);
+      }
+      if (key === 'abuse_detection.thresholds') {
+        return Promise.resolve(mockAbuseDetectionThresholds);
       }
       return Promise.resolve(undefined);
     }),
@@ -80,11 +90,11 @@ vi.mock('../../../src/services/auditLogService', () => ({
 
 // Mock Redis/Upstash
 const mockRedisMethods = {
-  ping: vi.fn().mockResolvedValue('PONG'),
-  get: vi.fn().mockResolvedValue(null),
-  set: vi.fn().mockResolvedValue('OK'),
-  del: vi.fn().mockResolvedValue(1),
-  incr: vi.fn().mockResolvedValue(1),
+    ping: vi.fn().mockResolvedValue('PONG'),
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue('OK'),
+    del: vi.fn().mockResolvedValue(1),
+    incr: vi.fn().mockResolvedValue(1),
   pexpire: vi.fn().mockResolvedValue(1),
   sadd: vi.fn().mockResolvedValue(1),
   smembers: vi.fn().mockResolvedValue([])
@@ -99,9 +109,11 @@ const {
   RateLimitStoreV2,
   getRateLimitConfig,
   getProgressiveBlockDurations,
+  getAbuseDetectionConfig,
   getMetrics,
   FALLBACK_RATE_LIMIT_CONFIG,
   FALLBACK_PROGRESSIVE_BLOCK_DURATIONS,
+  FALLBACK_ABUSE_DETECTION_THRESHOLDS,
   getClientIP,
   detectAuthType
 } = require('../../../src/middleware/authRateLimiterV2');
@@ -161,6 +173,37 @@ describe('Auth Rate Limiter v2', () => {
       expect(durations).toHaveLength(4);
       expect(durations[0]).toBe(15 * 60 * 1000);
       expect(durations[3]).toBe(null);
+    });
+  });
+
+  describe('Abuse Detection Config (SSOT)', () => {
+    it('should load abuse detection thresholds from SSOT', async () => {
+      const config = await getAbuseDetectionConfig();
+      expect(config).toBeDefined();
+      expect(config.multi_ip).toBe(3);
+      expect(config.multi_email).toBe(5);
+      expect(config.burst).toBe(10);
+      expect(config.slow_attack).toBe(20);
+    });
+
+    it('should use fallback if SSOT not available', async () => {
+      const settingsLoader = require('../../../src/services/settingsLoaderV2');
+      const originalGetValue = settingsLoader.getValue;
+      
+      // Mock getValue to return undefined for abuse_detection.thresholds
+      settingsLoader.getValue = vi.fn((key) => {
+        if (key === 'abuse_detection.thresholds') {
+          return Promise.resolve(undefined);
+        }
+        // Use original mock for other keys
+        return originalGetValue(key);
+      });
+      
+      const config = await getAbuseDetectionConfig();
+      expect(config).toEqual(FALLBACK_ABUSE_DETECTION_THRESHOLDS);
+      
+      // Restore original
+      settingsLoader.getValue = originalGetValue;
     });
   });
 
