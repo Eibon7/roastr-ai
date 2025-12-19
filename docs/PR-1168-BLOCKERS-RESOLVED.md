@@ -102,6 +102,9 @@
 ## 📝 Commit History
 
 **PR #1168 commits (analytics cache invalidation):**
+- `1c52d20d` - docs(PR-1168): document ROA-359 removal from PR scope
+- `ef8fe6f5` - refactor(PR-1168): remove ROA-359 auth rate limiting from PR scope
+- `faf832a9` - fix(PR-1168): correct blockers documentation per CodeRabbit review
 - `c7217a75` - docs(PR-1168): add blockers resolution documentation
 - `c81cfd6d` - fix(PR-1168): add cache invalidation in user.js and error handling
 - `10990a87` - fix(PR-1168): resolve merge conflicts with main (merge commit from main)
@@ -112,4 +115,7 @@
 **Related PRs (merged to main, appear in diff):**
 - PR #1167 (ROA-358): `0bcc46ac` - Auth UI Base Components v2 - deleted auth components
 - PR #1169 (ROA-356): `2c8100a0` - Amplitude Identity Sync v2 - deleted analytics.ts
+
+**Removed from PR (should be separate PR):**
+- ROA-359: Auth Rate Limiting v2 - removed in commit `ef8fe6f5` (1,167 lines removed)
 
