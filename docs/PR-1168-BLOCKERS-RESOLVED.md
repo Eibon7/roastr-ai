@@ -77,13 +77,27 @@
 - ✅ PR description updated: Scope accurately reflects analytics cache invalidation only
 - ✅ Related issues documented: ROA-356 (PR #1169), ROA-358 (PR #1167) referenced for context
 
+## ✅ BLOCKER 5: Unrelated Scope (ROA-359) - RESOLVED
+
+**Issue:** PR included ROA-359 Auth Rate Limiting v2 files (1,167+ lines) unrelated to analytics cache invalidation.
+
+**Status:** Removed from PR scope per CodeRabbit recommendation.
+
+**Files Removed:**
+- `src/middleware/authRateLimiterV2.js` (603 lines)
+- `tests/unit/middleware/authRateLimiterV2.test.js` (301 lines)
+- `docs/plan/issue-ROA-359.md` (263 lines)
+
+**Resolution:** ROA-359 should be implemented in a separate PR following the project's phased delivery pattern. PR #1168 now focuses solely on analytics cache invalidation.
+
 ## 🎯 Next Steps
 
 1. ✅ **DONE:** Add cache invalidation to user.js
 2. ✅ **DONE:** Add error handling to persona.js
 3. ✅ **DONE:** Create GitHub issue for analytics cache invalidation (#1172)
 4. ✅ **DONE:** Update PR description (POST vs PUT, scope clarification)
-5. ⚠️ **OPTIONAL:** Convert integration tests from Jest to Vitest (non-blocking)
+5. ✅ **DONE:** Remove unrelated ROA-359 files from PR scope
+6. ⚠️ **OPTIONAL:** Convert integration tests from Jest to Vitest (non-blocking)
 
 ## 📝 Commit History
 
