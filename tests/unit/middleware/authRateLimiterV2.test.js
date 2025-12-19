@@ -447,7 +447,7 @@ describe('Auth Rate Limiter v2', () => {
   });
 
   describe('Feature Flag OFF', () => {
-    it('should skip rate limiting when feature flag is disabled', () => {
+    it('should skip rate limiting when feature flag is disabled', async () => {
       const { flags } = require('../../../src/config/flags');
       
       // Mock flags.isEnabled to return false for ENABLE_RATE_LIMIT
@@ -462,11 +462,18 @@ describe('Auth Rate Limiter v2', () => {
         method: 'POST',
         body: { email: 'test@example.com' }
       };
-      const mockRes = {};
+      const mockRes = { locals: {} };
       const mockNext = vi.fn();
       
       process.env.NODE_ENV = 'production';
-      authRateLimiterV2(mockReq, mockRes, mockNext);
+      
+      // Call middleware and wait for async operations
+      await new Promise((resolve) => {
+        authRateLimiterV2(mockReq, mockRes, (...args) => {
+          mockNext(...args);
+          resolve();
+        });
+      });
       
       // Should call next immediately when flag is off
       expect(mockNext).toHaveBeenCalled();
@@ -484,7 +491,7 @@ describe('Auth Rate Limiter v2', () => {
       expect(metrics).toHaveProperty('auth_rate_limit_hits_total');
       expect(metrics).toHaveProperty('auth_blocks_active');
       expect(metrics).toHaveProperty('auth_abuse_events_total');
-      expect(metrics).toHaveProperty('last_reset');
+      // ROA-359: last_reset removed - metrics are cumulative counters
     });
   });
 });
