@@ -270,7 +270,92 @@ type FeatureFlagKey =
 
 ---
 
-## 4. Shield & Motor de Análisis
+## 4. Gatekeeper (Seguridad / Abuso)
+
+### 4.1 Propósito
+
+Gatekeeper es la primera línea de defensa contra comentarios maliciosos e intentos de prompt injection. Clasifica comentarios y detecta intentos de manipulación antes de que lleguen a los modelos de IA.
+
+### 4.2 Configuración
+
+La configuración de Gatekeeper vive en `admin_settings.gatekeeper.*` (vía SettingsLoader v2).
+
+**Estructura:**
+
+```ts
+type GatekeeperConfig = {
+  mode: 'multiplicative' | 'additive';
+  thresholds: {
+    suspicious: number;      // 0.0 - 1.0, default 0.5
+    highConfidence: number;   // 0.0 - 1.0, default 0.9
+    maxScore: number;         // 0.0 - 1.0, default 1.0
+  };
+  heuristics: {
+    multipleNewlines: number;    // 0.0 - 1.0, default 0.3
+    codeBlocks: number;          // 0.0 - 1.0, default 0.4
+    unusualLength: number;       // 0.0 - 1.0, default 0.2
+    repeatedPhrases: number;     // 0.0 - 1.0, default 0.3
+  };
+  heuristicsConfig: {
+    newlineThreshold: number;           // default 3
+    unusualLengthThreshold: number;     // default 1000
+    repeatedPhraseCount: number;        // default 2
+  };
+  patternWeights: {
+    instruction_override: number;   // default 1.0
+    prompt_extraction: number;      // default 0.9
+    role_manipulation: number;      // default 0.9
+    jailbreak: number;              // default 1.0
+    output_control: number;         // default 0.7
+    hidden_instruction: number;     // default 0.7
+    priority_override: number;       // default 0.9
+    encoding_trick: number;          // default 0.7
+  };
+};
+```
+
+### 4.3 Modos de Operación
+
+- **`multiplicative`** (default): Los pesos se multiplican para calcular score final.
+- **`additive`**: Los pesos se suman para calcular score final.
+
+### 4.4 Categorías de Detección
+
+Gatekeeper detecta los siguientes tipos de ataques:
+
+1. **`instruction_override`**: Intentos de ignorar instrucciones del sistema.
+2. **`prompt_extraction`**: Intentos de extraer el prompt del sistema.
+3. **`role_manipulation`**: Intentos de cambiar el rol del modelo.
+4. **`jailbreak`**: Intentos de "romper" las restricciones del modelo.
+5. **`output_control`**: Intentos de controlar la salida del modelo.
+6. **`hidden_instruction`**: Instrucciones ocultas en el texto.
+7. **`priority_override`**: Intentos de cambiar prioridades.
+8. **`encoding_trick`**: Trucos de codificación para evadir detección.
+
+### 4.5 Heurísticas
+
+Gatekeeper aplica heurísticas adicionales:
+
+- **`multipleNewlines`**: Detecta múltiples saltos de línea (posible código).
+- **`codeBlocks`**: Detecta bloques de código.
+- **`unusualLength`**: Detecta textos inusualmente largos o cortos.
+- **`repeatedPhrases`**: Detecta frases repetidas (posible spam).
+
+### 4.6 Fail-Safe
+
+Si no hay configuración en `admin_settings`, Gatekeeper usa valores por defecto seguros (fail-closed para seguridad). Los valores por defecto están documentados en `src/services/gatekeeperService.js`.
+
+### 4.7 Hot Reload
+
+La configuración se carga dinámicamente desde SettingsLoader v2 (cache de 1 minuto). Los cambios en `admin_settings` se reflejan automáticamente sin reiniciar el servicio.
+
+**Endpoints admin:**
+- `GET /api/v2/admin/settings/gatekeeper` - Obtener configuración actual
+- `PATCH /api/v2/admin/settings/gatekeeper` - Actualizar configuración
+
+---
+
+## 5. Shield & Motor de Análisis
 
 ### 4.1 Thresholds
 
@@ -326,7 +411,7 @@ type AnalysisDecision = 'publicar' | 'correctiva' | 'roast' | 'shield_moderado' 
 
 ---
 
-## 5. Roastr Persona
+## 6. Roastr Persona
 
 ### 5.1 Estructura
 
@@ -350,7 +435,7 @@ type PersonaProfile = {
 
 ---
 
-## 6. Tonos & Roasting
+## 7. Tonos & Roasting
 
 ### 6.1 Tonos oficiales
 
@@ -406,7 +491,7 @@ type DisclaimerPool = {
 
 ---
 
-## 7. Integraciones
+## 8. Integraciones
 
 ### 7.1 Redes soportadas en v2 (MVP)
 
@@ -526,7 +611,7 @@ type AbuseDetectionThresholds = {
 
 ---
 
-## 8. Workers & Procesos asíncronos
+## 9. Workers & Procesos asíncronos
 
 ### 8.1 Workers oficiales v2
 
@@ -598,7 +683,7 @@ type AuxiliaryWorkerName =
 
 ---
 
-## 9. GDPR, Retención y Datos
+## 10. GDPR, Retención y Datos
 
 ### 9.1 Retención
 
@@ -630,7 +715,7 @@ type AuxiliaryWorkerName =
 
 ---
 
-## 10. Infraestructura v2 (Staging / Prod)
+## 11. Infraestructura v2 (Staging / Prod)
 
 ### 10.1 Entornos
 
@@ -665,7 +750,7 @@ Ejemplos (no exhaustivo, pero los nombres no deben cambiar):
 
 ---
 
-## 11. Testing v2 (umbrales mínimos)
+## 12. Testing v2 (umbrales mínimos)
 
 ### 11.1 Cobertura por categoría
 
@@ -686,7 +771,7 @@ Ejemplos (no exhaustivo, pero los nombres no deben cambiar):
 
 ---
 
-## 12. Reglas anti-"AI slop"
+## 13. Reglas anti-"AI slop"
 
 Para cualquier cambio generado con ayuda de IA:
 
@@ -702,7 +787,7 @@ Para cualquier cambio generado con ayuda de IA:
 
 ---
 
-## 13. Regla final
+## 14. Regla final
 
 > Ningún nuevo comportamiento de Roastr v2 se puede introducir sin:
 >
