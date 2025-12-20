@@ -20,6 +20,9 @@ export interface AbuseDetectionThresholds {
 }
 
 // Configuración desde SSOT v2 - Sección 7.5
+// TODO(ROA-XXX): Migrar a SettingsLoader cuando esté disponible en backend-v2
+// Los valores están hardcoded temporalmente para cumplir deadline de ROA-360
+// Fallback si SSOT no disponible
 const DEFAULT_THRESHOLDS: AbuseDetectionThresholds = {
   multi_ip: 3,
   multi_email: 5,
@@ -143,20 +146,47 @@ export class AbuseDetectionService {
 
   /**
    * Verifica si un email o IP está marcado como abusivo
+   * Chequea todos los 4 patrones: multi-IP, multi-email, burst, slow attack
    */
   isAbusive(email?: string, ip?: string): boolean {
+    const now = Date.now();
+    const oneMinuteAgo = now - 60 * 1000;
+    const oneHourAgo = now - 60 * 60 * 1000;
+
     if (email) {
       const emailHash = this.hashEmail(email);
       const entry = this.emailStore.get(emailHash);
-      if (entry && entry.ips.size > this.thresholds.multi_ip) {
-        return true;
+      if (entry) {
+        // Limpiar intentos antiguos
+        entry.attempts = entry.attempts.filter((a) => a.timestamp > oneHourAgo);
+
+        // Check multi_ip
+        if (entry.ips.size > this.thresholds.multi_ip) return true;
+
+        // Check burst_attack
+        const recentAttempts = entry.attempts.filter((a) => a.timestamp > oneMinuteAgo).length;
+        if (recentAttempts > this.thresholds.burst) return true;
+
+        // Check slow_attack
+        if (entry.attempts.length > this.thresholds.slow_attack) return true;
       }
     }
 
     if (ip) {
       const entry = this.ipStore.get(ip);
-      if (entry && entry.emails.size > this.thresholds.multi_email) {
-        return true;
+      if (entry) {
+        // Limpiar intentos antiguos
+        entry.attempts = entry.attempts.filter((a) => a.timestamp > oneHourAgo);
+
+        // Check multi_email
+        if (entry.emails.size > this.thresholds.multi_email) return true;
+
+        // Check burst_attack
+        const recentAttempts = entry.attempts.filter((a) => a.timestamp > oneMinuteAgo).length;
+        if (recentAttempts > this.thresholds.burst) return true;
+
+        // Check slow_attack
+        if (entry.attempts.length > this.thresholds.slow_attack) return true;
       }
     }
 

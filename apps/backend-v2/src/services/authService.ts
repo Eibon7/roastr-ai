@@ -65,6 +65,8 @@ export class AuthService {
         );
       }
 
+      // TODO(ROA-XXX): Migrar a SettingsLoader cuando esté disponible en backend-v2
+      // Plan IDs están hardcoded temporalmente para cumplir deadline de ROA-360
       if (!['starter', 'pro', 'plus'].includes(planId)) {
         throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid plan ID');
       }
@@ -108,7 +110,7 @@ export class AuthService {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_in: data.session.expires_in || 3600,
-        expires_at: data.session.expires_at || Date.now() + 3600,
+        expires_at: data.session.expires_at || Math.floor(Date.now() / 1000) + 3600,
         user: {
           id: data.user.id,
           email: data.user.email!,
@@ -180,7 +182,7 @@ export class AuthService {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_in: data.session.expires_in || 3600,
-        expires_at: data.session.expires_at || Date.now() + 3600,
+        expires_at: data.session.expires_at || Math.floor(Date.now() / 1000) + 3600,
         user: {
           id: data.user.id,
           email: data.user.email!,
@@ -301,7 +303,7 @@ export class AuthService {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_in: data.session.expires_in || 3600,
-        expires_at: data.session.expires_at || Date.now() + 3600,
+        expires_at: data.session.expires_at || Math.floor(Date.now() / 1000) + 3600,
         user: {
           id: data.user.id,
           email: data.user.email!,
