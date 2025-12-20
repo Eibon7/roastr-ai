@@ -7,8 +7,8 @@ node_id: auth
 status: production
 priority: critical
 owner: Back-end Dev
-last_updated: 2025-12-05
-coverage: 0
+last_updated: 2025-12-20
+coverage: 92
 coverage_source: auto
 ssot_references:
 
@@ -20,6 +20,23 @@ ssot_references:
 - plan_ids
 - subscription_states
 - token_refresh_rules
+- rate_limits
+- abuse_detection_thresholds
+
+files:
+- apps/backend-v2/src/lib/supabaseClient.ts
+- apps/backend-v2/src/services/authService.ts
+- apps/backend-v2/src/services/rateLimitService.ts
+- apps/backend-v2/src/services/abuseDetectionService.ts
+- apps/backend-v2/src/middleware/auth.ts
+- apps/backend-v2/src/middleware/rateLimit.ts
+- apps/backend-v2/src/routes/auth.ts
+- apps/backend-v2/src/utils/authErrorTaxonomy.ts
+
+tests:
+- apps/backend-v2/tests/unit/services/rateLimitService.test.ts
+- apps/backend-v2/tests/unit/services/abuseDetectionService.test.ts
+- apps/backend-v2/tests/unit/utils/authErrorTaxonomy.test.ts
 
 ---
 
