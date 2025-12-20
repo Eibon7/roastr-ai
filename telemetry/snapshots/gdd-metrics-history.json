@@ -4619,9 +4619,72 @@
         "phase": 13,
         "collector": "collect-gdd-telemetry.js"
       }
+    },
+    {
+      "timestamp": "2025-12-20T00:54:09.483Z",
+      "date": "2025-12-20",
+      "metrics": {
+        "health": {
+          "overall_score": 65.7,
+          "average_score": 65.7,
+          "healthy_count": 0,
+          "degraded_count": 15,
+          "critical_count": 0,
+          "total_nodes": 15,
+          "status": "degraded"
+        },
+        "drift": {
+          "average_drift_risk": 4,
+          "high_risk_count": 0,
+          "at_risk_count": 0,
+          "healthy_count": 15,
+          "overall_status": "HEALTHY"
+        },
+        "validation": {
+          "nodes_validated": 15,
+          "orphans": 0,
+          "missing_refs": 0,
+          "cycles": 0,
+          "status": "healthy"
+        },
+        "repair": {
+          "total_fixes_attempted": 1,
+          "successful_fixes": 1,
+          "failed_fixes": 0,
+          "success_rate": 100
+        },
+        "coverage": null,
+        "derived": {
+          "stability_index": 87,
+          "health_variance": 85,
+          "auto_fix_efficiency": 100,
+          "system_status": "CRITICAL"
+        },
+        "momentum": {
+          "trend": "stable",
+          "delta": 0,
+          "current_health": 65.7,
+          "previous_health": 65.7,
+          "message": "Health stable by 0.0 points"
+        }
+      },
+      "alerts": [
+        {
+          "type": "health",
+          "severity": "critical",
+          "message": "Health score 65.7 below threshold 90",
+          "value": 65.7,
+          "threshold": 90
+        }
+      ],
+      "metadata": {
+        "version": "1.0.0",
+        "phase": 13,
+        "collector": "collect-gdd-telemetry.js"
+      }
     }
   ],
-  "last_updated": "2025-12-19T00:57:31.337Z",
-  "total_snapshots": 72,
+  "last_updated": "2025-12-20T00:54:09.483Z",
+  "total_snapshots": 73,
   "retention_days": 90
 }
