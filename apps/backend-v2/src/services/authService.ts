@@ -1,6 +1,6 @@
 /**
  * Authentication Service v2
- * 
+ *
  * Servicio principal de autenticación usando Supabase Auth.
  * Implementa signup, login, logout, refresh, magic links según SSOT v2.
  */
@@ -55,10 +55,7 @@ export class AuthService {
     try {
       // Validación básica
       if (!this.isValidEmail(email)) {
-        throw new AuthError(
-          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-          'Invalid email format'
-        );
+        throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email format');
       }
 
       if (!this.isValidPassword(password)) {
@@ -69,10 +66,7 @@ export class AuthService {
       }
 
       if (!['starter', 'pro', 'plus'].includes(planId)) {
-        throw new AuthError(
-          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-          'Invalid plan ID'
-        );
+        throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid plan ID');
       }
 
       // Crear usuario en Supabase Auth
@@ -94,21 +88,16 @@ export class AuthService {
       }
 
       if (!data.user || !data.session) {
-        throw new AuthError(
-          AUTH_ERROR_CODES.ACCOUNT_NOT_FOUND,
-          'User creation failed'
-        );
+        throw new AuthError(AUTH_ERROR_CODES.ACCOUNT_NOT_FOUND, 'User creation failed');
       }
 
       // Crear perfil en profiles table
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: data.user.id,
-          username: email.split('@')[0],
-          language_preference: 'en',
-          onboarding_state: 'welcome'
-        });
+      const { error: profileError } = await supabase.from('profiles').insert({
+        user_id: data.user.id,
+        username: email.split('@')[0],
+        language_preference: 'en',
+        onboarding_state: 'welcome'
+      });
 
       if (profileError) {
         console.error('Failed to create profile:', profileError);
@@ -148,14 +137,12 @@ export class AuthService {
       const rateLimitResult = rateLimitService.recordAttempt('login', ip);
       if (!rateLimitResult.allowed) {
         const blockedUntil = rateLimitResult.blockedUntil;
-        const message = blockedUntil === null
-          ? 'Account permanently locked. Contact support.'
-          : `Too many login attempts. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
-        
-        throw new AuthError(
-          AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED,
-          message
-        );
+        const message =
+          blockedUntil === null
+            ? 'Account permanently locked. Contact support.'
+            : `Too many login attempts. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
+
+        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED, message);
       }
 
       // Abuse detection
@@ -178,10 +165,7 @@ export class AuthService {
       }
 
       if (!data.user || !data.session) {
-        throw new AuthError(
-          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-          'Invalid email or password'
-        );
+        throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email or password');
       }
 
       // Verificar email confirmado
@@ -226,18 +210,18 @@ export class AuthService {
       const rateLimitResult = rateLimitService.recordAttempt('magic_link', ip);
       if (!rateLimitResult.allowed) {
         const blockedUntil = rateLimitResult.blockedUntil;
-        const message = blockedUntil === null
-          ? 'Account permanently locked. Contact support.'
-          : `Too many magic link requests. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
-        
-        throw new AuthError(
-          AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED,
-          message
-        );
+        const message =
+          blockedUntil === null
+            ? 'Account permanently locked. Contact support.'
+            : `Too many magic link requests. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
+
+        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED, message);
       }
 
       // Verificar que el usuario existe y es role=user
-      const { data: userData, error: userError } = await supabase.auth.admin.getUserByEmail(email.toLowerCase());
+      const { data: userData, error: userError } = await supabase.auth.admin.getUserByEmail(
+        email.toLowerCase()
+      );
 
       if (userError || !userData.user) {
         // No revelar si el email existe (anti-enumeration)
@@ -310,10 +294,7 @@ export class AuthService {
       }
 
       if (!data.session || !data.user) {
-        throw new AuthError(
-          AUTH_ERROR_CODES.TOKEN_INVALID,
-          'Invalid refresh token'
-        );
+        throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid refresh token');
       }
 
       return {
@@ -350,10 +331,7 @@ export class AuthService {
       }
 
       if (!data.user) {
-        throw new AuthError(
-          AUTH_ERROR_CODES.TOKEN_INVALID,
-          'Invalid access token'
-        );
+        throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid access token');
       }
 
       return {

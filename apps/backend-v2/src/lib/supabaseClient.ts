@@ -1,6 +1,6 @@
 /**
  * Supabase Client - Backend v2
- * 
+ *
  * Inicializa el cliente de Supabase Auth usando la service role key
  * para operaciones de backend.
  */
@@ -14,13 +14,9 @@ if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error('Missing required Supabase environment variables');
 }
 
-export const supabase: SupabaseClient = createClient(
-  supabaseUrl,
-  supabaseServiceKey,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
+export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
   }
-);
+});

@@ -14,10 +14,7 @@ import {
 describe('AuthError', () => {
   describe('constructor', () => {
     it('should create error with correct properties', () => {
-      const error = new AuthError(
-        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-        'Test message'
-      );
+      const error = new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Test message');
 
       expect(error).toBeInstanceOf(Error);
       expect(error.name).toBe('AuthError');
@@ -66,11 +63,7 @@ describe('AuthError', () => {
   describe('details', () => {
     it('should store additional details', () => {
       const details = { foo: 'bar' };
-      const error = new AuthError(
-        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-        'Test',
-        details
-      );
+      const error = new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Test', details);
 
       expect(error.details).toEqual(details);
     });

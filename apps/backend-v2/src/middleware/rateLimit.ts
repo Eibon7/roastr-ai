@@ -1,6 +1,6 @@
 /**
  * Rate Limiting Middleware v2
- * 
+ *
  * Middleware para aplicar rate limiting según tipo de endpoint.
  */
 
@@ -14,16 +14,17 @@ import { AUTH_ERROR_CODES } from '../utils/authErrorTaxonomy.js';
 export function rateLimitByType(authType: AuthType) {
   return (req: Request, res: Response, next: NextFunction): void => {
     // Obtener IP del cliente
-    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || 
-                req.socket.remoteAddress || 
-                'unknown';
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+      req.socket.remoteAddress ||
+      'unknown';
 
     // Verificar rate limit
     const result = rateLimitService.recordAttempt(authType, ip);
 
     if (!result.allowed) {
       const blockedUntil = result.blockedUntil;
-      
+
       if (blockedUntil === null) {
         // Bloqueo permanente
         res.status(429).json({
@@ -38,7 +39,7 @@ export function rateLimitByType(authType: AuthType) {
 
       // Bloqueo temporal
       const retryAfterSeconds = Math.ceil((blockedUntil - Date.now()) / 1000);
-      
+
       res.status(429).json({
         error: {
           code: AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED,
@@ -65,9 +66,10 @@ export function rateLimitByIp(options: {
   const attempts = new Map<string, { count: number; resetAt: number }>();
 
   return (req: Request, res: Response, next: NextFunction): void => {
-    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || 
-                req.socket.remoteAddress || 
-                'unknown';
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+      req.socket.remoteAddress ||
+      'unknown';
 
     const now = Date.now();
     const entry = attempts.get(ip);
@@ -83,7 +85,7 @@ export function rateLimitByIp(options: {
 
     if (entry.count >= options.maxAttempts) {
       const retryAfterSeconds = Math.ceil((entry.resetAt - now) / 1000);
-      
+
       res.status(429).json({
         error: {
           code: AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED,

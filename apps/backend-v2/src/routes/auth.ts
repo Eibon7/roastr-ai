@@ -1,8 +1,8 @@
 /**
  * Authentication Routes v2
- * 
+ *
  * Endpoints de autenticación con Supabase Auth.
- * 
+ *
  * Endpoints:
  * - POST /api/v2/auth/signup
  * - POST /api/v2/auth/login
@@ -86,9 +86,10 @@ router.post('/login', rateLimitByType('login'), async (req: Request, res: Respon
       });
     }
 
-    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || 
-                req.socket.remoteAddress || 
-                'unknown';
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+      req.socket.remoteAddress ||
+      'unknown';
 
     const session = await authService.login({
       email,
@@ -127,7 +128,7 @@ router.post('/login', rateLimitByType('login'), async (req: Request, res: Respon
 router.post('/logout', requireAuth, async (req: Request, res: Response) => {
   try {
     const token = req.headers.authorization?.substring(7) || '';
-    
+
     await authService.logout(token);
 
     res.json({
@@ -215,9 +216,10 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
       });
     }
 
-    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || 
-                req.socket.remoteAddress || 
-                'unknown';
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+      req.socket.remoteAddress ||
+      'unknown';
 
     const result = await authService.requestMagicLink({
       email,

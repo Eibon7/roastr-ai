@@ -1,14 +1,14 @@
 /**
  * Rate Limiting Service v2
- * 
+ *
  * Implementación de rate limiting según SSOT v2 - Sección 7.4
- * 
+ *
  * Configuración por tipo de autenticación:
  * - login: 5 intentos en 15 min → bloqueo 15 min
  * - magic_link: 3 intentos en 1h → bloqueo 1h
  * - oauth: 10 intentos en 15 min → bloqueo 15 min
  * - password_reset: 3 intentos en 1h → bloqueo 1h
- * 
+ *
  * Bloqueo progresivo: 15min → 1h → 24h → permanente
  */
 
@@ -32,22 +32,22 @@ interface RateLimitEntry {
 // Configuración desde SSOT v2 - Sección 7.4
 const RATE_LIMITS: Record<AuthType, RateLimitConfig> = {
   login: {
-    windowMs: 15 * 60 * 1000,      // 15 minutos
+    windowMs: 15 * 60 * 1000, // 15 minutos
     maxAttempts: 5,
     blockDurationMs: 15 * 60 * 1000 // 15 minutos
   },
   magic_link: {
-    windowMs: 60 * 60 * 1000,       // 1 hora
+    windowMs: 60 * 60 * 1000, // 1 hora
     maxAttempts: 3,
     blockDurationMs: 60 * 60 * 1000 // 1 hora
   },
   oauth: {
-    windowMs: 15 * 60 * 1000,       // 15 minutos
+    windowMs: 15 * 60 * 1000, // 15 minutos
     maxAttempts: 10,
     blockDurationMs: 15 * 60 * 1000 // 15 minutos
   },
   password_reset: {
-    windowMs: 60 * 60 * 1000,       // 1 hora
+    windowMs: 60 * 60 * 1000, // 1 hora
     maxAttempts: 3,
     blockDurationMs: 60 * 60 * 1000 // 1 hora
   }
@@ -55,10 +55,10 @@ const RATE_LIMITS: Record<AuthType, RateLimitConfig> = {
 
 // Bloqueo progresivo según SSOT v2
 const PROGRESSIVE_BLOCK_DURATIONS = [
-  15 * 60 * 1000,     // 15 minutos (1ra infracción)
-  60 * 60 * 1000,     // 1 hora (2da infracción)
+  15 * 60 * 1000, // 15 minutos (1ra infracción)
+  60 * 60 * 1000, // 1 hora (2da infracción)
   24 * 60 * 60 * 1000, // 24 horas (3ra infracción)
-  null                // Permanente (4ta+ infracción, requiere intervención manual)
+  null // Permanente (4ta+ infracción, requiere intervención manual)
 ];
 
 export class RateLimitService {
@@ -145,7 +145,10 @@ export class RateLimitService {
   /**
    * Registra un intento de autenticación
    */
-  recordAttempt(authType: AuthType, identifier: string): {
+  recordAttempt(
+    authType: AuthType,
+    identifier: string
+  ): {
     allowed: boolean;
     remaining?: number;
     blockedUntil?: number | null;
@@ -159,7 +162,7 @@ export class RateLimitService {
       const remaining = this.getBlockRemaining(authType, identifier);
       return {
         allowed: false,
-        blockedUntil: remaining === Infinity ? null : (now + (remaining || 0))
+        blockedUntil: remaining === Infinity ? null : now + (remaining || 0)
       };
     }
 
@@ -189,13 +192,13 @@ export class RateLimitService {
     // Si excede el límite, bloquear
     if (entry.attempts > config.maxAttempts) {
       const blockDuration = this.getBlockDuration(entry.blockCount, config.blockDurationMs);
-      
+
       entry.blockedUntil = blockDuration === null ? null : now + blockDuration;
       entry.blockCount++;
       entry.attempts = 0;
-      
+
       this.store.set(key, entry);
-      
+
       return {
         allowed: false,
         blockedUntil: entry.blockedUntil

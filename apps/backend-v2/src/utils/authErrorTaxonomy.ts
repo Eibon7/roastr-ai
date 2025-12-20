@@ -1,9 +1,9 @@
 /**
  * Auth Error Taxonomy v2
- * 
+ *
  * Sistema completo de taxonomía de errores de autenticación
  * basado en SSOT v2 y ROA-372.
- * 
+ *
  * Categorías:
  * - AUTH_*: Errores de autenticación (401)
  * - AUTHZ_*: Errores de autorización (403)
@@ -18,24 +18,24 @@ export const AUTH_ERROR_CODES = {
   EMAIL_NOT_VERIFIED: 'AUTH_EMAIL_NOT_VERIFIED',
   ACCOUNT_LOCKED: 'AUTH_ACCOUNT_LOCKED',
   RATE_LIMIT_EXCEEDED: 'AUTH_RATE_LIMIT_EXCEEDED',
-  
+
   // AUTHZ_* - Errores de autorización (403)
   INSUFFICIENT_PERMISSIONS: 'AUTHZ_INSUFFICIENT_PERMISSIONS',
   ROLE_NOT_ALLOWED: 'AUTHZ_ROLE_NOT_ALLOWED',
   MAGIC_LINK_NOT_ALLOWED: 'AUTHZ_MAGIC_LINK_NOT_ALLOWED',
-  
+
   // SESSION_* - Errores de sesión
   SESSION_EXPIRED: 'SESSION_EXPIRED',
   SESSION_INVALID: 'SESSION_INVALID',
   SESSION_REVOKED: 'SESSION_REVOKED',
   INACTIVITY_TIMEOUT: 'SESSION_INACTIVITY_TIMEOUT',
-  
+
   // TOKEN_* - Errores de tokens
   TOKEN_EXPIRED: 'TOKEN_EXPIRED',
   TOKEN_INVALID: 'TOKEN_INVALID',
   TOKEN_MISSING: 'TOKEN_MISSING',
   TOKEN_REVOKED: 'TOKEN_REVOKED',
-  
+
   // ACCOUNT_* - Errores de cuenta
   ACCOUNT_NOT_FOUND: 'ACCOUNT_NOT_FOUND',
   ACCOUNT_SUSPENDED: 'ACCOUNT_SUSPENDED',
@@ -43,7 +43,7 @@ export const AUTH_ERROR_CODES = {
   EMAIL_ALREADY_EXISTS: 'ACCOUNT_EMAIL_ALREADY_EXISTS'
 } as const;
 
-export type AuthErrorCode = typeof AUTH_ERROR_CODES[keyof typeof AUTH_ERROR_CODES];
+export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[keyof typeof AUTH_ERROR_CODES];
 
 export class AuthError extends Error {
   code: AuthErrorCode;
@@ -55,7 +55,7 @@ export class AuthError extends Error {
     this.name = 'AuthError';
     this.code = code;
     this.details = details;
-    
+
     // Mapear código a HTTP status code
     if (code.startsWith('AUTH_')) {
       this.statusCode = 401;
@@ -68,7 +68,7 @@ export class AuthError extends Error {
     } else {
       this.statusCode = 500;
     }
-    
+
     Error.captureStackTrace(this, this.constructor);
   }
 }
@@ -78,7 +78,7 @@ export class AuthError extends Error {
  */
 export function mapSupabaseError(error: any): AuthError {
   const message = error?.message || 'Unknown error';
-  
+
   // Email ya existe
   if (message.includes('already registered') || message.includes('duplicate')) {
     return new AuthError(
@@ -87,16 +87,12 @@ export function mapSupabaseError(error: any): AuthError {
       error
     );
   }
-  
+
   // Credenciales inválidas
   if (message.includes('Invalid login credentials') || message.includes('wrong password')) {
-    return new AuthError(
-      AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-      'Invalid email or password',
-      error
-    );
+    return new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email or password', error);
   }
-  
+
   // Email no verificado
   if (message.includes('Email not confirmed')) {
     return new AuthError(
@@ -105,7 +101,7 @@ export function mapSupabaseError(error: any): AuthError {
       error
     );
   }
-  
+
   // Token expirado
   if (message.includes('expired') || message.includes('JWT expired')) {
     return new AuthError(
@@ -114,40 +110,26 @@ export function mapSupabaseError(error: any): AuthError {
       error
     );
   }
-  
+
   // Token inválido
   if (message.includes('invalid') && message.includes('token')) {
-    return new AuthError(
-      AUTH_ERROR_CODES.TOKEN_INVALID,
-      'Invalid authentication token',
-      error
-    );
+    return new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid authentication token', error);
   }
-  
+
   // Sesión inválida
   if (message.includes('session')) {
-    return new AuthError(
-      AUTH_ERROR_CODES.SESSION_INVALID,
-      'Invalid session',
-      error
-    );
+    return new AuthError(AUTH_ERROR_CODES.SESSION_INVALID, 'Invalid session', error);
   }
-  
+
   // Fallback
-  return new AuthError(
-    AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-    'Authentication failed',
-    error
-  );
+  return new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Authentication failed', error);
 }
 
 /**
  * Determina si un error es retryable
  */
 export function isRetryableError(error: AuthError): boolean {
-  const retryableCodes = [
-    AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED
-  ];
+  const retryableCodes = [AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED];
   return retryableCodes.includes(error.code);
 }
 

@@ -1,6 +1,6 @@
 /**
  * Authentication Middleware v2
- * 
+ *
  * Middleware para verificar JWT tokens y roles de usuario.
  */
 
@@ -25,15 +25,11 @@ declare global {
 /**
  * Middleware que verifica que el usuario esté autenticado
  */
-export async function requireAuth(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     // Extraer token del header Authorization
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       throw new AuthError(
         AUTH_ERROR_CODES.TOKEN_MISSING,
@@ -107,18 +103,14 @@ export function requireRole(...allowedRoles: Array<'user' | 'admin' | 'superadmi
 /**
  * Middleware opcional de autenticación (no falla si no hay token)
  */
-export async function optionalAuth(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function optionalAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       const user = await authService.getCurrentUser(token);
-      
+
       req.user = {
         id: user.id,
         email: user.email,

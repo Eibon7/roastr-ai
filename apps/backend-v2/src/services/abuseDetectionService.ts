@@ -1,8 +1,8 @@
 /**
  * Abuse Detection Service v2
- * 
+ *
  * Implementación de detección de abuse patterns según SSOT v2 - Sección 7.5
- * 
+ *
  * Thresholds:
  * - multi_ip: 3 IPs diferentes para mismo email
  * - multi_email: 5 emails diferentes para misma IP
@@ -33,11 +33,7 @@ interface AbuseEntry {
   attempts: Array<{ timestamp: number }>;
 }
 
-export type AbusePattern = 
-  | 'multi_ip'
-  | 'multi_email'
-  | 'burst_attack'
-  | 'slow_attack';
+export type AbusePattern = 'multi_ip' | 'multi_email' | 'burst_attack' | 'slow_attack';
 
 export class AbuseDetectionService {
   private ipStore: Map<string, AbuseEntry>;
@@ -60,7 +56,10 @@ export class AbuseDetectionService {
   /**
    * Registra un intento de autenticación y detecta abuse patterns
    */
-  recordAttempt(email: string, ip: string): {
+  recordAttempt(
+    email: string,
+    ip: string
+  ): {
     isAbuse: boolean;
     patterns: AbusePattern[];
     details?: string;
@@ -101,8 +100,8 @@ export class AbuseDetectionService {
 
     // Limpiar intentos antiguos (>1 hora)
     const oneHourAgo = now - 60 * 60 * 1000;
-    ipEntry.attempts = ipEntry.attempts.filter(a => a.timestamp > oneHourAgo);
-    emailEntry.attempts = emailEntry.attempts.filter(a => a.timestamp > oneHourAgo);
+    ipEntry.attempts = ipEntry.attempts.filter((a) => a.timestamp > oneHourAgo);
+    emailEntry.attempts = emailEntry.attempts.filter((a) => a.timestamp > oneHourAgo);
 
     // Detectar patrones de abuse
 
@@ -118,25 +117,27 @@ export class AbuseDetectionService {
 
     // 3. Burst Attack: Muchos intentos en 1 minuto
     const oneMinuteAgo = now - 60 * 1000;
-    const recentAttemptsIp = ipEntry.attempts.filter(a => a.timestamp > oneMinuteAgo).length;
-    const recentAttemptsEmail = emailEntry.attempts.filter(a => a.timestamp > oneMinuteAgo).length;
-    
+    const recentAttemptsIp = ipEntry.attempts.filter((a) => a.timestamp > oneMinuteAgo).length;
+    const recentAttemptsEmail = emailEntry.attempts.filter(
+      (a) => a.timestamp > oneMinuteAgo
+    ).length;
+
     if (recentAttemptsIp > this.thresholds.burst || recentAttemptsEmail > this.thresholds.burst) {
       patterns.push('burst_attack');
     }
 
     // 4. Slow Attack: Muchos intentos en 1 hora
-    if (ipEntry.attempts.length > this.thresholds.slow_attack || 
-        emailEntry.attempts.length > this.thresholds.slow_attack) {
+    if (
+      ipEntry.attempts.length > this.thresholds.slow_attack ||
+      emailEntry.attempts.length > this.thresholds.slow_attack
+    ) {
       patterns.push('slow_attack');
     }
 
     return {
       isAbuse: patterns.length > 0,
       patterns,
-      details: patterns.length > 0 
-        ? `Detected abuse patterns: ${patterns.join(', ')}` 
-        : undefined
+      details: patterns.length > 0 ? `Detected abuse patterns: ${patterns.join(', ')}` : undefined
     };
   }
 
@@ -185,7 +186,7 @@ export class AbuseDetectionService {
 
     // Limpiar IP store
     for (const [ip, entry] of this.ipStore.entries()) {
-      entry.attempts = entry.attempts.filter(a => a.timestamp > oneHourAgo);
+      entry.attempts = entry.attempts.filter((a) => a.timestamp > oneHourAgo);
       if (entry.attempts.length === 0) {
         this.ipStore.delete(ip);
       }
@@ -193,7 +194,7 @@ export class AbuseDetectionService {
 
     // Limpiar email store
     for (const [emailHash, entry] of this.emailStore.entries()) {
-      entry.attempts = entry.attempts.filter(a => a.timestamp > oneHourAgo);
+      entry.attempts = entry.attempts.filter((a) => a.timestamp > oneHourAgo);
       if (entry.attempts.length === 0) {
         this.emailStore.delete(emailHash);
       }
