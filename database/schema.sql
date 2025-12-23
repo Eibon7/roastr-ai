@@ -757,6 +757,10 @@ CREATE POLICY admin_settings_admin_only ON admin_settings FOR ALL
     USING (
         auth.jwt() ->> 'role' = 'authenticated' AND 
         EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND is_admin = true)
+    )
+    WITH CHECK (
+        auth.jwt() ->> 'role' = 'authenticated' AND 
+        EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND is_admin = true)
     );
 
 -- ============================================================================
