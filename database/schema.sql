@@ -593,6 +593,27 @@ CREATE TABLE password_history (
     INDEX (user_id, created_at DESC)
 );
 
+-- ============================================================================
+-- ADMIN SETTINGS (V2 Infrastructure)
+-- ============================================================================
+
+-- Admin settings table for dynamic configuration via SettingsLoader v2
+-- Issue: ROA-369 - Infraestructura común V2
+-- Stores key-value pairs for dynamic configuration (gatekeeper, feature flags, etc.)
+CREATE TABLE admin_settings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    key VARCHAR(255) UNIQUE NOT NULL, -- Dot-separated key path (e.g., "gatekeeper.mode", "feature_flags.autopost_enabled")
+    value JSONB NOT NULL, -- Value can be string, number, boolean, or nested object
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_by UUID REFERENCES users(id), -- Admin user who last updated this setting
+    
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for admin_settings
+CREATE INDEX idx_admin_settings_key ON admin_settings(key);
+CREATE INDEX idx_admin_settings_updated_at ON admin_settings(updated_at DESC);
+
 -- Add RLS to password history
 ALTER TABLE password_history ENABLE ROW LEVEL SECURITY;
 
@@ -617,6 +638,7 @@ ALTER TABLE app_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE account_deletion_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_settings ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies (users can only access their organization's data)
 -- Users can only see their own user record
@@ -730,6 +752,17 @@ CREATE POLICY password_history_isolation ON password_history FOR ALL USING (user
 CREATE POLICY password_history_service_access ON password_history FOR ALL 
     USING (auth.role() = 'service_role');
 
+-- Admin settings - only admins can view and modify
+CREATE POLICY admin_settings_admin_only ON admin_settings FOR ALL
+    USING (
+        auth.jwt() ->> 'role' = 'authenticated' AND 
+        EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND is_admin = true)
+    )
+    WITH CHECK (
+        auth.jwt() ->> 'role' = 'authenticated' AND 
+        EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND is_admin = true)
+    );
+
 -- ============================================================================
 -- FUNCTIONS & TRIGGERS
 -- ============================================================================
@@ -748,6 +781,7 @@ CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECU
 CREATE TRIGGER update_organizations_updated_at BEFORE UPDATE ON organizations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_integration_configs_updated_at BEFORE UPDATE ON integration_configs FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_monthly_usage_updated_at BEFORE UPDATE ON monthly_usage FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_admin_settings_updated_at BEFORE UPDATE ON admin_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Function to check usage limits
 CREATE OR REPLACE FUNCTION check_usage_limit(org_id UUID)

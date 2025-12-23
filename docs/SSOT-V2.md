@@ -270,9 +270,94 @@ type FeatureFlagKey =
 
 ---
 
-## 4. Shield & Motor de Análisis
+## 4. Gatekeeper (Seguridad / Abuso)
 
-### 4.1 Thresholds
+### 12.1 Propósito
+
+Gatekeeper es la primera línea de defensa contra comentarios maliciosos e intentos de prompt injection. Clasifica comentarios y detecta intentos de manipulación antes de que lleguen a los modelos de IA.
+
+### 12.2 Configuración
+
+La configuración de Gatekeeper vive en `admin_settings.gatekeeper.*` (vía SettingsLoader v2).
+
+**Estructura:**
+
+```ts
+type GatekeeperConfig = {
+  mode: 'multiplicative' | 'additive';
+  thresholds: {
+    suspicious: number;      // 0.0 - 1.0, default 0.5
+    highConfidence: number;   // 0.0 - 1.0, default 0.9
+    maxScore: number;         // 0.0 - 1.0, default 1.0
+  };
+  heuristics: {
+    multipleNewlines: number;    // 0.0 - 1.0, default 0.3
+    codeBlocks: number;          // 0.0 - 1.0, default 0.4
+    unusualLength: number;       // 0.0 - 1.0, default 0.2
+    repeatedPhrases: number;     // 0.0 - 1.0, default 0.3
+  };
+  heuristicsConfig: {
+    newlineThreshold: number;           // default 3
+    unusualLengthThreshold: number;     // default 1000
+    repeatedPhraseCount: number;        // default 2
+  };
+  patternWeights: {
+    instruction_override: number;   // default 1.0
+    prompt_extraction: number;      // default 0.9
+    role_manipulation: number;      // default 0.9
+    jailbreak: number;              // default 1.0
+    output_control: number;         // default 0.7
+    hidden_instruction: number;     // default 0.7
+    priority_override: number;       // default 0.9
+    encoding_trick: number;          // default 0.7
+  };
+};
+```
+
+### 12.3 Modos de Operación
+
+- **`multiplicative`** (default): Los pesos se multiplican para calcular score final.
+- **`additive`**: Los pesos se suman para calcular score final.
+
+### 12.4 Categorías de Detección
+
+Gatekeeper detecta los siguientes tipos de ataques:
+
+1. **`instruction_override`**: Intentos de ignorar instrucciones del sistema.
+2. **`prompt_extraction`**: Intentos de extraer el prompt del sistema.
+3. **`role_manipulation`**: Intentos de cambiar el rol del modelo.
+4. **`jailbreak`**: Intentos de "romper" las restricciones del modelo.
+5. **`output_control`**: Intentos de controlar la salida del modelo.
+6. **`hidden_instruction`**: Instrucciones ocultas en el texto.
+7. **`priority_override`**: Intentos de cambiar prioridades.
+8. **`encoding_trick`**: Trucos de codificación para evadir detección.
+
+### 12.5 Heurísticas
+
+Gatekeeper aplica heurísticas adicionales:
+
+- **`multipleNewlines`**: Detecta múltiples saltos de línea (posible código).
+- **`codeBlocks`**: Detecta bloques de código.
+- **`unusualLength`**: Detecta textos inusualmente largos o cortos.
+- **`repeatedPhrases`**: Detecta frases repetidas (posible spam).
+
+### 12.6 Fail-Safe
+
+Si no hay configuración en `admin_settings`, Gatekeeper usa valores por defecto seguros (fail-closed para seguridad). Los valores por defecto están documentados en `src/services/gatekeeperService.js`.
+
+### 12.7 Hot Reload
+
+La configuración se carga dinámicamente desde SettingsLoader v2 (cache de 1 minuto). Los cambios en `admin_settings` se reflejan automáticamente sin reiniciar el servicio.
+
+**Endpoints admin:**
+- `GET /api/v2/admin/settings/gatekeeper` - Obtener configuración actual
+- `PATCH /api/v2/admin/settings/gatekeeper` - Actualizar configuración
+
+---
+
+## 5. Shield & Motor de Análisis
+
+### 12.1 Thresholds
 
 Valores numéricos viven en DB/config, pero las **claves** son:
 
@@ -284,7 +369,7 @@ type Thresholds = {
 };
 ```
 
-### 4.2 Weights
+### 12.2 Weights
 
 ```ts
 type Weights = {
@@ -298,7 +383,7 @@ type Weights = {
 };
 ```
 
-### 4.3 Reglas inmutables de Shield
+### 12.3 Reglas inmutables de Shield
 
 - Identity attack o amenaza ⇒ **shield_critico** siempre, aunque el score numérico sea bajo.
 - `insults_count >= N_DENSIDAD` ⇒ fuerza `shield_critico`.
@@ -308,13 +393,13 @@ type Weights = {
   - Solo pueden **reducir** el score cuando aún no estamos en zona de Shield.
   - Nunca pueden rebajar un caso crítico.
 
-### 4.4 Salidas posibles del motor
+### 12.4 Salidas posibles del motor
 
 ```ts
 type AnalysisDecision = 'publicar' | 'correctiva' | 'roast' | 'shield_moderado' | 'shield_critico';
 ```
 
-### 4.5 Reglas de "Correctiva"
+### 12.5 Reglas de "Correctiva"
 
 - Solo si:
   - `score_final < τ_shield`
@@ -326,9 +411,9 @@ type AnalysisDecision = 'publicar' | 'correctiva' | 'roast' | 'shield_moderado' 
 
 ---
 
-## 5. Roastr Persona
+## 6. Roastr Persona
 
-### 5.1 Estructura
+### 12.1 Estructura
 
 ```ts
 type PersonaProfile = {
@@ -341,7 +426,7 @@ type PersonaProfile = {
 - Se almacena como **EncryptedPersona** (AES) en DB.
 - Backend nunca usa el texto plano salvo en una capa controlada de normalización.
 
-### 5.2 Reglas
+### 12.2 Reglas
 
 - Persona se usa **solo** en Motor de Análisis (ajuste de score).
 - **Nunca** se incluye en prompts de IA.
@@ -350,9 +435,9 @@ type PersonaProfile = {
 
 ---
 
-## 6. Tonos & Roasting
+## 7. Tonos & Roasting
 
-### 6.1 Tonos oficiales
+### 12.1 Tonos oficiales
 
 ```ts
 type RoastTone = 'flanders' | 'balanceado' | 'canalla' | 'personal';
@@ -363,14 +448,14 @@ type RoastTone = 'flanders' | 'balanceado' | 'canalla' | 'personal';
 - `canalla`: humor afilado, ironía, sin degradación.
 - `personal`: derivado rule-based del estilo del usuario (solo Pro/Plus, beta).
 
-### 6.2 Tono NSFW
+### 12.2 Tono NSFW
 
 - Existe como concepto, pero:
   - `nsfw_tone_enabled` = false por defecto.
   - No se usa hasta tener modelo dedicado y legal aprobado.
   - No se debe integrar en UI ni código productivo v2.
 
-### 6.3 Style Validator
+### 12.3 Style Validator
 
 - Rule-based, sin IA.
 - No permite:
@@ -386,7 +471,7 @@ type RoastTone = 'flanders' | 'balanceado' | 'canalla' | 'personal';
   - Debe devolver error claro al usuario.
   - El contenido no se publica.
 
-### 6.4 Disclaimers IA
+### 12.4 Disclaimers IA
 
 - Se aplican **solo** cuando:
   - `autoApprove === true`
@@ -406,9 +491,9 @@ type DisclaimerPool = {
 
 ---
 
-## 7. Integraciones
+## 8. Integraciones
 
-### 7.1 Redes soportadas en v2 (MVP)
+### 12.1 Redes soportadas en v2 (MVP)
 
 ```ts
 type SupportedPlatform = 'x' | 'youtube';
@@ -419,7 +504,7 @@ type SupportedPlatform = 'x' | 'youtube';
 - YouTube:
   - `googleapis` / Comment API.
 
-### 7.2 Redes planificadas (no implementadas en v2)
+### 12.2 Redes planificadas (no implementadas en v2)
 
 Existe intención de integrarlas en el futuro, pero:
 
@@ -438,7 +523,7 @@ Lista de redes planificadas:
 
 > Cualquier aparición de estas redes en código v2 debe marcarse como **TODO futuro**, no como legacy.
 
-### 7.3 Otros servicios de terceros
+### 12.3 Otros servicios de terceros
 
 - **Supabase**: DB + Auth + Storage.
 - **Redis / Upstash**: colas, rate limiting.
@@ -448,7 +533,7 @@ Lista de redes planificadas:
 - **Resend**: email transaccional v2.
 - **SendGrid / Stripe / otras**: solo v1 (legacy), no usarse en nuevos flujos.
 
-### 7.4 Rate Limiting de Autenticación (ROA-359)
+### 12.4 Rate Limiting de Autenticación (ROA-359)
 
 **Configuración oficial de rate limits para endpoints de autenticación:**
 
@@ -497,7 +582,7 @@ type ProgressiveBlockDurations = [
 - `ENABLE_AUTH_RATE_LIMIT_V2`: Habilita rate limiting v2 (reemplaza v1)
 - `ENABLE_RATE_LIMIT`: Habilita rate limiting general (requerido para v2)
 
-### 7.5 Abuse Detection Thresholds (ROA-359)
+### 12.5 Abuse Detection Thresholds (ROA-359)
 
 **Configuración oficial de thresholds para detección de abuse patterns:**
 
@@ -526,9 +611,9 @@ type AbuseDetectionThresholds = {
 
 ---
 
-## 8. Workers & Procesos asíncronos
+## 9. Workers & Procesos asíncronos
 
-### 8.1 Workers oficiales v2
+### 12.1 Workers oficiales v2
 
 ```ts
 type WorkerName =
@@ -543,7 +628,7 @@ type WorkerName =
   | 'StrikeCleanup';
 ```
 
-### 8.5 Workers auxiliares (internos)
+### 12.5 Workers auxiliares (internos)
 
 Estos workers soportan funcionalidades internas y no forman parte del flujo core de roasting:
 
@@ -562,12 +647,12 @@ type AuxiliaryWorkerName =
 - Logs estructurados obligatorios (sin datos sensibles).
 - Pueden ser deshabilitados individualmente sin afectar el flujo core.
 
-### 8.2 Tenancy
+### 12.2 Tenancy
 
 - Todos los payloads deben incluir `userId` + `accountId`.
 - Ningún worker puede tocar datos de otro usuario.
 
-### 8.3 Retries y DLQ
+### 12.3 Retries y DLQ
 
 - 5 intentos por job:
   - 1 normal + 3 con backoff creciente + 1 final.
@@ -578,7 +663,7 @@ type AuxiliaryWorkerName =
   - error final.
   - worker.
 
-### 8.4 Logs mínimos por worker
+### 12.4 Logs mínimos por worker
 
 ```ts
 {
@@ -598,16 +683,16 @@ type AuxiliaryWorkerName =
 
 ---
 
-## 9. GDPR, Retención y Datos
+## 10. GDPR, Retención y Datos
 
-### 9.1 Retención
+### 12.1 Retención
 
 - Usuarios eliminados → retención máx. 90 días → purga total.
 - Ofensores / reincidencia → solo últimos 90 días.
 - Logs de motor → 90 días.
 - Roastr Persona → borrado inmediato al eliminar cuenta.
 
-### 9.2 Datos que **sí** guardamos
+### 12.2 Datos que **sí** guardamos
 
 - Datos de cuenta:
   - email, user_id, idioma, plan, estado.
@@ -621,7 +706,7 @@ type AuxiliaryWorkerName =
   - tipo de acción del Shield.
 - Roasts publicados (solo si el usuario los publica).
 
-### 9.3 Datos que **no** guardamos
+### 12.3 Datos que **no** guardamos
 
 - Texto crudo de comentarios interceptados por Shield.
 - Imágenes, vídeos, DMs.
@@ -630,9 +715,9 @@ type AuxiliaryWorkerName =
 
 ---
 
-## 10. Infraestructura v2 (Staging / Prod)
+## 11. Infraestructura v2 (Staging / Prod)
 
-### 10.1 Entornos
+### 12.1 Entornos
 
 - `staging` y `production` completamente separados:
   - Supabase separado.
@@ -640,7 +725,7 @@ type AuxiliaryWorkerName =
   - Colas separadas.
   - OAuth apps separadas (X, YouTube, Polar, Resend).
 
-### 10.2 Env vars (nombres contractuales)
+### 12.2 Env vars (nombres contractuales)
 
 Ejemplos (no exhaustivo, pero los nombres no deben cambiar):
 
@@ -665,9 +750,9 @@ Ejemplos (no exhaustivo, pero los nombres no deben cambiar):
 
 ---
 
-## 11. Testing v2 (umbrales mínimos)
+## 12. Testing v2 (umbrales mínimos)
 
-### 11.1 Cobertura por categoría
+### 12.1 Cobertura por categoría
 
 - Lógica de dominio: ≥ 90%.
 - Prompt builders: 100%.
@@ -677,7 +762,7 @@ Ejemplos (no exhaustivo, pero los nombres no deben cambiar):
 - Frontend hooks: ≥ 70%.
 - UI E2E: flujos críticos cubiertos (login, conectar cuentas, dashboard, detalle de cuenta, settings, billing básico).
 
-### 11.2 Regla de señal
+### 12.2 Regla de señal
 
 - No se testean cosas sin señal:
   - clicks de botones triviales.
@@ -686,7 +771,7 @@ Ejemplos (no exhaustivo, pero los nombres no deben cambiar):
 
 ---
 
-## 12. Reglas anti-"AI slop"
+## 13. Reglas anti-"AI slop"
 
 Para cualquier cambio generado con ayuda de IA:
 
@@ -702,7 +787,7 @@ Para cualquier cambio generado con ayuda de IA:
 
 ---
 
-## 13. Regla final
+## 14. Regla final
 
 > Ningún nuevo comportamiento de Roastr v2 se puede introducir sin:
 >
