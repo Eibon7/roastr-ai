@@ -64,7 +64,7 @@ export class AuthError extends Error {
     } else if (code.startsWith('SESSION_') || code.startsWith('TOKEN_')) {
       this.statusCode = 401;
     } else if (code.startsWith('ACCOUNT_')) {
-      this.statusCode = code === 'ACCOUNT_EMAIL_ALREADY_EXISTS' ? 409 : 404;
+      this.statusCode = code === AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS ? 409 : 404;
     } else {
       this.statusCode = 500;
     }
@@ -119,6 +119,15 @@ export function mapSupabaseError(error: any): AuthError {
   // Sesión inválida
   if (message.includes('session')) {
     return new AuthError(AUTH_ERROR_CODES.SESSION_INVALID, 'Invalid session', error);
+  }
+
+  // Rate limit from Supabase
+  if (message.includes('Too many requests') || message.includes('rate_limit') || message.includes('over_request_rate_limit')) {
+    return new AuthError(
+      AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED,
+      'Too many requests. Please try again later',
+      error
+    );
   }
 
   // Fallback

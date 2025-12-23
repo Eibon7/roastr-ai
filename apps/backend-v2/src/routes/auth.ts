@@ -17,14 +17,16 @@ import { authService } from '../services/authService.js';
 import { AuthError } from '../utils/authErrorTaxonomy.js';
 import { rateLimitByType } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
+import { getClientIp } from '../utils/request.js';
 
 const router = Router();
 
 /**
  * POST /api/v2/auth/signup
  * Registra un nuevo usuario
+ * Rate limited: 5 intentos en 1 hora
  */
-router.post('/signup', async (req: Request, res: Response) => {
+router.post('/signup', rateLimitByType('signup'), async (req: Request, res: Response) => {
   try {
     const { email, password, plan_id, metadata } = req.body;
 
@@ -86,10 +88,7 @@ router.post('/login', rateLimitByType('login'), async (req: Request, res: Respon
       });
     }
 
-    const ip =
-      (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-      req.socket.remoteAddress ||
-      'unknown';
+    const ip = getClientIp(req);
 
     const session = await authService.login({
       email,
@@ -127,7 +126,10 @@ router.post('/login', rateLimitByType('login'), async (req: Request, res: Respon
  */
 router.post('/logout', requireAuth, async (req: Request, res: Response) => {
   try {
-    const token = req.headers.authorization?.substring(7) || '';
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') 
+      ? authHeader.slice(7) 
+      : '';
 
     await authService.logout(token);
 
@@ -216,10 +218,7 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
       });
     }
 
-    const ip =
-      (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-      req.socket.remoteAddress ||
-      'unknown';
+    const ip = getClientIp(req);
 
     const result = await authService.requestMagicLink({
       email,
@@ -251,20 +250,10 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
  * GET /api/v2/auth/me
  * Obtiene información del usuario actual
  */
-router.get('/me', requireAuth, async (req: Request, res: Response) => {
-  try {
-    res.json({
-      user: req.user
-    });
-  } catch (error) {
-    console.error('Get user error:', error);
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An error occurred while fetching user'
-      }
-    });
-  }
+router.get('/me', requireAuth, (req: Request, res: Response) => {
+  res.json({
+    user: req.user
+  });
 });
 
 export default router;

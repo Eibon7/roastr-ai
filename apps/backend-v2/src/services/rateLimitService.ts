@@ -14,7 +14,7 @@
 
 import { createHash } from 'crypto';
 
-export type AuthType = 'login' | 'magic_link' | 'oauth' | 'password_reset';
+export type AuthType = 'login' | 'magic_link' | 'oauth' | 'password_reset' | 'signup';
 
 interface RateLimitConfig {
   windowMs: number;
@@ -50,6 +50,11 @@ const RATE_LIMITS: Record<AuthType, RateLimitConfig> = {
     windowMs: 60 * 60 * 1000, // 1 hora
     maxAttempts: 3,
     blockDurationMs: 60 * 60 * 1000 // 1 hora
+  },
+  signup: {
+    windowMs: 60 * 60 * 1000, // 1 hora
+    maxAttempts: 5,
+    blockDurationMs: 60 * 60 * 1000 // 1 hora
   }
 };
 
@@ -66,13 +71,6 @@ export class RateLimitService {
 
   constructor() {
     this.store = new Map();
-  }
-
-  /**
-   * Genera hash de email para privacidad
-   */
-  private hashEmail(email: string): string {
-    return createHash('sha256').update(email.toLowerCase()).digest('hex');
   }
 
   /**
@@ -129,13 +127,18 @@ export class RateLimitService {
     const key = this.getKey(authType, identifier);
     const entry = this.store.get(key);
 
-    if (!entry || !entry.blockedUntil) {
+    if (!entry) {
       return null;
     }
 
     // Bloqueo permanente
     if (entry.blockedUntil === null) {
       return Infinity;
+    }
+
+    // Si no hay bloqueo temporal
+    if (!entry.blockedUntil) {
+      return null;
     }
 
     const remaining = entry.blockedUntil - Date.now();

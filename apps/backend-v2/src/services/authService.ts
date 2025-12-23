@@ -110,7 +110,9 @@ export class AuthService {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_in: data.session.expires_in || 3600,
-        expires_at: data.session.expires_at || Math.floor(Date.now() / 1000) + 3600,
+        expires_at: data.session.expires_at 
+          ? (typeof data.session.expires_at === 'number' ? data.session.expires_at : Math.floor(new Date(data.session.expires_at).getTime() / 1000))
+          : Math.floor(Date.now() / 1000) + 3600,
         user: {
           id: data.user.id,
           email: data.user.email!,
@@ -150,9 +152,11 @@ export class AuthService {
       // Abuse detection
       const abuseResult = abuseDetectionService.recordAttempt(email, ip);
       if (abuseResult.isAbuse) {
+        // Log patterns server-side for investigation, but don't expose to client
+        console.error('Abuse detected:', { email, ip, patterns: abuseResult.patterns });
         throw new AuthError(
           AUTH_ERROR_CODES.ACCOUNT_LOCKED,
-          `Suspicious activity detected: ${abuseResult.patterns.join(', ')}`
+          'Suspicious activity detected. Please try again later or contact support.'
         );
       }
 
@@ -182,7 +186,9 @@ export class AuthService {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_in: data.session.expires_in || 3600,
-        expires_at: data.session.expires_at || Math.floor(Date.now() / 1000) + 3600,
+        expires_at: data.session.expires_at 
+          ? (typeof data.session.expires_at === 'number' ? data.session.expires_at : Math.floor(new Date(data.session.expires_at).getTime() / 1000))
+          : Math.floor(Date.now() / 1000) + 3600,
         user: {
           id: data.user.id,
           email: data.user.email!,
@@ -235,10 +241,11 @@ export class AuthService {
 
       const role = userData.user.user_metadata?.role || 'user';
       if (role === 'admin' || role === 'superadmin') {
-        throw new AuthError(
-          AUTH_ERROR_CODES.MAGIC_LINK_NOT_ALLOWED,
-          'Magic links are not allowed for admin users'
-        );
+        // Return same message as non-existent user (anti-enumeration)
+        return {
+          success: true,
+          message: 'If this email exists, a magic link has been sent'
+        };
       }
 
       // Enviar magic link

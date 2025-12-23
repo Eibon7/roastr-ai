@@ -7,6 +7,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { rateLimitService, AuthType } from '../services/rateLimitService.js';
 import { AUTH_ERROR_CODES } from '../utils/authErrorTaxonomy.js';
+import { getClientIp } from '../utils/request.js';
 
 /**
  * Middleware de rate limiting por tipo de autenticación
@@ -14,10 +15,7 @@ import { AUTH_ERROR_CODES } from '../utils/authErrorTaxonomy.js';
 export function rateLimitByType(authType: AuthType) {
   return (req: Request, res: Response, next: NextFunction): void => {
     // Obtener IP del cliente
-    const ip =
-      (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-      req.socket.remoteAddress ||
-      'unknown';
+    const ip = getClientIp(req);
 
     // Verificar rate limit
     const result = rateLimitService.recordAttempt(authType, ip);
@@ -66,10 +64,7 @@ export function rateLimitByIp(options: {
   const attempts = new Map<string, { count: number; resetAt: number }>();
 
   return (req: Request, res: Response, next: NextFunction): void => {
-    const ip =
-      (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-      req.socket.remoteAddress ||
-      'unknown';
+    const ip = getClientIp(req);
 
     const now = Date.now();
     const entry = attempts.get(ip);

@@ -42,11 +42,24 @@ export class AbuseDetectionService {
   private ipStore: Map<string, AbuseEntry>;
   private emailStore: Map<string, AbuseEntry>;
   private thresholds: AbuseDetectionThresholds;
+  private cleanupInterval?: NodeJS.Timeout;
 
   constructor(thresholds: AbuseDetectionThresholds = DEFAULT_THRESHOLDS) {
     this.ipStore = new Map();
     this.emailStore = new Map();
     this.thresholds = thresholds;
+    // Auto-cleanup every 10 minutes to prevent memory leaks
+    this.cleanupInterval = setInterval(() => this.cleanup(), 10 * 60 * 1000);
+  }
+
+  /**
+   * Stops cleanup interval (for graceful shutdown)
+   */
+  destroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = undefined;
+    }
   }
 
   /**
