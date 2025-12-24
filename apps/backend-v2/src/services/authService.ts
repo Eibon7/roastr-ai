@@ -142,7 +142,7 @@ export class AuthService {
       if (!rateLimitResult.allowed) {
         const blockedUntil = rateLimitResult.blockedUntil;
         const message =
-          blockedUntil === null
+          blockedUntil === null || blockedUntil === undefined
             ? 'Account permanently locked. Contact support.'
             : `Too many login attempts. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
 
@@ -219,7 +219,7 @@ export class AuthService {
       if (!rateLimitResult.allowed) {
         const blockedUntil = rateLimitResult.blockedUntil;
         const message =
-          blockedUntil === null
+          blockedUntil === null || blockedUntil === undefined
             ? 'Account permanently locked. Contact support.'
             : `Too many magic link requests. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
 
@@ -227,11 +227,12 @@ export class AuthService {
       }
 
       // Verificar que el usuario existe y es role=user
-      const { data: userData, error: userError } = await supabase.auth.admin.getUserByEmail(
-        email.toLowerCase()
-      );
+      // Usar listUsers con filtro de email (getUserByEmail no existe en Supabase Admin API)
+      const { data: usersList, error: userError } = await supabase.auth.admin.listUsers();
+      
+      const user = usersList?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
 
-      if (userError || !userData.user) {
+      if (userError || !user) {
         // No revelar si el email existe (anti-enumeration)
         return {
           success: true,
@@ -239,7 +240,7 @@ export class AuthService {
         };
       }
 
-      const role = userData.user.user_metadata?.role || 'user';
+      const role = user.user_metadata?.role || 'user';
       if (role === 'admin' || role === 'superadmin') {
         // Return same message as non-existent user (anti-enumeration)
         return {

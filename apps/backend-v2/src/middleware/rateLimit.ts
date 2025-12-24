@@ -36,7 +36,7 @@ export function rateLimitByType(authType: AuthType) {
       }
 
       // Bloqueo temporal
-      const retryAfterSeconds = Math.ceil((blockedUntil - Date.now()) / 1000);
+      const retryAfterSeconds = blockedUntil ? Math.ceil((blockedUntil - Date.now()) / 1000) : 0;
 
       res.status(429).json({
         error: {

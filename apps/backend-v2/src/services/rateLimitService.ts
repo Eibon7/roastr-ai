@@ -12,7 +12,6 @@
  * Bloqueo progresivo: 15min → 1h → 24h → permanente
  */
 
-import { createHash } from 'crypto';
 
 export type AuthType = 'login' | 'magic_link' | 'oauth' | 'password_reset' | 'signup';
 
@@ -25,7 +24,7 @@ interface RateLimitConfig {
 interface RateLimitEntry {
   attempts: number;
   firstAttempt: number;
-  blockedUntil?: number;
+  blockedUntil?: number | null;
   blockCount: number;
 }
 

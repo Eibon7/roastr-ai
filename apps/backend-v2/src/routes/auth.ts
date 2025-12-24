@@ -50,6 +50,7 @@ router.post('/signup', rateLimitByType('signup'), async (req: Request, res: Resp
       session,
       message: 'User created successfully'
     });
+    return;
   } catch (error) {
     if (error instanceof AuthError) {
       return res.status(error.statusCode).json({
@@ -67,6 +68,7 @@ router.post('/signup', rateLimitByType('signup'), async (req: Request, res: Resp
         message: 'An error occurred during signup'
       }
     });
+    return;
   }
 });
 
@@ -100,6 +102,7 @@ router.post('/login', rateLimitByType('login'), async (req: Request, res: Respon
       session,
       message: 'Login successful'
     });
+    return;
   } catch (error) {
     if (error instanceof AuthError) {
       return res.status(error.statusCode).json({
@@ -117,6 +120,7 @@ router.post('/login', rateLimitByType('login'), async (req: Request, res: Respon
         message: 'An error occurred during login'
       }
     });
+    return;
   }
 });
 
@@ -136,6 +140,7 @@ router.post('/logout', requireAuth, async (req: Request, res: Response) => {
     res.json({
       message: 'Logout successful'
     });
+    return;
   } catch (error) {
     if (error instanceof AuthError) {
       return res.status(error.statusCode).json({
@@ -153,6 +158,7 @@ router.post('/logout', requireAuth, async (req: Request, res: Response) => {
         message: 'An error occurred during logout'
       }
     });
+    return;
   }
 });
 
@@ -179,6 +185,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       session,
       message: 'Token refreshed successfully'
     });
+    return;
   } catch (error) {
     if (error instanceof AuthError) {
       return res.status(error.statusCode).json({
@@ -196,6 +203,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
         message: 'An error occurred during token refresh'
       }
     });
+    return;
   }
 });
 
@@ -226,6 +234,7 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
     });
 
     res.json(result);
+    return;
   } catch (error) {
     if (error instanceof AuthError) {
       return res.status(error.statusCode).json({
@@ -243,6 +252,7 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
         message: 'An error occurred while sending magic link'
       }
     });
+    return;
   }
 });
 

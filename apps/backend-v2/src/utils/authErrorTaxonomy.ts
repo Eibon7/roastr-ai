@@ -138,7 +138,7 @@ export function mapSupabaseError(error: any): AuthError {
  * Determina si un error es retryable
  */
 export function isRetryableError(error: AuthError): boolean {
-  const retryableCodes = [AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED];
+  const retryableCodes: AuthErrorCode[] = [AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED];
   return retryableCodes.includes(error.code);
 }
 
