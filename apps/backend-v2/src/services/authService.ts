@@ -240,7 +240,11 @@ export class AuthService {
         refresh_token: refreshToken
       });
 
-      if (error || !data.session) {
+      if (error) {
+        throw mapSupabaseError(error);
+      }
+
+      if (!data.session || !data.user) {
         throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid refresh token');
       }
 
