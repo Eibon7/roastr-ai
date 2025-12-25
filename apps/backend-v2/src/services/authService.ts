@@ -323,7 +323,15 @@ export class AuthService {
         };
       }
 
-      const role = user.user_metadata?.role || 'user';
+      // Verificar que user y user_metadata existan
+      if (!user.user_metadata) {
+        return {
+          success: true,
+          message: 'If this email exists, a magic link has been sent'
+        };
+      }
+
+      const role = user.user_metadata.role || 'user';
       if (role === 'admin' || role === 'superadmin') {
         // Return same message as non-existent user (anti-enumeration)
         return {
