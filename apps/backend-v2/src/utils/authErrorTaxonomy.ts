@@ -122,7 +122,11 @@ export function mapSupabaseError(error: any): AuthError {
   }
 
   // Rate limit from Supabase
-  if (message.includes('Too many requests') || message.includes('rate_limit') || message.includes('over_request_rate_limit')) {
+  if (
+    message.includes('Too many requests') ||
+    message.includes('rate_limit') ||
+    message.includes('over_request_rate_limit')
+  ) {
     return new AuthError(
       AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED,
       'Too many requests. Please try again later',

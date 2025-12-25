@@ -103,7 +103,11 @@ export function requireRole(...allowedRoles: Array<'user' | 'admin' | 'superadmi
 /**
  * Middleware opcional de autenticación (no falla si no hay token)
  */
-export async function optionalAuth(req: Request, _res: Response, next: NextFunction): Promise<void> {
+export async function optionalAuth(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): Promise<void> {
   try {
     const authHeader = req.headers.authorization;
 

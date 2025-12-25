@@ -131,9 +131,7 @@ router.post('/login', rateLimitByType('login'), async (req: Request, res: Respon
 router.post('/logout', requireAuth, async (req: Request, res: Response) => {
   try {
     const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ') 
-      ? authHeader.slice(7) 
-      : '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
 
     await authService.logout(token);
 

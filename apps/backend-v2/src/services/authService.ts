@@ -110,8 +110,10 @@ export class AuthService {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_in: data.session.expires_in || 3600,
-        expires_at: data.session.expires_at 
-          ? (typeof data.session.expires_at === 'number' ? data.session.expires_at : Math.floor(new Date(data.session.expires_at).getTime() / 1000))
+        expires_at: data.session.expires_at
+          ? typeof data.session.expires_at === 'number'
+            ? data.session.expires_at
+            : Math.floor(new Date(data.session.expires_at).getTime() / 1000)
           : Math.floor(Date.now() / 1000) + 3600,
         user: {
           id: data.user.id,
@@ -186,8 +188,10 @@ export class AuthService {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_in: data.session.expires_in || 3600,
-        expires_at: data.session.expires_at 
-          ? (typeof data.session.expires_at === 'number' ? data.session.expires_at : Math.floor(new Date(data.session.expires_at).getTime() / 1000))
+        expires_at: data.session.expires_at
+          ? typeof data.session.expires_at === 'number'
+            ? data.session.expires_at
+            : Math.floor(new Date(data.session.expires_at).getTime() / 1000)
           : Math.floor(Date.now() / 1000) + 3600,
         user: {
           id: data.user.id,
@@ -229,8 +233,8 @@ export class AuthService {
       // Verificar que el usuario existe y es role=user
       // Usar listUsers con filtro de email (getUserByEmail no existe en Supabase Admin API)
       const { data: usersList, error: userError } = await supabase.auth.admin.listUsers();
-      
-      const user = usersList?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+
+      const user = usersList?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase());
 
       if (userError || !user) {
         // No revelar si el email existe (anti-enumeration)

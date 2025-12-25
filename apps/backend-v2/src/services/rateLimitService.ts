@@ -12,7 +12,6 @@
  * Bloqueo progresivo: 15min → 1h → 24h → permanente
  */
 
-
 export type AuthType = 'login' | 'magic_link' | 'oauth' | 'password_reset' | 'signup';
 
 interface RateLimitConfig {

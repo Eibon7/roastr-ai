@@ -17,4 +17,3 @@ export function getClientIp(req: Request): string {
     'unknown'
   );
 }
-
