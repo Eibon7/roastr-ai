@@ -9,11 +9,12 @@ import { supabase } from '../lib/supabaseClient.js';
 import { AuthError, AUTH_ERROR_CODES, mapSupabaseError } from '../utils/authErrorTaxonomy.js';
 import { rateLimitService } from './rateLimitService.js';
 import { abuseDetectionService } from './abuseDetectionService.js';
+import { createHash } from 'crypto';
 
 export interface SignupParams {
   email: string;
   password: string;
-  planId: 'starter' | 'pro' | 'plus';
+  planId: string;
   metadata?: Record<string, any>;
 }
 
@@ -28,58 +29,63 @@ export interface MagicLinkParams {
   ip: string;
 }
 
+export interface Session {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  expires_at: number;
+  token_type: string;
+  user: User;
+}
+
 export interface User {
   id: string;
   email: string;
   role: 'user' | 'admin' | 'superadmin';
   email_verified: boolean;
-  created_at: string;
+  created_at?: string;
   metadata?: Record<string, any>;
-}
-
-export interface AuthSession {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  expires_at: number;
-  user: User;
 }
 
 export class AuthService {
   /**
    * Registra un nuevo usuario
    */
-  async signup(params: SignupParams): Promise<AuthSession> {
+  async signup(params: SignupParams): Promise<Session> {
     const { email, password, planId, metadata } = params;
 
+    // Validar inputs
+    if (!this.isValidEmail(email)) {
+      throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email format');
+    }
+
+    if (!this.isValidPassword(password)) {
+      throw new AuthError(
+        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+        'Password must be at least 8 characters'
+      );
+    }
+
+    // TODO: Validar planId contra SSOT
+    // Temporal hardcoded para deadline 2025-12-31
+    // Referencia: Issue ROA-360
+    const validPlans = ['starter', 'pro', 'plus'];
+    if (!validPlans.includes(planId)) {
+      throw new AuthError(
+        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+        'Invalid plan ID. Must be one of: starter, pro, plus'
+      );
+    }
+
     try {
-      // Validación básica
-      if (!this.isValidEmail(email)) {
-        throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email format');
-      }
-
-      if (!this.isValidPassword(password)) {
-        throw new AuthError(
-          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-          'Password must be at least 8 characters'
-        );
-      }
-
-      // TODO(ROA-XXX): Migrar a SettingsLoader cuando esté disponible en backend-v2
-      // Plan IDs están hardcoded temporalmente para cumplir deadline de ROA-360
-      if (!['starter', 'pro', 'plus'].includes(planId)) {
-        throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid plan ID');
-      }
-
       // Crear usuario en Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email: email.toLowerCase(),
         password,
         options: {
           data: {
-            plan_id: planId,
             role: 'user',
-            onboarding_state: 'welcome',
+            plan_id: planId,
             ...metadata
           }
         }
@@ -90,15 +96,18 @@ export class AuthService {
       }
 
       if (!data.user || !data.session) {
-        throw new AuthError(AUTH_ERROR_CODES.ACCOUNT_NOT_FOUND, 'User creation failed');
+        throw new AuthError(
+          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+          'Failed to create user session'
+        );
       }
 
-      // Crear perfil en profiles table
+      // Crear perfil en base de datos
       const { error: profileError } = await supabase.from('profiles').insert({
-        user_id: data.user.id,
-        username: email.split('@')[0],
-        language_preference: 'en',
-        onboarding_state: 'welcome'
+        id: data.user.id,
+        email: data.user.email,
+        plan_id: planId,
+        created_at: new Date().toISOString()
       });
 
       if (profileError) {
@@ -109,16 +118,16 @@ export class AuthService {
       return {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
-        expires_in: data.session.expires_in || 3600,
-        expires_at: data.session.expires_at
-          ? typeof data.session.expires_at === 'number'
+        expires_in: data.session.expires_in,
+        expires_at:
+          typeof data.session.expires_at === 'number'
             ? data.session.expires_at
-            : Math.floor(new Date(data.session.expires_at).getTime() / 1000)
-          : Math.floor(Date.now() / 1000) + 3600,
+            : Math.floor(new Date(data.session.expires_at).getTime() / 1000),
+        token_type: data.session.token_type || 'bearer',
         user: {
           id: data.user.id,
           email: data.user.email!,
-          role: (data.user.user_metadata?.role as any) || 'user',
+          role: 'user',
           email_verified: !!data.user.email_confirmed_at,
           created_at: data.user.created_at,
           metadata: data.user.user_metadata
@@ -135,7 +144,7 @@ export class AuthService {
   /**
    * Inicia sesión con email y password
    */
-  async login(params: LoginParams): Promise<AuthSession> {
+  async login(params: LoginParams): Promise<Session> {
     const { email, password, ip } = params;
 
     try {
@@ -155,7 +164,12 @@ export class AuthService {
       const abuseResult = abuseDetectionService.recordAttempt(email, ip);
       if (abuseResult.isAbuse) {
         // Log patterns server-side for investigation, but don't expose to client
-        console.error('Abuse detected:', { email, ip, patterns: abuseResult.patterns });
+        // PII anonymized for GDPR compliance
+        console.error('Abuse detected:', {
+          emailHash: this.hashForLog(email),
+          ipPrefix: ip.split('.').slice(0, 2).join('.') + '.x.x',
+          patterns: abuseResult.patterns
+        });
         throw new AuthError(
           AUTH_ERROR_CODES.ACCOUNT_LOCKED,
           'Suspicious activity detected. Please try again later or contact support.'
@@ -168,31 +182,19 @@ export class AuthService {
         password
       });
 
-      if (error) {
+      if (error || !data.session) {
         throw mapSupabaseError(error);
-      }
-
-      if (!data.user || !data.session) {
-        throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email or password');
-      }
-
-      // Verificar email confirmado
-      if (!data.user.email_confirmed_at) {
-        throw new AuthError(
-          AUTH_ERROR_CODES.EMAIL_NOT_VERIFIED,
-          'Please verify your email before logging in'
-        );
       }
 
       return {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
-        expires_in: data.session.expires_in || 3600,
-        expires_at: data.session.expires_at
-          ? typeof data.session.expires_at === 'number'
+        expires_in: data.session.expires_in,
+        expires_at:
+          typeof data.session.expires_at === 'number'
             ? data.session.expires_at
-            : Math.floor(new Date(data.session.expires_at).getTime() / 1000)
-          : Math.floor(Date.now() / 1000) + 3600,
+            : Math.floor(new Date(data.session.expires_at).getTime() / 1000),
+        token_type: data.session.token_type || 'bearer',
         user: {
           id: data.user.id,
           email: data.user.email!,
@@ -211,8 +213,69 @@ export class AuthService {
   }
 
   /**
-   * Solicita un magic link para login passwordless
-   * SOLO permitido para role=user (NUNCA admin/superadmin)
+   * Cierra sesión
+   */
+  async logout(accessToken: string): Promise<void> {
+    try {
+      if (!accessToken) {
+        return;
+      }
+
+      const { error } = await supabase.auth.admin.signOut(accessToken);
+
+      if (error) {
+        throw mapSupabaseError(error);
+      }
+    } catch (error) {
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      throw mapSupabaseError(error);
+    }
+  }
+
+  /**
+   * Refresca el access token
+   */
+  async refreshSession(refreshToken: string): Promise<Session> {
+    try {
+      const { data, error } = await supabase.auth.refreshSession({
+        refresh_token: refreshToken
+      });
+
+      if (error || !data.session) {
+        throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid refresh token');
+      }
+
+      return {
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+        expires_in: data.session.expires_in,
+        expires_at:
+          typeof data.session.expires_at === 'number'
+            ? data.session.expires_at
+            : Math.floor(new Date(data.session.expires_at).getTime() / 1000),
+        token_type: data.session.token_type || 'bearer',
+        user: {
+          id: data.user.id,
+          email: data.user.email!,
+          role: (data.user.user_metadata?.role as any) || 'user',
+          email_verified: !!data.user.email_confirmed_at,
+          created_at: data.user.created_at,
+          metadata: data.user.user_metadata
+        }
+      };
+    } catch (error) {
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      throw mapSupabaseError(error);
+    }
+  }
+
+  /**
+   * Solicita magic link para login passwordless
+   * SOLO permitido para role=user (admin/superadmin no pueden usar magic links)
    */
   async requestMagicLink(params: MagicLinkParams): Promise<{ success: boolean; message: string }> {
     const { email, ip } = params;
@@ -231,12 +294,26 @@ export class AuthService {
       }
 
       // Verificar que el usuario existe y es role=user
-      // Usar listUsers con filtro de email (getUserByEmail no existe en Supabase Admin API)
-      const { data: usersList, error: userError } = await supabase.auth.admin.listUsers();
+      // Paginate through users to find matching email (getUserByEmail no existe en Supabase Admin API)
+      let user = null;
+      let page = 1;
+      const perPage = 100;
 
-      const user = usersList?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+      while (true) {
+        const { data: usersList, error: userError } = await supabase.auth.admin.listUsers({
+          page,
+          perPage
+        });
 
-      if (userError || !user) {
+        if (userError) break;
+
+        user = usersList?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+        if (user || !usersList?.users?.length || usersList.users.length < perPage) break;
+
+        page++;
+      }
+
+      if (!user) {
         // No revelar si el email existe (anti-enumeration)
         return {
           success: true,
@@ -257,7 +334,7 @@ export class AuthService {
       const { error } = await supabase.auth.signInWithOtp({
         email: email.toLowerCase(),
         options: {
-          shouldCreateUser: false
+          emailRedirectTo: process.env.SUPABASE_REDIRECT_URL || 'http://localhost:3000/auth/callback'
         }
       });
 
@@ -267,63 +344,7 @@ export class AuthService {
 
       return {
         success: true,
-        message: 'Magic link sent to your email'
-      };
-    } catch (error) {
-      if (error instanceof AuthError) {
-        throw error;
-      }
-      throw mapSupabaseError(error);
-    }
-  }
-
-  /**
-   * Cierra sesión
-   */
-  async logout(accessToken: string): Promise<void> {
-    try {
-      const { error } = await supabase.auth.admin.signOut(accessToken);
-      if (error) {
-        throw mapSupabaseError(error);
-      }
-    } catch (error) {
-      if (error instanceof AuthError) {
-        throw error;
-      }
-      throw mapSupabaseError(error);
-    }
-  }
-
-  /**
-   * Refresca el access token
-   */
-  async refreshSession(refreshToken: string): Promise<AuthSession> {
-    try {
-      const { data, error } = await supabase.auth.refreshSession({
-        refresh_token: refreshToken
-      });
-
-      if (error) {
-        throw mapSupabaseError(error);
-      }
-
-      if (!data.session || !data.user) {
-        throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid refresh token');
-      }
-
-      return {
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-        expires_in: data.session.expires_in || 3600,
-        expires_at: data.session.expires_at || Math.floor(Date.now() / 1000) + 3600,
-        user: {
-          id: data.user.id,
-          email: data.user.email!,
-          role: (data.user.user_metadata?.role as any) || 'user',
-          email_verified: !!data.user.email_confirmed_at,
-          created_at: data.user.created_at,
-          metadata: data.user.user_metadata
-        }
+        message: 'Magic link sent successfully'
       };
     } catch (error) {
       if (error instanceof AuthError) {
@@ -373,10 +394,17 @@ export class AuthService {
   }
 
   /**
-   * Valida fortaleza de password
+   * Valida formato de password
    */
   private isValidPassword(password: string): boolean {
     return password.length >= 8;
+  }
+
+  /**
+   * Hash para logging (GDPR compliance)
+   */
+  private hashForLog(value: string): string {
+    return createHash('sha256').update(value.toLowerCase()).digest('hex').substring(0, 12);
   }
 }
 
