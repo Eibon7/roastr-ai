@@ -96,10 +96,7 @@ export class AuthService {
       }
 
       if (!data.user || !data.session) {
-        throw new AuthError(
-          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-          'Failed to create user session'
-        );
+        throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Failed to create user session');
       }
 
       // Crear perfil en base de datos
@@ -308,7 +305,12 @@ export class AuthService {
         if (userError) break;
 
         user = usersList?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase());
-        if (user || !usersList?.users?.length || usersList.users.length < perPage) break;
+        if (
+          user ||
+          !usersList?.users?.length ||
+          (usersList.users && usersList.users.length < perPage)
+        )
+          break;
 
         page++;
       }
@@ -334,7 +336,8 @@ export class AuthService {
       const { error } = await supabase.auth.signInWithOtp({
         email: email.toLowerCase(),
         options: {
-          emailRedirectTo: process.env.SUPABASE_REDIRECT_URL || 'http://localhost:3000/auth/callback'
+          emailRedirectTo:
+            process.env.SUPABASE_REDIRECT_URL || 'http://localhost:3000/auth/callback'
         }
       });
 
