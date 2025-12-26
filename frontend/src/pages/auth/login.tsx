@@ -17,8 +17,8 @@ import { AuthLayout } from '@/components/layout/auth-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth-context';
 import { Loader2, Sparkles } from 'lucide-react';
-// ROA-356: trackEvent not implemented yet - will be added in future PR
-// import { trackEvent } from '@/lib/analytics-identity';
+// ROA-362: Analytics tracking for login flow
+import { trackLoginAttempted, trackLoginSucceeded, trackLoginFailed } from '@/lib/auth-events';
 
 /**
  * LoginPage Component
@@ -57,19 +57,24 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
+    // ROA-362: Track login attempt at form submit
+    trackLoginAttempted('email_password');
+
     try {
       await login(email, password);
       
-      // ROA-356: Identity sync handled automatically in auth-context.tsx
-      // trackEvent('auth_login_success', {...}) - not in scope
+      // ROA-362: Track successful login
+      // Identity sync already handled in auth-context.tsx using A1 (setUserId, setUserProperties)
+      trackLoginSucceeded('email_password', from, 'active');
       
       // Redirect to the page user was trying to access, or /app
       navigate(from, { replace: true });
     } catch (err) {
-      // ROA-356: trackEvent not in scope
-      // trackEvent('auth_login_failed', {...})
+      // ROA-362: Track failed login with normalized error
+      const errorMessage = err instanceof Error ? err.message : 'Error al iniciar sesión';
+      trackLoginFailed('email_password', errorMessage);
       
-      setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -84,6 +89,9 @@ export default function LoginPage() {
   const handleDemoLogin = async () => {
     setError(null);
     setLoading(true);
+
+    // ROA-362: Track demo login attempt
+    trackLoginAttempted('demo_mode');
 
     try {
       // Simular login demo sin backend
@@ -103,13 +111,18 @@ export default function LoginPage() {
       // Simular delay de red
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // ROA-356: Demo mode identity sync not in scope
-      // trackEvent('auth_login_success', {...})
+      // ROA-362: Track successful demo login
+      // Note: Demo mode identity sync not in scope for this issue
+      trackLoginSucceeded('demo_mode', '/admin/dashboard', 'active');
 
       // Forzar recarga para que el AuthContext detecte el usuario
       window.location.href = '/admin/dashboard';
-    } catch {
-      setError('Error al iniciar sesión en modo demo');
+    } catch (err) {
+      // ROA-362: Track failed demo login
+      const errorMessage = 'Error al iniciar sesión en modo demo';
+      trackLoginFailed('demo_mode', errorMessage);
+      
+      setError(errorMessage);
       setLoading(false);
     }
   };
