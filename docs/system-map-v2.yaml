@@ -68,7 +68,6 @@ nodes:
       - observabilidad
       - ssot-integration
       - infraestructura
-      - auth
     used_by: []
     required_by:
       - roasting-engine
