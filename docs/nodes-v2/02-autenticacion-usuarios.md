@@ -37,6 +37,7 @@ tests:
 - apps/backend-v2/tests/unit/services/rateLimitService.test.ts
 - apps/backend-v2/tests/unit/services/abuseDetectionService.test.ts
 - apps/backend-v2/tests/unit/utils/authErrorTaxonomy.test.ts
+- apps/backend-v2/tests/flow/auth-login.flow.test.ts
 
 ---
 
@@ -176,6 +177,19 @@ Este nodo depende de los siguientes nodos:
 - ✅ Validación de formato del objeto cifrado y correcta recuperación (encrypt → decrypt → same object)
 - ✅ Lógica de onboarding state transitions
 - ❌ NO testear: Supabase Auth directamente
+
+### Flow Tests (Vitest - ROA-363):
+
+- ✅ Login exitoso con email + password
+- ✅ Login con feature flag activo
+- ✅ Credenciales inválidas (error controlado)
+- ✅ Error de red / servicio (sin estado inconsistente)
+- ✅ Rate limiting activo (bloqueo temporal)
+- ✅ Feature flag deshabilitado
+- ✅ Email case-insensitive
+- ✅ Abuse detection (bloqueo por actividad sospechosa)
+
+**Documentación:** `docs/testing/auth-login-v2.md`
 
 ### Integration Tests (Supabase Test):
 
