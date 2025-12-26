@@ -149,7 +149,7 @@ export class AuthService {
     try {
       const settings = await loadSettings();
       const loginEnabled = settings?.auth?.login?.enabled ?? true;
-      
+
       if (!loginEnabled) {
         throw new AuthError(
           AUTH_ERROR_CODES.AUTH_DISABLED,
@@ -159,14 +159,14 @@ export class AuthService {
     } catch (error) {
       // If SettingsLoader fails, fall back to process.env
       const loginEnabled = process.env.AUTH_LOGIN_ENABLED !== 'false';
-      
+
       if (!loginEnabled) {
         throw new AuthError(
           AUTH_ERROR_CODES.AUTH_DISABLED,
           'Authentication is currently unavailable.'
         );
       }
-      
+
       // If it's an AuthError (AUTH_DISABLED), rethrow it
       if (error instanceof AuthError) {
         throw error;
