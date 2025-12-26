@@ -49,6 +49,120 @@ depends_on:
 
 ---
 
+## 0. Ingestion Eligibility Gate (IG1)
+
+**⚠️ Pre-condición obligatoria:** Antes de cualquier ingestion (fetch de comentarios), el sistema **debe evaluar** el Ingestion Eligibility Gate (IG1).
+
+IG1 es una capa de elegibilidad que determina si el usuario está autorizado a iniciar la ingestion en ese momento.
+
+### Propósito
+
+- Separar las reglas de elegibilidad de la lógica de ingestion
+- Decisión determinista y auditable
+- Facilitar adición de nuevas reglas sin modificar Ingestion
+- Garantizar observabilidad completa
+
+### Policies Evaluadas
+
+IG1 evalúa las siguientes policies en orden determinista (fail-fast):
+
+1. **UserStatusPolicy** - Usuario activo (no suspendido ni eliminado)
+2. **SubscriptionPolicy** - Suscripción activa
+3. **TrialPolicy** - Trial válido (si aplica)
+4. **CreditPolicy** - Créditos de análisis disponibles
+5. **FeatureFlagPolicy** - Feature flag `ingestion_enabled` activado
+6. **RateLimitPolicy** - Límites de rate no excedidos
+
+La primera policy que devuelva `allowed: false` detiene la evaluación y bloquea la ingestion.
+
+### Output del Gate
+
+```typescript
+type IngestionEligibilityResult = {
+  allowed: boolean;
+  blocked_by?: {
+    policy: string;
+    reason: string;
+    retry_after_seconds?: number;
+  };
+};
+```
+
+### Razones de Bloqueo
+
+| Reason | Policy | Retryable | Descripción |
+|--------|--------|-----------|-------------|
+| `credit_exhausted` | CreditPolicy | No | Créditos de análisis agotados |
+| `trial_expired` | TrialPolicy | No | Trial expirado sin suscripción activa |
+| `subscription_inactive` | SubscriptionPolicy | No | Suscripción pausada o cancelada |
+| `user_suspended` | UserStatusPolicy | No | Usuario suspendido por admin |
+| `user_deleted` | UserStatusPolicy | No | Usuario eliminado |
+| `feature_disabled` | FeatureFlagPolicy | Sí | Feature flag de ingestion desactivado |
+| `rate_limit_exceeded` | RateLimitPolicy | Sí | Rate limit global/usuario/cuenta excedido |
+
+### Observabilidad
+
+Cuando IG1 bloquea una ingestion, emite un evento `ingestion_blocked`:
+
+```typescript
+{
+  event: 'ingestion_blocked',
+  timestamp: Date.now(),
+  user_id: string,
+  account_id: string,
+  platform: 'x' | 'youtube',
+  flow: 'timeline' | 'mentions' | 'replies',
+  policy: string,
+  reason: string,
+  retryable: boolean,
+  user_plan: 'starter' | 'pro' | 'plus',
+  is_trial: boolean,
+  feature_flag_state: Record<string, boolean>,
+  metadata: Record<string, unknown>
+}
+```
+
+### Integración con Workers
+
+El worker `FetchComments` debe llamar a IG1 **antes** de cualquier fetch:
+
+```javascript
+const eligibilityGate = require('../services/ingestion/IngestionEligibilityGate');
+
+async process(job) {
+  const { userId, accountId, platform, flow } = job.data;
+  
+  // Evaluate eligibility BEFORE fetching
+  const eligibility = await eligibilityGate.evaluate({
+    userId,
+    accountId,
+    platform,
+    flow
+  });
+  
+  if (!eligibility.allowed) {
+    logger.info('Ingestion blocked by IG1', {
+      policy: eligibility.blocked_by.policy,
+      reason: eligibility.blocked_by.reason
+    });
+    // Do NOT enqueue, do NOT fetch
+    return;
+  }
+  
+  // Proceed with fetch...
+}
+```
+
+### Reglas Clave
+
+- ❌ **NO ejecutar ingestion** si IG1 bloquea
+- ❌ **NO silenciar bloqueos** - siempre emitir evento
+- ✅ **Respetar retry_after_seconds** cuando esté presente
+- ✅ **Logging estructurado** sin PII
+- ✅ **Fail-safe**: Si una policy falla al evaluar, bloquea por defecto
+
+---
+
 ## 1. Dependencies
 
 - [`billing`](./billing.md)

@@ -219,6 +219,9 @@ type FeatureFlagKey =
   | 'kill_switch_autopost'
   | 'enable_shield'
   | 'enable_roast'
+  
+  // Ingestion
+  | 'ingestion_enabled'
 
   // UX / UI
   | 'show_two_roast_variants'
@@ -254,6 +257,11 @@ type FeatureFlagKey =
   - Enciende/apaga Shield para la cuenta.
 - `enable_roast` (user/account):
   - Permite desactivar Roasts y usar solo Shield.
+
+- `ingestion_enabled` (admin/account):
+  - Habilita/deshabilita la ingestion de comentarios desde plataformas.
+  - Cuando está OFF, el sistema no procesa nuevos comentarios.
+  - No afecta histórico ni funcionalidad existente.
 
 - `show_two_roast_variants` (admin):
   - ON → 2 variantes de roast.
