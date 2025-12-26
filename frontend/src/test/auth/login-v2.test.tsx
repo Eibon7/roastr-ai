@@ -15,7 +15,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
-import LoginPageV2 from '@/pages/auth/login-v2';
+import LoginPageV2, { getErrorMessage } from '@/pages/auth/login-v2';
 
 // Mock navigate
 const mockNavigate = vi.fn();
@@ -206,24 +206,12 @@ describe('LoginPageV2', () => {
       });
     });
 
-    it('displays generic error message for unknown error codes', async () => {
-      const user = userEvent.setup();
-      renderLoginPage();
-
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/contraseña/i);
-      const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
-
-      await user.type(emailInput, 'test@roastr.ai');
-      await user.type(passwordInput, 'password');
-      
-      // This would trigger an unknown error in real implementation
-      await user.click(submitButton);
-
-      // Wait for form to be re-enabled (after error)
-      await waitFor(() => {
-        expect(submitButton).not.toBeDisabled();
-      });
+    it('displays generic error message for unknown error codes', () => {
+      // Test getErrorMessage function directly for unknown codes
+      expect(getErrorMessage('UNKNOWN_CODE')).toBe('Algo ha fallado. Inténtalo más tarde');
+      expect(getErrorMessage('AUTH_SOME_NEW_ERROR')).toBe('Algo ha fallado. Inténtalo más tarde');
+      expect(getErrorMessage(undefined)).toBe('Algo ha fallado. Inténtalo más tarde');
+      expect(getErrorMessage('')).toBe('Algo ha fallado. Inténtalo más tarde');
     });
 
     it('displays error with accessible alert role', async () => {

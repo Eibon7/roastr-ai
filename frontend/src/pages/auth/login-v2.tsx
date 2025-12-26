@@ -54,8 +54,9 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 /**
  * Get user-friendly error message from error_code
+ * Exported for testing purposes
  */
-function getErrorMessage(errorCode: string | undefined): string {
+export function getErrorMessage(errorCode: string | undefined): string {
   if (!errorCode) {
     return ERROR_MESSAGES.AUTH_UNKNOWN_ERROR;
   }
