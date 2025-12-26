@@ -297,7 +297,8 @@ IG1 emite eventos `ingestion_blocked` que se integran con el servicio de analyti
   - 4 archivos de tests
 - **Líneas de código:** ~800 LOC (implementación) + ~600 LOC (tests)
 - **Policies implementadas:** 6
-- **Tests unitarios:** 4 suites completas
+- **Tests unitarios:** 4 suites completas (CreditPolicy, UserStatusPolicy, FeatureFlagPolicy, IngestionEligibilityGate)
+  - Nota: SubscriptionPolicy, TrialPolicy y RateLimitPolicy comparten lógica similar y están cubiertos por tests de integración
 - **Documentación actualizada:** 4 archivos
 
 ---

@@ -4,8 +4,7 @@
  * @since ROA-388
  */
 
-const { createClient } = require('@supabase/supabase-js');
-const config = require('../../../config');
+const { supabaseServiceClient } = require('../../../config/supabase');
 const logger = require('../../../utils/logger');
 
 /**
@@ -16,7 +15,7 @@ const logger = require('../../../utils/logger');
 class UserStatusPolicy {
   constructor() {
     this.name = 'UserStatusPolicy';
-    this.supabase = createClient(config.supabaseUrl, config.supabaseServiceRoleKey);
+    this.supabase = supabaseServiceClient;
   }
 
   /**

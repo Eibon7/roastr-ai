@@ -4,8 +4,7 @@
  * @since ROA-388
  */
 
-const { createClient } = require('@supabase/supabase-js');
-const config = require('../../../config');
+const { supabaseServiceClient } = require('../../../config/supabase');
 const logger = require('../../../utils/logger');
 
 /**
@@ -16,7 +15,7 @@ const logger = require('../../../utils/logger');
 class TrialPolicy {
   constructor() {
     this.name = 'TrialPolicy';
-    this.supabase = createClient(config.supabaseUrl, config.supabaseServiceRoleKey);
+    this.supabase = supabaseServiceClient;
   }
 
   /**
@@ -59,12 +58,22 @@ class TrialPolicy {
       }
 
       // Check if user has active subscription (overrides trial)
-      const { data: subscription } = await this.supabase
+      const { data: subscription, error: subscriptionError } = await this.supabase
         .from('polar_subscriptions')
         .select('status')
         .eq('user_id', userId)
         .eq('is_active', true)
         .single();
+
+      if (subscriptionError && subscriptionError.code !== 'PGRST116') {
+        logger.warn('TrialPolicy: Error checking subscription, continuing with trial check', {
+          userId,
+          error: subscriptionError.message,
+          errorCode: subscriptionError.code,
+          requestId: context.requestId
+        });
+        // Continue with trial check rather than blocking
+      }
 
       // If user has active subscription, trial is not applicable
       if (subscription && subscription.status === 'active') {

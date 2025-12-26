@@ -15,19 +15,21 @@ const logger = require('../../../utils/logger');
 class RateLimitPolicy {
   constructor() {
     this.name = 'RateLimitPolicy';
-    // Default rate limits (can be overridden by SSOT)
+    // Rate limits from SSOT v2 (section 12.6)
+    // TODO: Load from SettingsLoader when available
+    // For now, using SSOT-defined defaults
     this.limits = {
       global: {
-        max: 1000, // Max ingestions per hour globally
-        windowMs: 60 * 60 * 1000 // 1 hour
+        max: 1000, // Max ingestions per hour globally (SSOT 12.6)
+        windowMs: 60 * 60 * 1000 // 1 hour (SSOT 12.6)
       },
       perUser: {
-        max: 100, // Max ingestions per hour per user
-        windowMs: 60 * 60 * 1000 // 1 hour
+        max: 100, // Max ingestions per hour per user (SSOT 12.6)
+        windowMs: 60 * 60 * 1000 // 1 hour (SSOT 12.6)
       },
       perAccount: {
-        max: 50, // Max ingestions per hour per account
-        windowMs: 60 * 60 * 1000 // 1 hour
+        max: 50, // Max ingestions per hour per account (SSOT 12.6)
+        windowMs: 60 * 60 * 1000 // 1 hour (SSOT 12.6)
       }
     };
   }

@@ -590,6 +590,36 @@ type ProgressiveBlockDurations = [
 - `ENABLE_AUTH_RATE_LIMIT_V2`: Habilita rate limiting v2 (reemplaza v1)
 - `ENABLE_RATE_LIMIT`: Habilita rate limiting general (requerido para v2)
 
+### 12.6 Ingestion Rate Limits (ROA-388)
+
+**Configuración oficial de rate limits para ingestion de comentarios:**
+
+```ts
+type IngestionRateLimitConfig = {
+  global: {
+    max: 1000;           // Max ingestions per hour globally
+    windowMs: 3600000;   // 1 hour window
+  };
+  perUser: {
+    max: 100;            // Max ingestions per hour per user
+    windowMs: 3600000;   // 1 hour window
+  };
+  perAccount: {
+    max: 50;             // Max ingestions per hour per account
+    windowMs: 3600000;   // 1 hour window
+  };
+};
+```
+
+**Algoritmo:**
+- Sliding window con Redis
+- Fail-safe: Bloquea en errores de Redis (no permite bypass)
+- Keys: `ingestion:global`, `ingestion:user:{userId}`, `ingestion:account:{accountId}:{platform}`
+
+**Almacenamiento:**
+- Redis/Upstash (sorted sets con timestamps)
+- TTL automático según windowMs
+
 ### 12.5 Abuse Detection Thresholds (ROA-359)
 
 **Configuración oficial de thresholds para detección de abuse patterns:**
