@@ -1,10 +1,10 @@
 # Guardian Scan Report
 
-**Generated:** 2025-12-10T23:11:26.488Z
+**Generated:** 2025-12-26T17:31:40.131Z
 
 ## Summary
 
-- **Total Files Changed:** 0
+- **Total Files Changed:** 3
 - **Lines Added:** 0
 - **Lines Removed:** 0
 - **Domains Affected:** None
@@ -19,10 +19,16 @@ _None_
 
 _None_
 
-### 🟢 Safe (1)
+### 🟢 Safe (3)
 
 
-- **File:** test.js
+- **File:** docs/guardian/audit-log.md
+
+
+- **File:** docs/guardian/guardian-report.md
+
+
+- **File:** junit.xml
 
 
 ## Recommendation

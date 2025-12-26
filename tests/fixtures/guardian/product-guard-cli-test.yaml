@@ -1,0 +1,7 @@
+
+version: "1.0"
+domains:
+  test_domain:
+    files: ["**/*.test"]
+    protection_level: SENSITIVE
+    keywords: ["test"]

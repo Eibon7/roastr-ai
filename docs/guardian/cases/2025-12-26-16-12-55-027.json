@@ -1,0 +1,124 @@
+{
+  "case_id": "2025-12-26-16-12-55-027",
+  "timestamp": "2025-12-26T16:12:55.027Z",
+  "actor": "emiliopostigo",
+  "domains": [],
+  "files_changed": [
+    ".issue_lock",
+    "apps/backend-v2/.env.example",
+    "apps/backend-v2/src/config/admin-controlled.yaml",
+    "apps/backend-v2/src/index.ts",
+    "docs/auto-health-reports/auto-health-2025-12-25-08-15.md",
+    "docs/auto-health-reports/auto-health-v2-2025-12-25-08-15.json",
+    "docs/auto-health-reports/auto-health-v2-official-2025-12-25-08-15.json",
+    "docs/guardian/audit-log.md",
+    "docs/guardian/guardian-report.md",
+    "docs/nodes-v2/02-autenticacion-usuarios.md",
+    "docs/system-map-v2.yaml",
+    "frontend/package-lock.json",
+    "package-lock.json"
+  ],
+  "severity": "SAFE",
+  "action": "APPROVED",
+  "violations": {
+    "critical": 0,
+    "sensitive": 0,
+    "safe": 13
+  },
+  "details": [
+    {
+      "file": ".issue_lock",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/.env.example",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/config/admin-controlled.yaml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/index.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/auto-health-reports/auto-health-2025-12-25-08-15.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/auto-health-reports/auto-health-v2-2025-12-25-08-15.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/auto-health-reports/auto-health-v2-official-2025-12-25-08-15.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/guardian/audit-log.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/guardian/guardian-report.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/nodes-v2/02-autenticacion-usuarios.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/system-map-v2.yaml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "frontend/package-lock.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "package-lock.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    }
+  ],
+  "approval_required": false,
+  "approved_by": null,
+  "notes": "Auto-approved"
+}
