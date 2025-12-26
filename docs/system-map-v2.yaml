@@ -560,15 +560,23 @@ nodes:
     status: production
     priority: critical
     owner: Back-end Dev
-    last_updated: '2025-12-05T18:31:11.772Z'
-    coverage: 0
+    last_updated: '2025-12-20T16:10:00.000Z'
+    coverage: 92
     depends_on: []
     used_by: []
     required_by: []
     related: []
     docs:
       - docs/nodes-v2/02-autenticacion-usuarios.md
-    files: []
+    files:
+      - apps/backend-v2/src/lib/supabaseClient.ts
+      - apps/backend-v2/src/services/authService.ts
+      - apps/backend-v2/src/services/rateLimitService.ts
+      - apps/backend-v2/src/services/abuseDetectionService.ts
+      - apps/backend-v2/src/middleware/auth.ts
+      - apps/backend-v2/src/middleware/rateLimit.ts
+      - apps/backend-v2/src/routes/auth.ts
+      - apps/backend-v2/src/utils/authErrorTaxonomy.ts
     ssot_references:
       - connection_status
       - feature_flags
@@ -578,7 +586,13 @@ nodes:
       - plan_ids
       - subscription_states
       - token_refresh_rules
-    subnodes: []
+      - rate_limits
+      - abuse_detection_thresholds
+    subnodes:
+      - supabase-auth
+      - rate-limiting
+      - abuse-detection
+      - session-management
   settings-loader-and-feature-flags:
     description: Settings loader and feature flags management system with SSOT integration, admin settings, and dynamic feature toggling
     status: production

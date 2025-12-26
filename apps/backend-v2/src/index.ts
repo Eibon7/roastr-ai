@@ -7,6 +7,7 @@
 
 import express from 'express';
 import { initializeAmplitude } from './lib/analytics.js';
+import authRoutes from './routes/auth.js';
 
 // Initialize Amplitude Analytics
 initializeAmplitude();
@@ -24,6 +25,9 @@ app.get('/health', (_req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// API routes
+app.use('/api/v2/auth', authRoutes);
 
 // Start server (only if not in test environment)
 if (process.env.NODE_ENV !== 'test') {
