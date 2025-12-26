@@ -10,6 +10,7 @@ import { AuthError, AUTH_ERROR_CODES, mapSupabaseError } from '../utils/authErro
 import { rateLimitService } from './rateLimitService.js';
 import { abuseDetectionService } from './abuseDetectionService.js';
 import { createHash } from 'crypto';
+import { loadSettings } from '../lib/loadSettings.js';
 
 export interface SignupParams {
   email: string;
@@ -143,6 +144,35 @@ export class AuthService {
    */
   async login(params: LoginParams): Promise<Session> {
     const { email, password, ip } = params;
+
+    // Feature flag check: auth.login.enabled
+    try {
+      const settings = await loadSettings();
+      const loginEnabled = settings?.auth?.login?.enabled ?? true;
+      
+      if (!loginEnabled) {
+        throw new AuthError(
+          AUTH_ERROR_CODES.AUTH_DISABLED,
+          'Authentication is currently unavailable.'
+        );
+      }
+    } catch (error) {
+      // If SettingsLoader fails, fall back to process.env
+      const loginEnabled = process.env.AUTH_LOGIN_ENABLED !== 'false';
+      
+      if (!loginEnabled) {
+        throw new AuthError(
+          AUTH_ERROR_CODES.AUTH_DISABLED,
+          'Authentication is currently unavailable.'
+        );
+      }
+      
+      // If it's an AuthError (AUTH_DISABLED), rethrow it
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      // Otherwise, continue (settings loader unavailable but auth not explicitly disabled)
+    }
 
     try {
       // Rate limiting
