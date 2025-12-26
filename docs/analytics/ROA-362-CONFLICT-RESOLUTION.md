@@ -11,7 +11,7 @@
 
 Al intentar mergear la rama `cursor/agent-ROA-362-login-analytics-implementation-298e` con `main`, se detectó un conflicto en:
 
-```
+```text
 frontend/package-lock.json
 ```
 
@@ -48,7 +48,7 @@ git commit -m "Merge main into ROA-362 branch - resolved package-lock.json confl
 
 **Resultado:**
 
-```
+```text
 [cursor/agent-ROA-362-login-analytics-implementation-298e 1b534a22] 
 Merge main into ROA-362 branch - resolved package-lock.json conflict
 ```
@@ -66,7 +66,7 @@ npm test -- src/lib/__tests__/auth-events.test.ts --run
 
 **Resultado:** ✅ **32/32 tests passing**
 
-```
+```text
  Test Files  1 passed (1)
       Tests  32 passed (32)
    Start at  16:38:50
@@ -97,7 +97,7 @@ git status
 
 **Resultado:** ✅ **Nothing to commit, working tree clean**
 
-```
+```text
 On branch cursor/agent-ROA-362-login-analytics-implementation-298e
 Your branch is ahead of 'origin/...' by 14 commits.
   (use "git push" to publish your local commits)
