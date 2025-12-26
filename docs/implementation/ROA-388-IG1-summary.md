@@ -100,6 +100,37 @@ Todas las policies implementan el contrato `PolicyResult` y siguen el principio 
   - ✅ Bloquea cuando flag account desactivado
   - ✅ Fail-safe en errores inesperados
 
+- **`tests/unit/services/ingestion/policies/SubscriptionPolicy.test.js`**
+  - ✅ Permite para active, trialing
+  - ✅ Permite canceled_pending dentro del período
+  - ✅ Bloquea canceled_pending fuera del período
+  - ✅ Bloquea paused, expired_trial_pending_payment, payment_retry
+  - ✅ Permite cuando no hay suscripción (PGRST116)
+  - ✅ Bloquea en errores de verificación
+  - ✅ Bloquea en status desconocido
+  - ✅ Fail-safe en errores inesperados
+
+- **`tests/unit/services/ingestion/policies/TrialPolicy.test.js`**
+  - ✅ Permite cuando trial activo
+  - ✅ Bloquea cuando trial expirado
+  - ✅ Permite cuando no hay trial configurado
+  - ✅ Permite cuando hay suscripción activa (override)
+  - ✅ Bloquea en error de profile fetch
+  - ✅ Continúa gracefully en error de subscription check
+  - ✅ Fail-safe en errores inesperados
+
+- **`tests/unit/services/ingestion/policies/RateLimitPolicy.test.js`**
+  - ✅ Permite cuando todos los límites OK
+  - ✅ Bloquea en global limit con retry_after
+  - ✅ Bloquea en user limit con retry_after
+  - ✅ Bloquea en account limit con retry_after
+  - ✅ Verifica sliding window pruning (zremrangebyscore)
+  - ✅ Verifica count increment (zadd + expire)
+  - ✅ Calcula retry_after correctamente
+  - ✅ Usa keys correctas de Redis
+  - ✅ Maneja zrange vacío gracefully
+  - ✅ Fail-safe en errores de Redis
+
 - **`tests/unit/services/ingestion/IngestionEligibilityGate.test.js`**
   - ✅ Permite cuando todas las policies permiten
   - ✅ Bloquea por cada policy (fail-fast)
