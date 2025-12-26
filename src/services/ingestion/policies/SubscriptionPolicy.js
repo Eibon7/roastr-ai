@@ -64,13 +64,14 @@ class SubscriptionPolicy {
         logger.error('SubscriptionPolicy: Error fetching subscription', {
           userId,
           error: error.message,
+          errorCode: error.code,
           requestId: context.requestId
         });
         // Fail-safe: block if we can't verify subscription
         return {
           allowed: false,
           reason: 'subscription_verification_error',
-          metadata: { error: error.message }
+          metadata: { error: error.message, code: error.code }
         };
       }
 

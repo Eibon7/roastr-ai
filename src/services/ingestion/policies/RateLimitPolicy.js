@@ -186,8 +186,11 @@ class RateLimitPolicy {
         key,
         error: err.message
       });
-      // Fail-safe: allow on Redis errors to avoid blocking service
-      return { allowed: true };
+      // Fail-safe: block on Redis errors per IG1 policy
+      return {
+        allowed: false,
+        retry_after_seconds: 60 // Reasonable retry delay during Redis issues
+      };
     }
   }
 }

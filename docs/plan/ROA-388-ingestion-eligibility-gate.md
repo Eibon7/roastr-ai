@@ -147,13 +147,13 @@ type IngestionEligibilityResult = {
 7. **`src/services/ingestion/policies/RateLimitPolicy.js`**
    - Evalúa rate limits
 
-8. **`tests/unit/ingestion/IngestionEligibilityGate.test.js`**
+8. **`tests/unit/services/ingestion/IngestionEligibilityGate.test.js`**
    - Tests unitarios del gate
 
-9. **`tests/unit/ingestion/policies/*.test.js`**
+9. **`tests/unit/services/ingestion/policies/*.test.js`**
    - Tests unitarios de cada policy
 
-10. **`tests/integration/ingestion/eligibilityFlow.test.js`**
+10. **`tests/integration/services/ingestion/eligibilityFlow.test.js`**
     - Tests de integración del flujo completo
 
 ### Archivos a Modificar
