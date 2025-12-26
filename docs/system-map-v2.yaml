@@ -57,11 +57,11 @@ nodes:
       - style-validator
       - corrective-replies
   analysis-engine:
-    description: Toxicity analysis engine with Perspective API, OpenAI fallback, pattern detection, and user personality (Roastr Persona) configuration with encryption
+    description: Toxicity analysis engine with Perspective API, OpenAI fallback, pattern detection, Ingestion Eligibility Gate (IG1), and user personality (Roastr Persona) configuration with encryption
     status: production
     priority: critical
     owner: Back-end Dev
-    last_updated: '2025-12-05T18:31:11.772Z'
+    last_updated: '2025-12-26T00:00:00.000Z'
     coverage: 92
     depends_on:
       - billing-integration
@@ -81,6 +81,13 @@ nodes:
       - src/services/AnalysisDepartmentService.js
       - src/services/gatekeeperService.js
       - src/services/PersonaService.js
+      - src/services/ingestion/IngestionEligibilityGate.js
+      - src/services/ingestion/policies/CreditPolicy.js
+      - src/services/ingestion/policies/TrialPolicy.js
+      - src/services/ingestion/policies/SubscriptionPolicy.js
+      - src/services/ingestion/policies/UserStatusPolicy.js
+      - src/services/ingestion/policies/FeatureFlagPolicy.js
+      - src/services/ingestion/policies/RateLimitPolicy.js
       - src/routes/persona.js
       - src/utils/encryption.js
     workers:
@@ -97,12 +104,14 @@ nodes:
       - persona_matching_thresholds
       - persona_structure
       - score_base_formula
+      - ingestion_enabled
     subnodes:
       - perspective-api
       - fallback-classifier
       - persona-integration
       - pattern-detection
       - gatekeeper
+      - ingestion-eligibility-gate
   shield-engine:
     description: Automated content moderation with escalating actions and decision engine
     status: production
