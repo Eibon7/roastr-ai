@@ -9,6 +9,15 @@
 #
 # Última actualización: 2025-01-27
 
+# Authentication Configuration
+auth:
+  login:
+    enabled: true
+  signup:
+    enabled: true
+  magic_link:
+    enabled: true
+
 # Shield Configuration
 shield:
   # Valores por defecto (pueden ser overrideados por admin_settings)
