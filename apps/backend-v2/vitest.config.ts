@@ -13,7 +13,7 @@ export default defineConfig({
       thresholds: {
         lines: 80,
         functions: 80,
-        branches: 75,
+        branches: 75, // TBD: Restore to 80+ after ROA-374 coverage improvements
         statements: 80
       }
     },
