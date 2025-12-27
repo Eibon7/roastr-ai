@@ -82,12 +82,10 @@ This document describes the API contract between frontend and backend v2 for aut
 **Response (Error):**
 ```json
 {
-  "success": false,
   "error": {
-    "slug": "AUTH_INVALID_CREDENTIALS",
-    "retryable": false
-  },
-  "request_id": "uuid"
+    "code": "AUTH_INVALID_CREDENTIALS",
+    "message": "Invalid email or password"
+  }
 }
 ```
 
@@ -117,12 +115,10 @@ This document describes the API contract between frontend and backend v2 for aut
 **Response (Error):**
 ```json
 {
-  "success": false,
   "error": {
-    "slug": "TOKEN_INVALID",
-    "retryable": false
-  },
-  "request_id": "uuid"
+    "code": "TOKEN_INVALID",
+    "message": "Invalid or expired refresh token"
+  }
 }
 ```
 
