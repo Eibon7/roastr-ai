@@ -18,6 +18,10 @@ auth:
   magic_link:
     enabled: true
 
+# Feature Flags (SSOT-driven)
+feature_flags:
+  enable_user_registration: false
+
 # Shield Configuration
 shield:
   # Valores por defecto (pueden ser overrideados por admin_settings)

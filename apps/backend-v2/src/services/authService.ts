@@ -19,6 +19,11 @@ export interface SignupParams {
   metadata?: Record<string, any>;
 }
 
+export interface RegisterParams {
+  email: string;
+  password: string;
+}
+
 export interface LoginParams {
   email: string;
   password: string;
@@ -49,6 +54,76 @@ export interface User {
 }
 
 export class AuthService {
+  /**
+   * Registro v2 (contract-first)
+   *
+   * - Identidad: Supabase Auth (email + password)
+   * - Anti-enumeration: si el email ya existe, NO se revela (caller debe responder homogéneo)
+   * - Perfil mínimo: se intenta crear en `profiles` (best-effort, no bloquea registro)
+   */
+  async register(params: RegisterParams): Promise<void> {
+    const normalizedEmail = this.normalizeEmail(params.email);
+    const { password } = params;
+
+    if (!this.isValidEmail(normalizedEmail)) {
+      throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email format');
+    }
+
+    if (!this.isValidPassword(password)) {
+      throw new AuthError(
+        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+        'Password must be at least 8 characters'
+      );
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: {
+          data: {
+            role: 'user'
+          }
+        }
+      });
+
+      if (error) {
+        // Anti-enumeration: si el email ya existe, no revelar (caller responderá success:true).
+        if (this.isEmailAlreadyRegisteredError(error)) {
+          return;
+        }
+        throw mapSupabaseError(error);
+      }
+
+      // Supabase puede devolver session null si requiere verificación. Aun así, user puede existir.
+      if (!data?.user?.id) {
+        // Contrato: el caller responde success:true de todos modos.
+        return;
+      }
+
+      // Perfil mínimo (best-effort): NO bloquear si falla.
+      const { error: profileError } = await supabase.from('profiles').insert({
+        user_id: data.user.id,
+        username: normalizedEmail,
+        onboarding_state: 'welcome'
+      });
+
+      if (profileError) {
+        // No loguear email/password. Solo contexto mínimo.
+        console.error('Failed to create minimal profile', {
+          userId: data.user.id,
+          code: profileError.code,
+          message: profileError.message
+        });
+      }
+    } catch (error) {
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      throw mapSupabaseError(error);
+    }
+  }
+
   /**
    * Registra un nuevo usuario
    */
@@ -117,10 +192,7 @@ export class AuthService {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_in: data.session.expires_in,
-        expires_at:
-          typeof data.session.expires_at === 'number'
-            ? data.session.expires_at
-            : Math.floor(new Date(data.session.expires_at).getTime() / 1000),
+        expires_at: this.normalizeExpiresAt(data.session),
         token_type: data.session.token_type || 'bearer',
         user: {
           id: data.user.id,
@@ -217,10 +289,7 @@ export class AuthService {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_in: data.session.expires_in,
-        expires_at:
-          typeof data.session.expires_at === 'number'
-            ? data.session.expires_at
-            : Math.floor(new Date(data.session.expires_at).getTime() / 1000),
+        expires_at: this.normalizeExpiresAt(data.session),
         token_type: data.session.token_type || 'bearer',
         user: {
           id: data.user.id,
@@ -282,10 +351,7 @@ export class AuthService {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_in: data.session.expires_in,
-        expires_at:
-          typeof data.session.expires_at === 'number'
-            ? data.session.expires_at
-            : Math.floor(new Date(data.session.expires_at).getTime() / 1000),
+        expires_at: this.normalizeExpiresAt(data.session),
         token_type: data.session.token_type || 'bearer',
         user: {
           id: data.user.id,
@@ -442,7 +508,7 @@ export class AuthService {
    * Valida formato de password
    */
   private isValidPassword(password: string): boolean {
-    return password.length >= 8;
+    return password.length >= 8 && password.length <= 128;
   }
 
   /**
@@ -450,6 +516,48 @@ export class AuthService {
    */
   private hashForLog(value: string): string {
     return createHash('sha256').update(value.toLowerCase()).digest('hex').substring(0, 12);
+  }
+
+  /**
+   * Normaliza email (case-insensitive) y elimina caracteres de control.
+   */
+  private normalizeEmail(email: string): string {
+    return email
+      .trim()
+      .toLowerCase()
+      .replace(/[\x00-\x1F\x7F]/g, '');
+  }
+
+  /**
+   * Detecta error "email ya registrado" (Supabase) para anti-enumeration.
+   */
+  private isEmailAlreadyRegisteredError(error: unknown): boolean {
+    const message = (error as any)?.message?.toString?.() || '';
+    const lower = message.toLowerCase();
+    return (
+      lower.includes('already registered') ||
+      lower.includes('already exists') ||
+      lower.includes('email address already') ||
+      lower.includes('duplicate')
+    );
+  }
+
+  /**
+   * Normaliza `expires_at` para el contrato Session.
+   * Supabase puede devolverlo como number, string o undefined según contexto.
+   */
+  private normalizeExpiresAt(session: {
+    expires_at?: number | string;
+    expires_in?: number;
+  }): number {
+    if (typeof session.expires_at === 'number') {
+      return session.expires_at;
+    }
+    if (typeof session.expires_at === 'string' && session.expires_at.length > 0) {
+      return Math.floor(new Date(session.expires_at).getTime() / 1000);
+    }
+    const expiresIn = typeof session.expires_in === 'number' ? session.expires_in : 0;
+    return Math.floor(Date.now() / 1000) + expiresIn;
   }
 }
 

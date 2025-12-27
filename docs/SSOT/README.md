@@ -61,7 +61,7 @@ El SSOT previene:
 
 ### 4. Feature Flags
 
-15 flags autorizados (lista completa, sin "etc."):
+16 flags autorizados (lista completa, sin "etc."):
 
 **Core Producto (6)**:
 
@@ -72,23 +72,27 @@ El SSOT previene:
 5. `personal_tone_enabled`
 6. `nsfw_tone_enabled`
 
+**Auth (1)**:
+
+7. `enable_user_registration`
+
 **Shield / Seguridad (4)**:
 
-7. `kill_switch_autopost`
-8. `enable_shield`
-9. `enable_roast`
-10. `enable_perspective_fallback_classifier`
+8. `kill_switch_autopost`
+9. `enable_shield`
+10. `enable_roast`
+11. `enable_perspective_fallback_classifier`
 
 **UX / UI (2)**:
 
-11. `show_two_roast_variants`
-12. `show_transparency_disclaimer`
+12. `show_two_roast_variants`
+13. `show_transparency_disclaimer`
 
 **Despliegue / Experimentales (3)**:
 
-13. `enable_style_validator`
-14. `enable_advanced_tones`
-15. `enable_beta_sponsor_ui`
+14. `enable_style_validator`
+15. `enable_advanced_tones`
+16. `enable_beta_sponsor_ui`
 
 ### 5. Shield & Análisis
 

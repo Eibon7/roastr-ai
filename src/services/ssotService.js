@@ -142,6 +142,7 @@ function getValidFeatureFlagKeys() {
     'manual_approval_enabled',
     'custom_prompt_enabled',
     'sponsor_feature_enabled',
+    'enable_user_registration',
     'original_tone_enabled',
     'nsfw_tone_enabled',
     // Shield / seguridad
@@ -181,6 +182,10 @@ function getFeatureFlagSemantics() {
     sponsor_feature_enabled: {
       actors: ['admin'],
       description: 'Habilita módulo de sponsors (solo Plus)'
+    },
+    enable_user_registration: {
+      actors: ['admin'],
+      description: 'Habilita el registro de usuarios (email + password) en Auth v2'
     },
     original_tone_enabled: {
       actors: ['admin'],

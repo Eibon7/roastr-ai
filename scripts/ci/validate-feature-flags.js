@@ -32,6 +32,7 @@ const AUTHORIZED_FLAGS = [
   'sponsor_feature_enabled',
   'personal_tone_enabled',
   'nsfw_tone_enabled',
+  'enable_user_registration',
   'kill_switch_autopost',
   'enable_shield',
   'enable_roast',
