@@ -239,15 +239,15 @@ const INACTIVITY_TIMEOUT = 7 * 24 * 60 * 60 * 1000; // 7 días
 
 ```typescript
 // Almacenar tokens
-localStorage.setItem('access_token', session.access_token);
+localStorage.setItem('auth_token', session.access_token);
 localStorage.setItem('refresh_token', session.refresh_token);
 
 // Leer tokens
-const accessToken = localStorage.getItem('access_token');
+const accessToken = localStorage.getItem('auth_token');
 const refreshToken = localStorage.getItem('refresh_token');
 
 // Limpiar tokens (logout)
-localStorage.removeItem('access_token');
+localStorage.removeItem('auth_token');
 localStorage.removeItem('refresh_token');
 ```
 

@@ -169,7 +169,7 @@ Implement frontend HTTP interceptor with automatic token refresh retry and compr
 
 ### Tests
 ```bash
-✓ 10 E2E tests passing
+✓ 13 E2E tests passing (4+3+3+3)
 ✓ 5 API client tests passing
 ✓ 7 Auth context tests passing
 ```
@@ -216,7 +216,7 @@ Implement frontend HTTP interceptor with automatic token refresh retry and compr
 
 ## 📚 Files Summary
 
-### Created Files (7)
+### Created Files (8)
 1. `frontend/src/lib/auth/tokenStorage.ts`
 2. `frontend/src/lib/auth/refreshService.ts`
 3. `frontend/src/lib/auth/errorHandler.ts`

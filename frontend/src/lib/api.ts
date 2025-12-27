@@ -41,7 +41,7 @@
  * - **429:** Per-action backoff (not global lock), disable specific action button
  */
 
-import { getAccessToken } from './auth/tokenStorage';
+import { getAccessToken, clearTokens } from './auth/tokenStorage';
 import { refreshAccessToken } from './auth/refreshService';
 import { handleAuthError, getLoginRedirect } from './auth/errorHandler';
 
@@ -562,7 +562,7 @@ export const authApi = {
    * when user explicitly logs out or session expires.
    */
   async logout() {
-    localStorage.removeItem('auth_token');
+    clearTokens();
     localStorage.removeItem('user');
   }
 };
