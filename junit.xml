@@ -1,3 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="0" failures="0" errors="0" time="0">
+<testsuites name="vitest tests" tests="1" failures="1" errors="0" time="0">
+    <testsuite name="tests/unit/services/emailService.test.js" timestamp="2025-12-27T10:05:16.607Z" hostname="macbookpro.lan" tests="1" failures="1" errors="0" skipped="0" time="0">
+        <testcase classname="tests/unit/services/emailService.test.js" name="tests/unit/services/emailService.test.js" time="0">
+            <failure message="jest is not defined" type="ReferenceError">
+ReferenceError: jest is not defined
+ ❯ tests/unit/services/emailService.test.js:2:24
+            </failure>
+        </testcase>
+    </testsuite>
 </testsuites>

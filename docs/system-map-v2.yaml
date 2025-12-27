@@ -604,18 +604,15 @@ nodes:
       - apps/backend-v2/src/middleware/rateLimit.ts
       - apps/backend-v2/src/routes/auth.ts
       - apps/backend-v2/src/utils/authErrorTaxonomy.ts
-    strong_concepts:
-      - authErrorTaxonomy
-      - rateLimitConfig
-    soft_concepts:
-      - session-management
-      - jwt-validation
     ssot_references:
       - auth_rate_limit_config
       - abuse_detection_thresholds
       - subscription_states
+      - oauth_pkce_flow
+      - oauth_scopes
       - plan_ids
       - gdpr_retention
+      - environment_variables
     subnodes:
       - overview
       - login-flows
