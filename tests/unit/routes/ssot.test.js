@@ -1,8 +1,8 @@
 /**
  * SSOT Routes Tests
- * 
+ *
  * Tests for public SSOT endpoints (ROA-267)
- * 
+ *
  * All endpoints are public (no authentication required)
  */
 
@@ -12,9 +12,7 @@ const { app } = require('../../../src/index');
 describe('SSOT Public Routes', () => {
   describe('GET /api/ssot/plans', () => {
     it('should return valid plan IDs, trial config, limits, and capabilities', async () => {
-      const response = await request(app)
-        .get('/api/ssot/plans')
-        .expect(200);
+      const response = await request(app).get('/api/ssot/plans').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('valid_ids');
@@ -44,17 +42,13 @@ describe('SSOT Public Routes', () => {
     });
 
     it('should be accessible without authentication', async () => {
-      await request(app)
-        .get('/api/ssot/plans')
-        .expect(200);
+      await request(app).get('/api/ssot/plans').expect(200);
     });
   });
 
   describe('GET /api/ssot/limits', () => {
     it('should return plan limits', async () => {
-      const response = await request(app)
-        .get('/api/ssot/limits')
-        .expect(200);
+      const response = await request(app).get('/api/ssot/limits').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('starter');
@@ -87,9 +81,7 @@ describe('SSOT Public Routes', () => {
 
   describe('GET /api/ssot/features', () => {
     it('should return valid feature flags and semantics', async () => {
-      const response = await request(app)
-        .get('/api/ssot/features')
-        .expect(200);
+      const response = await request(app).get('/api/ssot/features').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('valid_flags');
@@ -122,9 +114,7 @@ describe('SSOT Public Routes', () => {
 
   describe('GET /api/ssot/tones', () => {
     it('should return valid roast tones', async () => {
-      const response = await request(app)
-        .get('/api/ssot/tones')
-        .expect(200);
+      const response = await request(app).get('/api/ssot/tones').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('valid_tones');
@@ -147,9 +137,7 @@ describe('SSOT Public Routes', () => {
 
   describe('GET /api/ssot/subscription-states', () => {
     it('should return valid subscription states', async () => {
-      const response = await request(app)
-        .get('/api/ssot/subscription-states')
-        .expect(200);
+      const response = await request(app).get('/api/ssot/subscription-states').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('valid_states');
@@ -174,9 +162,7 @@ describe('SSOT Public Routes', () => {
 
   describe('GET /api/ssot/platforms', () => {
     it('should return supported and planned platforms', async () => {
-      const response = await request(app)
-        .get('/api/ssot/platforms')
-        .expect(200);
+      const response = await request(app).get('/api/ssot/platforms').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('supported');
@@ -196,9 +182,7 @@ describe('SSOT Public Routes', () => {
 
   describe('GET /api/ssot/all', () => {
     it('should return all SSOT data in a single response', async () => {
-      const response = await request(app)
-        .get('/api/ssot/all')
-        .expect(200);
+      const response = await request(app).get('/api/ssot/all').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('plans');
@@ -243,4 +227,3 @@ describe('SSOT Public Routes', () => {
     });
   });
 });
-

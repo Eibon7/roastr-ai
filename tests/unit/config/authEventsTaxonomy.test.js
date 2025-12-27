@@ -17,9 +17,7 @@ const {
 describe('Auth Events Taxonomy v2', () => {
   describe('buildEventId', () => {
     it('should build event ID from path array', () => {
-      expect(buildEventId(['session', 'login', 'success'])).toBe(
-        'auth.session.login.success'
-      );
+      expect(buildEventId(['session', 'login', 'success'])).toBe('auth.session.login.success');
       expect(buildEventId(['password', 'reset', 'requested'])).toBe(
         'auth.password.reset.requested'
       );
@@ -36,11 +34,7 @@ describe('Auth Events Taxonomy v2', () => {
 
   describe('parseEventId', () => {
     it('should parse event ID into path array', () => {
-      expect(parseEventId('auth.session.login.success')).toEqual([
-        'session',
-        'login',
-        'success'
-      ]);
+      expect(parseEventId('auth.session.login.success')).toEqual(['session', 'login', 'success']);
       expect(parseEventId('auth.password.reset.requested')).toEqual([
         'password',
         'reset',
@@ -49,12 +43,8 @@ describe('Auth Events Taxonomy v2', () => {
     });
 
     it('should throw error for invalid event ID', () => {
-      expect(() => parseEventId('invalid.event')).toThrow(
-        'Event ID must start with "auth."'
-      );
-      expect(() => parseEventId(null)).toThrow(
-        'Event ID must start with "auth."'
-      );
+      expect(() => parseEventId('invalid.event')).toThrow('Event ID must start with "auth."');
+      expect(() => parseEventId(null)).toThrow('Event ID must start with "auth."');
     });
   });
 
@@ -95,15 +85,11 @@ describe('Auth Events Taxonomy v2', () => {
     });
 
     it('should map v1 reset_request to v2', () => {
-      expect(mapV1ToV2('auth.reset_request')).toBe(
-        'auth.password.reset.requested'
-      );
+      expect(mapV1ToV2('auth.reset_request')).toBe('auth.password.reset.requested');
     });
 
     it('should map v1 reset_complete to v2', () => {
-      expect(mapV1ToV2('auth.reset_complete')).toBe(
-        'auth.password.reset.completed'
-      );
+      expect(mapV1ToV2('auth.reset_complete')).toBe('auth.password.reset.completed');
     });
 
     it('should return null for v1 event without mapping', () => {
@@ -155,9 +141,7 @@ describe('Auth Events Taxonomy v2', () => {
       expect(typeof flat).toBe('object');
       expect(flat['auth.session.login.success']).toBeDefined();
       expect(flat['auth.session.login.success'].severity).toBe('info');
-      expect(flat['auth.session.login.success'].description).toBe(
-        'User successfully logged in'
-      );
+      expect(flat['auth.session.login.success'].description).toBe('User successfully logged in');
     });
 
     it('should include all categories', () => {
@@ -188,9 +172,7 @@ describe('Auth Events Taxonomy v2', () => {
 
     it('should have registration events', () => {
       expect(AUTH_EVENTS_TAXONOMY_V2.registration.signup).toBeDefined();
-      expect(
-        AUTH_EVENTS_TAXONOMY_V2.registration.email_verification
-      ).toBeDefined();
+      expect(AUTH_EVENTS_TAXONOMY_V2.registration.email_verification).toBeDefined();
     });
 
     it('should have password events', () => {
@@ -234,4 +216,3 @@ describe('Auth Events Taxonomy v2', () => {
     });
   });
 });
-

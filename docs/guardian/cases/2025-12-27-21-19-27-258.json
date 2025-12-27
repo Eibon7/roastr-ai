@@ -1,0 +1,84 @@
+{
+  "case_id": "2025-12-27-21-19-27-258",
+  "timestamp": "2025-12-27T21:19:27.258Z",
+  "actor": "emiliopostigo",
+  "domains": [],
+  "files_changed": [
+    "apps/backend-v2/src/index.ts",
+    "apps/backend-v2/src/routes/auth.ts",
+    "apps/backend-v2/src/services/authService.ts",
+    "docs/guardian/audit-log.md",
+    "docs/guardian/guardian-report.md",
+    "eslint.config.js",
+    "junit.xml",
+    "tests/integration/sponsor-service-integration.test.js"
+  ],
+  "severity": "SAFE",
+  "action": "APPROVED",
+  "violations": {
+    "critical": 0,
+    "sensitive": 0,
+    "safe": 8
+  },
+  "details": [
+    {
+      "file": "apps/backend-v2/src/index.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/routes/auth.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/services/authService.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/guardian/audit-log.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/guardian/guardian-report.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "eslint.config.js",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "junit.xml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "tests/integration/sponsor-service-integration.test.js",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    }
+  ],
+  "approval_required": false,
+  "approved_by": null,
+  "notes": "Auto-approved"
+}

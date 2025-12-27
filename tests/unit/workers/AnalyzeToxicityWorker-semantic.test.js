@@ -17,7 +17,12 @@ describe('AnalyzeToxicityWorker - Semantic Minimal Contracts', () => {
 
   test('processJob resolves', async () => {
     await expect(
-      worker.processJob({ comment_id: 'c1', organization_id: 'o1', platform: 'twitter', text: 'hi' })
+      worker.processJob({
+        comment_id: 'c1',
+        organization_id: 'o1',
+        platform: 'twitter',
+        text: 'hi'
+      })
     ).resolves.toBeDefined();
   });
 

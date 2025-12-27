@@ -1,6 +1,6 @@
 /**
  * Tests for Auth Error Taxonomy v2
- * 
+ *
  * @file tests/unit/authErrorTaxonomy.test.js
  */
 
@@ -26,7 +26,7 @@ describe('Auth Error Taxonomy v2', () => {
     });
 
     it('should have metadata for all error codes', () => {
-      Object.values(AUTH_ERROR_CODES).forEach(code => {
+      Object.values(AUTH_ERROR_CODES).forEach((code) => {
         expect(ERROR_METADATA[code]).toBeDefined();
         expect(ERROR_METADATA[code].httpStatus).toBeDefined();
         expect(ERROR_METADATA[code].severity).toBeDefined();
@@ -39,7 +39,7 @@ describe('Auth Error Taxonomy v2', () => {
   describe('AuthError class', () => {
     it('should create error with correct properties', () => {
       const error = new AuthError(AUTH_ERROR_CODES.TOKEN_EXPIRED);
-      
+
       expect(error.code).toBe(AUTH_ERROR_CODES.TOKEN_EXPIRED);
       expect(error.httpStatus).toBe(401);
       expect(error.severity).toBe('LOW');
@@ -50,22 +50,15 @@ describe('Auth Error Taxonomy v2', () => {
     });
 
     it('should allow custom message', () => {
-      const error = new AuthError(
-        AUTH_ERROR_CODES.TOKEN_EXPIRED,
-        'Custom expired message'
-      );
-      
+      const error = new AuthError(AUTH_ERROR_CODES.TOKEN_EXPIRED, 'Custom expired message');
+
       expect(error.userMessage).toBe('Custom expired message');
       expect(error.message).toBe('Custom expired message');
     });
 
     it('should include details in JSON', () => {
-      const error = new AuthError(
-        AUTH_ERROR_CODES.TOKEN_EXPIRED,
-        null,
-        { userId: '123' }
-      );
-      
+      const error = new AuthError(AUTH_ERROR_CODES.TOKEN_EXPIRED, null, { userId: '123' });
+
       const json = error.toJSON();
       expect(json.details).toEqual({ userId: '123' });
       expect(json.code).toBe(AUTH_ERROR_CODES.TOKEN_EXPIRED);
@@ -130,7 +123,7 @@ describe('Auth Error Taxonomy v2', () => {
     it('should create AuthError from Supabase error', () => {
       const supabaseError = { message: 'JWT expired', status: 401 };
       const authError = createAuthErrorFromSupabase(supabaseError);
-      
+
       expect(authError).toBeInstanceOf(AuthError);
       expect(authError.code).toBe(AUTH_ERROR_CODES.TOKEN_EXPIRED);
       expect(authError.details.originalError).toBe('JWT expired');
@@ -144,7 +137,7 @@ describe('Auth Error Taxonomy v2', () => {
         null, // null error should use fallback
         AUTH_ERROR_CODES.DATABASE_ERROR
       );
-      
+
       expect(authError.code).toBe(AUTH_ERROR_CODES.DATABASE_ERROR);
     });
   });
@@ -193,28 +186,26 @@ describe('Auth Error Taxonomy v2', () => {
   describe('Error metadata consistency', () => {
     it('should have consistent httpStatus for error categories', () => {
       // All TOKEN_* errors should be 401 (except system errors)
-      const tokenErrors = Object.values(AUTH_ERROR_CODES).filter(code =>
-        code.startsWith('AUTH_TOKEN_') && 
-        code !== AUTH_ERROR_CODES.TOKEN_GENERATION_FAILED
+      const tokenErrors = Object.values(AUTH_ERROR_CODES).filter(
+        (code) =>
+          code.startsWith('AUTH_TOKEN_') && code !== AUTH_ERROR_CODES.TOKEN_GENERATION_FAILED
       );
-      tokenErrors.forEach(code => {
+      tokenErrors.forEach((code) => {
         expect(ERROR_METADATA[code].httpStatus).toBe(401);
       });
 
       // All AUTHZ_* errors should be 403
-      const authzErrors = Object.values(AUTH_ERROR_CODES).filter(code =>
+      const authzErrors = Object.values(AUTH_ERROR_CODES).filter((code) =>
         code.startsWith('AUTHZ_')
       );
-      authzErrors.forEach(code => {
+      authzErrors.forEach((code) => {
         expect(ERROR_METADATA[code].httpStatus).toBe(403);
       });
     });
 
     it('should have appropriate severity levels', () => {
-      const criticalErrors = [
-        AUTH_ERROR_CODES.DATABASE_ERROR
-      ];
-      criticalErrors.forEach(code => {
+      const criticalErrors = [AUTH_ERROR_CODES.DATABASE_ERROR];
+      criticalErrors.forEach((code) => {
         expect(ERROR_METADATA[code].severity).toBe('CRITICAL');
       });
 
@@ -223,10 +214,9 @@ describe('Auth Error Taxonomy v2', () => {
         AUTH_ERROR_CODES.ACCOUNT_DISABLED,
         AUTH_ERROR_CODES.SUPERADMIN_REQUIRED
       ];
-      highErrors.forEach(code => {
+      highErrors.forEach((code) => {
         expect(['HIGH', 'CRITICAL']).toContain(ERROR_METADATA[code].severity);
       });
     });
   });
 });
-

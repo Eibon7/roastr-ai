@@ -101,7 +101,7 @@ Este nodo depende de los siguientes nodos:
 
 ### Sistema:
 
-- [ ] 15 flags oficiales implementados
+- [ ] 16 flags oficiales implementados (incluye `enable_user_registration`)
 - [ ] Flags en `admin_settings.feature_flags` (SSOT)
 - [ ] ❌ NO flags hardcoded en código
 - [ ] Documentados en `docs/architecture/sources-of-truth.md`

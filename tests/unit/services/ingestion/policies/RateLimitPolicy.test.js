@@ -49,7 +49,7 @@ describe('RateLimitPolicy', () => {
 
       expect(result.allowed).toBe(true);
       expect(result.metadata.rate_limits_ok).toBe(true);
-      
+
       // Verify Redis calls for all 3 levels
       expect(mockRedis.zremrangebyscore).toHaveBeenCalledTimes(3); // global, user, account
       expect(mockRedis.zcard).toHaveBeenCalledTimes(3);
@@ -59,13 +59,10 @@ describe('RateLimitPolicy', () => {
 
     it('should block on global rate limit exceeded with retry_after', async () => {
       const oldestTimestamp = Date.now() - 1800000; // 30 min ago
-      
+
       mockRedis.zremrangebyscore.mockResolvedValue();
       mockRedis.zcard.mockResolvedValueOnce(1000); // Global limit reached
-      mockRedis.zrange.mockResolvedValue([
-        'entry-1',
-        oldestTimestamp.toString()
-      ]);
+      mockRedis.zrange.mockResolvedValue(['entry-1', oldestTimestamp.toString()]);
 
       const result = await policy.evaluate(context);
 
@@ -82,15 +79,12 @@ describe('RateLimitPolicy', () => {
 
     it('should block on user rate limit exceeded with retry_after', async () => {
       const oldestTimestamp = Date.now() - 600000; // 10 min ago
-      
+
       mockRedis.zremrangebyscore.mockResolvedValue();
       mockRedis.zcard
         .mockResolvedValueOnce(50) // Global OK
         .mockResolvedValueOnce(100); // User limit reached
-      mockRedis.zrange.mockResolvedValue([
-        'entry-1',
-        oldestTimestamp.toString()
-      ]);
+      mockRedis.zrange.mockResolvedValue(['entry-1', oldestTimestamp.toString()]);
 
       const result = await policy.evaluate(context);
 
@@ -106,16 +100,13 @@ describe('RateLimitPolicy', () => {
 
     it('should block on account rate limit exceeded with retry_after', async () => {
       const oldestTimestamp = Date.now() - 300000; // 5 min ago
-      
+
       mockRedis.zremrangebyscore.mockResolvedValue();
       mockRedis.zcard
         .mockResolvedValueOnce(50) // Global OK
         .mockResolvedValueOnce(50) // User OK
         .mockResolvedValueOnce(50); // Account limit reached
-      mockRedis.zrange.mockResolvedValue([
-        'entry-1',
-        oldestTimestamp.toString()
-      ]);
+      mockRedis.zrange.mockResolvedValue(['entry-1', oldestTimestamp.toString()]);
 
       const result = await policy.evaluate(context);
 
@@ -131,7 +122,7 @@ describe('RateLimitPolicy', () => {
     it('should verify sliding window pruning (zremrangebyscore)', async () => {
       const now = Date.now();
       const windowMs = 3600000; // 1 hour
-      
+
       mockRedis.zremrangebyscore.mockResolvedValue();
       mockRedis.zcard.mockResolvedValue(10);
       mockRedis.zadd.mockResolvedValue();
@@ -142,8 +133,8 @@ describe('RateLimitPolicy', () => {
       // Verify zremrangebyscore was called with correct window
       const calls = mockRedis.zremrangebyscore.mock.calls;
       expect(calls.length).toBeGreaterThan(0);
-      
-      calls.forEach(call => {
+
+      calls.forEach((call) => {
         const [key, minScore, maxScore] = call;
         expect(key).toMatch(/^ingestion:(global|user:|account:)/);
         expect(minScore).toBe(0);
@@ -164,7 +155,7 @@ describe('RateLimitPolicy', () => {
       const zaddCalls = mockRedis.zadd.mock.calls;
       expect(zaddCalls.length).toBe(3); // global, user, account
 
-      zaddCalls.forEach(call => {
+      zaddCalls.forEach((call) => {
         const [key, timestamp, value] = call;
         expect(key).toMatch(/^ingestion:(global|user:|account:)/);
         expect(typeof timestamp).toBe('number');
@@ -175,7 +166,7 @@ describe('RateLimitPolicy', () => {
       const expireCalls = mockRedis.expire.mock.calls;
       expect(expireCalls.length).toBe(3);
 
-      expireCalls.forEach(call => {
+      expireCalls.forEach((call) => {
         const [key, ttl] = call;
         expect(key).toMatch(/^ingestion:(global|user:|account:)/);
         expect(ttl).toBe(3600); // 1 hour in seconds
@@ -189,10 +180,7 @@ describe('RateLimitPolicy', () => {
 
       mockRedis.zremrangebyscore.mockResolvedValue();
       mockRedis.zcard.mockResolvedValue(1000); // Limit reached
-      mockRedis.zrange.mockResolvedValue([
-        'entry-1',
-        oldestTimestamp.toString()
-      ]);
+      mockRedis.zrange.mockResolvedValue(['entry-1', oldestTimestamp.toString()]);
 
       const result = await policy.evaluate(context);
 

@@ -21,7 +21,7 @@ module.exports = [
   },
   // Main configuration - ONLY lint apps/backend-v2/** and scripts/** (Node.js)
   {
-    files: ['apps/backend-v2/**/*.{js,ts,tsx}', 'scripts/**/*.{js,ts,tsx}'],
+    files: ['apps/backend-v2/**/*.{js,ts,tsx}', 'scripts/**/*.{js,ts,tsx}', 'tests/**/*.{js,ts,tsx}'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -59,6 +59,7 @@ module.exports = [
       
       // Disable unsupported TypeScript rules (not available in this config)
       '@typescript-eslint/no-dynamic-delete': 'off',
+      'no-dynamic-delete': 'off',
       
       // Disable rules that conflict with Prettier
       ...prettierRecommended.rules
