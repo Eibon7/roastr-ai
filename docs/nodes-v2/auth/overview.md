@@ -343,57 +343,6 @@ GET /api/v2/auth/health
 
 ## 🛠️ Configuración
 
-### Email Provider (Resend - v2)
-
-**⭐ ROA-370: Email provider migrado de SendGrid a Resend**
-
-**Configuración en Supabase Auth:**
-
-Supabase Auth se integra con Resend vía SMTP para envío de emails de autenticación:
-
-```bash
-# Supabase Dashboard → Authentication → Email Templates → SMTP Settings
-Host: smtp.resend.com
-Port: 587
-Username: resend
-Password: <RESEND_API_KEY>
-Sender Email: noreply@roastr.ai
-Sender Name: Roastr.ai
-```
-
-**Tipos de emails enviados por Supabase:**
-- **Confirm Email** (signup)
-- **Magic Link** (passwordless login)
-- **Change Email Address**
-- **Reset Password**
-
-**Service emailService.js (transaccional):**
-
-Adicionalmente, `src/services/emailService.js` usa Resend API directamente para emails transaccionales (billing, exports, etc.).
-
-**Variables de entorno requeridas:**
-
-```bash
-# Resend API (ROA-370)
-RESEND_API_KEY=re_your_api_key_here
-RESEND_FROM_EMAIL=noreply@roastr.ai
-SENDGRID_FROM_NAME=Roastr.ai  # Reutilizado para compatibilidad
-SUPPORT_EMAIL=support@roastr.ai
-
-# Feature flag
-ENABLE_EMAIL_NOTIFICATIONS=true
-```
-
-**Verificación del dominio:**
-
-Antes de usar Resend en producción, verificar el dominio en Resend Dashboard:
-1. Settings → Domains → Add Domain
-2. Añadir registros DNS (SPF, DKIM)
-3. Verificar dominio
-4. Usar email verificado en `RESEND_FROM_EMAIL`
-
----
-
 ### Environment Variables
 
 **Requeridas:**
@@ -412,12 +361,6 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # JWT
 JWT_SECRET=your-jwt-secret
-
-# Email (Resend - ROA-370)
-RESEND_API_KEY=re_your_api_key_here
-RESEND_FROM_EMAIL=noreply@roastr.ai
-SENDGRID_FROM_NAME=Roastr.ai
-SUPPORT_EMAIL=support@roastr.ai
 ```
 
 **Opcionales (Feature Flags):**
@@ -426,9 +369,6 @@ SUPPORT_EMAIL=support@roastr.ai
 # Rate Limiting v2 (ROA-359)
 ENABLE_AUTH_RATE_LIMIT_V2=true
 ENABLE_RATE_LIMIT=true
-
-# Email
-ENABLE_EMAIL_NOTIFICATIONS=true
 
 # Debug
 DEBUG_SESSION=false
@@ -449,14 +389,6 @@ Desde `admin_settings.feature_flags` (SSOT v2, sección 3):
 ```
 
 **⚠️ Nota:** Feature flags de autenticación son **estáticos** (env vars), no dinámicos.
-
----
-
-## 👥 Agentes Relevantes
-
-- **Backend Dev** (ROA-364: Auth Error Taxonomy, ROA-359: Rate Limiting v2, ROA-370: Resend Integration)
-- **Test Engineer** (Coverage auth node, tests de integración)
-- **Guardian** (Security audit, env vars validation)
 
 ---
 
@@ -515,7 +447,7 @@ node scripts/check-system-map-drift.js --ci
 
 ---
 
-**Última actualización:** 2025-12-27  
-**Owner:** ROA-364, ROA-359, ROA-370  
+**Última actualización:** 2025-12-26  
+**Owner:** ROA-364  
 **Status:** ✅ Active
 
