@@ -1,56 +1,62 @@
-// Mock SendGrid
-jest.mock('@sendgrid/mail', () => ({
-  setApiKey: jest.fn(),
-  send: jest.fn()
+// Mock Resend (ROA-370: Migrated from SendGrid)
+import { vi } from 'vitest';
+
+const mockResendSend = vi.fn();
+vi.mock('resend', () => ({
+  Resend: vi.fn().mockImplementation(() => ({
+    emails: {
+      send: mockResendSend
+    }
+  }))
 }));
 
 // Mock file system for template loading
-jest.mock('fs', () => ({
+vi.mock('fs', () => ({
   promises: {
-    readFile: jest.fn()
+    readFile: vi.fn()
   }
 }));
 
 // Mock handlebars
-jest.mock('handlebars', () => ({
-  compile: jest.fn()
+vi.mock('handlebars', () => ({
+  compile: vi.fn()
 }));
 
 // Mock logger
-jest.mock('../../../src/utils/logger', () => ({
+vi.mock('../../../src/utils/logger', () => ({
   logger: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn(),
-    child: jest.fn(() => ({
-      info: jest.fn(),
-      error: jest.fn(),
-      warn: jest.fn(),
-      debug: jest.fn()
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn(() => ({
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      debug: vi.fn()
     }))
   }
 }));
 
 // Mock flags
-jest.mock('../../../src/config/flags', () => ({
+vi.mock('../../../src/config/flags', () => ({
   flags: {
-    isEnabled: jest.fn().mockReturnValue(true)
+    isEnabled: vi.fn().mockReturnValue(true)
   }
 }));
 
-const sgMail = require('@sendgrid/mail');
-const fs = require('fs');
-const handlebars = require('handlebars');
-const { logger } = require('../../../src/utils/logger');
-const { flags } = require('../../../src/config/flags');
+import { Resend } from 'resend';
+import fs from 'fs';
+import handlebars from 'handlebars';
+import { logger } from '../../../src/utils/logger';
+import { flags } from '../../../src/config/flags';
 
 describe('EmailService', () => {
   let emailService;
 
   beforeAll(() => {
-    // Set up environment before requiring the module
-    process.env.SENDGRID_API_KEY = 'test-api-key';
+    // Set up environment before requiring the module (ROA-370: Updated for Resend)
+    process.env.RESEND_API_KEY = 'test-api-key';
     process.env.SENDGRID_FROM_EMAIL = 'test@roastr.ai';
     process.env.SENDGRID_FROM_NAME = 'Test Roastr';
     process.env.APP_URL = 'https://test.roastr.ai';
@@ -72,14 +78,13 @@ describe('EmailService', () => {
     // Mock file read
     fs.promises.readFile.mockResolvedValue('<h1>{{userName}}</h1>');
 
-    // Mock SendGrid success response
-    sgMail.send.mockResolvedValue([
-      {
-        headers: {
-          'x-message-id': 'test-message-id'
-        }
-      }
-    ]);
+    // Mock Resend success response (ROA-370: Updated from SendGrid)
+    mockResendSend.mockResolvedValue({
+      id: 'test-message-id',
+      from: 'Test Roastr <test@roastr.ai>',
+      to: ['user@test.com'],
+      created_at: '2025-12-27T10:00:00Z'
+    });
   });
 
   describe('Service Configuration', () => {
@@ -89,7 +94,7 @@ describe('EmailService', () => {
     });
 
     it('should handle missing API key', () => {
-      delete process.env.SENDGRID_API_KEY;
+      delete process.env.RESEND_API_KEY;
       flags.isEnabled.mockReturnValue(false);
 
       // Create new instance to test initialization
@@ -104,7 +109,7 @@ describe('EmailService', () => {
 
       expect(status).toEqual({
         configured: true,
-        provider: 'SendGrid',
+        provider: 'Resend', // ROA-370: Updated from SendGrid
         templatesLoaded: expect.any(Number),
         featureFlag: true
       });
@@ -120,12 +125,11 @@ describe('EmailService', () => {
 
       expect(result.success).toBe(true);
       expect(result.messageId).toBe('test-message-id');
-      expect(sgMail.send).toHaveBeenCalledWith(
+      expect(mockResendSend).toHaveBeenCalledWith(
         expect.objectContaining({
-          to: 'user@test.com',
+          to: ['user@test.com'], // ROA-370: Resend expects array
           subject: '🎉 Welcome to Roastr.ai!',
-          from: 'test@roastr.ai',
-          fromName: 'Test Roastr'
+          from: 'Test Roastr <test@roastr.ai>' // ROA-370: Resend format
         })
       );
     });
@@ -134,9 +138,9 @@ describe('EmailService', () => {
       const result = await emailService.sendWelcomeEmail('user@test.com', {});
 
       expect(result.success).toBe(true);
-      expect(sgMail.send).toHaveBeenCalled();
+      expect(mockResendSend).toHaveBeenCalled();
 
-      const callArgs = sgMail.send.mock.calls[0][0];
+      const callArgs = mockResendSend.mock.calls[0][0];
       expect(callArgs.to).toBe('user@test.com');
     });
   });
@@ -152,9 +156,9 @@ describe('EmailService', () => {
       const result = await emailService.sendPasswordResetEmail('user@test.com', resetData);
 
       expect(result.success).toBe(true);
-      expect(sgMail.send).toHaveBeenCalledWith(
+      expect(mockResendSend).toHaveBeenCalledWith(
         expect.objectContaining({
-          to: 'user@test.com',
+          to: ['user@test.com'], // ROA-370: Resend expects array
           subject: '🔐 Reset Your Password'
         })
       );
@@ -166,7 +170,7 @@ describe('EmailService', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(sgMail.send).toHaveBeenCalled();
+      expect(mockResendSend).toHaveBeenCalled();
     });
   });
 
@@ -185,9 +189,9 @@ describe('EmailService', () => {
       );
 
       expect(result.success).toBe(true);
-      expect(sgMail.send).toHaveBeenCalledWith(
+      expect(mockResendSend).toHaveBeenCalledWith(
         expect.objectContaining({
-          to: 'user@test.com',
+          to: ['user@test.com'], // ROA-370: Resend expects array
           subject: '⚠️ Payment Failed - Action Required'
         })
       );
@@ -197,7 +201,7 @@ describe('EmailService', () => {
   describe('Error Handling', () => {
     it('should handle SendGrid send error with retry', async () => {
       const sendError = new Error('SendGrid API error');
-      sgMail.send
+      mockResendSend
         .mockRejectedValueOnce(sendError)
         .mockRejectedValueOnce(sendError)
         .mockResolvedValueOnce([
@@ -212,12 +216,12 @@ describe('EmailService', () => {
 
       expect(result.success).toBe(true);
       expect(result.attempt).toBe(3);
-      expect(sgMail.send).toHaveBeenCalledTimes(3);
+      expect(mockResendSend).toHaveBeenCalledTimes(3);
     });
 
     it('should fail after max retries', async () => {
       const sendError = new Error('SendGrid API error');
-      sgMail.send.mockRejectedValue(sendError);
+      mockResendSend.mockRejectedValue(sendError);
 
       const result = await emailService.sendWelcomeEmail('user@test.com', {
         userName: 'Test User'
@@ -226,7 +230,7 @@ describe('EmailService', () => {
       expect(result.success).toBe(false);
       expect(result.error).toBe('SendGrid API error');
       expect(result.retriesAttempted).toBe(3);
-      expect(sgMail.send).toHaveBeenCalledTimes(3);
+      expect(mockResendSend).toHaveBeenCalledTimes(3);
     });
 
     it('should handle template loading error', async () => {
@@ -252,7 +256,7 @@ describe('EmailService', () => {
 
       expect(result.success).toBe(false);
       expect(result.reason).toBe('Email service not configured');
-      expect(sgMail.send).not.toHaveBeenCalled();
+      expect(mockResendSend).not.toHaveBeenCalled();
 
       // Restore configuration
       emailService.isConfigured = true;
@@ -273,11 +277,11 @@ describe('EmailService', () => {
 
       expect(result.success).toBe(true);
       expect(result.messageId).toBe('test-message-id');
-      expect(sgMail.send).toHaveBeenCalledWith(
+      expect(mockResendSend).toHaveBeenCalledWith(
         expect.objectContaining({
           to: userEmail,
           subject: '🗑️ Data Export File Deleted',
-          from: 'test@roastr.ai'
+          from: 'Test Roastr <test@roastr.ai>' // ROA-370: Resend format
         })
       );
     });
@@ -294,7 +298,7 @@ describe('EmailService', () => {
       );
 
       expect(result.success).toBe(true);
-      expect(sgMail.send).toHaveBeenCalled();
+      expect(mockResendSend).toHaveBeenCalled();
     });
 
     it('should handle missing reason gracefully', async () => {
@@ -304,7 +308,7 @@ describe('EmailService', () => {
       const result = await emailService.sendExportFileDeletionNotification(userEmail, filename);
 
       expect(result.success).toBe(true);
-      expect(sgMail.send).toHaveBeenCalled();
+      expect(mockResendSend).toHaveBeenCalled();
     });
   });
 
@@ -322,11 +326,11 @@ describe('EmailService', () => {
 
       expect(result.success).toBe(true);
       expect(result.messageId).toBe('test-message-id');
-      expect(sgMail.send).toHaveBeenCalledWith(
+      expect(mockResendSend).toHaveBeenCalledWith(
         expect.objectContaining({
           to: userEmail,
           subject: '🧹 Data Export Cleanup Complete',
-          from: 'test@roastr.ai'
+          from: 'Test Roastr <test@roastr.ai>' // ROA-370: Resend format
         })
       );
     });
@@ -343,7 +347,7 @@ describe('EmailService', () => {
       );
 
       expect(result.success).toBe(true);
-      expect(sgMail.send).toHaveBeenCalled();
+      expect(mockResendSend).toHaveBeenCalled();
     });
 
     it('should handle service not configured', async () => {
@@ -357,7 +361,7 @@ describe('EmailService', () => {
 
       expect(result.success).toBe(false);
       expect(result.reason).toBe('Email service not configured');
-      expect(sgMail.send).not.toHaveBeenCalled();
+      expect(mockResendSend).not.toHaveBeenCalled();
 
       // Restore configuration
       emailService.isConfigured = true;

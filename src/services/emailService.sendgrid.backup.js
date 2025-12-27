@@ -1,10 +1,9 @@
 /**
  * Email notification service for billing and subscription events
- * Supports Resend (v2) with email templates for various notification types
- * Migration: ROA-370 - Replaced SendGrid with Resend
+ * Supports SendGrid with email templates for various notification types
  */
 
-const { Resend } = require('resend');
+const sgMail = require('@sendgrid/mail');
 const handlebars = require('handlebars');
 const fs = require('fs').promises;
 const path = require('path');
@@ -41,21 +40,20 @@ class EmailService {
   constructor() {
     this.isConfigured = false;
     this.templates = new Map();
-    this.resend = null;
     this.init();
   }
 
   /**
-   * Initialize email service (ROA-370: Migrated to Resend)
+   * Initialize email service
    */
   init() {
-    // Check if Resend is configured
-    if (process.env.RESEND_API_KEY && flags.isEnabled('ENABLE_EMAIL_NOTIFICATIONS')) {
-      this.resend = new Resend(process.env.RESEND_API_KEY);
+    // Check if SendGrid is configured
+    if (process.env.SENDGRID_API_KEY && flags.isEnabled('ENABLE_EMAIL_NOTIFICATIONS')) {
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
       this.isConfigured = true;
-      logger.info('📧 Email service initialized with Resend (v2)');
+      logger.info('📧 Email service initialized with SendGrid');
     } else {
-      logger.warn('📧 Email service disabled - missing RESEND_API_KEY or feature flag disabled');
+      logger.warn('📧 Email service disabled - missing SENDGRID_API_KEY or feature flag disabled');
     }
   }
 
@@ -85,7 +83,7 @@ class EmailService {
   }
 
   /**
-   * Send email using Resend (ROA-370: Migrated from SendGrid)
+   * Send email using SendGrid
    * @param {Object} options - Email options
    * @param {string} options.to - Recipient email
    * @param {string} options.subject - Email subject
@@ -105,38 +103,34 @@ class EmailService {
       const template = await this.loadTemplate(templateName);
       const htmlContent = template(templateData);
 
-      // Prepare email message for Resend
-      const emailOptions = {
-        from: `${process.env.SENDGRID_FROM_NAME || 'Roastr.ai'} <${process.env.SENDGRID_FROM_EMAIL || 'noreply@roastr.ai'}>`,
-        to: [to],
+      // Prepare email message
+      const msg = {
+        to: to,
+        from: process.env.SENDGRID_FROM_EMAIL || 'noreply@roastr.ai',
+        fromName: process.env.SENDGRID_FROM_NAME || 'Roastr.ai',
         subject: subject,
         html: htmlContent,
-        // Optional: Add plain text version
-        text: this.htmlToPlainText(htmlContent),
-        // Optional: Add tags for tracking
-        tags: [
-          { name: 'template', value: templateName },
-          { name: 'category', value: 'transactional' }
-        ]
+        // Add plain text version
+        text: this.htmlToPlainText(htmlContent)
       };
 
       // Send email with retry logic
       let lastError;
       for (let attempt = 1; attempt <= retries; attempt++) {
         try {
-          const result = await this.resend.emails.send(emailOptions);
+          const result = await sgMail.send(msg);
 
-          logger.info('📧 Email sent successfully via Resend', {
+          logger.info('📧 Email sent successfully', {
             to: to,
             subject: subject,
             templateName: templateName,
             attempt: attempt,
-            messageId: result.id
+            messageId: result[0]?.headers?.['x-message-id']
           });
 
           return {
             success: true,
-            messageId: result.id,
+            messageId: result[0]?.headers?.['x-message-id'],
             attempt: attempt
           };
         } catch (error) {
@@ -501,13 +495,13 @@ class EmailService {
   }
 
   /**
-   * Get service status (ROA-370: Updated for Resend)
+   * Get service status
    * @returns {Object} Service configuration status
    */
   getStatus() {
     return {
       configured: this.isConfigured,
-      provider: 'Resend', // v2 provider
+      provider: 'SendGrid',
       templatesLoaded: this.templates.size,
       featureFlag: flags.isEnabled('ENABLE_EMAIL_NOTIFICATIONS')
     };
