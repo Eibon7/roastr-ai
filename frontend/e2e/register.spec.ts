@@ -59,9 +59,10 @@ test.describe('Register Page', () => {
 
     await passwordInput.fill('Pass1234');
 
-    // Verificar que los requisitos cumplidos estén en verde
-    const requirements = page.locator('.text-green-600, .dark\\:text-green-400');
-    await expect(requirements).toHaveCount(3); // Todos los requisitos cumplidos
+    // Verificar que los requisitos cumplidos estén en verde usando data-testid
+    await expect(page.locator('[data-testid="requirement-length"]')).toHaveClass(/text-green-600/);
+    await expect(page.locator('[data-testid="requirement-uppercase"]')).toHaveClass(/text-green-600/);
+    await expect(page.locator('[data-testid="requirement-number"]')).toHaveClass(/text-green-600/);
   });
 
   test('should register successfully with valid data', async ({ page }) => {
@@ -95,7 +96,6 @@ test.describe('Register Page', () => {
 
     // Verificar redirección a dashboard
     await page.waitForURL('**/dashboard');
-    expect(page.url()).toContain('/dashboard');
   });
 
   test('should handle email already taken error', async ({ page }) => {
@@ -154,9 +154,10 @@ test.describe('Register Page', () => {
 
   test('should be responsive on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/register');
 
     // Card debe ser visible y no desbordarse
-    const card = page.locator('[class*="max-w-md"]');
+    const card = page.locator('[data-testid="register-card"]');
     await expect(card).toBeVisible();
 
     // Todos los inputs deben ser visibles
@@ -169,7 +170,7 @@ test.describe('Register Page', () => {
     await page.setViewportSize({ width: 768, height: 1024 });
 
     // Card debe estar centrada
-    const card = page.locator('[class*="max-w-md"]');
+    const card = page.locator('[data-testid="register-card"]');
     await expect(card).toBeVisible();
 
     // Formulario debe ser completamente visible
@@ -185,8 +186,7 @@ test.describe('Register Page', () => {
 
     // Verificar que los requisitos de password en verde sean visibles en dark mode
     await page.fill('input[id="password"]', 'SecurePass123');
-    const darkGreenText = page.locator('.dark\\:text-green-400');
-    await expect(darkGreenText.first()).toBeVisible();
+    await expect(page.locator('[data-testid="requirement-length"]')).toHaveClass(/text-green-/);
   });
 
   test('should work with light theme', async ({ page }) => {
@@ -198,8 +198,7 @@ test.describe('Register Page', () => {
 
     // Verificar que los requisitos de password en verde sean visibles en light mode
     await page.fill('input[id="password"]', 'SecurePass123');
-    const lightGreenText = page.locator('.text-green-600');
-    await expect(lightGreenText.first()).toBeVisible();
+    await expect(page.locator('[data-testid="requirement-length"]')).toHaveClass(/text-green-/);
   });
 });
 

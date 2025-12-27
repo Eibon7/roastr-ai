@@ -169,7 +169,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto" data-testid="register-card">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center">Crear cuenta</CardTitle>
         <CardDescription className="text-center">
@@ -231,13 +231,22 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
               <div className="text-xs text-muted-foreground space-y-1">
                 <p>La contraseña debe contener:</p>
                 <ul className="list-disc list-inside space-y-0.5">
-                  <li className={formData.password.length >= 8 ? 'text-green-600 dark:text-green-400' : ''}>
+                  <li 
+                    data-testid="requirement-length"
+                    className={formData.password.length >= 8 ? 'text-green-600 dark:text-green-400' : ''}
+                  >
                     Mínimo 8 caracteres
                   </li>
-                  <li className={/[A-Z]/.test(formData.password) ? 'text-green-600 dark:text-green-400' : ''}>
+                  <li 
+                    data-testid="requirement-uppercase"
+                    className={/[A-Z]/.test(formData.password) ? 'text-green-600 dark:text-green-400' : ''}
+                  >
                     Una letra mayúscula
                   </li>
-                  <li className={/[0-9]/.test(formData.password) ? 'text-green-600 dark:text-green-400' : ''}>
+                  <li 
+                    data-testid="requirement-number"
+                    className={/[0-9]/.test(formData.password) ? 'text-green-600 dark:text-green-400' : ''}
+                  >
                     Un número
                   </li>
                 </ul>
