@@ -12,6 +12,7 @@ import { abuseDetectionService } from './abuseDetectionService.js';
 import { createHash } from 'crypto';
 import { loadSettings } from '../lib/loadSettings.js';
 import { logger } from '../utils/logger.js';
+import { trackEvent } from '../lib/analytics.js';
 
 export interface SignupParams {
   email: string;
@@ -66,18 +67,19 @@ export class AuthService {
     const normalizedEmail = this.normalizeEmail(params.email);
     const { password } = params;
 
-    if (!this.isValidEmail(normalizedEmail)) {
-      throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email format');
-    }
-
-    if (!this.isValidPassword(password)) {
-      throw new AuthError(
-        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-        'Password must be at least 8 characters'
-      );
-    }
-
     try {
+      // Validaciones dentro del try-catch para capturar analytics
+      if (!this.isValidEmail(normalizedEmail)) {
+        throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email format');
+      }
+
+      if (!this.isValidPassword(password)) {
+        throw new AuthError(
+          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+          'Password must be at least 8 characters'
+        );
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
@@ -117,7 +119,42 @@ export class AuthService {
           message: profileError.message
         });
       }
+
+      // Track successful registration (B3: Register Analytics)
+      try {
+        trackEvent({
+          userId: data.user.id,
+          event: 'auth_register_success',
+          properties: {
+            method: 'email_password',
+            profile_created: !profileError
+          },
+          context: {
+            flow: 'auth'
+          }
+        });
+      } catch (analyticsError) {
+        // Graceful degradation: analytics failure should not crash registration
+        console.error('Analytics tracking failed:', analyticsError);
+      }
     } catch (error) {
+      // Track failed registration (B3: Register Analytics)
+      try {
+        trackEvent({
+          event: 'auth_register_failed',
+          properties: {
+            error_code: error instanceof AuthError ? error.code : 'UNKNOWN_ERROR',
+            method: 'email_password'
+          },
+          context: {
+            flow: 'auth'
+          }
+        });
+      } catch (analyticsError) {
+        // Graceful degradation: analytics failure should not crash error handling
+        console.error('Analytics tracking failed:', analyticsError);
+      }
+
       if (error instanceof AuthError) {
         throw error;
       }
