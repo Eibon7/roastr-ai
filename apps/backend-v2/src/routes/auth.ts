@@ -19,6 +19,7 @@ import { rateLimitByType } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
 import { getClientIp } from '../utils/request.js';
 import { loadSettings } from '../lib/loadSettings.js';
+import { trackEvent } from '../lib/analytics.js';
 
 const router = Router();
 
@@ -109,9 +110,45 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
       password
     });
 
+    // Track successful registration at endpoint level (B3: Register Analytics)
+    try {
+      trackEvent({
+        event: 'auth_register_endpoint_success',
+        properties: {
+          endpoint: '/api/v2/auth/register',
+          method: 'email_password',
+          status_code: 200
+        },
+        context: {
+          flow: 'auth'
+        }
+      });
+    } catch (analyticsError) {
+      // Graceful degradation: analytics failure should not crash the flow
+      console.error('Analytics tracking failed:', analyticsError);
+    }
+
     // Anti-enumeration: siempre homogéneo
     return res.json({ success: true });
   } catch (error) {
+    // Track failed registration at endpoint level (B3: Register Analytics)
+    try {
+      trackEvent({
+        event: 'auth_register_endpoint_failed',
+        properties: {
+          endpoint: '/api/v2/auth/register',
+          error_type: 'INTERNAL_ERROR',
+          status_code: 500
+        },
+        context: {
+          flow: 'auth'
+        }
+      });
+    } catch (analyticsError) {
+      // Graceful degradation: analytics failure should not crash the flow
+      console.error('Analytics tracking failed:', analyticsError);
+    }
+
     // No filtrar errores internos (Supabase).
     console.error('Register error:', (error as any)?.message || error);
     return res.status(500).json({
