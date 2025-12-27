@@ -2,6 +2,13 @@ import * as React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authApi, type User, type ApiError } from './api';
 import { setUserId, setUserProperties, reset } from './analytics-identity';
+import {
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+  clearTokens,
+  hasTokens
+} from './auth/tokenStorage';
 
 /**
  * Authentication context type definition
@@ -42,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   // Load user from localStorage on mount
+  // localStorage is the single source of truth for tokens
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -49,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
         // Si es un token demo, no intentar verificar con backend
-        const token = localStorage.getItem('auth_token');
+        const token = getAccessToken();
         if (token && token.startsWith('demo-token-')) {
           setLoading(false);
           return;
@@ -65,11 +73,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * Verifies authentication status with the backend
    *
    * Checks if there's a valid auth token and verifies it with the server.
+   * Uses localStorage as single source of truth for tokens.
    * Supports demo mode by detecting demo tokens and skipping backend verification.
    * Automatically clears invalid tokens.
    */
   const verifyAuth = async () => {
-    const token = localStorage.getItem('auth_token');
+    // Read token from localStorage (single source of truth)
+    const token = getAccessToken();
     if (!token) {
       setLoading(false);
       return;
@@ -97,12 +107,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('user', JSON.stringify(response.data));
       } else {
         // Invalid token, clear it
-        authApi.logout();
+        clearTokens();
         setUser(null);
       }
     } catch {
-      // Auth failed, clear token
-      authApi.logout();
+      // Auth failed, clear tokens
+      clearTokens();
       setUser(null);
     } finally {
       setLoading(false);
@@ -112,6 +122,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   /**
    * Authenticates a user with email and password
    *
+   * Stores tokens in localStorage (single source of truth).
+   * Handles both legacy format ({ token, user }) and v2 format ({ session: { access_token, refresh_token, user } }).
+   *
    * @param email - User's email address
    * @param password - User's password
    * @throws {Error} If login fails or credentials are invalid
@@ -119,25 +132,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await authApi.login(email, password);
-      if (response.success && response.token && response.user) {
-        localStorage.setItem('auth_token', response.token);
-        localStorage.setItem('user', JSON.stringify(response.user));
-        setUser(response.user);
+      
+      // Handle both legacy and v2 response formats
+      let accessToken: string;
+      let refreshToken: string | undefined;
+      let user: User;
 
-        // ROA-356: Sync identity with Amplitude
-        setUserId(response.user.id);
-        setUserProperties({
-          plan: response.user.plan || 'free',
-          role: response.user.is_admin ? 'admin' : 'user',
-          has_roastr_persona: !!(response.user as any).lo_que_me_define_encrypted,
-          is_admin: response.user.is_admin || false,
-          is_trial: response.user.plan?.toLowerCase().includes('trial') || false,
-          auth_provider: 'email_password',
-          locale: navigator.language?.split('-')[0] || 'en'
-        });
+      if ('session' in response && response.session) {
+        // v2 format: { session: { access_token, refresh_token, user }, message }
+        accessToken = response.session.access_token;
+        refreshToken = response.session.refresh_token;
+        user = response.session.user || (response as any).user;
+      } else if ('token' in response && response.token && 'user' in response) {
+        // Legacy format: { success, token, user }
+        accessToken = response.token;
+        refreshToken = undefined; // Legacy format doesn't have refresh_token
+        user = response.user;
       } else {
-        throw new Error('Login failed');
+        throw new Error('Invalid login response format');
       }
+
+      // Store tokens in localStorage (single source of truth)
+      if (refreshToken) {
+        setTokens(accessToken, refreshToken);
+      } else {
+        // Legacy: only access token available
+        localStorage.setItem('auth_token', accessToken);
+      }
+
+      // Store user data
+      localStorage.setItem('user', JSON.stringify(user));
+      setUser(user);
+
+      // ROA-356: Sync identity with Amplitude
+      setUserId(user.id);
+      setUserProperties({
+        plan: user.plan || 'free',
+        role: user.is_admin ? 'admin' : 'user',
+        has_roastr_persona: !!(user as any).lo_que_me_define_encrypted,
+        is_admin: user.is_admin || false,
+        is_trial: user.plan?.toLowerCase().includes('trial') || false,
+        auth_provider: 'email_password',
+        locale: navigator.language?.split('-')[0] || 'en'
+      });
     } catch (error) {
       const apiError = error as ApiError;
       throw new Error(apiError.message || 'Failed to login');
@@ -147,7 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   /**
    * Logs out the current user
    *
-   * Clears authentication token and user data from localStorage
+   * Clears authentication tokens and user data from localStorage (single source of truth)
    * and resets the auth state.
    */
   const logout = async () => {
@@ -155,8 +192,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserId(undefined);
     reset();
 
-    authApi.logout();
+    // Clear tokens from localStorage (single source of truth)
+    clearTokens();
+    
+    // Clear user data
+    localStorage.removeItem('user');
     setUser(null);
+
+    // Call backend logout endpoint (optional, may fail if already logged out)
+    try {
+      await authApi.logout();
+    } catch {
+      // Ignore errors - tokens already cleared
+    }
   };
 
   /**

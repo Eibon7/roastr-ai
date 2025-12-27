@@ -750,6 +750,116 @@ const status = emailService.getStatus();
 
 ---
 
+## Frontend Auto-Refresh Strategy (ROA-335)
+
+**Status:** ✅ Implemented  
+**Last Updated:** 2025-12-26
+
+### Overview
+
+The frontend implements automatic token refresh with 401 retry logic to provide seamless user experience without manual re-authentication.
+
+### Interceptor Flow
+
+```mermaid
+sequenceDiagram
+    participant Frontend
+    participant ApiClient
+    participant RefreshService
+    participant Backend
+    participant Queue
+
+    Frontend->>ApiClient: Request (expired token)
+    ApiClient->>Backend: GET /api/protected (401)
+    Backend-->>ApiClient: 401 TOKEN_EXPIRED
+    
+    alt Auth Endpoint
+        ApiClient-->>Frontend: Error (no retry)
+    else Protected Endpoint
+        alt Already Refreshing
+            ApiClient->>Queue: Queue request (FIFO)
+        else Not Refreshing
+            ApiClient->>RefreshService: refreshAccessToken()
+            RefreshService->>Backend: POST /api/v2/auth/refresh
+            Backend-->>RefreshService: { session: { access_token, refresh_token } }
+            RefreshService->>RefreshService: Update localStorage
+            RefreshService-->>ApiClient: New tokens
+            
+            ApiClient->>Backend: Retry original request (max 1x)
+            Backend-->>ApiClient: 200 Success
+            ApiClient->>Queue: Resolve all queued requests (FIFO)
+            ApiClient-->>Frontend: Response
+        end
+    end
+```
+
+### Token Storage
+
+**Location:** `frontend/src/lib/auth/tokenStorage.ts`
+
+**Storage Strategy:**
+- `access_token`: `localStorage.getItem('auth_token')` (persistent)
+- `refresh_token`: `localStorage.getItem('refresh_token')` (persistent)
+- **localStorage is single source of truth** (no in-memory storage)
+- **No custom persistence** beyond Supabase (localStorage sufficient)
+
+**Token Lifetime Assumptions:**
+- Access token TTL: 1 hour (backend validation)
+- Refresh token TTL: 7 days (backend validation)
+- **No frontend expiration checks** - backend returns 401 if expired
+
+### Retry Logic
+
+**Constraints:**
+- **Max 1 retry attempt** per request (hard limit)
+- **Block retry if refresh fails** - immediately reject, clear tokens, redirect to login
+- **Block retry for auth endpoints** - `/auth/login`, `/auth/signup`, `/auth/refresh`, etc.
+- **Concurrent 401s queue behind single refresh** (FIFO order)
+
+**FIFO Queue:**
+- All concurrent requests receiving 401 are queued
+- Queue processed in First-In-First-Out order after refresh completes
+- If refresh fails, all queued requests rejected immediately
+
+### Anonymous Endpoints (No Retry)
+
+These endpoints don't require authentication, so 401 means authentication failed (not expired token):
+
+- `/auth/login` (or `/api/v2/auth/login`)
+- `/auth/signup` (or `/api/v2/auth/signup`)
+- `/auth/refresh` (or `/api/v2/auth/refresh`)
+- `/auth/magic-link` (or `/api/v2/auth/magic-link`)
+- `/auth/reset-password` (or `/api/v2/auth/reset-password`)
+
+**Behavior:** On 401 for these endpoints → skip retry, throw error immediately.
+
+### Error Handling
+
+**401 (Session Expired):**
+- After refresh failure → clear tokens, redirect to `/login`
+- Toast shown only once (prevent spam with `_auth_redirecting` flag)
+- Store intended destination in `sessionStorage` for post-login redirect
+
+**403 (Access Denied):**
+- Show user-friendly message
+- Do NOT redirect (user is authenticated, just lacks permission)
+
+**429 (Rate Limit):**
+- Per-action backoff (not global lock)
+- Each action has independent backoff timer
+- Disable only the specific action/button that triggered 429
+- Re-enable after `Retry-After` seconds
+
+### Implementation Files
+
+- **API Client:** `frontend/src/lib/api.ts` (interceptor logic)
+- **Refresh Service:** `frontend/src/lib/auth/refreshService.ts`
+- **Token Storage:** `frontend/src/lib/auth/tokenStorage.ts`
+- **Error Handler:** `frontend/src/lib/auth/errorHandler.ts`
+- **Auth Context:** `frontend/src/lib/auth-context.tsx` (uses tokenStorage)
+
+---
+
 ## Current Gaps
 
 ### To Be Implemented
