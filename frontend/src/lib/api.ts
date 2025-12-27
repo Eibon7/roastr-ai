@@ -5,11 +5,45 @@
  * and standardized error handling for all API requests.
  *
  * Features:
- * - Automatic token injection from localStorage
+ * - Automatic token injection from localStorage (single source of truth)
  * - CSRF token handling from cookies
  * - Request/response interceptors
  * - Type-safe generic methods
+ * - Automatic 401 retry with token refresh (max 1 retry)
+ * - FIFO queue for concurrent requests during refresh
+ *
+ * ## 401 Retry Logic
+ *
+ * When a protected endpoint returns 401:
+ * 1. Check if endpoint is auth endpoint → skip retry, throw error immediately
+ * 2. If already refreshing → queue request in FIFO order
+ * 3. If not refreshing → start refresh process
+ * 4. On refresh success → retry original request exactly once (max 1 retry)
+ * 5. On refresh failure → reject all queued requests, clear tokens, redirect to login
+ *
+ * **Constraints:**
+ * - Max 1 retry attempt per request (hard limit)
+ * - Block retry if refresh fails
+ * - Block retry for auth endpoints themselves
+ * - Concurrent 401s queue behind single refresh (FIFO order)
+ *
+ * ## FIFO Queue
+ *
+ * The `_pendingRequests` array maintains a First-In-First-Out queue:
+ * - Requests are added in order received
+ * - After refresh completes, requests are processed in same order
+ * - If refresh fails, all queued requests rejected in FIFO order
+ *
+ * ## Error Handling
+ *
+ * - **401 (after refresh failure):** Clear tokens, redirect to login, show toast once
+ * - **403:** Show "Access denied" message, no redirect
+ * - **429:** Per-action backoff (not global lock), disable specific action button
  */
+
+import { getAccessToken, clearTokens } from './auth/tokenStorage';
+import { refreshAccessToken } from './auth/refreshService';
+import { handleAuthError, getLoginRedirect } from './auth/errorHandler';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -31,8 +65,35 @@ export interface ApiError {
  * Handles all API communication including authentication headers,
  * CSRF tokens, and error transformation.
  */
+/**
+ * Pending request in the retry queue
+ */
+interface PendingRequest<T> {
+  resolve: (value: T) => void;
+  reject: (error: ApiError) => void;
+  endpoint: string;
+  options: RequestInit;
+}
+
 class ApiClient {
   private baseURL: string;
+  
+  /**
+   * Flag to prevent concurrent refresh calls
+   * Only one refresh operation can be in progress at a time.
+   */
+  private _isRefreshing: boolean = false;
+  
+  /**
+   * FIFO queue for requests waiting on token refresh
+   * 
+   * When multiple requests receive 401 simultaneously, they are queued here
+   * in First-In-First-Out order. Once refresh completes, all queued requests
+   * are retried in the same order they were received.
+   * 
+   * Queue is cleared if refresh fails (all requests rejected).
+   */
+  private _pendingRequests: PendingRequest<any>[] = [];
 
   /**
    * Creates a new API client instance
@@ -45,11 +106,38 @@ class ApiClient {
 
   /**
    * Retrieves the authentication token from localStorage
+   * Uses tokenStorage as single source of truth.
    *
    * @returns The auth token string or null if not found
    */
   private getAuthToken(): string | null {
-    return localStorage.getItem('auth_token');
+    return getAccessToken();
+  }
+  
+  /**
+   * Checks if an endpoint is an auth endpoint (no retry on 401)
+   * 
+   * Auth endpoints don't require authentication, so 401 means
+   * authentication failed (not expired token). No retry needed.
+   * 
+   * @param endpoint - API endpoint path
+   * @returns true if endpoint is an auth endpoint
+   */
+  private isAuthEndpoint(endpoint: string): boolean {
+    const authEndpoints = [
+      '/auth/login',
+      '/auth/signup',
+      '/auth/refresh',
+      '/auth/magic-link',
+      '/auth/reset-password',
+      '/v2/auth/login',
+      '/v2/auth/signup',
+      '/v2/auth/refresh',
+      '/v2/auth/magic-link',
+      '/v2/auth/reset-password'
+    ];
+    
+    return authEndpoints.some(authEndpoint => endpoint.includes(authEndpoint));
   }
 
   /**
@@ -79,13 +167,26 @@ class ApiClient {
    * - Content-Type header
    * - Credentials for cookie-based auth
    *
+   * Handles 401 Unauthorized with automatic token refresh and retry:
+   * - Detects 401 responses
+   * - Refreshes token if available
+   * - Retries original request once (max 1 retry)
+   * - Queues concurrent requests during refresh (FIFO)
+   * - Blocks retry for auth endpoints
+   * - Blocks retry if refresh fails
+   *
    * @template T - Expected response type
    * @param endpoint - API endpoint path (relative to baseURL)
    * @param options - Fetch API options (method, body, headers, etc.)
+   * @param isRetry - Internal flag to track if this is a retry attempt (max 1 retry)
    * @returns Promise resolving to the typed response data
    * @throws {ApiError} If the request fails or returns an error status
    */
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {},
+    isRetry: boolean = false
+  ): Promise<T> {
     const token = this.getAuthToken();
     const csrfToken = this.getCsrfToken();
     const headers: Record<string, string> = {
@@ -108,6 +209,112 @@ class ApiClient {
       credentials: 'include' // Include cookies for CSRF token
     });
 
+    // Handle 401 Unauthorized with token refresh and retry
+    if (response.status === 401 && !isRetry) {
+      // Block retry for auth endpoints (401 means auth failed, not expired token)
+      if (this.isAuthEndpoint(endpoint)) {
+        const error: ApiError = {
+          message: 'Authentication failed',
+          status: 401
+        };
+        try {
+          const errorData = await response.json();
+          error.message = errorData.error?.message || errorData.message || error.message;
+          error.code = errorData.error?.code;
+        } catch {
+          // If response is not JSON, use default error message
+        }
+        throw error;
+      }
+
+      // If already refreshing, queue this request (FIFO)
+      if (this._isRefreshing) {
+        return new Promise<T>((resolve, reject) => {
+          this._pendingRequests.push({
+            resolve,
+            reject,
+            endpoint,
+            options
+          });
+        });
+      }
+
+      // Start refresh process
+      this._isRefreshing = true;
+
+      try {
+        // Refresh token
+        await refreshAccessToken();
+
+        // Get new token
+        const newToken = this.getAuthToken();
+        if (!newToken) {
+          throw new Error('Token refresh failed: no new token');
+        }
+
+        // Update Authorization header with new token
+        headers['Authorization'] = `Bearer ${newToken}`;
+
+        // Retry original request with new token (max 1 retry)
+        const retryResponse = await fetch(`${this.baseURL}${endpoint}`, {
+          ...options,
+          headers,
+          credentials: 'include'
+        });
+
+        // Process retry response
+        if (!retryResponse.ok) {
+          const error: ApiError = {
+            message: `HTTP error! status: ${retryResponse.status}`,
+            status: retryResponse.status
+          };
+
+          try {
+            const errorData = await retryResponse.json();
+            error.message = errorData.error?.message || errorData.message || error.message;
+            error.code = errorData.error?.code;
+          } catch {
+            // If response is not JSON, use default error message
+          }
+
+          // Retry failed - reject all queued requests
+          this._rejectPendingRequests(error);
+          throw error;
+        }
+
+        // Retry successful - process response
+        const contentType = retryResponse.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const result = {} as T;
+          this._resolvePendingRequests();
+          return result;
+        }
+
+        const data = await retryResponse.json();
+        
+        // Resolve all queued requests (FIFO order)
+        this._resolvePendingRequests();
+        
+        return data;
+      } catch (refreshError) {
+        // Refresh failed - reject all queued requests and redirect to login
+        const error: ApiError = {
+          message: refreshError instanceof Error ? refreshError.message : 'Token refresh failed',
+          status: 401,
+          code: 'TOKEN_REFRESH_FAILED'
+        };
+        
+        // Handle error UX (redirect to login, show toast)
+        handleAuthError(error, getLoginRedirect());
+        
+        this._rejectPendingRequests(error);
+        throw error;
+      } finally {
+        this._isRefreshing = false;
+      }
+    }
+
+    // Handle non-401 errors (403, 429, etc.)
     if (!response.ok) {
       const error: ApiError = {
         message: `HTTP error! status: ${response.status}`,
@@ -117,9 +324,31 @@ class ApiClient {
       try {
         const errorData = await response.json();
         error.message = errorData.error?.message || errorData.message || error.message;
-        error.code = errorData.code;
+        error.code = errorData.error?.code;
+        
+        // Extract retry-after header for 429 errors
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          if (retryAfter) {
+            const numericValue = Number(retryAfter);
+            if (!isNaN(numericValue) && numericValue > 0) {
+              (error as any).retryAfter = numericValue;
+            } else {
+              const dateValue = Date.parse(retryAfter);
+              if (!isNaN(dateValue)) {
+                const secondsUntilDate = Math.max(0, Math.floor((dateValue - Date.now()) / 1000));
+                (error as any).retryAfter = secondsUntilDate || 60;
+              }
+            }
+          }
+        }
       } catch {
         // If response is not JSON, use default error message
+      }
+
+      // Handle auth-related errors with UX actions
+      if (error.status === 403 || error.status === 429 || error.code?.startsWith('AUTH')) {
+        handleAuthError(error, getLoginRedirect());
       }
 
       throw error;
@@ -133,6 +362,93 @@ class ApiClient {
 
     const data = await response.json();
     return data;
+  }
+
+  /**
+   * Resolves all pending requests in FIFO order after successful refresh
+   * 
+   * Each queued request is retried with the new token in the order it was received.
+   */
+  private async _resolvePendingRequests(): Promise<void> {
+    const pending = [...this._pendingRequests];
+    this._pendingRequests = [];
+
+    // Resolve in FIFO order
+    for (const pendingRequest of pending) {
+      try {
+        // Retry each queued request with new token
+        const newToken = this.getAuthToken();
+        if (!newToken) {
+          pendingRequest.reject({
+            message: 'Token refresh failed: no new token',
+            status: 401
+          });
+          continue;
+        }
+
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${newToken}`,
+          ...(pendingRequest.options.headers as Record<string, string>)
+        };
+
+        const retryResponse = await fetch(
+          `${this.baseURL}${pendingRequest.endpoint}`,
+          {
+            ...pendingRequest.options,
+            headers,
+            credentials: 'include'
+          }
+        );
+
+        if (!retryResponse.ok) {
+          const error: ApiError = {
+            message: `HTTP error! status: ${retryResponse.status}`,
+            status: retryResponse.status
+          };
+
+          try {
+            const errorData = await retryResponse.json();
+            error.message = errorData.error?.message || errorData.message || error.message;
+            error.code = errorData.error?.code;
+          } catch {
+            // If response is not JSON, use default error message
+          }
+
+          pendingRequest.reject(error);
+        } else {
+          const contentType = retryResponse.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            pendingRequest.resolve({} as any);
+          } else {
+            const data = await retryResponse.json();
+            pendingRequest.resolve(data);
+          }
+        }
+      } catch (error) {
+        pendingRequest.reject({
+          message: error instanceof Error ? error.message : 'Request failed',
+          status: 500
+        });
+      }
+    }
+  }
+
+  /**
+   * Rejects all pending requests when refresh fails
+   * 
+   * All queued requests are rejected with the same error in FIFO order.
+   * 
+   * @param error - The error to reject all requests with
+   */
+  private _rejectPendingRequests(error: ApiError): void {
+    const pending = [...this._pendingRequests];
+    this._pendingRequests = [];
+
+    // Reject in FIFO order
+    for (const pendingRequest of pending) {
+      pendingRequest.reject(error);
+    }
   }
 
   /**
@@ -233,7 +549,7 @@ export const authApi = {
    * @throws {ApiError} If credentials are invalid
    */
   async login(email: string, password: string) {
-    return apiClient.post<{ success: boolean; token: string; user: User }>('/auth/login', {
+    return apiClient.post<{ success: boolean; token: string; user: User } | { session: { access_token: string; refresh_token?: string; user: User }; message: string }>('/auth/login', {
       email,
       password
     });
@@ -246,7 +562,7 @@ export const authApi = {
    * when user explicitly logs out or session expires.
    */
   async logout() {
-    localStorage.removeItem('auth_token');
+    clearTokens();
     localStorage.removeItem('user');
   }
 };

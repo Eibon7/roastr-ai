@@ -152,24 +152,50 @@ sequenceDiagram
 
 ### Frontend Handling
 
+**Implementation:** `frontend/src/lib/api.ts` (ApiClient class)
+
+**Token Storage:**
+- **Single Source of Truth:** localStorage (no in-memory storage)
+- `access_token`: `localStorage.getItem('auth_token')`
+- `refresh_token`: `localStorage.getItem('refresh_token')`
+- **Utility:** `frontend/src/lib/auth/tokenStorage.ts`
+
+**Auto-Refresh on 401:**
 ```typescript
-// Interceptor de respuestas
-api.interceptors.response.use((response) => {
-  // Detectar nuevos tokens en headers
-  const newAccessToken = response.headers['x-new-access-token'];
-  const newRefreshToken = response.headers['x-new-refresh-token'];
-  
-  if (newAccessToken && newRefreshToken) {
-    // Actualizar localStorage
-    localStorage.setItem('access_token', newAccessToken);
-    localStorage.setItem('refresh_token', newRefreshToken);
-    
-    console.log('[Session] Tokens refreshed automatically');
+// ApiClient.request() detects 401 and triggers refresh
+if (response.status === 401 && !isRetry) {
+  // Block retry for auth endpoints
+  if (this.isAuthEndpoint(endpoint)) {
+    throw error; // No retry
   }
   
-  return response;
-});
+  // Queue concurrent requests (FIFO)
+  if (this._isRefreshing) {
+    return new Promise((resolve, reject) => {
+      this._pendingRequests.push({ resolve, reject, endpoint, options });
+    });
+  }
+  
+  // Refresh token
+  await refreshAccessToken();
+  
+  // Retry original request (max 1 retry)
+  return this.request(endpoint, { ...options, headers: { ...headers, Authorization: `Bearer ${newToken}` } }, true);
+}
 ```
+
+**FIFO Queue:**
+- Concurrent 401s are queued in `_pendingRequests` array
+- Queue processed in First-In-First-Out order after refresh completes
+- All queued requests retried with new token
+- If refresh fails, all queued requests rejected immediately
+
+**Error Handling:**
+- 401 after refresh failure → clear tokens, redirect to login (toast shown once)
+- 403 → show message, no redirect
+- 429 → per-action backoff (not global lock)
+
+**Reference:** `docs/flows/login-registration.md` - "Frontend Auto-Refresh Strategy" section
 
 ---
 
@@ -213,15 +239,15 @@ const INACTIVITY_TIMEOUT = 7 * 24 * 60 * 60 * 1000; // 7 días
 
 ```typescript
 // Almacenar tokens
-localStorage.setItem('access_token', session.access_token);
+localStorage.setItem('auth_token', session.access_token);
 localStorage.setItem('refresh_token', session.refresh_token);
 
 // Leer tokens
-const accessToken = localStorage.getItem('access_token');
+const accessToken = localStorage.getItem('auth_token');
 const refreshToken = localStorage.getItem('refresh_token');
 
 // Limpiar tokens (logout)
-localStorage.removeItem('access_token');
+localStorage.removeItem('auth_token');
 localStorage.removeItem('refresh_token');
 ```
 
