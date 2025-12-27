@@ -286,14 +286,14 @@ class ApiClient {
         const contentType = retryResponse.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
           const result = {} as T;
-          this._resolvePendingRequests(endpoint, options, result);
+          this._resolvePendingRequests();
           return result;
         }
 
         const data = await retryResponse.json();
         
         // Resolve all queued requests (FIFO order)
-        this._resolvePendingRequests(endpoint, options, data);
+        this._resolvePendingRequests();
         
         return data;
       } catch (refreshError) {
@@ -368,16 +368,8 @@ class ApiClient {
    * Resolves all pending requests in FIFO order after successful refresh
    * 
    * Each queued request is retried with the new token in the order it was received.
-   * 
-   * @param originalEndpoint - The endpoint that triggered the refresh
-   * @param originalOptions - The options that triggered the refresh
-   * @param originalResult - The result from the original request
    */
-  private async _resolvePendingRequests<T>(
-    originalEndpoint: string,
-    originalOptions: RequestInit,
-    originalResult: T
-  ): Promise<void> {
+  private async _resolvePendingRequests(): Promise<void> {
     const pending = [...this._pendingRequests];
     this._pendingRequests = [];
 
@@ -557,7 +549,7 @@ export const authApi = {
    * @throws {ApiError} If credentials are invalid
    */
   async login(email: string, password: string) {
-    return apiClient.post<{ success: boolean; token: string; user: User }>('/auth/login', {
+    return apiClient.post<{ success: boolean; token: string; user: User } | { session: { access_token: string; refresh_token?: string; user: User }; message: string }>('/auth/login', {
       email,
       password
     });

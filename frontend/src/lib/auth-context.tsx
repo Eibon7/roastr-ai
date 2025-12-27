@@ -4,10 +4,8 @@ import { authApi, type User, type ApiError } from './api';
 import { setUserId, setUserProperties, reset } from './analytics-identity';
 import {
   getAccessToken,
-  getRefreshToken,
   setTokens,
-  clearTokens,
-  hasTokens
+  clearTokens
 } from './auth/tokenStorage';
 
 /**
@@ -138,11 +136,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       let refreshToken: string | undefined;
       let user: User;
 
-      if ('session' in response && response.session) {
+      if ('session' in response && response.session && typeof response.session === 'object') {
         // v2 format: { session: { access_token, refresh_token, user }, message }
-        accessToken = response.session.access_token;
-        refreshToken = response.session.refresh_token;
-        user = response.session.user || (response as any).user;
+        const session = response.session as { access_token: string; refresh_token?: string; user?: User };
+        accessToken = session.access_token;
+        refreshToken = session.refresh_token;
+        user = session.user || (response as any).user;
       } else if ('token' in response && response.token && 'user' in response) {
         // Legacy format: { success, token, user }
         accessToken = response.token;
