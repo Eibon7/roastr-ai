@@ -78,7 +78,10 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
   }
 
   // Validación de formato básico (sin normalizar password)
-  const normalizedEmail = email.trim().toLowerCase().replace(/[\x00-\x1F\x7F]/g, '');
+  const normalizedEmail = email
+    .trim()
+    .toLowerCase()
+    .replace(/[\x00-\x1F\x7F]/g, '');
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(normalizedEmail)) {
     return res.status(400).json({

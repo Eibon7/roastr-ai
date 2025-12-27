@@ -220,7 +220,9 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
     });
 
     const { default: app } = await import('../../src/index');
-    const res = await request(app).post('/api/v2/auth/magic-link').send({ email: 'user@example.com' });
+    const res = await request(app)
+      .post('/api/v2/auth/magic-link')
+      .send({ email: 'user@example.com' });
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
   });
@@ -231,7 +233,9 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
     );
 
     const { default: app } = await import('../../src/index');
-    const res = await request(app).post('/api/v2/auth/magic-link').send({ email: 'user@example.com' });
+    const res = await request(app)
+      .post('/api/v2/auth/magic-link')
+      .send({ email: 'user@example.com' });
     expect(res.status).toBe(401);
     expect(res.body.error.code).toBe(AUTH_ERROR_CODES.AUTH_DISABLED);
   });
@@ -283,4 +287,3 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
     expect(res.body.error.code).toBe(AUTH_ERROR_CODES.INVALID_CREDENTIALS);
   });
 });
-

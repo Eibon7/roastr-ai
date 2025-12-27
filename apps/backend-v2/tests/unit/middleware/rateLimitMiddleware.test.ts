@@ -63,10 +63,8 @@ describe('middleware/rateLimit', () => {
     const { rateLimitByIp } = await import('../../../src/middleware/rateLimit');
 
     const app = express();
-    app.get(
-      '/x',
-      rateLimitByIp({ windowMs: 60_000, maxAttempts: 1 }),
-      (_req, res) => res.json({ ok: true })
+    app.get('/x', rateLimitByIp({ windowMs: 60_000, maxAttempts: 1 }), (_req, res) =>
+      res.json({ ok: true })
     );
 
     await request(app).get('/x'); // 1st ok
@@ -74,4 +72,3 @@ describe('middleware/rateLimit', () => {
     expect(res2.status).toBe(429);
   });
 });
-

@@ -46,4 +46,3 @@ describe('GET /api/v2/settings/public', () => {
     expect(res.body.success).toBe(false);
   });
 });
-

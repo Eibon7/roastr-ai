@@ -30,4 +30,3 @@ describe('getClientIp', () => {
     expect(ip).toBe('unknown');
   });
 });
-

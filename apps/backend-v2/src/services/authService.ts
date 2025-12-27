@@ -11,6 +11,7 @@ import { rateLimitService } from './rateLimitService.js';
 import { abuseDetectionService } from './abuseDetectionService.js';
 import { createHash } from 'crypto';
 import { loadSettings } from '../lib/loadSettings.js';
+import { logger } from '../utils/logger.js';
 
 export interface SignupParams {
   email: string;
@@ -150,6 +151,15 @@ export class AuthService {
       throw new AuthError(
         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
         'Invalid plan ID. Must be one of: starter, pro, plus'
+      );
+    }
+
+    // ROA-355: Verificar si el email ya existe antes de intentar crear usuario
+    const emailExists = await this.checkEmailExists(email);
+    if (emailExists) {
+      throw new AuthError(
+        AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS,
+        'An account with this email already exists'
       );
     }
 
@@ -540,6 +550,102 @@ export class AuthService {
       lower.includes('email address already') ||
       lower.includes('duplicate')
     );
+  }
+
+  /**
+   * Verifica si un email ya existe en la base de datos (ROA-355)
+   *
+   * Usa Supabase Admin API para listar usuarios y buscar el email.
+   * Soporta paginación para bases de datos grandes.
+   * Comparación case-insensitive.
+   *
+   * @param email - Email a verificar
+   * @returns true si el email existe, false si no existe o si hay error (fallback)
+   */
+  private async checkEmailExists(email: string): Promise<boolean> {
+    try {
+      let page = 1;
+      const perPage = 100;
+      const normalizedEmail = email.toLowerCase();
+
+      while (true) {
+        const { data: usersList, error: userError } = await supabase.auth.admin.listUsers({
+          page,
+          perPage
+        });
+
+        if (userError) {
+          // Log error pero no bloquear signup (fallback behavior)
+          logger.error('Error checking email existence:', userError);
+          return false; // Assume not exists to not block signup
+        }
+
+        // Buscar email en la lista de usuarios (case-insensitive)
+        const user = usersList?.users?.find((u) => u.email?.toLowerCase() === normalizedEmail);
+
+        if (user) {
+          return true;
+        }
+
+        // Si no hay más usuarios o la lista es menor que perPage, terminamos
+        if (!usersList?.users?.length || (usersList.users && usersList.users.length < perPage)) {
+          return false;
+        }
+        page++;
+      }
+    } catch (error) {
+      // Log error pero no bloquear signup (fallback behavior)
+      logger.error('Unexpected error checking email existence:', error);
+      return false; // Assume not exists to not block signup
+    }
+  }
+
+  /**
+   * Verifica si un email ya existe en la base de datos (ROA-355)
+   *
+   * Usa Supabase Admin API para listar usuarios y buscar el email.
+   * Soporta paginación para bases de datos grandes.
+   * Comparación case-insensitive.
+   *
+   * @param email - Email a verificar
+   * @returns true si el email existe, false si no existe o si hay error (fallback)
+   */
+  private async checkEmailExists(email: string): Promise<boolean> {
+    try {
+      let page = 1;
+      const perPage = 100;
+      const normalizedEmail = email.toLowerCase();
+
+      while (true) {
+        const { data: usersList, error: userError } = await supabase.auth.admin.listUsers({
+          page,
+          perPage
+        });
+
+        if (userError) {
+          // Log error pero no bloquear signup (fallback behavior)
+          logger.error('Error checking email existence:', userError);
+          return false; // Assume not exists to not block signup
+        }
+
+        // Buscar email en la lista de usuarios (case-insensitive)
+        const user = usersList?.users?.find((u) => u.email?.toLowerCase() === normalizedEmail);
+
+        if (user) {
+          return true;
+        }
+
+        // Si no hay más usuarios o la lista es menor que perPage, terminamos
+        if (!usersList?.users?.length || (usersList.users && usersList.users.length < perPage)) {
+          return false;
+        }
+        page++;
+      }
+    } catch (error) {
+      // Log error pero no bloquear signup (fallback behavior)
+      logger.error('Unexpected error checking email existence:', error);
+      return false; // Assume not exists to not block signup
+    }
   }
 
   /**

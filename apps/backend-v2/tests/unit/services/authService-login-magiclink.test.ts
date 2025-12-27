@@ -114,7 +114,11 @@ describe('AuthService login + magic-link', () => {
     const { AuthService } = await import('../../../src/services/authService');
     const svc = new AuthService();
 
-    const session = await svc.login({ email: 'user@example.com', password: 'ValidPassword123', ip: '1.1.1.1' });
+    const session = await svc.login({
+      email: 'user@example.com',
+      password: 'ValidPassword123',
+      ip: '1.1.1.1'
+    });
     expect(session.access_token).toBe('token');
     expect(session.expires_at).toBeGreaterThan(0);
   });
@@ -164,4 +168,3 @@ describe('AuthService login + magic-link', () => {
     expect(mockSignInWithOtp).toHaveBeenCalled();
   });
 });
-

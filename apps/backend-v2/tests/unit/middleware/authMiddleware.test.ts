@@ -52,7 +52,12 @@ describe('middleware/auth', () => {
 
     const app = express();
     app.use((req, _res, next) => {
-      (req as any).user = { id: 'u1', email: 'user@example.com', role: 'user', email_verified: true };
+      (req as any).user = {
+        id: 'u1',
+        email: 'user@example.com',
+        role: 'user',
+        email_verified: true
+      };
       next();
     });
     app.get('/admin', requireRole('admin'), (_req, res) => res.json({ ok: true }));
@@ -106,4 +111,3 @@ describe('middleware/auth', () => {
     expect(res.body.user).toBeNull();
   });
 });
-

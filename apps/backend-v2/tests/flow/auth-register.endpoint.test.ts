@@ -185,4 +185,3 @@ describe('POST /api/v2/auth/register', () => {
     });
   });
 });
-

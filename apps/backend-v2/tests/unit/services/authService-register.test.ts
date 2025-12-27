@@ -117,4 +117,3 @@ describe('AuthService.register', () => {
     ).resolves.toBeUndefined();
   });
 });
-
