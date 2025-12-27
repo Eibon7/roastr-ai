@@ -7,6 +7,7 @@
  * Error codes reference: apps/backend-v2/src/utils/authErrorTaxonomy.ts
  */
 
+import { toast } from 'sonner';
 import { ApiError } from '../api';
 
 /**
@@ -125,20 +126,34 @@ function handleRateLimit(error: ApiError): boolean {
 }
 
 /**
- * Shows a toast notification
+ * Shows a toast notification using sonner
  *
  * @param message - Message to display
  * @param type - Toast type (error, warning, success, info)
  */
 function showToast(message: string, type: 'error' | 'warning' | 'success' | 'info' = 'error'): void {
-  // Try to use toast library if available (e.g., sonner)
-  if (typeof window !== 'undefined' && (window as any).toast) {
-    (window as any).toast[type](message);
-    return;
+  // Use sonner toast library (installed as dependency)
+  if (typeof window !== 'undefined') {
+    switch (type) {
+      case 'error':
+        toast.error(message);
+        break;
+      case 'warning':
+        toast.warning(message);
+        break;
+      case 'success':
+        toast.success(message);
+        break;
+      case 'info':
+        toast.info(message);
+        break;
+      default:
+        toast(message);
+    }
+  } else {
+    // Fallback to console in non-browser environments (e.g., tests)
+    console[type === 'error' ? 'error' : 'warn'](`[Auth] ${message}`);
   }
-
-  // Fallback to console if toast library not available
-  console[type === 'error' ? 'error' : 'warn'](`[Auth] ${message}`);
 }
 
 /**

@@ -90,7 +90,7 @@ Implement frontend HTTP interceptor with automatic token refresh retry and compr
 
 **Test Results:**
 ```
-✓ 10 tests passed (3 test files)
+✓ 13 tests passed (4 test files)
 ✓ All priority tests passing
 ✓ No linter errors
 ```
@@ -117,9 +117,11 @@ Implement frontend HTTP interceptor with automatic token refresh retry and compr
 - **Total Lines:** ~1,225 lines (333 auth lib + 892 tests)
 
 ### Test Coverage
-- **E2E Tests:** 10 tests (all passing)
-- **Priority Tests:** 7 tests (all passing)
-- **Optional Tests:** 3 tests (all passing)
+- **E2E Tests:** 13 tests (all passing)
+  - Expired token: 4 tests
+  - Refresh failure: 3 tests
+  - Concurrent refresh: 3 tests
+  - Rate limit: 3 tests
 
 ### Documentation
 - **New Docs:** 1 file (`frontend-backend-auth-contract.md`)
