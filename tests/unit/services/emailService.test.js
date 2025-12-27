@@ -57,8 +57,8 @@ describe('EmailService', () => {
   beforeAll(() => {
     // Set up environment before requiring the module (ROA-370: Updated for Resend)
     process.env.RESEND_API_KEY = 'test-api-key';
-    process.env.SENDGRID_FROM_EMAIL = 'test@roastr.ai';
-    process.env.SENDGRID_FROM_NAME = 'Test Roastr';
+    process.env.RESEND_FROM_EMAIL = 'test@roastr.ai';
+    process.env.RESEND_FROM_NAME = 'Test Roastr';
     process.env.APP_URL = 'https://test.roastr.ai';
     process.env.SUPPORT_EMAIL = 'support@test.roastr.ai';
 
@@ -199,8 +199,8 @@ describe('EmailService', () => {
   });
 
   describe('Error Handling', () => {
-    it('should handle SendGrid send error with retry', async () => {
-      const sendError = new Error('SendGrid API error');
+    it('should handle Resend send error with retry', async () => {
+      const sendError = new Error('Resend API error');
       mockResendSend
         .mockRejectedValueOnce(sendError)
         .mockRejectedValueOnce(sendError)
@@ -220,7 +220,7 @@ describe('EmailService', () => {
     });
 
     it('should fail after max retries', async () => {
-      const sendError = new Error('SendGrid API error');
+      const sendError = new Error('Resend API error');
       mockResendSend.mockRejectedValue(sendError);
 
       const result = await emailService.sendWelcomeEmail('user@test.com', {
@@ -228,7 +228,7 @@ describe('EmailService', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('SendGrid API error');
+      expect(result.error).toBe('Resend API error');
       expect(result.retriesAttempted).toBe(3);
       expect(mockResendSend).toHaveBeenCalledTimes(3);
     });

@@ -107,7 +107,7 @@ class EmailService {
 
       // Prepare email message for Resend
       const emailOptions = {
-        from: `${process.env.SENDGRID_FROM_NAME || 'Roastr.ai'} <${process.env.SENDGRID_FROM_EMAIL || 'noreply@roastr.ai'}>`,
+        from: `${process.env.RESEND_FROM_NAME || 'Roastr.ai'} <${process.env.RESEND_FROM_EMAIL || 'noreply@roastr.ai'}>`,
         to: [to],
         subject: subject,
         html: htmlContent,
