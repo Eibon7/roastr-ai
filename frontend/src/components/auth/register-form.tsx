@@ -8,12 +8,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { setTokens } from '@/lib/auth/tokenStorage';
 
 // Auth Error Messages (from authErrorTaxonomy)
 const authErrorMessages: Record<string, string> = {
   'AUTH_EMAIL_TAKEN': 'Este email ya está registrado',
   'AUTH_INVALID_EMAIL': 'Email inválido',
-  'AUTH_WEAK_PASSWORD': 'La contraseña es muy débil. Debe tener al menos 8 caracteres, una mayúscula y un número',
+  'AUTH_WEAK_PASSWORD': 'La contraseña es muy débil. Debe tener al menos 8 caracteres, una minúscula, una mayúscula y un número',
   'AUTH_RATE_LIMIT_EXCEEDED': 'Demasiados intentos. Espera 15 minutos e inténtalo de nuevo',
   'AUTH_TERMS_NOT_ACCEPTED': 'Debes aceptar los términos y condiciones',
   'REGISTER_FAILED': 'Error al registrar. Inténtalo de nuevo'
@@ -73,10 +74,11 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     return '';
   };
 
-  // Validate password
+  // Validate password (match backend requirements from PR #979)
   const validatePassword = (password: string): string => {
     if (!password) return 'La contraseña es requerida';
     if (password.length < 8) return 'Mínimo 8 caracteres';
+    if (!/[a-z]/.test(password)) return 'Debe incluir al menos una minúscula';
     if (!/[A-Z]/.test(password)) return 'Debe incluir al menos una mayúscula';
     if (!/[0-9]/.test(password)) return 'Debe incluir al menos un número';
     return '';
@@ -148,15 +150,13 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
         return;
       }
 
-      // Success - save tokens
-      if (data.session?.access_token) {
-        localStorage.setItem('access_token', data.session.access_token);
-      }
-      if (data.session?.refresh_token) {
-        localStorage.setItem('refresh_token', data.session.refresh_token);
+      // Success - save tokens using tokenStorage
+      if (data.session?.access_token && data.session?.refresh_token) {
+        setTokens(data.session.access_token, data.session.refresh_token);
       }
 
       // Call success callback or redirect
+      setIsLoading(false);
       if (onSuccess) {
         onSuccess(data);
       } else {
@@ -236,6 +236,12 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
                     className={formData.password.length >= 8 ? 'text-green-600 dark:text-green-400' : ''}
                   >
                     Mínimo 8 caracteres
+                  </li>
+                  <li 
+                    data-testid="requirement-lowercase"
+                    className={/[a-z]/.test(formData.password) ? 'text-green-600 dark:text-green-400' : ''}
+                  >
+                    Una letra minúscula
                   </li>
                   <li 
                     data-testid="requirement-uppercase"

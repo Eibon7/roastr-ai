@@ -174,6 +174,7 @@ Implementado mapeo de códigos de error a mensajes user-friendly:
 3. **Contraseña**
    - Requerida
    - Mínimo 8 caracteres
+   - Al menos una minúscula (match backend PR #979)
    - Al menos una mayúscula
    - Al menos un número
    - Indicadores visuales en tiempo real (verde cuando cumple)

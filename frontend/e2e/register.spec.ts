@@ -40,6 +40,12 @@ test.describe('Register Page', () => {
 
     await expect(page.locator('text=Mínimo 8 caracteres')).toBeVisible();
 
+    // Password sin minúscula
+    await page.fill('input[id="password"]', 'PASSWORD123');
+    await page.click('input[id="email"]'); // Trigger blur
+
+    await expect(page.locator('text=Debe incluir al menos una minúscula')).toBeVisible();
+
     // Password sin mayúscula
     await page.fill('input[id="password"]', 'password123');
     await page.click('input[id="email"]'); // Trigger blur
@@ -61,6 +67,7 @@ test.describe('Register Page', () => {
 
     // Verificar que los requisitos cumplidos estén en verde usando data-testid
     await expect(page.locator('[data-testid="requirement-length"]')).toHaveClass(/text-green-600/);
+    await expect(page.locator('[data-testid="requirement-lowercase"]')).toHaveClass(/text-green-600/);
     await expect(page.locator('[data-testid="requirement-uppercase"]')).toHaveClass(/text-green-600/);
     await expect(page.locator('[data-testid="requirement-number"]')).toHaveClass(/text-green-600/);
   });
