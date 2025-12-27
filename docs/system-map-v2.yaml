@@ -23,6 +23,7 @@ nodes:
     last_updated: '2025-12-05T18:31:11.771Z'
     coverage: 85
     depends_on:
+      - auth
       - analysis-engine
       - integraciones-redes-sociales
       - shield-engine
@@ -120,6 +121,7 @@ nodes:
     last_updated: '2025-12-05T00:00:00.000Z'
     coverage: 78
     depends_on:
+      - auth
       - billing-integration
       - infraestructura
       - observabilidad
@@ -214,6 +216,7 @@ nodes:
       - ssot-integration
     used_by: []
     required_by:
+      - auth
       - roasting-engine
       - analysis-engine
       - shield-engine
@@ -343,6 +346,7 @@ nodes:
     last_updated: '2025-12-05T18:31:11.772Z'
     coverage: 75
     depends_on:
+      - auth
       - roasting-engine
       - shield-engine
       - observabilidad
@@ -396,6 +400,7 @@ nodes:
     last_updated: '2025-12-05T00:00:00.000Z'
     coverage: 60
     depends_on:
+      - auth
       - ssot-integration
       - billing-integration
     used_by: []
@@ -496,6 +501,8 @@ nodes:
       - infraestructura
     used_by:
       - billing-integration
+    required_by:
+      - auth
     docs:
       - docs/nodes-v2/08-workers.md
     files:
@@ -551,7 +558,6 @@ nodes:
       - worker_routing
       - worker_routing_table
       - worker_tenancy
-    required_by: []
     related: []
     subnodes:
       - fetch-comments
@@ -565,43 +571,58 @@ nodes:
       - strike-cleanup
       - worker-manager
   auth:
-    description: Authentication and authorization system with Supabase Auth, OAuth PKCE flow, magic links, and user profile management
+    description: Multi-method authentication system (password, magic link, OAuth) with JWT session management, rate limiting v2, and error taxonomy (ROA-364, ROA-359, ROA-372)
     status: production
     priority: critical
     owner: Back-end Dev
-    last_updated: '2025-12-20T16:10:00.000Z'
+    last_updated: '2025-12-26T00:00:00.000Z'
     coverage: 92
-    depends_on: []
+    depends_on:
+      - billing-integration
+      - workers
     used_by: []
-    required_by: []
+    required_by:
+      - frontend-user-app
+      - frontend-admin
+      - roasting-engine
+      - shield-engine
     related: []
     docs:
-      - docs/nodes-v2/02-autenticacion-usuarios.md
+      - docs/nodes-v2/auth/overview.md
+      - docs/nodes-v2/auth/login-flows.md
+      - docs/nodes-v2/auth/session-management.md
+      - docs/nodes-v2/auth/rate-limiting.md
+      - docs/nodes-v2/auth/error-taxonomy.md
+      - docs/nodes-v2/auth/security.md
     files:
       - apps/backend-v2/src/lib/supabaseClient.ts
       - apps/backend-v2/src/services/authService.ts
       - apps/backend-v2/src/services/rateLimitService.ts
       - apps/backend-v2/src/services/abuseDetectionService.ts
       - apps/backend-v2/src/middleware/auth.ts
+      - apps/backend-v2/src/middleware/sessionRefresh.ts
       - apps/backend-v2/src/middleware/rateLimit.ts
       - apps/backend-v2/src/routes/auth.ts
       - apps/backend-v2/src/utils/authErrorTaxonomy.ts
-    ssot_references:
-      - connection_status
-      - feature_flags
-      - oauth_pkce_flow
-      - oauth_scopes
-      - oauth_tokens
-      - plan_ids
-      - subscription_states
-      - token_refresh_rules
-      - rate_limits
-      - abuse_detection_thresholds
-    subnodes:
-      - supabase-auth
-      - rate-limiting
-      - abuse-detection
+    strong_concepts:
+      - authErrorTaxonomy
+      - rateLimitConfig
+    soft_concepts:
       - session-management
+      - jwt-validation
+    ssot_references:
+      - auth_rate_limit_config
+      - abuse_detection_thresholds
+      - subscription_states
+      - plan_ids
+      - gdpr_retention
+    subnodes:
+      - overview
+      - login-flows
+      - session-management
+      - rate-limiting
+      - error-taxonomy
+      - security
   settings-loader-and-feature-flags:
     description: Settings loader and feature flags management system with SSOT integration, admin settings, and dynamic feature toggling
     status: production

@@ -1,0 +1,44 @@
+{
+  "case_id": "2025-12-26-16-12-54-791",
+  "timestamp": "2025-12-26T16:12:54.791Z",
+  "actor": "emiliopostigo",
+  "domains": [],
+  "files_changed": [
+    "docs/guardian/audit-log.md",
+    "docs/guardian/guardian-report.md",
+    "junit.xml"
+  ],
+  "severity": "SAFE",
+  "action": "APPROVED",
+  "violations": {
+    "critical": 0,
+    "sensitive": 0,
+    "safe": 3
+  },
+  "details": [
+    {
+      "file": "docs/guardian/audit-log.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/guardian/guardian-report.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "junit.xml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    }
+  ],
+  "approval_required": false,
+  "approved_by": null,
+  "notes": "Auto-approved"
+}
