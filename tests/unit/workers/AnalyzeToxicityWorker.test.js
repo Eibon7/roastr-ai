@@ -19,8 +19,9 @@ describe('AnalyzeToxicityWorker - Minimal Contracts', () => {
   });
 
   test('processJob resolves', async () => {
-    await expect(worker.processJob({ comment_id: 'c1', organization_id: 'o1', platform: 'twitter' }))
-      .resolves.toBeDefined();
+    await expect(
+      worker.processJob({ comment_id: 'c1', organization_id: 'o1', platform: 'twitter' })
+    ).resolves.toBeDefined();
   });
 
   test('analyzePatterns returns basic structure', () => {
@@ -31,13 +32,23 @@ describe('AnalyzeToxicityWorker - Minimal Contracts', () => {
 
   test('recordAnalysisUsage can be called', async () => {
     await expect(
-      worker.recordAnalysisUsage('org', 'twitter', 'comment', 'text', { analysis: { services_used: [] }, metadata: { decision: {} }, scores: {} })
+      worker.recordAnalysisUsage('org', 'twitter', 'comment', 'text', {
+        analysis: { services_used: [] },
+        metadata: { decision: {} },
+        scores: {}
+      })
     ).resolves.toBeUndefined();
   });
 
   test('updateCommentWithAnalysisDecision can be called', async () => {
-    await expect(worker.updateCommentWithAnalysisDecision('comment', { analysis: { services_used: [] }, metadata: { decision: {} }, scores: {}, action_tags: [] }))
-      .resolves.toBeUndefined();
+    await expect(
+      worker.updateCommentWithAnalysisDecision('comment', {
+        analysis: { services_used: [] },
+        metadata: { decision: {} },
+        scores: {},
+        action_tags: []
+      })
+    ).resolves.toBeUndefined();
   });
 
   afterEach(() => {

@@ -1,0 +1,1628 @@
+{
+  "case_id": "2025-12-27-21-22-15-205",
+  "timestamp": "2025-12-27T21:22:15.205Z",
+  "actor": "emiliopostigo",
+  "domains": [],
+  "files_changed": [
+    ".pr-description.md",
+    "AMPLITUDE_BACKEND_V2_COMPLETE.md",
+    "AMPLITUDE_SETUP_COMPLETE.md",
+    "AMPLITUDE_V2_ADJUSTMENTS_COMPLETE.md",
+    "BUILD-FIX-SUMMARY.md",
+    "CHANGELOG-ROA-328.md",
+    "CHANGELOG-ROA-361.md",
+    "CI-FIXES-SUMMARY.md",
+    "CODERABBIT-BLOCKERS-RESOLVED.md",
+    "CODERABBIT-RESPONSE.md",
+    "CONFLICT-RESOLUTION-SUMMARY.md",
+    "admin-dashboard/src/components/ui/badge.tsx",
+    "admin-dashboard/src/components/ui/button.tsx",
+    "admin-dashboard/src/components/ui/sheet.tsx",
+    "apps/backend-v2/README.md",
+    "apps/backend-v2/src/index.ts",
+    "apps/backend-v2/src/lib/analytics.ts",
+    "apps/backend-v2/src/lib/loadSettings.ts",
+    "apps/backend-v2/src/routes/auth.ts",
+    "apps/backend-v2/src/routes/settings.ts",
+    "apps/backend-v2/src/services/authService.ts",
+    "apps/backend-v2/vitest.config.ts",
+    "docs/AMPLITUDE_ANALYTICS.md",
+    "docs/CI-V2/CYCLE-REMOVAL-REPORT.md",
+    "docs/CI-V2/LEGACY-TO-V2-MAPPING.md",
+    "docs/CI-V2/ROA-320-CLASSIFICATION.json",
+    "docs/CI-V2/ROA-320-FINAL-REPORT.md",
+    "docs/CI-V2/ROA-320-RECLASSIFICATION-REPORT.md",
+    "docs/CI-V2/ROA-323-FINAL-MIGRATION-REPORT.md",
+    "docs/agents/receipts/cursor-backend-dev-ROA-370.md",
+    "docs/agents/receipts/cursor-documentation-ROA-364.md",
+    "docs/analysis/ROA-302-303-IMPLEMENTATION-REPORT.md",
+    "docs/analytics/ROA-362-CONFLICT-RESOLUTION.md",
+    "docs/analytics/ROA-362-IMPLEMENTATION-SUMMARY.md",
+    "docs/analytics/amplitude.md",
+    "docs/analytics/auth-login-events.md",
+    "docs/analytics/pii-validation-ROA-362.md",
+    "docs/architecture/v2-common-infrastructure.md",
+    "docs/auth/login-ui-v2.md",
+    "docs/auth/login-v2.md",
+    "docs/deployment/admin-settings-migration-ROA-268.md",
+    "docs/deployment/admin-settings-verification.md",
+    "docs/flows/frontend-backend-auth-contract.md",
+    "docs/flows/login-registration.md",
+    "docs/guardian/audit-log.md",
+    "docs/guardian/guardian-report.md",
+    "docs/implementation/ROA-388-IG1-summary.md",
+    "docs/legacy/test-evidence/review-3309563715/lighthouse-after.json",
+    "docs/legacy/test-evidence/review-3329345492/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3329345492/gdd-health-after.json",
+    "docs/legacy/test-evidence/review-3329345492/gdd-health-before.json",
+    "docs/legacy/test-evidence/review-3329345492/gdd-status-after.json",
+    "docs/legacy/test-evidence/review-3329345492/gdd-status-before.json",
+    "docs/legacy/test-evidence/review-3329352717/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3329352717/gdd-health-after.json",
+    "docs/legacy/test-evidence/review-3329352717/gdd-status-after.json",
+    "docs/legacy/test-evidence/review-3331370158/FINDINGS.md",
+    "docs/legacy/test-evidence/review-3331370158/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3331472272/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3331601417/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3331703571/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3331779367/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3332619544/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3332667107/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3332682710/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3332873308/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3332951880/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3334825590/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3335075828/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3339877724/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3340617817/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3341957615/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3341957615/gdd-drift-after.json",
+    "docs/legacy/test-evidence/review-3341957615/gdd-health-after.json",
+    "docs/legacy/test-evidence/review-3341957615/gdd-status-after.json",
+    "docs/legacy/test-evidence/review-3342452985/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3342561607/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3342561607/gdd-status-after.json",
+    "docs/legacy/test-evidence/review-3343448532/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3343796117/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3343930442/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3343936799/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3344281711/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3344769061/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3345134973/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3345390254/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3345404358/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3345472977/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3345599847/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3345744075/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3345845777/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3346836919/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3346841401/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3349006632/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3349493593/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3350677071/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3351087724/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3351087724/drift-after.json",
+    "docs/legacy/test-evidence/review-3351792121/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3352743882/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3352743882/gdd-validation-after.json",
+    "docs/legacy/test-evidence/review-3352743882/gdd-validation-report.md",
+    "docs/legacy/test-evidence/review-3353722960/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3353819519/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3353894295/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3354462246/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3354598820/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3354642078/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3354698973/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3356721323/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3356875608/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3357403780/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3357480921/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3357562417/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3358102684/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3358126969/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3359215410/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3359715479/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3360205391/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3372030941/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3380232959/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3383902854/EXECUTIVE-SUMMARY.md",
+    "docs/legacy/test-evidence/review-3383902854/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3383902854/pr-description-corrected.md",
+    "docs/legacy/test-evidence/review-3385986392/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3387536267/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3388952901/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3392598742/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3393621565/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3394182951/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3394330716/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3398199357/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3414111177/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3430270803/ANALYSIS.md",
+    "docs/legacy/test-evidence/review-3430270803/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3430530237/RESOLUTION.md",
+    "docs/legacy/test-evidence/review-3434156164/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3434733955/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3442639957/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3495070964/CHECKLIST-FINAL.md",
+    "docs/legacy/test-evidence/review-3495070964/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3499858197/SUMMARY.md",
+    "docs/legacy/test-evidence/review-634/SUMMARY.md",
+    "docs/legacy/test-evidence/review-697/SUMMARY.md",
+    "docs/legacy/test-evidence/review-738/SUMMARY.md",
+    "docs/legacy/test-evidence/review-750/SUMMARY.md",
+    "docs/legacy/test-evidence/review-756/SUMMARY.md",
+    "docs/legacy/v1/README.md",
+    "docs/legacy/v1/nodes/analytics.md",
+    "docs/legacy/v1/nodes/billing.md",
+    "docs/legacy/v1/nodes/cost-control.md",
+    "docs/legacy/v1/nodes/guardian.md",
+    "docs/legacy/v1/nodes/multi-tenant.md",
+    "docs/legacy/v1/nodes/observability.md",
+    "docs/legacy/v1/nodes/persona.md",
+    "docs/legacy/v1/nodes/plan-features.md",
+    "docs/legacy/v1/nodes/platform-constraints.md",
+    "docs/legacy/v1/nodes/queue-system.md",
+    "docs/legacy/v1/nodes/roast.md",
+    "docs/legacy/v1/nodes/shield.md",
+    "docs/legacy/v1/nodes/social-platforms.md",
+    "docs/legacy/v1/nodes/tone.md",
+    "docs/legacy/v1/nodes/trainer.md",
+    "docs/linear-issue-cache-invalidation.md",
+    "docs/nodes-v2/05-motor-analisis.md",
+    "docs/nodes-v2/08-workers.md",
+    "docs/nodes-v2/13-testing.md",
+    "docs/nodes-v2/14-infraestructura.md",
+    "docs/nodes-v2/auth/error-taxonomy.md",
+    "docs/nodes-v2/auth/login-flows.md",
+    "docs/nodes-v2/auth/overview.md",
+    "docs/nodes-v2/auth/rate-limiting.md",
+    "docs/nodes-v2/auth/security.md",
+    "docs/nodes-v2/auth/session-management.md",
+    "docs/plan/ROA-268-summary.md",
+    "docs/plan/issue-ROA-267.md",
+    "docs/plan/issue-ROA-316.md",
+    "docs/plan/issue-ROA-319.md",
+    "docs/plan/issue-ROA-320.md",
+    "docs/plan/issue-ROA-326.md",
+    "docs/plan/issue-ROA-328.md",
+    "docs/plan/issue-ROA-329.md",
+    "docs/plan/issue-ROA-330.md",
+    "docs/plan/issue-ROA-331.md",
+    "docs/plan/issue-ROA-354.md",
+    "docs/plan/issue-ROA-356.md",
+    "docs/plan/issue-ROA-357.md",
+    "docs/plan/issue-ROA-358.md",
+    "docs/plan/issue-ROA-359.md",
+    "docs/plan/issue-ROA-360.md",
+    "docs/plan/issue-ROA-364.md",
+    "docs/plan/issue-ROA-369-progress.md",
+    "docs/plan/issue-ROA-369-summary.md",
+    "docs/plan/issue-ROA-369.md",
+    "docs/plan/issue-ROA-370-testing-notes.md",
+    "docs/plan/issue-ROA-370.md",
+    "eslint.config.js",
+    "junit.xml",
+    "tests/fixtures/guardian/malformed-config.yaml",
+    "tests/fixtures/guardian/product-guard-cli-test.yaml",
+    "tests/integration/sponsor-service-integration.test.js"
+  ],
+  "severity": "SAFE",
+  "action": "APPROVED",
+  "violations": {
+    "critical": 0,
+    "sensitive": 0,
+    "safe": 201
+  },
+  "details": [
+    {
+      "file": ".pr-description.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "AMPLITUDE_BACKEND_V2_COMPLETE.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "AMPLITUDE_SETUP_COMPLETE.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "AMPLITUDE_V2_ADJUSTMENTS_COMPLETE.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "BUILD-FIX-SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "CHANGELOG-ROA-328.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "CHANGELOG-ROA-361.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "CI-FIXES-SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "CODERABBIT-BLOCKERS-RESOLVED.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "CODERABBIT-RESPONSE.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "CONFLICT-RESOLUTION-SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "admin-dashboard/src/components/ui/badge.tsx",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "admin-dashboard/src/components/ui/button.tsx",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "admin-dashboard/src/components/ui/sheet.tsx",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/README.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/index.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/lib/analytics.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/lib/loadSettings.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/routes/auth.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/routes/settings.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/services/authService.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/vitest.config.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/AMPLITUDE_ANALYTICS.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/CI-V2/CYCLE-REMOVAL-REPORT.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/CI-V2/LEGACY-TO-V2-MAPPING.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/CI-V2/ROA-320-CLASSIFICATION.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/CI-V2/ROA-320-FINAL-REPORT.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/CI-V2/ROA-320-RECLASSIFICATION-REPORT.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/CI-V2/ROA-323-FINAL-MIGRATION-REPORT.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/agents/receipts/cursor-backend-dev-ROA-370.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/agents/receipts/cursor-documentation-ROA-364.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/analysis/ROA-302-303-IMPLEMENTATION-REPORT.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/analytics/ROA-362-CONFLICT-RESOLUTION.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/analytics/ROA-362-IMPLEMENTATION-SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/analytics/amplitude.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/analytics/auth-login-events.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/analytics/pii-validation-ROA-362.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/architecture/v2-common-infrastructure.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/auth/login-ui-v2.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/auth/login-v2.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/deployment/admin-settings-migration-ROA-268.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/deployment/admin-settings-verification.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/flows/frontend-backend-auth-contract.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/flows/login-registration.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/guardian/audit-log.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/guardian/guardian-report.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/implementation/ROA-388-IG1-summary.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3309563715/lighthouse-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329345492/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329345492/gdd-health-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329345492/gdd-health-before.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329345492/gdd-status-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329345492/gdd-status-before.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329352717/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329352717/gdd-health-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329352717/gdd-status-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3331370158/FINDINGS.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3331370158/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3331472272/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3331601417/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3331703571/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3331779367/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3332619544/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3332667107/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3332682710/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3332873308/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3332951880/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3334825590/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3335075828/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3339877724/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3340617817/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3341957615/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3341957615/gdd-drift-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3341957615/gdd-health-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3341957615/gdd-status-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3342452985/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3342561607/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3342561607/gdd-status-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3343448532/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3343796117/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3343930442/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3343936799/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3344281711/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3344769061/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3345134973/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3345390254/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3345404358/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3345472977/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3345599847/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3345744075/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3345845777/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3346836919/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3346841401/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3349006632/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3349493593/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3350677071/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3351087724/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3351087724/drift-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3351792121/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3352743882/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3352743882/gdd-validation-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3352743882/gdd-validation-report.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3353722960/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3353819519/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3353894295/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3354462246/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3354598820/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3354642078/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3354698973/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3356721323/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3356875608/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3357403780/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3357480921/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3357562417/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3358102684/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3358126969/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3359215410/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3359715479/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3360205391/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3372030941/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3380232959/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3383902854/EXECUTIVE-SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3383902854/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3383902854/pr-description-corrected.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3385986392/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3387536267/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3388952901/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3392598742/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3393621565/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3394182951/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3394330716/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3398199357/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3414111177/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3430270803/ANALYSIS.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3430270803/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3430530237/RESOLUTION.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3434156164/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3434733955/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3442639957/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3495070964/CHECKLIST-FINAL.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3495070964/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3499858197/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-634/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-697/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-738/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-750/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-756/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/README.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/nodes/analytics.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/nodes/billing.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/nodes/cost-control.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/nodes/guardian.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/nodes/multi-tenant.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/nodes/observability.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/nodes/persona.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/nodes/plan-features.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/nodes/platform-constraints.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/nodes/queue-system.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/nodes/roast.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/nodes/shield.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/nodes/social-platforms.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/nodes/tone.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/v1/nodes/trainer.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/linear-issue-cache-invalidation.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/nodes-v2/05-motor-analisis.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/nodes-v2/08-workers.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/nodes-v2/13-testing.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/nodes-v2/14-infraestructura.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/nodes-v2/auth/error-taxonomy.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/nodes-v2/auth/login-flows.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/nodes-v2/auth/overview.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/nodes-v2/auth/rate-limiting.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/nodes-v2/auth/security.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/nodes-v2/auth/session-management.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/ROA-268-summary.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-267.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-316.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-319.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-320.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-326.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-328.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-329.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-330.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-331.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-354.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-356.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-357.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-358.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-359.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-360.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-364.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-369-progress.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-369-summary.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-369.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-370-testing-notes.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-ROA-370.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "eslint.config.js",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "junit.xml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "tests/fixtures/guardian/malformed-config.yaml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "tests/fixtures/guardian/product-guard-cli-test.yaml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "tests/integration/sponsor-service-integration.test.js",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    }
+  ],
+  "approval_required": false,
+  "approved_by": null,
+  "notes": "Auto-approved"
+}

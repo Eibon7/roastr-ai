@@ -1,8 +1,8 @@
 /**
  * V2 Settings Routes Tests
- * 
+ *
  * Contract tests for v2 settings endpoints (ROA-267)
- * 
+ *
  * These tests verify CONTRACT (structure, not values) since values come from SettingsLoader v2
  * All endpoints are public (no authentication required)
  */
@@ -133,4 +133,3 @@ describe('V2 Settings Public Routes - Contract Tests', () => {
     });
   });
 });
-

@@ -65,7 +65,7 @@ describe('IngestionEligibilityGate', () => {
 
     it('should allow ingestion when all policies allow', async () => {
       // All policies return allowed: true
-      Object.values(mockPolicies).forEach(policy => {
+      Object.values(mockPolicies).forEach((policy) => {
         policy.evaluate = vi.fn().mockResolvedValue({
           allowed: true,
           metadata: {}
@@ -78,7 +78,7 @@ describe('IngestionEligibilityGate', () => {
       expect(result.blocked_by).toBeUndefined();
 
       // Verify all policies were evaluated
-      Object.values(mockPolicies).forEach(policy => {
+      Object.values(mockPolicies).forEach((policy) => {
         expect(policy.evaluate).toHaveBeenCalledOnce();
       });
     });
@@ -92,8 +92,8 @@ describe('IngestionEligibilityGate', () => {
 
       // Other policies should not be called
       Object.keys(mockPolicies)
-        .filter(key => key !== 'UserStatusPolicy')
-        .forEach(key => {
+        .filter((key) => key !== 'UserStatusPolicy')
+        .forEach((key) => {
           mockPolicies[key].evaluate = vi.fn().mockResolvedValue({
             allowed: true,
             metadata: {}
@@ -116,9 +116,15 @@ describe('IngestionEligibilityGate', () => {
 
     it('should block ingestion when CreditPolicy blocks', async () => {
       // First 3 policies allow
-      mockPolicies.UserStatusPolicy.evaluate = vi.fn().mockResolvedValue({ allowed: true, metadata: {} });
-      mockPolicies.SubscriptionPolicy.evaluate = vi.fn().mockResolvedValue({ allowed: true, metadata: {} });
-      mockPolicies.TrialPolicy.evaluate = vi.fn().mockResolvedValue({ allowed: true, metadata: {} });
+      mockPolicies.UserStatusPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
+      mockPolicies.SubscriptionPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
+      mockPolicies.TrialPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
 
       // CreditPolicy blocks
       mockPolicies.CreditPolicy.evaluate = vi.fn().mockResolvedValue({
@@ -128,8 +134,12 @@ describe('IngestionEligibilityGate', () => {
       });
 
       // Later policies should not be called
-      mockPolicies.FeatureFlagPolicy.evaluate = vi.fn().mockResolvedValue({ allowed: true, metadata: {} });
-      mockPolicies.RateLimitPolicy.evaluate = vi.fn().mockResolvedValue({ allowed: true, metadata: {} });
+      mockPolicies.FeatureFlagPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
+      mockPolicies.RateLimitPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
 
       const result = await gate.evaluate(input);
 
@@ -148,11 +158,21 @@ describe('IngestionEligibilityGate', () => {
 
     it('should include retry_after_seconds when policy provides it', async () => {
       // First 5 policies allow
-      mockPolicies.UserStatusPolicy.evaluate = vi.fn().mockResolvedValue({ allowed: true, metadata: {} });
-      mockPolicies.SubscriptionPolicy.evaluate = vi.fn().mockResolvedValue({ allowed: true, metadata: {} });
-      mockPolicies.TrialPolicy.evaluate = vi.fn().mockResolvedValue({ allowed: true, metadata: {} });
-      mockPolicies.CreditPolicy.evaluate = vi.fn().mockResolvedValue({ allowed: true, metadata: {} });
-      mockPolicies.FeatureFlagPolicy.evaluate = vi.fn().mockResolvedValue({ allowed: true, metadata: {} });
+      mockPolicies.UserStatusPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
+      mockPolicies.SubscriptionPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
+      mockPolicies.TrialPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
+      mockPolicies.CreditPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
+      mockPolicies.FeatureFlagPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
 
       // RateLimitPolicy blocks with retry_after
       mockPolicies.RateLimitPolicy.evaluate = vi.fn().mockResolvedValue({
@@ -173,9 +193,9 @@ describe('IngestionEligibilityGate', () => {
     });
 
     it('should handle unexpected errors gracefully (fail-safe)', async () => {
-      mockPolicies.UserStatusPolicy.evaluate = vi.fn().mockRejectedValue(
-        new Error('Unexpected error')
-      );
+      mockPolicies.UserStatusPolicy.evaluate = vi
+        .fn()
+        .mockRejectedValue(new Error('Unexpected error'));
 
       const result = await gate.evaluate(input);
 
@@ -185,7 +205,7 @@ describe('IngestionEligibilityGate', () => {
     });
 
     it('should generate requestId if not provided', async () => {
-      Object.values(mockPolicies).forEach(policy => {
+      Object.values(mockPolicies).forEach((policy) => {
         policy.evaluate = vi.fn().mockResolvedValue({
           allowed: true,
           metadata: {}
@@ -205,7 +225,7 @@ describe('IngestionEligibilityGate', () => {
     it('should use provided requestId', async () => {
       const customRequestId = 'custom-req-123';
 
-      Object.values(mockPolicies).forEach(policy => {
+      Object.values(mockPolicies).forEach((policy) => {
         policy.evaluate = vi.fn().mockResolvedValue({
           allowed: true,
           metadata: {}
@@ -223,7 +243,7 @@ describe('IngestionEligibilityGate', () => {
       // This test verifies that the gate only evaluates policies
       // and doesn't perform any data modifications
 
-      Object.values(mockPolicies).forEach(policy => {
+      Object.values(mockPolicies).forEach((policy) => {
         policy.evaluate = vi.fn().mockResolvedValue({
           allowed: true,
           metadata: {}

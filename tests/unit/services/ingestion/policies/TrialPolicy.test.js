@@ -47,7 +47,7 @@ describe('TrialPolicy', () => {
   describe('evaluate', () => {
     it('should allow when trial is active (future trial_ends_at)', async () => {
       const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      
+
       // Mock profile query
       mockSupabase.from.mockReturnValueOnce({
         select: vi.fn(() => ({
@@ -86,7 +86,7 @@ describe('TrialPolicy', () => {
 
     it('should block when trial is expired (past trial_ends_at)', async () => {
       const pastDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      
+
       // Mock profile query
       mockSupabase.from.mockReturnValueOnce({
         select: vi.fn(() => ({
@@ -162,7 +162,7 @@ describe('TrialPolicy', () => {
 
     it('should allow when active subscription exists (overrides trial)', async () => {
       const pastDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      
+
       // Mock profile query
       mockSupabase.from.mockReturnValueOnce({
         select: vi.fn(() => ({
@@ -223,7 +223,7 @@ describe('TrialPolicy', () => {
 
     it('should continue gracefully on subscription check error', async () => {
       const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      
+
       // Mock profile query
       mockSupabase.from.mockReturnValueOnce({
         select: vi.fn(() => ({

@@ -1,0 +1,44 @@
+{
+  "case_id": "2025-12-27-21-18-27-660",
+  "timestamp": "2025-12-27T21:18:27.660Z",
+  "actor": "emiliopostigo",
+  "domains": [],
+  "files_changed": [
+    "docs/guardian/audit-log.md",
+    "junit.xml",
+    "tests/fixtures/guardian/product-guard-cli-test.yaml"
+  ],
+  "severity": "SAFE",
+  "action": "APPROVED",
+  "violations": {
+    "critical": 0,
+    "sensitive": 0,
+    "safe": 3
+  },
+  "details": [
+    {
+      "file": "docs/guardian/audit-log.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "junit.xml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "tests/fixtures/guardian/product-guard-cli-test.yaml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    }
+  ],
+  "approval_required": false,
+  "approved_by": null,
+  "notes": "Auto-approved"
+}

@@ -1,0 +1,548 @@
+{
+  "case_id": "2025-12-27-21-21-45-460",
+  "timestamp": "2025-12-27T21:21:45.460Z",
+  "actor": "emiliopostigo",
+  "domains": [],
+  "files_changed": [
+    ".pr-description.md",
+    "AMPLITUDE_BACKEND_V2_COMPLETE.md",
+    "AMPLITUDE_SETUP_COMPLETE.md",
+    "AMPLITUDE_V2_ADJUSTMENTS_COMPLETE.md",
+    "BUILD-FIX-SUMMARY.md",
+    "CHANGELOG-ROA-328.md",
+    "CHANGELOG-ROA-361.md",
+    "CI-FIXES-SUMMARY.md",
+    "CODERABBIT-BLOCKERS-RESOLVED.md",
+    "CODERABBIT-RESPONSE.md",
+    "CONFLICT-RESOLUTION-SUMMARY.md",
+    "admin-dashboard/src/components/ui/badge.tsx",
+    "admin-dashboard/src/components/ui/button.tsx",
+    "admin-dashboard/src/components/ui/sheet.tsx",
+    "apps/backend-v2/README.md",
+    "apps/backend-v2/src/index.ts",
+    "apps/backend-v2/src/lib/analytics.ts",
+    "apps/backend-v2/src/lib/loadSettings.ts",
+    "apps/backend-v2/src/routes/auth.ts",
+    "apps/backend-v2/src/routes/settings.ts",
+    "apps/backend-v2/src/services/authService.ts",
+    "apps/backend-v2/vitest.config.ts",
+    "docs/AMPLITUDE_ANALYTICS.md",
+    "docs/CI-V2/CYCLE-REMOVAL-REPORT.md",
+    "docs/CI-V2/LEGACY-TO-V2-MAPPING.md",
+    "docs/CI-V2/ROA-320-CLASSIFICATION.json",
+    "docs/CI-V2/ROA-320-FINAL-REPORT.md",
+    "docs/CI-V2/ROA-320-RECLASSIFICATION-REPORT.md",
+    "docs/CI-V2/ROA-323-FINAL-MIGRATION-REPORT.md",
+    "docs/agents/receipts/cursor-backend-dev-ROA-370.md",
+    "docs/agents/receipts/cursor-documentation-ROA-364.md",
+    "docs/analysis/ROA-302-303-IMPLEMENTATION-REPORT.md",
+    "docs/analytics/ROA-362-CONFLICT-RESOLUTION.md",
+    "docs/analytics/ROA-362-IMPLEMENTATION-SUMMARY.md",
+    "docs/analytics/amplitude.md",
+    "docs/analytics/auth-login-events.md",
+    "docs/analytics/pii-validation-ROA-362.md",
+    "docs/architecture/v2-common-infrastructure.md",
+    "docs/auth/login-ui-v2.md",
+    "docs/auth/login-v2.md",
+    "docs/deployment/admin-settings-migration-ROA-268.md",
+    "docs/deployment/admin-settings-verification.md",
+    "docs/flows/frontend-backend-auth-contract.md",
+    "docs/flows/login-registration.md",
+    "docs/guardian/audit-log.md",
+    "docs/guardian/guardian-report.md",
+    "docs/implementation/ROA-388-IG1-summary.md",
+    "docs/legacy/test-evidence/review-3309563715/lighthouse-after.json",
+    "docs/legacy/test-evidence/review-3329345492/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3329345492/gdd-health-after.json",
+    "docs/legacy/test-evidence/review-3329345492/gdd-health-before.json",
+    "docs/legacy/test-evidence/review-3329345492/gdd-status-after.json",
+    "docs/legacy/test-evidence/review-3329345492/gdd-status-before.json",
+    "docs/legacy/test-evidence/review-3329352717/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3329352717/gdd-health-after.json",
+    "docs/legacy/test-evidence/review-3329352717/gdd-status-after.json",
+    "docs/legacy/test-evidence/review-3331370158/FINDINGS.md",
+    "docs/legacy/test-evidence/review-3331370158/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3331472272/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3331601417/SUMMARY.md",
+    "docs/legacy/test-evidence/review-3331703571/SUMMARY.md",
+    "eslint.config.js",
+    "junit.xml",
+    "tests/fixtures/guardian/malformed-config.yaml",
+    "tests/fixtures/guardian/product-guard-cli-test.yaml",
+    "tests/integration/sponsor-service-integration.test.js"
+  ],
+  "severity": "SAFE",
+  "action": "APPROVED",
+  "violations": {
+    "critical": 0,
+    "sensitive": 0,
+    "safe": 66
+  },
+  "details": [
+    {
+      "file": ".pr-description.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "AMPLITUDE_BACKEND_V2_COMPLETE.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "AMPLITUDE_SETUP_COMPLETE.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "AMPLITUDE_V2_ADJUSTMENTS_COMPLETE.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "BUILD-FIX-SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "CHANGELOG-ROA-328.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "CHANGELOG-ROA-361.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "CI-FIXES-SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "CODERABBIT-BLOCKERS-RESOLVED.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "CODERABBIT-RESPONSE.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "CONFLICT-RESOLUTION-SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "admin-dashboard/src/components/ui/badge.tsx",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "admin-dashboard/src/components/ui/button.tsx",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "admin-dashboard/src/components/ui/sheet.tsx",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/README.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/index.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/lib/analytics.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/lib/loadSettings.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/routes/auth.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/routes/settings.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/services/authService.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/vitest.config.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/AMPLITUDE_ANALYTICS.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/CI-V2/CYCLE-REMOVAL-REPORT.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/CI-V2/LEGACY-TO-V2-MAPPING.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/CI-V2/ROA-320-CLASSIFICATION.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/CI-V2/ROA-320-FINAL-REPORT.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/CI-V2/ROA-320-RECLASSIFICATION-REPORT.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/CI-V2/ROA-323-FINAL-MIGRATION-REPORT.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/agents/receipts/cursor-backend-dev-ROA-370.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/agents/receipts/cursor-documentation-ROA-364.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/analysis/ROA-302-303-IMPLEMENTATION-REPORT.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/analytics/ROA-362-CONFLICT-RESOLUTION.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/analytics/ROA-362-IMPLEMENTATION-SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/analytics/amplitude.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/analytics/auth-login-events.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/analytics/pii-validation-ROA-362.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/architecture/v2-common-infrastructure.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/auth/login-ui-v2.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/auth/login-v2.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/deployment/admin-settings-migration-ROA-268.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/deployment/admin-settings-verification.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/flows/frontend-backend-auth-contract.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/flows/login-registration.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/guardian/audit-log.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/guardian/guardian-report.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/implementation/ROA-388-IG1-summary.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3309563715/lighthouse-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329345492/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329345492/gdd-health-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329345492/gdd-health-before.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329345492/gdd-status-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329345492/gdd-status-before.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329352717/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329352717/gdd-health-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3329352717/gdd-status-after.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3331370158/FINDINGS.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3331370158/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3331472272/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3331601417/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/legacy/test-evidence/review-3331703571/SUMMARY.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "eslint.config.js",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "junit.xml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "tests/fixtures/guardian/malformed-config.yaml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "tests/fixtures/guardian/product-guard-cli-test.yaml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "tests/integration/sponsor-service-integration.test.js",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    }
+  ],
+  "approval_required": false,
+  "approved_by": null,
+  "notes": "Auto-approved"
+}

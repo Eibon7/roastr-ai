@@ -19,8 +19,9 @@ describe('AnalyzeToxicityWorker - Fallback Minimal', () => {
   });
 
   it('processJob resolves', async () => {
-    await expect(worker.processJob({ comment_id: 'c1', organization_id: 'o1', platform: 'twitter' }))
-      .resolves.toBeDefined();
+    await expect(
+      worker.processJob({ comment_id: 'c1', organization_id: 'o1', platform: 'twitter' })
+    ).resolves.toBeDefined();
   });
 
   it('analyzeToxicity resolves', async () => {

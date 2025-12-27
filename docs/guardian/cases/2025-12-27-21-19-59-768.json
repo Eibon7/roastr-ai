@@ -1,0 +1,116 @@
+{
+  "case_id": "2025-12-27-21-19-59-768",
+  "timestamp": "2025-12-27T21:19:59.768Z",
+  "actor": "emiliopostigo",
+  "domains": [],
+  "files_changed": [
+    "apps/backend-v2/src/index.ts",
+    "apps/backend-v2/src/lib/analytics.ts",
+    "apps/backend-v2/src/lib/loadSettings.ts",
+    "apps/backend-v2/src/routes/auth.ts",
+    "apps/backend-v2/src/routes/settings.ts",
+    "apps/backend-v2/src/services/authService.ts",
+    "apps/backend-v2/vitest.config.ts",
+    "docs/guardian/audit-log.md",
+    "docs/guardian/guardian-report.md",
+    "eslint.config.js",
+    "junit.xml",
+    "tests/integration/sponsor-service-integration.test.js"
+  ],
+  "severity": "SAFE",
+  "action": "APPROVED",
+  "violations": {
+    "critical": 0,
+    "sensitive": 0,
+    "safe": 12
+  },
+  "details": [
+    {
+      "file": "apps/backend-v2/src/index.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/lib/analytics.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/lib/loadSettings.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/routes/auth.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/routes/settings.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/services/authService.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/vitest.config.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/guardian/audit-log.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/guardian/guardian-report.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "eslint.config.js",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "junit.xml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "tests/integration/sponsor-service-integration.test.js",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    }
+  ],
+  "approval_required": false,
+  "approved_by": null,
+  "notes": "Auto-approved"
+}
