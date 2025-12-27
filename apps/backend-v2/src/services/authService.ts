@@ -11,6 +11,7 @@ import { rateLimitService } from './rateLimitService.js';
 import { abuseDetectionService } from './abuseDetectionService.js';
 import { createHash } from 'crypto';
 import { loadSettings } from '../lib/loadSettings.js';
+import { logger } from '../utils/logger.js';
 
 export interface SignupParams {
   email: string;
@@ -78,6 +79,15 @@ export class AuthService {
       );
     }
 
+    // ROA-355: Verificar si el email ya existe antes de intentar crear usuario
+    const emailExists = await this.checkEmailExists(email);
+    if (emailExists) {
+      throw new AuthError(
+        AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS,
+        'An account with this email already exists'
+      );
+    }
+
     try {
       // Crear usuario en Supabase Auth
       const { data, error } = await supabase.auth.signUp({
@@ -109,7 +119,7 @@ export class AuthService {
       });
 
       if (profileError) {
-        console.error('Failed to create profile:', profileError);
+        logger.error('Failed to create profile:', profileError);
         // No lanzar error, el usuario ya está creado
       }
 
@@ -192,7 +202,7 @@ export class AuthService {
       if (abuseResult.isAbuse) {
         // Log patterns server-side for investigation, but don't expose to client
         // PII anonymized for GDPR compliance
-        console.error('Abuse detected:', {
+        logger.error('Abuse detected:', {
           emailHash: this.hashForLog(email),
           ipPrefix: ip.split('.').slice(0, 2).join('.') + '.x.x',
           patterns: abuseResult.patterns
@@ -450,6 +460,57 @@ export class AuthService {
    */
   private hashForLog(value: string): string {
     return createHash('sha256').update(value.toLowerCase()).digest('hex').substring(0, 12);
+  }
+
+  /**
+   * Verifica si un email ya existe en Supabase Auth
+   * ROA-355: Pre-signup validation para evitar errores innecesarios
+   *
+   * @param email - Email a verificar (case-insensitive)
+   * @returns true si el email existe, false si no
+   */
+  private async checkEmailExists(email: string): Promise<boolean> {
+    try {
+      // Paginar a través de usuarios para encontrar email
+      let page = 1;
+      const perPage = 100;
+      const normalizedEmail = email.toLowerCase();
+
+      while (true) {
+        const { data: usersList, error: userError } = await supabase.auth.admin.listUsers({
+          page,
+          perPage
+        });
+
+        if (userError) {
+          logger.error('Error checking email existence:', userError);
+          // Si hay error, asumir que no existe para no bloquear signup
+          // El error se capturará cuando se intente crear el usuario
+          return false;
+        }
+
+        // Buscar email en la página actual
+        const user = usersList?.users?.find(
+          (u) => u.email?.toLowerCase() === normalizedEmail
+        );
+
+        if (user) {
+          return true;
+        }
+
+        // Si no hay más usuarios o la página está incompleta, terminar
+        if (!usersList?.users?.length || (usersList.users && usersList.users.length < perPage)) {
+          return false;
+        }
+
+        page++;
+      }
+    } catch (error) {
+      logger.error('Unexpected error checking email existence:', error);
+      // En caso de error inesperado, retornar false para no bloquear signup
+      // El error se capturará cuando se intente crear el usuario
+      return false;
+    }
   }
 }
 

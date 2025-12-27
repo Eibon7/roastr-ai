@@ -5,6 +5,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as amplitudeModule from '@amplitude/analytics-node';
 
+// Mock the logger module
+vi.mock('../../../src/utils/logger', () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn()
+  }
+}));
+
 // Mock the amplitude module
 vi.mock('@amplitude/analytics-node', () => ({
   init: vi.fn(),

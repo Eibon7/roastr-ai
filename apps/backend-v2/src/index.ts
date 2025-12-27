@@ -8,6 +8,7 @@
 import express from 'express';
 import { initializeAmplitude } from './lib/analytics.js';
 import authRoutes from './routes/auth.js';
+import { logger } from './utils/logger.js';
 
 // Initialize Amplitude Analytics
 initializeAmplitude();
@@ -32,7 +33,7 @@ app.use('/api/v2/auth', authRoutes);
 // Start server (only if not in test environment)
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
-    console.log(`🚀 Backend v2 server running on port ${PORT}`);
+    logger.info(`🚀 Backend v2 server running on port ${PORT}`);
   });
 }
 

@@ -14,6 +14,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 import yaml from 'yaml';
+import { logger } from '../utils/logger.js';
 
 /**
  * Cache for loaded settings to avoid repeated file reads and DB queries
@@ -74,7 +75,7 @@ function loadYamlConfig(): Record<string, any> {
   }
 
   if (!fs.existsSync(configPath)) {
-    console.warn(`Warning: admin-controlled.yaml not found at ${configPath}`);
+    logger.warn(`Warning: admin-controlled.yaml not found at ${configPath}`);
     return {};
   }
 
@@ -83,7 +84,7 @@ function loadYamlConfig(): Record<string, any> {
     const config = yaml.parse(fileContent);
     return config || {};
   } catch (error) {
-    console.error(`Error loading admin-controlled.yaml: ${error}`);
+    logger.error(`Error loading admin-controlled.yaml: ${error}`);
     return {};
   }
 }
@@ -101,7 +102,7 @@ async function loadDatabaseSettings(): Promise<Record<string, any>> {
     if (error) {
       // If table doesn't exist yet, return empty object (graceful degradation)
       if (error.code === 'PGRST116' || error.message.includes('does not exist')) {
-        console.warn('Warning: admin_settings table does not exist yet. Using YAML only.');
+        logger.warn('Warning: admin_settings table does not exist yet. Using YAML only.');
         return {};
       }
       throw error;
@@ -131,7 +132,7 @@ async function loadDatabaseSettings(): Promise<Record<string, any>> {
 
     return settings;
   } catch (error) {
-    console.error(`Error loading admin_settings: ${error}`);
+    logger.error(`Error loading admin_settings: ${error}`);
     // Graceful degradation: return empty object if DB fails
     return {};
   }

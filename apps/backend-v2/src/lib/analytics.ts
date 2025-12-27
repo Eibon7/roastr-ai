@@ -12,6 +12,7 @@
  */
 
 import * as amplitude from '@amplitude/analytics-node';
+import { logger } from '../utils/logger.js';
 
 /**
  * Flag to ensure Amplitude is initialized only once
@@ -59,7 +60,7 @@ export interface TrackEventParams {
 export function initializeAmplitude(): boolean {
   // Prevent double initialization
   if (isInitialized) {
-    console.warn('[Amplitude] Already initialized. Skipping duplicate initialization.');
+    logger.warn('[Amplitude] Already initialized. Skipping duplicate initialization.');
     return false;
   }
 
@@ -67,7 +68,7 @@ export function initializeAmplitude(): boolean {
   const apiKey = process.env.AMPLITUDE_API_KEY;
 
   if (!apiKey) {
-    console.warn(
+    logger.warn(
       '[Amplitude] Missing AMPLITUDE_API_KEY environment variable. Analytics will not be initialized.'
     );
     return false;
@@ -133,7 +134,7 @@ export function trackEvent({
   // Skip if not initialized (test environment or missing API key)
   if (!isInitialized) {
     if (process.env.NODE_ENV !== 'test') {
-      console.warn('[Amplitude] Not initialized. Skipping event:', event);
+      logger.warn('[Amplitude] Not initialized. Skipping event:', event);
     }
     return;
   }
@@ -169,7 +170,7 @@ export function trackEvent({
       device_id: deviceId
     });
   } catch (error) {
-    console.error('[Amplitude] Failed to track event:', event, error);
+    logger.error('[Amplitude] Failed to track event:', event, error);
   }
 }
 
@@ -196,8 +197,8 @@ export async function flushEvents(): Promise<void> {
 
   try {
     await amplitude.flush();
-    console.info('[Amplitude] Events flushed successfully');
+    logger.info('[Amplitude] Events flushed successfully');
   } catch (error) {
-    console.error('[Amplitude] Failed to flush events:', error);
+    logger.error('[Amplitude] Failed to flush events:', error);
   }
 }

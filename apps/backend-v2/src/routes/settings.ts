@@ -56,7 +56,7 @@ router.get('/public', async (_req: Request, res: Response) => {
       data: publicSettings
     });
   } catch (error: any) {
-    console.error('Error loading public settings:', error);
+    logger.error('Error loading public settings:', error);
 
     res.status(500).json({
       success: false,

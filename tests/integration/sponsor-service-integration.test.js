@@ -495,7 +495,6 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
         global.fetch = originalFetch;
       } else {
         // Clean up only if we defined it ourselves
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete global.fetch;
       }
     });

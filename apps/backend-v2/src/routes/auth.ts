@@ -18,6 +18,7 @@ import { AuthError } from '../utils/authErrorTaxonomy.js';
 import { rateLimitByType } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
 import { getClientIp } from '../utils/request.js';
+import { logger } from '../utils/logger.js';
 
 const router = Router();
 
@@ -61,7 +62,7 @@ router.post('/signup', rateLimitByType('signup'), async (req: Request, res: Resp
       });
     }
 
-    console.error('Signup error:', error);
+    logger.error('Signup error:', error);
     res.status(500).json({
       error: {
         code: 'INTERNAL_ERROR',
@@ -113,7 +114,7 @@ router.post('/login', rateLimitByType('login'), async (req: Request, res: Respon
       });
     }
 
-    console.error('Login error:', error);
+    logger.error('Login error:', error);
     res.status(500).json({
       error: {
         code: 'INTERNAL_ERROR',
@@ -149,7 +150,7 @@ router.post('/logout', requireAuth, async (req: Request, res: Response) => {
       });
     }
 
-    console.error('Logout error:', error);
+    logger.error('Logout error:', error);
     res.status(500).json({
       error: {
         code: 'INTERNAL_ERROR',
@@ -194,7 +195,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       });
     }
 
-    console.error('Refresh error:', error);
+    logger.error('Refresh error:', error);
     res.status(500).json({
       error: {
         code: 'INTERNAL_ERROR',
@@ -243,7 +244,7 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
       });
     }
 
-    console.error('Magic link error:', error);
+    logger.error('Magic link error:', error);
     res.status(500).json({
       error: {
         code: 'INTERNAL_ERROR',
