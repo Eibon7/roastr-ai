@@ -123,7 +123,7 @@ export class AuthService {
             flow: 'auth'
           }
         });
-      } catch (analyticsError) {
+      } catch {
         // Graceful degradation: analytics failure should not crash registration
         logger.warn('analytics.track_failed', { event: 'auth_register_success' });
       }
@@ -140,7 +140,7 @@ export class AuthService {
             flow: 'auth'
           }
         });
-      } catch (analyticsError) {
+      } catch {
         // Graceful degradation: analytics failure should not crash error handling
         logger.warn('analytics.track_failed', { event: 'auth_register_failed' });
       }
@@ -288,7 +288,9 @@ export class AuthService {
           ipPrefix: ip.split('.').slice(0, 2).join('.') + '.x.x',
           patterns: abuseResult.patterns
         });
-        throw new AuthError(AUTH_ERROR_CODES.ACCOUNT_LOCKED, { cause: { kind: 'abuse_detection' } });
+        throw new AuthError(AUTH_ERROR_CODES.ACCOUNT_LOCKED, {
+          cause: { kind: 'abuse_detection' }
+        });
       }
 
       // Autenticación con Supabase

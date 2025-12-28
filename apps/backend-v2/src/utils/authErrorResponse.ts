@@ -58,4 +58,3 @@ export function sendAuthError(
     request_id: requestId
   });
 }
-

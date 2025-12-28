@@ -17,8 +17,6 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { authService } from '../../src/services/authService';
-import * as amplitudeModule from '@amplitude/analytics-node';
-import type { AuthResponse } from '@supabase/supabase-js';
 
 // Mock Supabase client
 vi.mock('../../src/lib/supabaseClient', () => ({

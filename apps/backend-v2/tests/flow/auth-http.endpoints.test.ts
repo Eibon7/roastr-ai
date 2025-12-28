@@ -157,9 +157,7 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
       role: 'user',
       email_verified: true
     });
-    mockAuthService.logout.mockRejectedValueOnce(
-      new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID)
-    );
+    mockAuthService.logout.mockRejectedValueOnce(new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID));
 
     const { default: app } = await import('../../src/index');
     const res = await request(app)

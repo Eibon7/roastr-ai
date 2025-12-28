@@ -11,6 +11,7 @@ import { sendAuthError } from '../utils/authErrorResponse.js';
 
 // Extender Express Request con usuario autenticado
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: {

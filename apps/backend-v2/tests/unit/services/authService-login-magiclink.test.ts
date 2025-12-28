@@ -3,7 +3,6 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AuthError, AUTH_ERROR_CODES } from '../../../src/utils/authErrorTaxonomy';
 
 const mockSignInWithPassword = vi.fn();
 const mockSignInWithOtp = vi.fn();

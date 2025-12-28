@@ -18,4 +18,3 @@ export function attachRequestId(req: Request, res: Response, next: NextFunction)
   res.setHeader('x-request-id', requestId);
   next();
 }
-

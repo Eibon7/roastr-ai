@@ -101,7 +101,7 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
           flow: 'auth'
         }
       });
-    } catch (analyticsError) {
+    } catch {
       logger.warn('analytics.track_failed', { event: 'auth_register_endpoint_success' });
     }
 
@@ -121,7 +121,7 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
           flow: 'auth'
         }
       });
-    } catch (analyticsError) {
+    } catch {
       logger.warn('analytics.track_failed', { event: 'auth_register_endpoint_failed' });
     }
 

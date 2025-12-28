@@ -46,10 +46,7 @@ export function rateLimitByType(authType: AuthType) {
 /**
  * Middleware genérico de rate limiting por IP
  */
-export function rateLimitByIp(options: {
-  windowMs: number;
-  maxAttempts: number;
-}) {
+export function rateLimitByIp(options: { windowMs: number; maxAttempts: number }) {
   const attempts = new Map<string, { count: number; resetAt: number }>();
 
   return (req: Request, res: Response, next: NextFunction): void => {
