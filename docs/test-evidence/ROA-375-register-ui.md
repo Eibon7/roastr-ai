@@ -56,8 +56,8 @@ Implementación completa de la UI de registro usando componentes shadcn/ui con:
 ## 🧪 Tests E2E
 
 **Total:** 14 tests  
-**Passing:** 4 tests (36s)  
-**Failing:** 10 tests (requieren servidor de desarrollo corriendo)
+**Passing:** 5 tests (36s)  
+**Failing:** 9 tests (requieren servidor de desarrollo corriendo)
 
 ### Tests Implementados
 
