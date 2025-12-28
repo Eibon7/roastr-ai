@@ -179,7 +179,13 @@ Implementado mapeo de códigos de error a mensajes user-friendly:
    - Al menos un número
    - Indicadores visuales en tiempo real (verde cuando cumple)
 
-4. **Términos y Condiciones**
+4. **Confirmar Contraseña** (ROA-375 requisito explícito)
+   - Requerida
+   - Debe coincidir con contraseña
+   - Validación en blur
+   - Error user-friendly: "Las contraseñas no coinciden"
+
+5. **Términos y Condiciones**
    - Checkbox requerido
    - Links a `/terms` y `/privacy`
 
@@ -187,15 +193,16 @@ Implementado mapeo de códigos de error a mensajes user-friendly:
 
 ## ✅ Criterios de Aceptación
 
-- [x] **Formulario de registro funcional** - Implementado con shadcn components
-- [x] **Validación en tiempo real** - Email, password, términos validados
+- [x] **Formulario de registro funcional** - Implementado con shadcn components (email, password, confirm password, terms)
+- [x] **Validación en tiempo real** - Email, password, confirm password, términos validados
+- [x] **Confirm password matching** - Validación que password === confirmPassword (ROA-375 requisito explícito)
 - [x] **Manejo de errores con AuthError taxonomy** - Mapeo completo implementado
 - [x] **Registro exitoso → redirect a /dashboard** - Implementado con React Router
 - [x] **Email duplicado → error user-friendly** - Mensaje "Este email ya está registrado"
 - [x] **Rate limit → mensaje claro de espera** - Mensaje "Demasiados intentos. Espera 15 minutos"
 - [x] **Tema claro/oscuro funcionando** - Tema sistema por defecto, ambos funcionan
 - [x] **Responsive en 375px, 768px, 1920px** - Card responsive con max-width
-- [x] **Tests E2E implementados** - 13 tests con Playwright
+- [x] **Tests E2E implementados** - 14 tests con Playwright (incluye test de confirm password matching)
 - [x] **Build exitoso** - Compila sin errores TypeScript
 
 ---
@@ -203,8 +210,8 @@ Implementado mapeo de códigos de error a mensajes user-friendly:
 ## 📊 Métricas
 
 - **Archivos creados:** 4 (3 src + 1 test)
-- **Líneas de código:** ~534 líneas totales
-- **Tests E2E:** 13 tests
+- **Líneas de código:** ~570 líneas totales (incluye confirm password field)
+- **Tests E2E:** 14 tests (incluye validación de confirm password matching)
 - **Componentes shadcn:** 6 componentes utilizados
 - **Build time:** 2.64s
 - **Build output:** 851 KB (chunk principal)

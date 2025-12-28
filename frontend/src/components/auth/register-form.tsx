@@ -49,6 +49,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     fullName: '',
     email: '',
     password: '',
+    confirmPassword: '',
     termsAccepted: false
   });
 
@@ -56,6 +57,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     fullName: '',
     email: '',
     password: '',
+    confirmPassword: '',
     terms: ''
   });
 
@@ -84,8 +86,15 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     return '';
   };
 
+  // Validate confirm password (required by ROA-375)
+  const validateConfirmPassword = (confirmPassword: string, password: string): string => {
+    if (!confirmPassword) return 'Debes confirmar tu contraseña';
+    if (confirmPassword !== password) return 'Las contraseñas no coinciden';
+    return '';
+  };
+
   // Handle field blur validation
-  const handleBlur = (field: 'fullName' | 'email' | 'password') => {
+  const handleBlur = (field: 'fullName' | 'email' | 'password' | 'confirmPassword') => {
     let error = '';
     switch (field) {
       case 'fullName':
@@ -96,6 +105,9 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
         break;
       case 'password':
         error = validatePassword(formData.password);
+        break;
+      case 'confirmPassword':
+        error = validateConfirmPassword(formData.confirmPassword, formData.password);
         break;
     }
     setFieldErrors(prev => ({ ...prev, [field]: error }));
@@ -110,17 +122,19 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     const nameError = validateFullName(formData.fullName);
     const emailError = validateEmail(formData.email);
     const passwordError = validatePassword(formData.password);
+    const confirmPasswordError = validateConfirmPassword(formData.confirmPassword, formData.password);
     const termsError = !formData.termsAccepted ? 'Debes aceptar los términos y condiciones' : '';
 
     setFieldErrors({
       fullName: nameError,
       email: emailError,
       password: passwordError,
+      confirmPassword: confirmPasswordError,
       terms: termsError
     });
 
     // If any error, stop
-    if (nameError || emailError || passwordError || termsError) {
+    if (nameError || emailError || passwordError || confirmPasswordError || termsError) {
       setError('Por favor corrige los errores en el formulario');
       return;
     }
@@ -257,6 +271,23 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
                   </li>
                 </ul>
               </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+              <PasswordInput
+                id="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                onBlur={() => handleBlur('confirmPassword')}
+                disabled={isLoading}
+                aria-invalid={!!fieldErrors.confirmPassword}
+                placeholder="Confirma tu contraseña"
+              />
+              {fieldErrors.confirmPassword && (
+                <p className="text-sm text-destructive">{fieldErrors.confirmPassword}</p>
+              )}
             </div>
 
             {/* Terms Checkbox */}

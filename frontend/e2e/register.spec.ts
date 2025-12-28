@@ -72,6 +72,25 @@ test.describe('Register Page', () => {
     await expect(page.locator('[data-testid="requirement-number"]')).toHaveClass(/text-green-600/);
   });
 
+  test('should validate confirm password matching', async ({ page }) => {
+    // Llenar password
+    await page.fill('input[id="password"]', 'Pass1234');
+    
+    // Llenar confirm password con valor diferente
+    await page.fill('input[id="confirmPassword"]', 'Different123');
+    await page.click('input[id="email"]'); // Trigger blur
+
+    // Debe mostrar error
+    await expect(page.locator('text=Las contraseñas no coinciden')).toBeVisible();
+
+    // Corregir confirm password
+    await page.fill('input[id="confirmPassword"]', 'Pass1234');
+    await page.click('input[id="email"]'); // Trigger blur
+
+    // Error debe desaparecer
+    await expect(page.locator('text=Las contraseñas no coinciden')).not.toBeVisible();
+  });
+
   test('should register successfully with valid data', async ({ page }) => {
     // Mock de la API para simular registro exitoso
     await page.route('/api/v2/auth/register', async (route) => {
@@ -96,6 +115,7 @@ test.describe('Register Page', () => {
     await page.fill('input[id="fullName"]', 'Test User');
     await page.fill('input[id="email"]', 'test@example.com');
     await page.fill('input[id="password"]', 'SecurePass123');
+    await page.fill('input[id="confirmPassword"]', 'SecurePass123');
     await page.check('input[id="terms"]');
 
     // Submit
@@ -121,6 +141,7 @@ test.describe('Register Page', () => {
     await page.fill('input[id="fullName"]', 'Existing User');
     await page.fill('input[id="email"]', 'existing@example.com');
     await page.fill('input[id="password"]', 'SecurePass123');
+    await page.fill('input[id="confirmPassword"]', 'SecurePass123');
     await page.check('input[id="terms"]');
 
     await page.click('button[type="submit"]:has-text("Crear cuenta")');
@@ -145,6 +166,7 @@ test.describe('Register Page', () => {
     await page.fill('input[id="fullName"]', 'Test User');
     await page.fill('input[id="email"]', 'test@example.com');
     await page.fill('input[id="password"]', 'SecurePass123');
+    await page.fill('input[id="confirmPassword"]', 'SecurePass123');
     await page.check('input[id="terms"]');
 
     await page.click('button[type="submit"]:has-text("Crear cuenta")');
