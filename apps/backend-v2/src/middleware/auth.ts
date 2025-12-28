@@ -7,6 +7,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { authService } from '../services/authService.js';
 import { AuthError, AUTH_ERROR_CODES } from '../utils/authErrorTaxonomy.js';
+import { sendAuthError } from '../utils/authErrorResponse.js';
 
 // Extender Express Request con usuario autenticado
 declare global {
@@ -31,10 +32,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new AuthError(
-        AUTH_ERROR_CODES.TOKEN_MISSING,
-        'Missing or invalid authorization header'
-      );
+      throw new AuthError(AUTH_ERROR_CODES.TOKEN_MISSING);
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer '
@@ -52,22 +50,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
     next();
   } catch (error) {
-    if (error instanceof AuthError) {
-      res.status(error.statusCode).json({
-        error: {
-          code: error.code,
-          message: error.message
-        }
-      });
-      return;
-    }
-
-    res.status(401).json({
-      error: {
-        code: AUTH_ERROR_CODES.TOKEN_INVALID,
-        message: 'Authentication failed'
-      }
-    });
+    return void sendAuthError(req, res, error, { log: { policy: 'require_auth' } });
   }
 }
 
@@ -77,23 +60,15 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 export function requireRole(...allowedRoles: Array<'user' | 'admin' | 'superadmin'>) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
-      res.status(401).json({
-        error: {
-          code: AUTH_ERROR_CODES.TOKEN_MISSING,
-          message: 'Not authenticated'
-        }
+      return void sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.TOKEN_MISSING), {
+        log: { policy: 'require_role' }
       });
-      return;
     }
 
     if (!allowedRoles.includes(req.user.role)) {
-      res.status(403).json({
-        error: {
-          code: AUTH_ERROR_CODES.ROLE_NOT_ALLOWED,
-          message: `Access denied. Required roles: ${allowedRoles.join(', ')}`
-        }
+      return void sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.ROLE_NOT_ALLOWED), {
+        log: { policy: 'require_role' }
       });
-      return;
     }
 
     next();

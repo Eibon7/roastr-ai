@@ -14,12 +14,14 @@
 
 import { Router, Request, Response } from 'express';
 import { authService } from '../services/authService.js';
-import { AuthError } from '../utils/authErrorTaxonomy.js';
+import { AuthError, AUTH_ERROR_CODES } from '../utils/authErrorTaxonomy.js';
 import { rateLimitByType } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
 import { getClientIp } from '../utils/request.js';
 import { loadSettings } from '../lib/loadSettings.js';
 import { trackEvent } from '../lib/analytics.js';
+import { sendAuthError } from '../utils/authErrorResponse.js';
+import { logger } from '../utils/logger.js';
 
 const router = Router();
 
@@ -38,43 +40,27 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
     const settings = await loadSettings();
     const enabled = settings?.feature_flags?.enable_user_registration ?? false;
     if (!enabled) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'NOT_FOUND',
-          message: 'Not found'
-        }
+      return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.NOT_FOUND), {
+        log: { policy: 'feature_flag:enable_user_registration' }
       });
     }
   } catch {
-    return res.status(404).json({
-      success: false,
-      error: {
-        code: 'NOT_FOUND',
-        message: 'Not found'
-      }
+    return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.NOT_FOUND), {
+      log: { policy: 'feature_flag:enable_user_registration' }
     });
   }
 
   const { email, password } = req.body || {};
 
   if (typeof email !== 'string' || email.trim().length === 0) {
-    return res.status(400).json({
-      success: false,
-      error: {
-        code: 'VALIDATION_ERROR',
-        message: 'Email is required'
-      }
+    return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+      log: { policy: 'validation:register' }
     });
   }
 
   if (typeof password !== 'string' || password.length < 8) {
-    return res.status(400).json({
-      success: false,
-      error: {
-        code: 'VALIDATION_ERROR',
-        message: 'Password must be at least 8 characters'
-      }
+    return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+      log: { policy: 'validation:register' }
     });
   }
 
@@ -85,22 +71,14 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
     .replace(/[\x00-\x1F\x7F]/g, '');
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(normalizedEmail)) {
-    return res.status(400).json({
-      success: false,
-      error: {
-        code: 'VALIDATION_ERROR',
-        message: 'Invalid email format'
-      }
+    return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+      log: { policy: 'validation:register' }
     });
   }
 
   if (password.length > 128) {
-    return res.status(400).json({
-      success: false,
-      error: {
-        code: 'VALIDATION_ERROR',
-        message: 'Password too long (max 128 characters)'
-      }
+    return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+      log: { policy: 'validation:register' }
     });
   }
 
@@ -123,9 +101,8 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
           flow: 'auth'
         }
       });
-    } catch (analyticsError) {
-      // Graceful degradation: analytics failure should not crash the flow
-      console.error('Analytics tracking failed:', analyticsError);
+    } catch {
+      logger.warn('analytics.track_failed', { event: 'auth_register_endpoint_success' });
     }
 
     // Anti-enumeration: siempre homogéneo
@@ -144,20 +121,11 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
           flow: 'auth'
         }
       });
-    } catch (analyticsError) {
-      // Graceful degradation: analytics failure should not crash the flow
-      console.error('Analytics tracking failed:', analyticsError);
+    } catch {
+      logger.warn('analytics.track_failed', { event: 'auth_register_endpoint_failed' });
     }
 
-    // No filtrar errores internos (Supabase).
-    console.error('Register error:', (error as any)?.message || error);
-    return res.status(500).json({
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An error occurred during registration'
-      }
-    });
+    return sendAuthError(req, res, error, { log: { policy: 'register' } });
   }
 });
 
@@ -171,11 +139,8 @@ router.post('/signup', rateLimitByType('signup'), async (req: Request, res: Resp
     const { email, password, plan_id, metadata } = req.body;
 
     if (!email || !password || !plan_id) {
-      return res.status(400).json({
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Email, password, and plan_id are required'
-        }
+      return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+        log: { policy: 'validation:signup' }
       });
     }
 
@@ -192,23 +157,7 @@ router.post('/signup', rateLimitByType('signup'), async (req: Request, res: Resp
     });
     return;
   } catch (error) {
-    if (error instanceof AuthError) {
-      return res.status(error.statusCode).json({
-        error: {
-          code: error.code,
-          message: error.message
-        }
-      });
-    }
-
-    console.error('Signup error:', error);
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An error occurred during signup'
-      }
-    });
-    return;
+    return sendAuthError(req, res, error, { log: { policy: 'signup' } });
   }
 });
 
@@ -222,11 +171,8 @@ router.post('/login', rateLimitByType('login'), async (req: Request, res: Respon
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Email and password are required'
-        }
+      return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+        log: { policy: 'validation:login' }
       });
     }
 
@@ -244,23 +190,7 @@ router.post('/login', rateLimitByType('login'), async (req: Request, res: Respon
     });
     return;
   } catch (error) {
-    if (error instanceof AuthError) {
-      return res.status(error.statusCode).json({
-        error: {
-          code: error.code,
-          message: error.message
-        }
-      });
-    }
-
-    console.error('Login error:', error);
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An error occurred during login'
-      }
-    });
-    return;
+    return sendAuthError(req, res, error, { log: { policy: 'login' } });
   }
 });
 
@@ -280,23 +210,7 @@ router.post('/logout', requireAuth, async (req: Request, res: Response) => {
     });
     return;
   } catch (error) {
-    if (error instanceof AuthError) {
-      return res.status(error.statusCode).json({
-        error: {
-          code: error.code,
-          message: error.message
-        }
-      });
-    }
-
-    console.error('Logout error:', error);
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An error occurred during logout'
-      }
-    });
-    return;
+    return sendAuthError(req, res, error, { log: { policy: 'logout' } });
   }
 });
 
@@ -309,11 +223,8 @@ router.post('/refresh', async (req: Request, res: Response) => {
     const { refresh_token } = req.body;
 
     if (!refresh_token) {
-      return res.status(400).json({
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Refresh token is required'
-        }
+      return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+        log: { policy: 'validation:refresh' }
       });
     }
 
@@ -325,23 +236,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
     });
     return;
   } catch (error) {
-    if (error instanceof AuthError) {
-      return res.status(error.statusCode).json({
-        error: {
-          code: error.code,
-          message: error.message
-        }
-      });
-    }
-
-    console.error('Refresh error:', error);
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An error occurred during token refresh'
-      }
-    });
-    return;
+    return sendAuthError(req, res, error, { log: { policy: 'refresh' } });
   }
 });
 
@@ -356,11 +251,8 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
     const { email } = req.body;
 
     if (!email) {
-      return res.status(400).json({
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Email is required'
-        }
+      return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+        log: { policy: 'validation:magic_link' }
       });
     }
 
@@ -374,23 +266,7 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
     res.json(result);
     return;
   } catch (error) {
-    if (error instanceof AuthError) {
-      return res.status(error.statusCode).json({
-        error: {
-          code: error.code,
-          message: error.message
-        }
-      });
-    }
-
-    console.error('Magic link error:', error);
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An error occurred while sending magic link'
-      }
-    });
-    return;
+    return sendAuthError(req, res, error, { log: { policy: 'magic_link' } });
   }
 });
 

@@ -8,7 +8,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AuthService } from '../../../src/services/authService';
-import { AuthError, AUTH_ERROR_CODES } from '../../../src/utils/authErrorTaxonomy';
+import { AUTH_ERROR_CODES } from '../../../src/utils/authErrorTaxonomy';
 
 // Mock supabase client
 vi.mock('../../../src/lib/supabaseClient', () => ({
@@ -124,7 +124,7 @@ describe('AuthService - Email Existence Check (ROA-355)', () => {
       const password = 'password123';
       const planId = 'invalid-plan';
 
-      // Should throw INVALID_CREDENTIALS for plan (planId validation happens first)
+      // Should throw INVALID_REQUEST for plan (planId validation happens first)
       await expect(
         authService.signup({
           email,
@@ -132,7 +132,7 @@ describe('AuthService - Email Existence Check (ROA-355)', () => {
           planId
         })
       ).rejects.toMatchObject({
-        code: AUTH_ERROR_CODES.INVALID_CREDENTIALS
+        slug: AUTH_ERROR_CODES.INVALID_REQUEST
       });
 
       // Verify that email check was NOT called (planId validation happened first)

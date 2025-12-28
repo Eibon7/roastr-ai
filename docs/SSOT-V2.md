@@ -593,6 +593,76 @@ type ProgressiveBlockDurations = [
 - `ENABLE_AUTH_RATE_LIMIT_V2`: Habilita rate limiting v2 (reemplaza v1)
 - `ENABLE_RATE_LIMIT`: Habilita rate limiting general (requerido para v2)
 
+### 12.4.1 Auth Error Taxonomy (V2) — ROA-405
+
+**Objetivo:** Contrato estable de errores de Auth para backend + frontend (sin PII, sin detalles internos).
+
+**Tipo base (contrato / referencia):**
+
+```ts
+type AuthError = {
+  slug: string; // estable (ej. AUTH_INVALID_CREDENTIALS)
+  http_status: number;
+  retryable: boolean;
+  user_message_key: string; // i18n key (NO texto)
+  category: 'auth' | 'authz' | 'session' | 'token' | 'account' | 'policy';
+};
+```
+
+**Slugs soportados (MVP):**
+
+- `AUTH_INVALID_CREDENTIALS`
+- `AUTH_EMAIL_NOT_CONFIRMED`
+- `AUTH_ACCOUNT_LOCKED`
+- `AUTH_DISABLED`
+- `AUTH_UNKNOWN` (fail-closed)
+- `AUTHZ_INSUFFICIENT_PERMISSIONS`
+- `AUTHZ_ROLE_NOT_ALLOWED`
+- `AUTHZ_MAGIC_LINK_NOT_ALLOWED`
+- `AUTHZ_ADMIN_REQUIRED`
+- `SESSION_EXPIRED`
+- `SESSION_INVALID`
+- `SESSION_REVOKED`
+- `TOKEN_EXPIRED`
+- `TOKEN_INVALID`
+- `TOKEN_MISSING`
+- `TOKEN_REVOKED`
+- `ACCOUNT_NOT_FOUND`
+- `ACCOUNT_SUSPENDED`
+- `ACCOUNT_BANNED`
+- `ACCOUNT_DELETED`
+- `ACCOUNT_EMAIL_ALREADY_EXISTS`
+- `POLICY_RATE_LIMITED`
+- `POLICY_BLOCKED`
+- `POLICY_INVALID_REQUEST`
+- `POLICY_NOT_FOUND`
+
+**Contrato de API (error response):**
+
+```json
+{
+  "success": false,
+  "error": {
+    "slug": "AUTH_INVALID_CREDENTIALS",
+    "retryable": false
+  },
+  "request_id": "uuid"
+}
+```
+
+### 12.4.2 Auth Analytics Event (V2) — auth_error_shown
+
+**Event:** `auth_error_shown`  
+**Trigger:** cuando un error de Auth se presenta al usuario (frontend).
+
+**Properties:**
+- `error_slug` (string)
+- `category` (`auth` | `authz` | `session` | `token` | `account` | `policy`)
+- `retryable` (boolean)
+- `flow` (`login` | `register` | `recovery`)
+- `provider` (`supabase`)
+- `feature_flag_state` (obj / snapshot de flags relevantes)
+
 ### 12.6 Ingestion Rate Limits (ROA-388)
 
 **Configuración oficial de rate limits para ingestion de comentarios:**
