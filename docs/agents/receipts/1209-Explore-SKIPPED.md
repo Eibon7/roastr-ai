@@ -1,6 +1,6 @@
 # Receipt: Explore (SKIPPED)
 
-**PR:** #405 - A1. Auth Error Handling (V2)  
+**PR:** #1209 - A1. Auth Error Handling (V2)  
 **Date:** 2025-12-28  
 **Issue:** ROA-405
 
