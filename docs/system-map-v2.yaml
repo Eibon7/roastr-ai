@@ -577,6 +577,8 @@ nodes:
     owner: Back-end Dev
     last_updated: '2025-12-26T00:00:00.000Z'
     coverage: 92
+    strong_concepts:
+      - authErrorTaxonomy
     depends_on:
       - billing-integration
       - workers

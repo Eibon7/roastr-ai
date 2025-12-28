@@ -40,7 +40,7 @@
 
 **Agent Output (commands run):**
 
-```
+```shell
 apps/backend-v2: npm test
 frontend: npm run test:run
 gdd: node scripts/validate-gdd-runtime.js --full

@@ -200,7 +200,7 @@ export class AuthService {
       }
 
       if (!data.user || !data.session) {
-        throw new AuthError(AUTH_ERROR_CODES.UNKNOWN);
+        throw new AuthError(AUTH_ERROR_CODES.SESSION_INVALID);
       }
 
       // Crear perfil en base de datos
