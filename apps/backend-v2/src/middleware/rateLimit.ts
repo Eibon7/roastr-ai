@@ -6,8 +6,9 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { rateLimitService, AuthType } from '../services/rateLimitService.js';
-import { AUTH_ERROR_CODES } from '../utils/authErrorTaxonomy.js';
+import { AuthError, AUTH_ERROR_CODES } from '../utils/authErrorTaxonomy.js';
 import { getClientIp } from '../utils/request.js';
+import { sendAuthError } from '../utils/authErrorResponse.js';
 
 /**
  * Middleware de rate limiting por tipo de autenticación
@@ -24,28 +25,17 @@ export function rateLimitByType(authType: AuthType) {
       const blockedUntil = result.blockedUntil;
 
       if (blockedUntil === null) {
-        // Bloqueo permanente
-        res.status(429).json({
-          error: {
-            code: AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED,
-            message: 'Account permanently locked due to repeated violations. Contact support.',
-            retry_after: null
-          }
+        return void sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.RATE_LIMITED), {
+          log: { policy: `rate_limit:${authType}` }
         });
-        return;
       }
 
       // Bloqueo temporal
       const retryAfterSeconds = blockedUntil ? Math.ceil((blockedUntil - Date.now()) / 1000) : 0;
-
-      res.status(429).json({
-        error: {
-          code: AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED,
-          message: `Too many ${authType} attempts. Please try again later.`,
-          retry_after: retryAfterSeconds
-        }
+      return void sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.RATE_LIMITED), {
+        log: { policy: `rate_limit:${authType}` },
+        retryAfterSeconds
       });
-      return;
     }
 
     // Rate limit OK, continuar
@@ -59,7 +49,6 @@ export function rateLimitByType(authType: AuthType) {
 export function rateLimitByIp(options: {
   windowMs: number;
   maxAttempts: number;
-  message?: string;
 }) {
   const attempts = new Map<string, { count: number; resetAt: number }>();
 
@@ -80,15 +69,10 @@ export function rateLimitByIp(options: {
 
     if (entry.count >= options.maxAttempts) {
       const retryAfterSeconds = Math.ceil((entry.resetAt - now) / 1000);
-
-      res.status(429).json({
-        error: {
-          code: AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED,
-          message: options.message || 'Too many requests. Please try again later.',
-          retry_after: retryAfterSeconds
-        }
+      return void sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.RATE_LIMITED), {
+        log: { policy: 'rate_limit:ip' },
+        retryAfterSeconds
       });
-      return;
     }
 
     entry.count++;

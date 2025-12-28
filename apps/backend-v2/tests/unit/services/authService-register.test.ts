@@ -177,7 +177,7 @@ describe('AuthService.register', () => {
         expect.objectContaining({
           event: 'auth_register_failed',
           properties: expect.objectContaining({
-            error_code: expect.any(String),
+            error_slug: expect.any(String),
             method: 'email_password'
           }),
           context: expect.objectContaining({
@@ -209,7 +209,7 @@ describe('AuthService.register', () => {
         expect.objectContaining({
           event: 'auth_register_failed',
           properties: expect.objectContaining({
-            error_code: expect.any(String),
+            error_slug: expect.any(String),
             method: 'email_password'
           })
         })

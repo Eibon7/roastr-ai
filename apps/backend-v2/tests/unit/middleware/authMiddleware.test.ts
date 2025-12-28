@@ -25,7 +25,10 @@ describe('middleware/auth', () => {
 
     const res = await request(app).get('/protected');
     expect(res.status).toBe(401);
-    expect(res.body.error.code).toBeDefined();
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.slug).toBeDefined();
+    expect(res.body.error.retryable).toBeTypeOf('boolean');
+    expect(res.body.request_id).toBeTypeOf('string');
   });
 
   it('requireAuth adjunta req.user y permite pasar', async () => {

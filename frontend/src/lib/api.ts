@@ -51,9 +51,18 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
  * Represents an API error response
  */
 export interface ApiError {
-  /** Human-readable error message */
+  /** Human-readable fallback message (do NOT trust backend text for auth) */
   message: string;
-  /** Optional error code for programmatic handling */
+  /**
+   * Stable error slug (V2 auth contract).
+   * Frontend must resolve auth errors by slug, not by HTTP status.
+   */
+  slug?: string;
+  /** Whether the error is retryable (explicit, never inferred) */
+  retryable?: boolean;
+  /** Request trace ID (safe to expose, no PII) */
+  request_id?: string;
+  /** Optional legacy error code for backward compatibility */
   code?: string;
   /** HTTP status code */
   status?: number;
@@ -219,7 +228,10 @@ class ApiClient {
         };
         try {
           const errorData = await response.json();
-          error.message = errorData.error?.message || errorData.message || error.message;
+          error.slug = errorData.error?.slug;
+          error.retryable = errorData.error?.retryable;
+          error.request_id = errorData.request_id;
+          // Legacy compatibility if backend returns { error: { code } }
           error.code = errorData.error?.code;
         } catch {
           // If response is not JSON, use default error message
@@ -271,7 +283,9 @@ class ApiClient {
 
           try {
             const errorData = await retryResponse.json();
-            error.message = errorData.error?.message || errorData.message || error.message;
+            error.slug = errorData.error?.slug;
+            error.retryable = errorData.error?.retryable;
+            error.request_id = errorData.request_id;
             error.code = errorData.error?.code;
           } catch {
             // If response is not JSON, use default error message
@@ -323,7 +337,9 @@ class ApiClient {
 
       try {
         const errorData = await response.json();
-        error.message = errorData.error?.message || errorData.message || error.message;
+        error.slug = errorData.error?.slug;
+        error.retryable = errorData.error?.retryable;
+        error.request_id = errorData.request_id;
         error.code = errorData.error?.code;
         
         // Extract retry-after header for 429 errors
@@ -347,7 +363,17 @@ class ApiClient {
       }
 
       // Handle auth-related errors with UX actions
-      if (error.status === 403 || error.status === 429 || error.code?.startsWith('AUTH')) {
+      if (
+        error.slug ||
+        error.status === 403 ||
+        error.status === 429 ||
+        error.code?.startsWith('AUTH') ||
+        error.code?.startsWith('AUTHZ') ||
+        error.code?.startsWith('TOKEN') ||
+        error.code?.startsWith('SESSION') ||
+        error.code?.startsWith('ACCOUNT') ||
+        error.code?.startsWith('POLICY')
+      ) {
         handleAuthError(error, getLoginRedirect());
       }
 
@@ -409,7 +435,9 @@ class ApiClient {
 
           try {
             const errorData = await retryResponse.json();
-            error.message = errorData.error?.message || errorData.message || error.message;
+            error.slug = errorData.error?.slug;
+            error.retryable = errorData.error?.retryable;
+            error.request_id = errorData.request_id;
             error.code = errorData.error?.code;
           } catch {
             // If response is not JSON, use default error message

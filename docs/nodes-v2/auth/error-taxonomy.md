@@ -6,18 +6,18 @@
 
 ---
 
-## 📋 Propósito
+## 📋 Propósito (ROA-405)
 
-Este subnodo documenta la **taxonomía completa de errores de autenticación** implementada en ROA-372.
+Este subnodo documenta la **taxonomía estable de errores de Auth (V2)** y el **contrato backend → frontend**.
 
 **Strong Concept:** Este nodo es el dueño único de `authErrorTaxonomy`.
 
 **Objetivos:**
 
-1. **Códigos estructurados:** Categorías claras (AUTH_*, AUTHZ_*, SESSION_*, TOKEN_*, ACCOUNT_*)
-2. **Mapeo HTTP:** Códigos de error → HTTP status codes apropiados
-3. **User-facing messages:** Sin user enumeration, mensajes claros
-4. **Retryability logic:** Determinar si un error es retry-able
+1. **Slugs estables:** Categorías claras (AUTH_*, AUTHZ_*, SESSION_*, TOKEN_*, ACCOUNT_*, POLICY_*)
+2. **Contrato público:** Frontend resuelve por `slug` (NO por HTTP), backend devuelve solo `slug + retryable + request_id`
+3. **No filtrado:** ❌ No mensajes técnicos, ❌ no PII, ❌ no errores crudos de Supabase
+4. **Retryability explícito:** `retryable` definido por slug (no inferido)
 
 ---
 
@@ -25,41 +25,30 @@ Este subnodo documenta la **taxonomía completa de errores de autenticación** i
 
 **Archivo:** `apps/backend-v2/src/utils/authErrorTaxonomy.ts`
 
-### Clase Base: AuthError
+### Tipos base (V2)
 
 ```typescript
-export class AuthError extends Error {
-  code: AuthErrorCode;
-  statusCode: number;
-  details?: unknown;
+type AuthErrorV2 = {
+  slug: string; // estable (ej. AUTH_INVALID_CREDENTIALS)
+  http_status: number;
+  retryable: boolean;
+  user_message_key: string; // i18n key (NO texto literal)
+  category: 'auth' | 'authz' | 'session' | 'token' | 'account' | 'policy';
+};
 
-  constructor(code: AuthErrorCode, message?: string, details?: unknown) {
-    super(message || code);
-    this.name = 'AuthError';
-    this.code = code;
-    this.details = details;
-
-    // Mapear código a HTTP status code
-    if (code.startsWith('AUTH_')) {
-      this.statusCode = 401;
-    } else if (code.startsWith('AUTHZ_')) {
-      this.statusCode = 403;
-    } else if (code.startsWith('SESSION_') || code.startsWith('TOKEN_')) {
-      this.statusCode = 401;
-    } else if (code.startsWith('ACCOUNT_')) {
-      this.statusCode = code === AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS ? 409 : 404;
-    } else {
-      this.statusCode = 500;
-    }
-
-    Error.captureStackTrace(this, this.constructor);
-  }
-}
+type PublicAuthErrorResponseV2 = {
+  success: false;
+  error: { slug: string; retryable: boolean };
+  request_id: string;
+};
 ```
 
 ---
 
 ## 📚 Categorías de Errores
+
+> Nota ROA-405: en V2 el backend **no devuelve mensajes**. La UI debe resolver por `slug` y usar `user_message_key` para i18n.
+> El copy final está fuera de alcance de esta tarea.
 
 ### 1. AUTH_* — Errores de Autenticación (401)
 

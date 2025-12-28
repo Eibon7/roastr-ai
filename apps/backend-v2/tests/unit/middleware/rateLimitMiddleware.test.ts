@@ -29,8 +29,10 @@ describe('middleware/rateLimit', () => {
 
     const res = await request(app).get('/x');
     expect(res.status).toBe(429);
-    expect(res.body.error.code).toBeDefined();
-    expect(res.body.error.retry_after).toBeNull();
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.slug).toBe('POLICY_RATE_LIMITED');
+    expect(res.body.error.retryable).toBe(true);
+    expect(res.body.request_id).toBeTypeOf('string');
   });
 
   it('rateLimitByType devuelve 429 en bloqueo temporal', async () => {
@@ -43,7 +45,8 @@ describe('middleware/rateLimit', () => {
 
     const res = await request(app).get('/x');
     expect(res.status).toBe(429);
-    expect(res.body.error.retry_after).toBeGreaterThan(0);
+    // Retry-After header in seconds for backoff
+    expect(res.headers['retry-after']).toBeDefined();
   });
 
   it('rateLimitByType deja pasar cuando allowed=true', async () => {

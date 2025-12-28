@@ -268,7 +268,7 @@ describe('Login Flow v2 - Functional Tests', () => {
         password: 'password',
         ip: '192.168.1.1'
       })
-    ).rejects.toThrow(/rate limit|too many.*attempts/i);
+    ).rejects.toThrow('POLICY_RATE_LIMITED');
 
     // ✅ VALIDAR: El sistema no queda bloqueado permanentemente
     // (Se puede reintentar después del timeout)
@@ -297,7 +297,7 @@ describe('Login Flow v2 - Functional Tests', () => {
         password: 'password',
         ip: '192.168.1.1'
       })
-    ).rejects.toThrow(/authentication.*unavailable/i);
+    ).rejects.toThrow('AUTH_DISABLED');
   });
 
   // ============================================
@@ -366,6 +366,6 @@ describe('Login Flow v2 - Functional Tests', () => {
         password: 'password',
         ip: '192.168.1.1'
       })
-    ).rejects.toThrow(/suspicious activity/i);
+    ).rejects.toThrow('AUTH_ACCOUNT_LOCKED');
   });
 });

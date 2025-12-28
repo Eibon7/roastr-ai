@@ -75,8 +75,9 @@ describe('POST /api/v2/auth/register', () => {
     expect(res.status).toBe(404);
     expect(res.body).toMatchObject({
       success: false,
-      error: { code: 'NOT_FOUND' }
+      error: { slug: 'POLICY_NOT_FOUND', retryable: false }
     });
+    expect(res.body.request_id).toBeTypeOf('string');
   });
 
   it('devuelve 400 si el payload es inválido', async () => {
@@ -97,8 +98,9 @@ describe('POST /api/v2/auth/register', () => {
     expect(res.status).toBe(400);
     expect(res.body).toMatchObject({
       success: false,
-      error: { code: 'VALIDATION_ERROR' }
+      error: { slug: 'POLICY_INVALID_REQUEST' }
     });
+    expect(res.body.request_id).toBeTypeOf('string');
   });
 
   it('registra email nuevo y responde homogéneo { success: true }', async () => {
@@ -197,8 +199,9 @@ describe('POST /api/v2/auth/register', () => {
     expect(res.status).toBe(500);
     expect(res.body).toMatchObject({
       success: false,
-      error: { code: 'INTERNAL_ERROR' }
+      error: { slug: 'AUTH_UNKNOWN', retryable: false }
     });
+    expect(res.body.request_id).toBeTypeOf('string');
   });
 
   // ============================================
@@ -291,7 +294,7 @@ describe('POST /api/v2/auth/register', () => {
         expect.objectContaining({
           event: 'auth_register_failed',
           properties: expect.objectContaining({
-            error_code: expect.any(String),
+            error_slug: expect.any(String),
             method: 'email_password'
           }),
           context: expect.objectContaining({

@@ -69,15 +69,8 @@ export class AuthService {
 
     try {
       // Validaciones dentro del try-catch para capturar analytics
-      if (!this.isValidEmail(normalizedEmail)) {
-        throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email format');
-      }
-
-      if (!this.isValidPassword(password)) {
-        throw new AuthError(
-          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-          'Password must be at least 8 characters'
-        );
+      if (!this.isValidEmail(normalizedEmail) || !this.isValidPassword(password)) {
+        throw new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST);
       }
 
       const { data, error } = await supabase.auth.signUp({
@@ -99,10 +92,7 @@ export class AuthService {
       }
 
       // Supabase puede devolver session null si requiere verificación. Aun así, user puede existir.
-      if (!data?.user?.id) {
-        // Contrato: el caller responde success:true de todos modos.
-        return;
-      }
+      if (!data?.user?.id) return;
 
       // Perfil mínimo (best-effort): NO bloquear si falla.
       const { error: profileError } = await supabase.from('profiles').insert({
@@ -113,7 +103,7 @@ export class AuthService {
 
       if (profileError) {
         // No loguear email/password. Solo contexto mínimo.
-        console.error('Failed to create minimal profile', {
+        logger.warn('auth.register.profile_create_failed', {
           userId: data.user.id,
           code: profileError.code,
           message: profileError.message
@@ -135,7 +125,7 @@ export class AuthService {
         });
       } catch (analyticsError) {
         // Graceful degradation: analytics failure should not crash registration
-        console.error('Analytics tracking failed:', analyticsError);
+        logger.warn('analytics.track_failed', { event: 'auth_register_success' });
       }
     } catch (error) {
       // Track failed registration (B3: Register Analytics)
@@ -143,7 +133,7 @@ export class AuthService {
         trackEvent({
           event: 'auth_register_failed',
           properties: {
-            error_code: error instanceof AuthError ? error.code : 'UNKNOWN_ERROR',
+            error_slug: error instanceof AuthError ? error.slug : AUTH_ERROR_CODES.UNKNOWN,
             method: 'email_password'
           },
           context: {
@@ -152,7 +142,7 @@ export class AuthService {
         });
       } catch (analyticsError) {
         // Graceful degradation: analytics failure should not crash error handling
-        console.error('Analytics tracking failed:', analyticsError);
+        logger.warn('analytics.track_failed', { event: 'auth_register_failed' });
       }
 
       if (error instanceof AuthError) {
@@ -170,14 +160,11 @@ export class AuthService {
 
     // Validar inputs
     if (!this.isValidEmail(email)) {
-      throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email format');
+      throw new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST);
     }
 
     if (!this.isValidPassword(password)) {
-      throw new AuthError(
-        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-        'Password must be at least 8 characters'
-      );
+      throw new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST);
     }
 
     // TODO: Validar planId contra SSOT
@@ -185,19 +172,13 @@ export class AuthService {
     // Referencia: Issue ROA-360
     const validPlans = ['starter', 'pro', 'plus'];
     if (!validPlans.includes(planId)) {
-      throw new AuthError(
-        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-        'Invalid plan ID. Must be one of: starter, pro, plus'
-      );
+      throw new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST);
     }
 
     // ROA-355: Verificar si el email ya existe antes de intentar crear usuario
     const emailExists = await this.checkEmailExists(email);
     if (emailExists) {
-      throw new AuthError(
-        AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS,
-        'An account with this email already exists'
-      );
+      throw new AuthError(AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS);
     }
 
     try {
@@ -219,7 +200,7 @@ export class AuthService {
       }
 
       if (!data.user || !data.session) {
-        throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Failed to create user session');
+        throw new AuthError(AUTH_ERROR_CODES.UNKNOWN);
       }
 
       // Crear perfil en base de datos
@@ -231,7 +212,10 @@ export class AuthService {
       });
 
       if (profileError) {
-        console.error('Failed to create profile:', profileError);
+        logger.warn('auth.signup.profile_create_failed', {
+          code: profileError.code,
+          message: profileError.message
+        });
         // No lanzar error, el usuario ya está creado
       }
 
@@ -270,20 +254,14 @@ export class AuthService {
       const loginEnabled = settings?.auth?.login?.enabled ?? true;
 
       if (!loginEnabled) {
-        throw new AuthError(
-          AUTH_ERROR_CODES.AUTH_DISABLED,
-          'Authentication is currently unavailable.'
-        );
+        throw new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED);
       }
     } catch (error) {
       // If SettingsLoader fails, fall back to process.env
       const loginEnabled = process.env.AUTH_LOGIN_ENABLED !== 'false';
 
       if (!loginEnabled) {
-        throw new AuthError(
-          AUTH_ERROR_CODES.AUTH_DISABLED,
-          'Authentication is currently unavailable.'
-        );
+        throw new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED);
       }
 
       // If it's an AuthError (AUTH_DISABLED), rethrow it
@@ -297,13 +275,7 @@ export class AuthService {
       // Rate limiting
       const rateLimitResult = rateLimitService.recordAttempt('login', ip);
       if (!rateLimitResult.allowed) {
-        const blockedUntil = rateLimitResult.blockedUntil;
-        const message =
-          blockedUntil === null || blockedUntil === undefined
-            ? 'Account permanently locked. Contact support.'
-            : `Too many login attempts. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
-
-        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED, message);
+        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMITED, { cause: rateLimitResult });
       }
 
       // Abuse detection
@@ -311,15 +283,12 @@ export class AuthService {
       if (abuseResult.isAbuse) {
         // Log patterns server-side for investigation, but don't expose to client
         // PII anonymized for GDPR compliance
-        console.error('Abuse detected:', {
+        logger.warn('auth.login.abuse_detected', {
           emailHash: this.hashForLog(email),
           ipPrefix: ip.split('.').slice(0, 2).join('.') + '.x.x',
           patterns: abuseResult.patterns
         });
-        throw new AuthError(
-          AUTH_ERROR_CODES.ACCOUNT_LOCKED,
-          'Suspicious activity detected. Please try again later or contact support.'
-        );
+        throw new AuthError(AUTH_ERROR_CODES.ACCOUNT_LOCKED, { cause: { kind: 'abuse_detection' } });
       }
 
       // Autenticación con Supabase
@@ -391,7 +360,7 @@ export class AuthService {
       }
 
       if (!data.session || !data.user) {
-        throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid refresh token');
+        throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID);
       }
 
       return {
@@ -428,13 +397,7 @@ export class AuthService {
       // Rate limiting
       const rateLimitResult = rateLimitService.recordAttempt('magic_link', ip);
       if (!rateLimitResult.allowed) {
-        const blockedUntil = rateLimitResult.blockedUntil;
-        const message =
-          blockedUntil === null || blockedUntil === undefined
-            ? 'Account permanently locked. Contact support.'
-            : `Too many magic link requests. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
-
-        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED, message);
+        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMITED, { cause: rateLimitResult });
       }
 
       // Verificar que el usuario existe y es role=user
@@ -524,7 +487,7 @@ export class AuthService {
       }
 
       if (!data.user) {
-        throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid access token');
+        throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID);
       }
 
       return {

@@ -132,7 +132,7 @@ describe('AuthService session methods', () => {
     const svc = new AuthService();
 
     await expect(svc.getCurrentUser('token')).rejects.toMatchObject({
-      code: AUTH_ERROR_CODES.INVALID_CREDENTIALS
+      slug: AUTH_ERROR_CODES.TOKEN_INVALID
     });
   });
 });

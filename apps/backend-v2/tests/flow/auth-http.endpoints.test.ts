@@ -54,7 +54,9 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
 
     const res = await request(app).post('/api/v2/auth/login').send({ email: 'a@b.com' });
     expect(res.status).toBe(400);
-    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.INVALID_REQUEST);
+    expect(res.body.request_id).toBeTypeOf('string');
   });
 
   it('POST /api/v2/auth/login responde 200 en éxito', async () => {
@@ -81,7 +83,7 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
 
   it('POST /api/v2/auth/login mapea AuthError', async () => {
     mockAuthService.login.mockRejectedValueOnce(
-      new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email or password')
+      new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS)
     );
 
     const { default: app } = await import('../../src/index');
@@ -91,7 +93,10 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
     });
 
     expect(res.status).toBe(401);
-    expect(res.body.error.code).toBe(AUTH_ERROR_CODES.INVALID_CREDENTIALS);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.INVALID_CREDENTIALS);
+    expect(res.body.error.retryable).toBe(false);
+    expect(res.body.request_id).toBeTypeOf('string');
   });
 
   it('POST /api/v2/auth/login devuelve 500 ante error genérico', async () => {
@@ -104,7 +109,9 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
     });
 
     expect(res.status).toBe(500);
-    expect(res.body.error.code).toBe('INTERNAL_ERROR');
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.UNKNOWN);
+    expect(res.body.request_id).toBeTypeOf('string');
   });
 
   it('GET /api/v2/auth/me requiere auth y devuelve user', async () => {
@@ -151,7 +158,7 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
       email_verified: true
     });
     mockAuthService.logout.mockRejectedValueOnce(
-      new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid authentication token')
+      new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID)
     );
 
     const { default: app } = await import('../../src/index');
@@ -160,14 +167,16 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
       .set('Authorization', 'Bearer access-token');
 
     expect(res.status).toBe(401);
-    expect(res.body.error.code).toBe(AUTH_ERROR_CODES.TOKEN_INVALID);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.TOKEN_INVALID);
   });
 
   it('POST /api/v2/auth/refresh valida payload (400)', async () => {
     const { default: app } = await import('../../src/index');
     const res = await request(app).post('/api/v2/auth/refresh').send({});
     expect(res.status).toBe(400);
-    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.INVALID_REQUEST);
   });
 
   it('POST /api/v2/auth/refresh responde 200 en éxito', async () => {
@@ -188,13 +197,14 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
 
   it('POST /api/v2/auth/refresh mapea AuthError', async () => {
     mockAuthService.refreshSession.mockRejectedValueOnce(
-      new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid refresh token')
+      new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID)
     );
 
     const { default: app } = await import('../../src/index');
     const res = await request(app).post('/api/v2/auth/refresh').send({ refresh_token: 'rt' });
     expect(res.status).toBe(401);
-    expect(res.body.error.code).toBe(AUTH_ERROR_CODES.TOKEN_INVALID);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.TOKEN_INVALID);
   });
 
   it('POST /api/v2/auth/refresh devuelve 500 ante error genérico', async () => {
@@ -203,14 +213,16 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
     const { default: app } = await import('../../src/index');
     const res = await request(app).post('/api/v2/auth/refresh').send({ refresh_token: 'rt' });
     expect(res.status).toBe(500);
-    expect(res.body.error.code).toBe('INTERNAL_ERROR');
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.UNKNOWN);
   });
 
   it('POST /api/v2/auth/magic-link valida payload (400)', async () => {
     const { default: app } = await import('../../src/index');
     const res = await request(app).post('/api/v2/auth/magic-link').send({});
     expect(res.status).toBe(400);
-    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.INVALID_REQUEST);
   });
 
   it('POST /api/v2/auth/magic-link responde success cuando authService lo hace', async () => {
@@ -229,7 +241,7 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
 
   it('POST /api/v2/auth/magic-link mapea AuthError', async () => {
     mockAuthService.requestMagicLink.mockRejectedValueOnce(
-      new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED, 'Authentication is temporarily unavailable.')
+      new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED)
     );
 
     const { default: app } = await import('../../src/index');
@@ -237,7 +249,8 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
       .post('/api/v2/auth/magic-link')
       .send({ email: 'user@example.com' });
     expect(res.status).toBe(401);
-    expect(res.body.error.code).toBe(AUTH_ERROR_CODES.AUTH_DISABLED);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.AUTH_DISABLED);
   });
 
   it('POST /api/v2/auth/signup valida payload (400)', async () => {
@@ -247,7 +260,8 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
       password: 'ValidPassword123'
     });
     expect(res.status).toBe(400);
-    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.INVALID_REQUEST);
   });
 
   it('POST /api/v2/auth/signup responde 201 en éxito', async () => {
@@ -273,7 +287,7 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
 
   it('POST /api/v2/auth/signup mapea AuthError', async () => {
     mockAuthService.signup.mockRejectedValueOnce(
-      new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email or password')
+      new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS)
     );
 
     const { default: app } = await import('../../src/index');
@@ -284,6 +298,7 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
     });
 
     expect(res.status).toBe(401);
-    expect(res.body.error.code).toBe(AUTH_ERROR_CODES.INVALID_CREDENTIALS);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.INVALID_CREDENTIALS);
   });
 });
