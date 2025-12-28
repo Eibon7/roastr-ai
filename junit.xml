@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="1" failures="1" errors="0" time="0">
-    <testsuite name="tests/unit/services/emailService.test.js" timestamp="2025-12-27T10:05:16.607Z" hostname="macbookpro.lan" tests="1" failures="1" errors="0" skipped="0" time="0">
-        <testcase classname="tests/unit/services/emailService.test.js" name="tests/unit/services/emailService.test.js" time="0">
-            <failure message="jest is not defined" type="ReferenceError">
-ReferenceError: jest is not defined
- ❯ tests/unit/services/emailService.test.js:2:24
-            </failure>
+<testsuites name="vitest tests" tests="4" failures="0" errors="0" time="0.133752851">
+    <testsuite name="tests/unit/scripts/gdd-v2-tooling-alignment.test.js" timestamp="2025-12-28T10:33:18.114Z" hostname="cursor" tests="4" failures="0" errors="0" skipped="0" time="0.133752851">
+        <testcase classname="tests/unit/scripts/gdd-v2-tooling-alignment.test.js" name="ROA-516 — GDD v2 tooling alignment &gt; does not require system-map node IDs to match docs filenames" time="0.013541415">
+        </testcase>
+        <testcase classname="tests/unit/scripts/gdd-v2-tooling-alignment.test.js" name="ROA-516 — GDD v2 tooling alignment &gt; fails v2 validation when system-map references missing docs paths" time="0.003518341">
+        </testcase>
+        <testcase classname="tests/unit/scripts/gdd-v2-tooling-alignment.test.js" name="ROA-516 — GDD v2 tooling alignment &gt; ignores legacy spec.md references in v2 validation mode" time="0.003238863">
+        </testcase>
+        <testcase classname="tests/unit/scripts/gdd-v2-tooling-alignment.test.js" name="ROA-516 — GDD v2 tooling alignment &gt; scores v2 health without v1-only metrics (coverage/agents/spec)" time="0.00518245">
         </testcase>
     </testsuite>
 </testsuites>

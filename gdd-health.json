@@ -1,204 +1,174 @@
 {
-  "generated_at": "2025-12-16T09:36:28.817Z",
-  "status": "DEGRADED",
-  "overall_score": 65.7,
+  "generated_at": "2025-12-28T10:32:43.588Z",
+  "status": "HEALTHY",
+  "overall_score": 100,
   "total_nodes": 15,
-  "healthy_count": 0,
-  "degraded_count": 15,
+  "healthy_count": 15,
+  "degraded_count": 0,
   "critical_count": 0,
   "nodes": {
-    "02-autenticacion-usuarios": {
-      "score": 65,
-      "status": "degraded",
+    "roasting-engine": {
+      "score": 100,
+      "status": "healthy",
       "breakdown": {
-        "syncAccuracy": 100,
-        "updateFreshness": 78,
+        "docsIntegrity": 100,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 0,
-        "agentRelevance": 0,
-        "integrityScore": 80
+        "symmetryIntegrity": 100,
+        "updateFreshness": 100
       },
       "issues": []
     },
-    "04-integraciones": {
-      "score": 65,
-      "status": "degraded",
+    "analysis-engine": {
+      "score": 100,
+      "status": "healthy",
       "breakdown": {
-        "syncAccuracy": 100,
-        "updateFreshness": 78,
+        "docsIntegrity": 100,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 0,
-        "agentRelevance": 0,
-        "integrityScore": 80
+        "symmetryIntegrity": 100,
+        "updateFreshness": 100
       },
       "issues": []
     },
-    "05-motor-analisis": {
-      "score": 65,
-      "status": "degraded",
+    "shield-engine": {
+      "score": 100,
+      "status": "healthy",
       "breakdown": {
-        "syncAccuracy": 100,
-        "updateFreshness": 78,
+        "docsIntegrity": 100,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 0,
-        "agentRelevance": 0,
-        "integrityScore": 80
+        "symmetryIntegrity": 100,
+        "updateFreshness": 100
       },
       "issues": []
     },
-    "06-motor-roasting": {
-      "score": 65,
-      "status": "degraded",
+    "integraciones-redes-sociales": {
+      "score": 100,
+      "status": "healthy",
       "breakdown": {
-        "syncAccuracy": 100,
-        "updateFreshness": 78,
+        "docsIntegrity": 100,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 0,
-        "agentRelevance": 0,
-        "integrityScore": 80
+        "symmetryIntegrity": 100,
+        "updateFreshness": 100
       },
       "issues": []
     },
-    "07-shield": {
-      "score": 65,
-      "status": "degraded",
+    "billing-integration": {
+      "score": 100,
+      "status": "healthy",
       "breakdown": {
-        "syncAccuracy": 100,
-        "updateFreshness": 78,
+        "docsIntegrity": 100,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 0,
-        "agentRelevance": 0,
-        "integrityScore": 80
+        "symmetryIntegrity": 100,
+        "updateFreshness": 100
       },
       "issues": []
     },
-    "08-workers": {
-      "score": 65,
-      "status": "degraded",
+    "infraestructura": {
+      "score": 100,
+      "status": "healthy",
       "breakdown": {
-        "syncAccuracy": 100,
-        "updateFreshness": 78,
+        "docsIntegrity": 100,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 0,
-        "agentRelevance": 0,
-        "integrityScore": 80
-      },
-      "issues": []
-    },
-    "09-panel-usuario": {
-      "score": 65,
-      "status": "degraded",
-      "breakdown": {
-        "syncAccuracy": 100,
-        "updateFreshness": 78,
-        "dependencyIntegrity": 100,
-        "coverageEvidence": 0,
-        "agentRelevance": 0,
-        "integrityScore": 80
-      },
-      "issues": []
-    },
-    "10-panel-administracion": {
-      "score": 65,
-      "status": "degraded",
-      "breakdown": {
-        "syncAccuracy": 100,
-        "updateFreshness": 78,
-        "dependencyIntegrity": 100,
-        "coverageEvidence": 0,
-        "agentRelevance": 0,
-        "integrityScore": 80
-      },
-      "issues": []
-    },
-    "11-feature-flags": {
-      "score": 65,
-      "status": "degraded",
-      "breakdown": {
-        "syncAccuracy": 100,
-        "updateFreshness": 78,
-        "dependencyIntegrity": 100,
-        "coverageEvidence": 0,
-        "agentRelevance": 0,
-        "integrityScore": 80
-      },
-      "issues": []
-    },
-    "12-gdpr-legal": {
-      "score": 65,
-      "status": "degraded",
-      "breakdown": {
-        "syncAccuracy": 100,
-        "updateFreshness": 78,
-        "dependencyIntegrity": 100,
-        "coverageEvidence": 0,
-        "agentRelevance": 0,
-        "integrityScore": 80
-      },
-      "issues": []
-    },
-    "13-testing": {
-      "score": 70,
-      "status": "degraded",
-      "breakdown": {
-        "syncAccuracy": 100,
-        "updateFreshness": 78,
-        "dependencyIntegrity": 100,
-        "coverageEvidence": 0,
-        "agentRelevance": 50,
-        "integrityScore": 80
-      },
-      "issues": []
-    },
-    "14-infraestructura": {
-      "score": 65,
-      "status": "degraded",
-      "breakdown": {
-        "syncAccuracy": 100,
-        "updateFreshness": 78,
-        "dependencyIntegrity": 100,
-        "coverageEvidence": 0,
-        "agentRelevance": 0,
-        "integrityScore": 80
-      },
-      "issues": []
-    },
-    "15-ssot-integration": {
-      "score": 70,
-      "status": "degraded",
-      "breakdown": {
-        "syncAccuracy": 100,
-        "updateFreshness": 78,
-        "dependencyIntegrity": 100,
-        "coverageEvidence": 0,
-        "agentRelevance": 50,
-        "integrityScore": 80
-      },
-      "issues": []
-    },
-    "billing": {
-      "score": 65,
-      "status": "degraded",
-      "breakdown": {
-        "syncAccuracy": 100,
-        "updateFreshness": 78,
-        "dependencyIntegrity": 100,
-        "coverageEvidence": 0,
-        "agentRelevance": 0,
-        "integrityScore": 80
+        "symmetryIntegrity": 100,
+        "updateFreshness": 100
       },
       "issues": []
     },
     "observabilidad": {
-      "score": 65,
-      "status": "degraded",
+      "score": 100,
+      "status": "healthy",
       "breakdown": {
-        "syncAccuracy": 100,
-        "updateFreshness": 78,
+        "docsIntegrity": 100,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 0,
-        "agentRelevance": 0,
-        "integrityScore": 80
+        "symmetryIntegrity": 100,
+        "updateFreshness": 100
+      },
+      "issues": []
+    },
+    "frontend-user-app": {
+      "score": 100,
+      "status": "healthy",
+      "breakdown": {
+        "docsIntegrity": 100,
+        "dependencyIntegrity": 100,
+        "symmetryIntegrity": 100,
+        "updateFreshness": 100
+      },
+      "issues": []
+    },
+    "frontend-admin": {
+      "score": 100,
+      "status": "healthy",
+      "breakdown": {
+        "docsIntegrity": 100,
+        "dependencyIntegrity": 100,
+        "symmetryIntegrity": 100,
+        "updateFreshness": 100
+      },
+      "issues": []
+    },
+    "ssot-integration": {
+      "score": 100,
+      "status": "healthy",
+      "breakdown": {
+        "docsIntegrity": 100,
+        "dependencyIntegrity": 100,
+        "symmetryIntegrity": 100,
+        "updateFreshness": 100
+      },
+      "issues": []
+    },
+    "workers": {
+      "score": 100,
+      "status": "healthy",
+      "breakdown": {
+        "docsIntegrity": 100,
+        "dependencyIntegrity": 100,
+        "symmetryIntegrity": 100,
+        "updateFreshness": 100
+      },
+      "issues": []
+    },
+    "auth": {
+      "score": 100,
+      "status": "healthy",
+      "breakdown": {
+        "docsIntegrity": 100,
+        "dependencyIntegrity": 100,
+        "symmetryIntegrity": 100,
+        "updateFreshness": 100
+      },
+      "issues": []
+    },
+    "settings-loader-and-feature-flags": {
+      "score": 100,
+      "status": "healthy",
+      "breakdown": {
+        "docsIntegrity": 100,
+        "dependencyIntegrity": 100,
+        "symmetryIntegrity": 100,
+        "updateFreshness": 100
+      },
+      "issues": []
+    },
+    "gdpr-and-legal": {
+      "score": 100,
+      "status": "healthy",
+      "breakdown": {
+        "docsIntegrity": 100,
+        "dependencyIntegrity": 100,
+        "symmetryIntegrity": 100,
+        "updateFreshness": 100
+      },
+      "issues": []
+    },
+    "testing-v2": {
+      "score": 100,
+      "status": "healthy",
+      "breakdown": {
+        "docsIntegrity": 100,
+        "dependencyIntegrity": 100,
+        "symmetryIntegrity": 100,
+        "updateFreshness": 100
       },
       "issues": []
     }

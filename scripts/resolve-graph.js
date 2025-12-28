@@ -28,7 +28,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const yaml = require('js-yaml');
+const yaml = require('yaml');
 
 // ANSI color codes for terminal output
 const colors = {
@@ -59,7 +59,7 @@ class GraphResolver {
   loadSystemMap() {
     try {
       const content = fs.readFileSync(this.systemMapPath, 'utf8');
-      return yaml.load(content);
+      return yaml.parse(content);
     } catch (error) {
       console.error(`${colors.red}Error loading system map:${colors.reset}`, error.message);
       process.exit(1);

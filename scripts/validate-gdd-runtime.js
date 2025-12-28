@@ -1,22 +1,27 @@
 #!/usr/bin/env node
 
 /**
- * GDD Runtime Validator
+ * GDD Runtime Validator (v2-aligned)
  *
- * Validates the coherence between system-map-v2.yaml, docs/nodes-v2/, spec.md, and src/
- * Detects inconsistencies, orphans, cycles, and drift
+ * v2 single source of truth:
+ * - `docs/system-map-v2.yaml` defines node IDs and docs mapping.
  *
- * ⚠️ NOTE: This script uses EXCLUSIVELY v2 documentation:
- *   - docs/system-map-v2.yaml (NOT docs/system-map.yaml)
- *   - docs/nodes-v2/** (NOT docs/nodes/)
- *   - docs/legacy/v1/** is IGNORED
+ * In v2 mode, this validator:
+ * - DOES NOT infer node IDs from filenames in `docs/nodes-v2/`
+ * - DOES NOT load `spec.md` (legacy/v1) for validation
+ * - Considers a node valid if:
+ *   - it exists in `system-map-v2.yaml` (by ID), and
+ *   - every docs path referenced in `system-map-v2.yaml -> nodes.<id>.docs` exists on disk
+ *
+ * Legacy mode can be enabled with `--legacy` (kept for backward compatibility).
  *
  * Usage:
  *   node scripts/validate-gdd-runtime.js --full
  *   node scripts/validate-gdd-runtime.js --diff
- *   node scripts/validate-gdd-runtime.js --node=shield
+ *   node scripts/validate-gdd-runtime.js --node=<id>
  *   node scripts/validate-gdd-runtime.js --report
  *   node scripts/validate-gdd-runtime.js --ci
+ *   node scripts/validate-gdd-runtime.js --legacy
  *   node scripts/validate-gdd-runtime.js --score    # Run validation + health scoring
  *   node scripts/validate-gdd-runtime.js --drift    # Run validation + drift prediction
  */
@@ -33,6 +38,7 @@ class GDDValidator {
     this.results = {
       timestamp: new Date().toISOString(),
       mode: options.mode || 'full',
+      gdd_version: options.gddVersion || 'v2',
       nodes_validated: 0,
       orphans: [],
       drift: {},
@@ -41,10 +47,12 @@ class GDDValidator {
       missing_refs: [],
       broken_links: [],
       coverage_integrity: [], // Phase 15.1: Coverage authenticity violations
+      legacy_warnings: [],
       status: 'healthy'
     };
-    this.rootDir = path.resolve(__dirname, '..');
+    this.rootDir = options.rootDir ? path.resolve(options.rootDir) : path.resolve(__dirname, '..');
     this.isCIMode = options.ci || false;
+    this.gddVersion = options.gddVersion || 'v2';
   }
 
   /**
@@ -57,18 +65,24 @@ class GDDValidator {
 
       // Load all necessary files
       const systemMap = await this.loadSystemMap();
-      const nodes = await this.loadAllNodes();
-      const specContent = await this.loadSpec();
+      const nodes = await this.loadNodes(systemMap);
+      const specContent = this.gddVersion === 'legacy' ? await this.loadSpec() : '';
       const sourceFiles = await this.scanSourceFiles();
 
       // Run validation checks
       await this.validateGraphConsistency(systemMap, nodes);
-      await this.validateSpecSync(systemMap, nodes, specContent);
+
+      if (this.gddVersion === 'v2') {
+        await this.validateDocsExistence(systemMap);
+      } else {
+        await this.validateSpecSync(systemMap, nodes, specContent);
+        await this.detectOrphans(systemMap, nodes);
+        await this.validateCoverageAuthenticity(nodes); // Phase 15.1 (legacy only)
+      }
+
       await this.validateBidirectionalEdges(systemMap, nodes);
-      await this.validateCodeIntegration(nodes, sourceFiles);
-      await this.checkOutdatedNodes(nodes);
-      await this.detectOrphans(systemMap, nodes);
-      await this.validateCoverageAuthenticity(nodes); // Phase 15.1
+      await this.validateCodeIntegration(systemMap, sourceFiles);
+      await this.checkOutdatedNodes(systemMap);
 
       // Determine overall status
       this.determineStatus();
@@ -87,17 +101,9 @@ class GDDValidator {
       // Output summary
       this.printSummary(driftData);
 
-      // Exit code for CI
-      if (this.isCIMode && this.results.status !== 'healthy') {
-        process.exit(1);
-      }
-
       return this.results;
     } catch (error) {
       this.log(`❌ Validation failed: ${error.message}`, 'error');
-      if (this.isCIMode) {
-        process.exit(1);
-      }
       throw error;
     }
   }
@@ -108,7 +114,9 @@ class GDDValidator {
   async loadSystemMap() {
     this.log('📊 Loading system-map-v2.yaml...', 'step');
     try {
-      const filePath = path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
+      const filePath = this.options.systemMapPath
+        ? path.resolve(this.rootDir, this.options.systemMapPath)
+        : path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
       const content = await fs.readFile(filePath, 'utf-8');
       const map = yaml.parse(content);
       this.log('   ✅ Loaded', 'success');
@@ -120,15 +128,48 @@ class GDDValidator {
   }
 
   /**
-   * Load all node files from docs/nodes-v2/ (recursive traversal for subnodes)
+   * Load node set for validation.
+   * - v2: nodes are defined by system-map-v2.yaml (IDs + docs mapping)
+   * - legacy: nodes are loaded from docs/nodes-v2/ (filename-driven, deprecated)
    */
-  async loadAllNodes() {
-    this.log('📄 Loading GDD nodes from docs/nodes-v2/...', 'step');
+  async loadNodes(systemMap) {
+    if (this.gddVersion === 'legacy') {
+      return await this.loadAllNodesLegacy();
+    }
+    return this.buildNodesFromSystemMap(systemMap);
+  }
+
+  buildNodesFromSystemMap(systemMap) {
+    this.log('📄 Loading GDD nodes from system-map-v2.yaml (v2)...', 'step');
+    const nodes = {};
+    const mapNodes = systemMap?.nodes || {};
+
+    for (const [key, value] of Object.entries(mapNodes)) {
+      const nodeId = value?.id || key;
+      nodes[nodeId] = {
+        name: nodeId,
+        file: null,
+        content: '',
+        metadata: {
+          last_updated: value?.last_updated || null,
+          status: value?.status || 'active',
+          depends_on: Array.isArray(value?.depends_on) ? value.depends_on : [],
+          required_by: Array.isArray(value?.required_by) ? value.required_by : []
+        },
+        systemMap: value
+      };
+    }
+
+    this.log(`   ✅ Loaded ${Object.keys(nodes).length} nodes`, 'success');
+    return nodes;
+  }
+
+  async loadAllNodesLegacy() {
+    this.log('📄 Loading GDD nodes from docs/nodes-v2/... (legacy mode)', 'step');
     const nodesDir = path.join(this.rootDir, 'docs', 'nodes-v2');
     const nodes = {};
 
     try {
-      // Recursive function to traverse subdirectories
       const loadNodesRecursive = async (dir, basePath = '') => {
         const entries = await fs.readdir(dir, { withFileTypes: true });
 
@@ -137,21 +178,15 @@ class GDDValidator {
           const relativePath = basePath ? `${basePath}/${entry.name}` : entry.name;
 
           if (entry.isDirectory()) {
-            // Recursively load subdirectories (subnodes)
             await loadNodesRecursive(fullPath, relativePath);
           } else if (entry.isFile() && entry.name.endsWith('.md') && entry.name !== 'README.md') {
-            // Load markdown file
             const content = await fs.readFile(fullPath, 'utf-8');
-            // Extract node name from path (first directory or filename without .md)
             const pathParts = relativePath.split('/');
             const nodeName = pathParts.length > 1 ? pathParts[0] : entry.name.replace('.md', '');
 
-            // Parse metadata from frontmatter or first section
             const metadata = this.parseNodeMetadata(content);
 
-            // If node already exists, merge content (for subnodes)
             if (nodes[nodeName]) {
-              // Append subnode content
               nodes[nodeName].content += `\n\n---\n\n## ${relativePath}\n\n${content}`;
             } else {
               nodes[nodeName] = {
@@ -317,27 +352,29 @@ class GDDValidator {
       return;
     }
 
-    // Check all nodes in system-map exist
-    for (const [nodeName, nodeData] of Object.entries(systemMap.nodes)) {
-      if (!nodes[nodeName]) {
+    // v2: node IDs come from system-map keys (or explicit .id)
+    for (const [nodeKey, nodeData] of Object.entries(systemMap.nodes)) {
+      const nodeId = nodeData?.id || nodeKey;
+
+      // In legacy mode we still expect a corresponding node file to exist (deprecated behavior)
+      if (this.gddVersion === 'legacy' && !nodes[nodeId]) {
         this.results.missing_refs.push({
-          type: 'missing_node',
-          node: nodeName,
-          message: `Node ${nodeName} in system-map-v2.yaml but file doesn't exist`
+          type: 'missing_node_file_legacy',
+          node: nodeId,
+          message: `Legacy mode: Node ${nodeId} in system-map-v2.yaml but node file was not found in docs/nodes-v2/`
         });
       }
 
-      // Check dependencies exist
-      if (nodeData.dependencies) {
-        for (const dep of nodeData.dependencies) {
-          if (!nodes[dep] && !systemMap.nodes[dep]) {
-            this.results.missing_refs.push({
-              type: 'missing_dependency',
-              node: nodeName,
-              dependency: dep,
-              message: `${nodeName} depends on ${dep} which doesn't exist`
-            });
-          }
+      // Check dependencies exist (v2 field name: depends_on)
+      const dependsOn = Array.isArray(nodeData?.depends_on) ? nodeData.depends_on : [];
+      for (const dep of dependsOn) {
+        if (!systemMap.nodes[dep]) {
+          this.results.missing_refs.push({
+            type: 'missing_dependency',
+            node: nodeId,
+            dependency: dep,
+            message: `${nodeId} depends_on ${dep} which doesn't exist in system-map-v2.yaml`
+          });
         }
       }
     }
@@ -381,8 +418,9 @@ class GDDValidator {
       path.push(node);
 
       const nodeData = systemMap.nodes[node];
-      if (nodeData && nodeData.dependencies) {
-        for (const dep of nodeData.dependencies) {
+      const dependsOn = Array.isArray(nodeData?.depends_on) ? nodeData.depends_on : [];
+      if (dependsOn.length > 0) {
+        for (const dep of dependsOn) {
           dfs(dep, [...path]);
         }
       }
@@ -452,20 +490,20 @@ class GDDValidator {
     }
 
     for (const [nodeName, nodeData] of Object.entries(systemMap.nodes)) {
-      if (nodeData.dependencies) {
-        for (const dep of nodeData.dependencies) {
+      const dependsOn = Array.isArray(nodeData?.depends_on) ? nodeData.depends_on : [];
+      for (const dep of dependsOn) {
           const depNode = systemMap.nodes[dep];
           if (depNode) {
-            if (!depNode.used_by || !depNode.used_by.includes(nodeName)) {
+            const requiredBy = Array.isArray(depNode.required_by) ? depNode.required_by : [];
+            if (!requiredBy.includes(nodeName)) {
               this.results.missing_refs.push({
                 type: 'missing_bidirectional_edge',
                 node: nodeName,
                 dependency: dep,
-                message: `${nodeName} → ${dep} but ${dep} doesn't list ${nodeName} in used_by`
+                message: `${nodeName} depends_on ${dep} but ${dep} doesn't list ${nodeName} in required_by`
               });
             }
           }
-        }
       }
     }
 
@@ -482,16 +520,41 @@ class GDDValidator {
   /**
    * Validate code integration (@GDD tags)
    */
-  async validateCodeIntegration(nodes, sourceFiles) {
+  async validateCodeIntegration(systemMap, sourceFiles) {
     this.log('💾 Scanning source code for @GDD tags...', 'step');
 
     let totalTags = 0;
     let invalidTags = 0;
+    let legacyTags = 0;
+
+    const systemMapNodes = systemMap?.nodes || {};
+    const legacyNodeIds = new Set([
+      'guardian',
+      'trainer',
+      'queue-system',
+      'plan-features',
+      'social-platforms',
+      'frontend-dashboard',
+      'roast',
+      'shield',
+      'persona'
+    ]);
 
     for (const sourceFile of sourceFiles) {
       for (const tag of sourceFile.gddTags) {
         totalTags++;
-        if (!nodes[tag]) {
+        if (!systemMapNodes[tag]) {
+          if (legacyNodeIds.has(tag)) {
+            legacyTags++;
+            this.results.legacy_warnings.push({
+              type: 'legacy_gdd_tag',
+              file: sourceFile.path,
+              tag,
+              message: `Legacy @GDD tag ignored in v2 validation: @GDD:node=${tag}`
+            });
+            continue;
+          }
+
           invalidTags++;
           this.results.drift[sourceFile.path] = this.results.drift[sourceFile.path] || [];
           this.results.drift[sourceFile.path].push(`@GDD:node=${tag} references non-existent node`);
@@ -500,33 +563,38 @@ class GDDValidator {
     }
 
     if (invalidTags === 0) {
-      this.log(`   ✅ ${totalTags} @GDD tags validated`, 'success');
+      this.log(`   ✅ ${totalTags} @GDD tags validated${legacyTags > 0 ? ` (${legacyTags} legacy ignored)` : ''}`, 'success');
     } else {
       this.log(`   ⚠️  ${invalidTags}/${totalTags} invalid tags`, 'warning');
     }
   }
 
   /**
-   * Check for outdated nodes (>30 days)
+   * Check for outdated nodes based on system-map-v2.yaml (v2) or docs metadata (legacy)
    */
-  async checkOutdatedNodes(nodes) {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  async checkOutdatedNodes(systemMap) {
+    const updateFreshnessDays = systemMap?.validation?.update_freshness_days || 30;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - updateFreshnessDays);
 
-    for (const [nodeName, nodeData] of Object.entries(nodes)) {
-      if (nodeData.metadata.last_updated) {
-        const lastUpdate = new Date(nodeData.metadata.last_updated);
-        if (lastUpdate < thirtyDaysAgo) {
-          this.results.outdated.push({
-            node: nodeName,
-            last_updated: nodeData.metadata.last_updated,
-            days_ago: Math.floor((Date.now() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24))
-          });
-        }
+    for (const [nodeKey, nodeData] of Object.entries(systemMap?.nodes || {})) {
+      const nodeId = nodeData?.id || nodeKey;
+      const lastUpdated = nodeData?.last_updated || null;
+      if (!lastUpdated) continue;
+
+      const lastUpdateDate = new Date(lastUpdated);
+      if (Number.isNaN(lastUpdateDate.getTime())) continue;
+
+      if (lastUpdateDate < cutoff) {
+        this.results.outdated.push({
+          node: nodeId,
+          last_updated: lastUpdated,
+          days_ago: Math.floor((Date.now() - lastUpdateDate.getTime()) / (1000 * 60 * 60 * 24))
+        });
       }
     }
 
-    this.results.nodes_validated = Object.keys(nodes).length;
+    this.results.nodes_validated = Object.keys(systemMap?.nodes || {}).length;
   }
 
   /**
@@ -635,31 +703,71 @@ class GDDValidator {
    * Determine overall status
    */
   determineStatus() {
-    const criticalCoverageViolations = this.results.coverage_integrity.filter(
-      (v) => v.severity === 'critical'
-    ).length;
-
-    // Only coverage mismatches (not missing data warnings) should affect status
-    const coverageMismatches = this.results.coverage_integrity.filter(
-      (v) => v.type === 'coverage_integrity_violation'
-    ).length;
-
     if (
       this.results.cycles.length > 0 ||
-      this.results.missing_refs.length > 5 ||
-      criticalCoverageViolations > 0
+      this.results.missing_refs.some((r) =>
+        ['missing_doc_path', 'missing_dependency', 'missing_node_file_legacy'].includes(r.type)
+      )
     ) {
       this.results.status = 'critical';
     } else if (
       this.results.missing_refs.length > 0 ||
       this.results.orphans.length > 0 ||
       Object.keys(this.results.drift).length > 0 ||
-      this.results.outdated.length > 3 ||
-      coverageMismatches > 0 // Only actual mismatches, not missing data warnings
+      this.results.outdated.length > 3
     ) {
       this.results.status = 'warning';
     } else {
       this.results.status = 'healthy';
+    }
+  }
+
+  /**
+   * v2: Validate that every docs path referenced by system-map exists on disk.
+   * This is the core validity check for v2 documentation mapping.
+   */
+  async validateDocsExistence(systemMap) {
+    this.log('🗂️  Validating system-map docs paths exist...', 'step');
+    const mapNodes = systemMap?.nodes || {};
+    let missing = 0;
+
+    for (const [nodeKey, nodeData] of Object.entries(mapNodes)) {
+      const nodeId = nodeData?.id || nodeKey;
+      const docs = Array.isArray(nodeData?.docs) ? nodeData.docs : nodeData?.docs ? [nodeData.docs] : [];
+
+      for (const docsPath of docs) {
+        if (typeof docsPath !== 'string' || docsPath.trim().length === 0) continue;
+
+        const resolved = path.resolve(this.rootDir, docsPath);
+        if (!resolved.startsWith(this.rootDir + path.sep) && resolved !== this.rootDir) {
+          missing++;
+          this.results.missing_refs.push({
+            type: 'missing_doc_path',
+            node: nodeId,
+            doc: docsPath,
+            message: `${nodeId} docs path resolves outside repository root: ${docsPath}`
+          });
+          continue;
+        }
+
+        try {
+          await fs.access(resolved);
+        } catch {
+          missing++;
+          this.results.missing_refs.push({
+            type: 'missing_doc_path',
+            node: nodeId,
+            doc: docsPath,
+            message: `${nodeId} references missing docs file: ${docsPath}`
+          });
+        }
+      }
+    }
+
+    if (missing === 0) {
+      this.log('   ✅ All referenced docs paths exist', 'success');
+    } else {
+      this.log(`   ❌ ${missing} missing docs path(s)`, 'warning');
     }
   }
 
@@ -1045,7 +1153,8 @@ async function main() {
     ci: args.includes('--ci'),
     skipReports: args.includes('--report') && args.length === 1,
     drift: runDrift,
-    node: null
+    node: null,
+    gddVersion: args.includes('--legacy') ? 'legacy' : 'v2'
   };
 
   if (args.includes('--diff')) {
@@ -1059,7 +1168,12 @@ async function main() {
   }
 
   const validator = new GDDValidator(options);
-  await validator.validate();
+  const results = await validator.validate();
+
+  // CI exit code (kept in CLI, not inside the validator class)
+  if (options.ci && results.status !== 'healthy') {
+    process.exit(1);
+  }
 
   // Run health scoring if requested
   if (runScoring) {
