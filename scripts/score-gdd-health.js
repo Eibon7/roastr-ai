@@ -131,7 +131,11 @@ class GDDHealthScorer {
         }
       }
 
-      const docs = Array.isArray(nodeData?.docs) ? nodeData.docs : nodeData?.docs ? [nodeData.docs] : [];
+      const docs = Array.isArray(nodeData?.docs)
+        ? nodeData.docs
+        : nodeData?.docs
+          ? [nodeData.docs]
+          : [];
       for (const docsPath of docs) {
         if (typeof docsPath !== 'string' || docsPath.trim().length === 0) continue;
         const resolved = path.resolve(this.rootDir, docsPath);
@@ -321,7 +325,9 @@ async function main() {
   const { stats } = await scorer.score();
 
   if (options.ci) {
-    const minScore = process.env.GDD_MIN_HEALTH_SCORE ? Number(process.env.GDD_MIN_HEALTH_SCORE) : 87;
+    const minScore = process.env.GDD_MIN_HEALTH_SCORE
+      ? Number(process.env.GDD_MIN_HEALTH_SCORE)
+      : 87;
     const score = stats.overall_score || 0;
     console.log(`Overall Health: ${score}/100`);
     if (Number.isFinite(minScore) && score < minScore) {

@@ -492,18 +492,18 @@ class GDDValidator {
     for (const [nodeName, nodeData] of Object.entries(systemMap.nodes)) {
       const dependsOn = Array.isArray(nodeData?.depends_on) ? nodeData.depends_on : [];
       for (const dep of dependsOn) {
-          const depNode = systemMap.nodes[dep];
-          if (depNode) {
-            const requiredBy = Array.isArray(depNode.required_by) ? depNode.required_by : [];
-            if (!requiredBy.includes(nodeName)) {
-              this.results.missing_refs.push({
-                type: 'missing_bidirectional_edge',
-                node: nodeName,
-                dependency: dep,
-                message: `${nodeName} depends_on ${dep} but ${dep} doesn't list ${nodeName} in required_by`
-              });
-            }
+        const depNode = systemMap.nodes[dep];
+        if (depNode) {
+          const requiredBy = Array.isArray(depNode.required_by) ? depNode.required_by : [];
+          if (!requiredBy.includes(nodeName)) {
+            this.results.missing_refs.push({
+              type: 'missing_bidirectional_edge',
+              node: nodeName,
+              dependency: dep,
+              message: `${nodeName} depends_on ${dep} but ${dep} doesn't list ${nodeName} in required_by`
+            });
           }
+        }
       }
     }
 
@@ -563,7 +563,10 @@ class GDDValidator {
     }
 
     if (invalidTags === 0) {
-      this.log(`   ✅ ${totalTags} @GDD tags validated${legacyTags > 0 ? ` (${legacyTags} legacy ignored)` : ''}`, 'success');
+      this.log(
+        `   ✅ ${totalTags} @GDD tags validated${legacyTags > 0 ? ` (${legacyTags} legacy ignored)` : ''}`,
+        'success'
+      );
     } else {
       this.log(`   ⚠️  ${invalidTags}/${totalTags} invalid tags`, 'warning');
     }
@@ -733,7 +736,11 @@ class GDDValidator {
 
     for (const [nodeKey, nodeData] of Object.entries(mapNodes)) {
       const nodeId = nodeData?.id || nodeKey;
-      const docs = Array.isArray(nodeData?.docs) ? nodeData.docs : nodeData?.docs ? [nodeData.docs] : [];
+      const docs = Array.isArray(nodeData?.docs)
+        ? nodeData.docs
+        : nodeData?.docs
+          ? [nodeData.docs]
+          : [];
 
       for (const docsPath of docs) {
         if (typeof docsPath !== 'string' || docsPath.trim().length === 0) continue;
