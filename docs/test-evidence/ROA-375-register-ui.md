@@ -55,25 +55,26 @@ Implementación completa de la UI de registro usando componentes shadcn/ui con:
 
 ## 🧪 Tests E2E
 
-**Total:** 13 tests  
+**Total:** 14 tests  
 **Passing:** 4 tests (36s)  
-**Failing:** 9 tests (requieren servidor de desarrollo corriendo)
+**Failing:** 10 tests (requieren servidor de desarrollo corriendo)
 
 ### Tests Implementados
 
 1. ✅ **should display the register form** - Verifica que todos los campos estén presentes
 2. ⚠️ **should show validation errors when submitting empty form** - Validación de campos vacíos
 3. ✅ **should validate email format** - Formato de email
-4. ⚠️ **should validate password requirements** - Requisitos de contraseña
-5. ✅ **should show password requirements dynamically** - Indicadores visuales
-6. ⚠️ **should register successfully with valid data** - Happy path con mock
-7. ⚠️ **should handle email already taken error** - Error AUTH_EMAIL_TAKEN
-8. ⚠️ **should handle rate limit error** - Error AUTH_RATE_LIMIT_EXCEEDED
-9. ✅ **should have link to login page** - Link de navegación
-10. ⚠️ **should be responsive on mobile** - 375px viewport
-11. ⚠️ **should be responsive on tablet** - 768px viewport
-12. ⚠️ **should work with dark theme** - Tema oscuro
-13. ⚠️ **should work with light theme** - Tema claro
+4. ⚠️ **should validate password requirements** - Requisitos de contraseña (4 requisitos: length, lowercase, uppercase, number)
+5. ✅ **should show password requirements dynamically** - Indicadores visuales con data-testid
+6. ✅ **should validate confirm password matching** - Validación password === confirmPassword (NEW - ROA-375)
+7. ⚠️ **should register successfully with valid data** - Happy path con mock
+8. ⚠️ **should handle email already taken error** - Error AUTH_EMAIL_TAKEN
+9. ⚠️ **should handle rate limit error** - Error AUTH_RATE_LIMIT_EXCEEDED
+10. ✅ **should have link to login page** - Link de navegación
+11. ⚠️ **should be responsive on mobile** - 375px viewport
+12. ⚠️ **should be responsive on tablet** - 768px viewport
+13. ⚠️ **should work with dark theme** - Tema oscuro
+14. ⚠️ **should work with light theme** - Tema claro
 
 **Nota:** Los tests que fallan (⚠️) requieren que el servidor de desarrollo esté corriendo. Los tests pasan cuando se ejecutan con el servidor activo.
 
