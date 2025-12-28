@@ -76,6 +76,14 @@ class GraphResolver {
   }
 
   /**
+   * Read validation config from system-map-v2.yaml.
+   * v2 principle: only enforce rules explicitly declared in `validation`.
+   */
+  getValidationConfig() {
+    return this.systemMap?.validation || {};
+  }
+
+  /**
    * Convert glob pattern to regex safely
    * Escapes regex metacharacters before converting * to .*
    * @param {string} pattern - Glob pattern (e.g., "src/integrations/STAR/index.js" where STAR is *)
@@ -315,6 +323,10 @@ class GraphResolver {
       throw new Error('System map does not contain features or nodes');
     }
 
+    const validationConfig = this.getValidationConfig();
+    const enforceAgentsSection = validationConfig.agent_relevance_check === true;
+    const enforceValidAgents = validationConfig.agent_relevance_check === true;
+
     // Check each node
     for (const [nodeName, node] of Object.entries(features)) {
       // Check for circular dependencies
@@ -365,25 +377,26 @@ class GraphResolver {
       }
 
       // NEW: Validate agents section in documentation
-      if (node.docs && node.docs.length > 0) {
+      // v2: only enforce agent checks if explicitly configured in system-map-v2.yaml.validation
+      if ((enforceAgentsSection || enforceValidAgents) && node.docs && node.docs.length > 0) {
         for (const docPath of node.docs) {
           const fullPath = path.join(process.cwd(), docPath);
           if (fs.existsSync(fullPath)) {
             const agentIssues = this.validateAgentsSection(fullPath, nodeName);
-            if (agentIssues.missingSection) {
+            if (enforceAgentsSection && agentIssues.missingSection) {
               issues.missingAgentsSection.push({
                 node: nodeName,
                 file: docPath
               });
             }
-            if (agentIssues.duplicates.length > 0) {
+            if (enforceValidAgents && agentIssues.duplicates.length > 0) {
               issues.duplicateAgents.push({
                 node: nodeName,
                 file: docPath,
                 duplicates: agentIssues.duplicates
               });
             }
-            if (agentIssues.invalidAgents.length > 0) {
+            if (enforceValidAgents && agentIssues.invalidAgents.length > 0) {
               issues.invalidAgents.push({
                 node: nodeName,
                 file: docPath,
@@ -738,6 +751,8 @@ class GraphResolver {
 
     let hasIssues = false;
     let hasWarnings = false;
+    const validationConfig = this.getValidationConfig();
+    const enforceAgentsSection = validationConfig.agent_relevance_check === true;
 
     // Circular dependencies
     if (issues.circularDeps.length > 0) {
@@ -775,16 +790,27 @@ class GraphResolver {
       console.log();
     }
 
-    // NEW: Missing agents section
+    // Missing agents section (v2: only enforce if explicitly configured)
     if (issues.missingAgentsSection.length > 0) {
-      hasIssues = true;
-      console.log(
-        `${colors.red}❌ Missing "Agentes Relevantes" Section (${issues.missingAgentsSection.length}):${colors.reset}`
-      );
-      for (const issue of issues.missingAgentsSection) {
-        console.log(`  - ${issue.node}: ${issue.file}`);
+      if (enforceAgentsSection) {
+        hasIssues = true;
+        console.log(
+          `${colors.red}❌ Missing "Agentes Relevantes" Section (${issues.missingAgentsSection.length}):${colors.reset}`
+        );
+        for (const issue of issues.missingAgentsSection) {
+          console.log(`  - ${issue.node}: ${issue.file}`);
+        }
+        console.log();
+      } else {
+        hasWarnings = true;
+        console.log(
+          `${colors.yellow}⚠️  Missing "Agentes Relevantes" Section (${issues.missingAgentsSection.length}) [not enforced in v2]:${colors.reset}`
+        );
+        for (const issue of issues.missingAgentsSection) {
+          console.log(`  - ${issue.node}: ${issue.file}`);
+        }
+        console.log();
       }
-      console.log();
     }
 
     // NEW: Duplicate agents
@@ -819,7 +845,7 @@ class GraphResolver {
         issues.circularDeps.length +
         issues.missingDeps.length +
         issues.missingDocs.length +
-        issues.missingAgentsSection.length;
+        (enforceAgentsSection ? issues.missingAgentsSection.length : 0);
       console.log(
         `${colors.red}❌ Graph validation failed with ${totalIssues} critical issues.${colors.reset}\n`
       );
