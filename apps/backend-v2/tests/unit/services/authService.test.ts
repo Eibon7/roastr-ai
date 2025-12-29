@@ -55,7 +55,16 @@ vi.mock('../../../src/services/abuseDetectionService', () => ({
 
 // Mock loadSettings
 vi.mock('../../../src/lib/loadSettings', () => ({
-  loadSettings: vi.fn(() => Promise.resolve({ auth: { login: { enabled: true } } }))
+  loadSettings: vi.fn(() =>
+    Promise.resolve({
+      auth: {
+        login: { enabled: true },
+        signup: {
+          checkEmailExists: { enabled: true }
+        }
+      }
+    })
+  )
 }));
 
 describe('AuthService - Email Existence Check (ROA-355)', () => {
@@ -95,8 +104,8 @@ describe('AuthService - Email Existence Check (ROA-355)', () => {
           planId
         })
       ).rejects.toMatchObject({
-        code: AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS,
-        statusCode: 409
+        slug: AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS,
+        http_status: 409
       });
 
       // Verify that signUp was NOT called (email check prevented it)
@@ -189,7 +198,8 @@ describe('AuthService - Email Existence Check (ROA-355)', () => {
           planId
         })
       ).rejects.toMatchObject({
-        code: AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS
+        slug: AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS,
+        http_status: 409
       });
 
       // Verify that listUsers was called twice (pagination)
@@ -224,7 +234,8 @@ describe('AuthService - Email Existence Check (ROA-355)', () => {
           planId
         })
       ).rejects.toMatchObject({
-        code: AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS
+        slug: AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS,
+        http_status: 409
       });
     });
 
@@ -273,27 +284,12 @@ describe('AuthService - Email Existence Check (ROA-355)', () => {
       expect(supabase.auth.signUp).toHaveBeenCalled();
     });
 
-    it('should check email before validating planId', async () => {
-      const email = 'existing@example.com';
+    it('should validate planId before checking email', async () => {
+      const email = 'new@example.com';
       const password = 'password123';
       const planId = 'invalid-plan';
 
-      // Mock email exists
-      vi.mocked(supabase.auth.admin.listUsers).mockResolvedValueOnce({
-        data: {
-          users: [
-            {
-              id: 'user-123',
-              email: email,
-              created_at: new Date().toISOString(),
-              user_metadata: {}
-            }
-          ]
-        },
-        error: null
-      } as any);
-
-      // Should throw EMAIL_ALREADY_EXISTS, not INVALID_CREDENTIALS for plan
+      // Should throw INVALID_CREDENTIALS for plan (planId validation happens first)
       await expect(
         authService.signup({
           email,
@@ -301,8 +297,12 @@ describe('AuthService - Email Existence Check (ROA-355)', () => {
           planId
         })
       ).rejects.toMatchObject({
-        code: AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS
+        slug: AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+        http_status: 401
       });
+
+      // Verify that email check was NOT called (planId validation happened first)
+      expect(supabase.auth.admin.listUsers).not.toHaveBeenCalled();
     });
   });
 });
