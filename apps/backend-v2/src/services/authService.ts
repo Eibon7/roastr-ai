@@ -12,10 +12,7 @@ import { abuseDetectionService } from './abuseDetectionService.js';
 import { createHash } from 'crypto';
 import { loadSettings } from '../lib/loadSettings.js';
 import { logger } from '../utils/logger.js';
-<<<<<<< HEAD
-=======
 import { trackEvent } from '../lib/analytics.js';
->>>>>>> origin/main
 
 export interface SignupParams {
   email: string;
