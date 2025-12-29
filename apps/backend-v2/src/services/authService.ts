@@ -21,6 +21,11 @@ export interface SignupParams {
   metadata?: Record<string, any>;
 }
 
+export interface RegisterParams {
+  email: string;
+  password: string;
+}
+
 export interface LoginParams {
   email: string;
   password: string;
@@ -51,6 +56,102 @@ export interface User {
 }
 
 export class AuthService {
+  /**
+   * Registro v2 (contract-first)
+   *
+   * - Identidad: Supabase Auth (email + password)
+   * - Anti-enumeration: si el email ya existe, NO se revela (caller debe responder homogéneo)
+   * - Perfil mínimo: se intenta crear en `profiles` (best-effort, no bloquea registro)
+   */
+  async register(params: RegisterParams): Promise<void> {
+    const normalizedEmail = this.normalizeEmail(params.email);
+    const { password } = params;
+
+    try {
+      // Validaciones dentro del try-catch para capturar analytics
+      if (!this.isValidEmail(normalizedEmail) || !this.isValidPassword(password)) {
+        throw new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST);
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: {
+          data: {
+            role: 'user'
+          }
+        }
+      });
+
+      if (error) {
+        // Anti-enumeration: si el email ya existe, no revelar (caller responderá success:true).
+        if (this.isEmailAlreadyRegisteredError(error)) {
+          return;
+        }
+        throw mapSupabaseError(error);
+      }
+
+      // Supabase puede devolver session null si requiere verificación. Aun así, user puede existir.
+      if (!data?.user?.id) return;
+
+      // Perfil mínimo (best-effort): NO bloquear si falla.
+      const { error: profileError } = await supabase.from('profiles').insert({
+        user_id: data.user.id,
+        username: normalizedEmail,
+        onboarding_state: 'welcome'
+      });
+
+      if (profileError) {
+        // No loguear email/password. Solo contexto mínimo.
+        logger.warn('auth.register.profile_create_failed', {
+          userId: data.user.id,
+          code: profileError.code,
+          message: profileError.message
+        });
+      }
+
+      // Track successful registration (B3: Register Analytics)
+      try {
+        trackEvent({
+          userId: data.user.id,
+          event: 'auth_register_success',
+          properties: {
+            method: 'email_password',
+            profile_created: !profileError
+          },
+          context: {
+            flow: 'auth'
+          }
+        });
+      } catch {
+        // Graceful degradation: analytics failure should not crash registration
+        logger.warn('analytics.track_failed', { event: 'auth_register_success' });
+      }
+    } catch (error) {
+      // Track failed registration (B3: Register Analytics)
+      try {
+        trackEvent({
+          event: 'auth_register_failed',
+          properties: {
+            error_slug: error instanceof AuthError ? error.slug : AUTH_ERROR_CODES.UNKNOWN,
+            method: 'email_password'
+          },
+          context: {
+            flow: 'auth'
+          }
+        });
+      } catch {
+        // Graceful degradation: analytics failure should not crash error handling
+        logger.warn('analytics.track_failed', { event: 'auth_register_failed' });
+      }
+
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      throw mapSupabaseError(error);
+    }
+  }
+
   /**
    * Registra un nuevo usuario
    */
@@ -525,6 +626,27 @@ export class AuthService {
       logger.error('Unexpected error checking email existence:', error);
       return false; // Assume not exists to not block signup
     }
+  }
+
+  /**
+   * Normaliza email (lowercase, trim)
+   */
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+  }
+
+  /**
+   * Detecta si un error de Supabase indica que el email ya está registrado
+   */
+  private isEmailAlreadyRegisteredError(error: unknown): boolean {
+    const message = (error as any)?.message?.toString?.() || '';
+    const lowerMessage = message.toLowerCase();
+    return (
+      lowerMessage.includes('already registered') ||
+      lowerMessage.includes('already exists') ||
+      lowerMessage.includes('email address already') ||
+      lowerMessage.includes('duplicate')
+    );
   }
 
   /**
