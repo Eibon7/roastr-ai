@@ -28,14 +28,15 @@ import { logger } from '../utils/logger.js';
 
 /**
  * Auth actions that can be gated
+ *
+ * NOTE: Only actions with policy gate integration are included.
+ * Other actions (logout, password_recovery, token_refresh) are handled
+ * differently:
+ * - logout: Protected by requireAuth middleware, no pre-check needed
+ * - password_recovery: Not yet implemented (tracked separately)
+ * - token_refresh: Handled by Supabase Auth directly
  */
-export type AuthAction =
-  | 'login'
-  | 'register'
-  | 'password_recovery'
-  | 'magic_link'
-  | 'token_refresh'
-  | 'logout';
+export type AuthAction = 'login' | 'register' | 'magic_link';
 
 /**
  * Policy types that can block an action (EXACT CONTRACT)

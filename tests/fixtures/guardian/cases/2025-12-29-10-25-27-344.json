@@ -1,0 +1,68 @@
+{
+  "case_id": "2025-12-29-10-25-27-344",
+  "timestamp": "2025-12-29T10:25:27.344Z",
+  "actor": "emiliopostigo",
+  "domains": [
+    "test_domain"
+  ],
+  "files_changed": [
+    "apps/backend-v2/tests/unit/services/authService.test.ts",
+    "docs/plan/issue-ROA-355.md",
+    "tests/unit/scripts/gdd-v2-tooling-alignment.test.js",
+    ".issue_lock",
+    "apps/backend-v2/src/services/authService.ts"
+  ],
+  "severity": "SENSITIVE",
+  "action": "REVIEW",
+  "violations": {
+    "critical": 0,
+    "sensitive": 3,
+    "safe": 2
+  },
+  "details": [
+    {
+      "file": "apps/backend-v2/tests/unit/services/authService.test.ts",
+      "domains": [
+        "test_domain"
+      ],
+      "severity": "SENSITIVE",
+      "lines_added": 144,
+      "lines_removed": 17
+    },
+    {
+      "file": "docs/plan/issue-ROA-355.md",
+      "domains": [
+        "test_domain"
+      ],
+      "severity": "SENSITIVE",
+      "lines_added": 229,
+      "lines_removed": 0
+    },
+    {
+      "file": "tests/unit/scripts/gdd-v2-tooling-alignment.test.js",
+      "domains": [
+        "test_domain"
+      ],
+      "severity": "SENSITIVE",
+      "lines_added": 0,
+      "lines_removed": 1
+    },
+    {
+      "file": ".issue_lock",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/services/authService.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 114,
+      "lines_removed": 69
+    }
+  ],
+  "approval_required": true,
+  "approved_by": null,
+  "notes": "Requires Tech Lead review"
+}

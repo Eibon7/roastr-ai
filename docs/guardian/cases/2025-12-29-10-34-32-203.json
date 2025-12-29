@@ -1,0 +1,34 @@
+{
+  "case_id": "2025-12-29-10-34-32-203",
+  "timestamp": "2025-12-29T10:34:32.203Z",
+  "actor": "emiliopostigo",
+  "domains": [
+    "quotas",
+    "auth_policies"
+  ],
+  "files_changed": [
+    "frontend/src/lib/auth/errorHandler.ts"
+  ],
+  "severity": "CRITICAL",
+  "action": "BLOCKED",
+  "violations": {
+    "critical": 1,
+    "sensitive": 0,
+    "safe": 0
+  },
+  "details": [
+    {
+      "file": "frontend/src/lib/auth/errorHandler.ts",
+      "domains": [
+        "quotas",
+        "auth_policies"
+      ],
+      "severity": "CRITICAL",
+      "lines_added": 5,
+      "lines_removed": 4
+    }
+  ],
+  "approval_required": true,
+  "approved_by": null,
+  "notes": "Requires Product Owner approval"
+}

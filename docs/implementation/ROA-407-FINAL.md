@@ -72,11 +72,16 @@ No fail-open semantics implemented (maintenance mode removed).
 
 ### 2. Integration (`apps/backend-v2/src/routes/auth.ts`)
 
-**All auth endpoints check policy gate BEFORE auth logic:**
+**Auth endpoints with policy gate integration:**
 
 - POST `/api/v2/auth/login`
 - POST `/api/v2/auth/register`
 - POST `/api/v2/auth/magic-link`
+
+**Note:** Other endpoints handled separately:
+- POST `/api/v2/auth/logout` - Protected by `requireAuth` middleware only, no pre-check needed
+- Password recovery - Not yet implemented (tracked in separate issue)
+- Token refresh - Handled by Supabase Auth directly
 
 **Pattern:**
 ```typescript

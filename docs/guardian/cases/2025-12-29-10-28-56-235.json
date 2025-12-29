@@ -1,0 +1,32 @@
+{
+  "case_id": "2025-12-29-10-28-56-235",
+  "timestamp": "2025-12-29T10:28:56.235Z",
+  "actor": "emiliopostigo",
+  "domains": [
+    "auth_policies"
+  ],
+  "files_changed": [
+    ".issue_lock"
+  ],
+  "severity": "CRITICAL",
+  "action": "BLOCKED",
+  "violations": {
+    "critical": 1,
+    "sensitive": 0,
+    "safe": 0
+  },
+  "details": [
+    {
+      "file": ".issue_lock",
+      "domains": [
+        "auth_policies"
+      ],
+      "severity": "CRITICAL",
+      "lines_added": 1,
+      "lines_removed": 1
+    }
+  ],
+  "approval_required": true,
+  "approved_by": null,
+  "notes": "Requires Product Owner approval"
+}
