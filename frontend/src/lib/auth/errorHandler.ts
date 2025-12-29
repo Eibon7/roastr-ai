@@ -21,11 +21,12 @@ export function handleAuthError(
   error: ApiError,
   redirectToLogin?: () => void
 ): boolean {
-  const code = error.code;
+  // Use slug (v2 contract) with fallback to code (legacy)
+  const code = error.slug || error.code;
   const status = error.status;
 
   // Handle 401 errors (session expired, token invalid)
-  if (status === 401) {
+  if (status === 401 || code === 'TOKEN_EXPIRED') {
     if (
       code === 'SESSION_EXPIRED' ||
       code === 'TOKEN_EXPIRED' ||
@@ -53,7 +54,7 @@ export function handleAuthError(
   }
 
   // Handle 403 errors (access denied)
-  if (status === 403) {
+  if (status === 403 || code === 'AUTHZ_INSUFFICIENT_PERMISSIONS' || code === 'AUTHZ_ROLE_NOT_ALLOWED' || code === 'ACCOUNT_SUSPENDED') {
     let message = 'Access denied. You don\'t have permission for this action.';
     
     if (code === 'AUTHZ_INSUFFICIENT_PERMISSIONS') {
@@ -69,7 +70,7 @@ export function handleAuthError(
   }
 
   // Handle 429 errors (rate limit) - per-action backoff
-  if (status === 429) {
+  if (status === 429 || code === 'POLICY_RATE_LIMITED' || code === 'AUTH_RATE_LIMIT_EXCEEDED') {
     handleRateLimit(error);
     return true;
   }
