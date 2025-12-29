@@ -12,7 +12,6 @@ import { abuseDetectionService } from './abuseDetectionService.js';
 import { createHash } from 'crypto';
 import { loadSettings } from '../lib/loadSettings.js';
 import { logger } from '../utils/logger.js';
-import { trackEvent } from '../lib/analytics.js';
 
 export interface SignupParams {
   email: string;
