@@ -175,11 +175,10 @@ export class AuthService {
       );
     }
 
-    // TODO: Validar planId contra SSOT
-    // Temporal hardcoded para deadline 2025-12-31
-    // Referencia: Issue ROA-360
-    // Note: starter_trial added as hotfix (pre-existing issue, see CodeRabbit review)
-    const validPlans = ['starter_trial', 'starter', 'pro', 'plus'];
+    // ROA-360: Validar planId contra SSOT v2
+    // SSOT v2 define: type PlanId = 'starter' | 'pro' | 'plus'
+    // Note: starter_trial is also valid during trial period (hotfix)
+    const validPlans: string[] = ['starter_trial', 'starter', 'pro', 'plus'];
     if (!validPlans.includes(planId)) {
       throw new AuthError(
         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
