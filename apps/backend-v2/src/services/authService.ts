@@ -521,6 +521,42 @@ export class AuthService {
   }
 
   /**
+   * Solicita password recovery link (ROA-406)
+   * Feature flag check se hace en routes/auth.ts
+   */
+  async requestPasswordRecovery(params: MagicLinkParams): Promise<{ success: boolean; message: string }> {
+    const { email, ip } = params;
+
+    try {
+      // Rate limiting
+      const rateLimitResult = rateLimitService.recordAttempt('magic_link', ip);
+      if (!rateLimitResult.allowed) {
+        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED);
+      }
+
+      // Enviar password recovery link (no revelar si el usuario existe)
+      const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase(), {
+        redirectTo: process.env.SUPABASE_REDIRECT_URL || 'http://localhost:3000/auth/reset-password'
+      });
+
+      // Anti-enumeration: siempre devolver success, incluso si el email no existe
+      if (error && error.message !== 'User not found') {
+        throw mapSupabaseError(error);
+      }
+
+      return {
+        success: true,
+        message: 'If this email exists, a password recovery link has been sent'
+      };
+    } catch (error) {
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      throw mapSupabaseError(error);
+    }
+  }
+
+  /**
    * Obtiene usuario actual desde token
    */
   async getCurrentUser(accessToken: string): Promise<User> {
