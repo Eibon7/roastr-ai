@@ -1,0 +1,72 @@
+{
+  "case_id": "2025-12-29-10-22-54-695",
+  "timestamp": "2025-12-29T10:22:54.695Z",
+  "actor": "emiliopostigo",
+  "domains": [
+    "test_domain"
+  ],
+  "files_changed": [
+    "tests/unit/scripts/gdd-v2-tooling-alignment.test.js",
+    "apps/backend-v2/src/middleware/auth.ts",
+    "apps/backend-v2/src/routes/auth.ts",
+    "docs/guardian/audit-log.md",
+    "junit.xml",
+    "tests/fixtures/guardian/product-guard-cli-test.yaml"
+  ],
+  "severity": "SENSITIVE",
+  "action": "REVIEW",
+  "violations": {
+    "critical": 0,
+    "sensitive": 1,
+    "safe": 5
+  },
+  "details": [
+    {
+      "file": "tests/unit/scripts/gdd-v2-tooling-alignment.test.js",
+      "domains": [
+        "test_domain"
+      ],
+      "severity": "SENSITIVE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/middleware/auth.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/routes/auth.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/guardian/audit-log.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "junit.xml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "tests/fixtures/guardian/product-guard-cli-test.yaml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    }
+  ],
+  "approval_required": true,
+  "approved_by": null,
+  "notes": "Requires Tech Lead review"
+}

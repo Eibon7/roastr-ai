@@ -18,10 +18,10 @@ import { AuthError, AUTH_ERROR_CODES } from '../utils/authErrorTaxonomy.js';
 import { rateLimitByType } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
 import { getClientIp } from '../utils/request.js';
-import { loadSettings } from '../lib/loadSettings.js';
 import { trackEvent } from '../lib/analytics.js';
 import { sendAuthError } from '../utils/authErrorResponse.js';
 import { logger } from '../utils/logger.js';
+import { checkAuthPolicy } from '../auth/authPolicyGate.js';
 
 const router = Router();
 
@@ -35,20 +35,8 @@ const router = Router();
  * - Rate limit: misma política que login
  */
 router.post('/register', rateLimitByType('login'), async (req: Request, res: Response) => {
-  // Feature flag (fail-closed si no se puede cargar settings)
-  try {
-    const settings = await loadSettings();
-    const enabled = settings?.feature_flags?.enable_user_registration ?? false;
-    if (!enabled) {
-      return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.NOT_FOUND), {
-        log: { policy: 'feature_flag:enable_user_registration' }
-      });
-    }
-  } catch {
-    return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.NOT_FOUND), {
-      log: { policy: 'feature_flag:enable_user_registration' }
-    });
-  }
+  const ip = getClientIp(req);
+  const userAgent = (req.headers['user-agent'] as string) || null;
 
   const { email, password } = req.body || {};
 
@@ -83,6 +71,36 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
   }
 
   try {
+    // ✅ A3 POLICY GATE: Check policies BEFORE auth logic
+    const policyResult = await checkAuthPolicy({
+      action: 'register',
+      ip,
+      email: normalizedEmail,
+      userAgent
+    });
+
+    if (!policyResult.allowed) {
+      logger.warn('AuthPolicyGate blocked register', {
+        email: normalizedEmail,
+        policy: policyResult.policy,
+        reason: policyResult.reason
+      });
+
+      // Map policy result to AuthError
+      const errorCode =
+        policyResult.policy === 'rate_limit'
+          ? AUTH_ERROR_CODES.RATE_LIMITED
+          : policyResult.policy === 'feature_flag'
+            ? AUTH_ERROR_CODES.NOT_FOUND // Feature disabled = 404
+            : AUTH_ERROR_CODES.AUTH_DISABLED;
+
+      return sendAuthError(req, res, new AuthError(errorCode), {
+        log: { policy: `gate:${policyResult.policy}` },
+        retryAfterSeconds: policyResult.retryAfterSeconds
+      });
+    }
+
+    // Policy gate passed - proceed with auth business logic
     await authService.register({
       email: normalizedEmail,
       password
@@ -167,6 +185,9 @@ router.post('/signup', rateLimitByType('signup'), async (req: Request, res: Resp
  * Rate limited: 5 intentos en 15 minutos
  */
 router.post('/login', rateLimitByType('login'), async (req: Request, res: Response) => {
+  const ip = getClientIp(req);
+  const userAgent = (req.headers['user-agent'] as string) || null;
+
   try {
     const { email, password } = req.body;
 
@@ -176,8 +197,34 @@ router.post('/login', rateLimitByType('login'), async (req: Request, res: Respon
       });
     }
 
-    const ip = getClientIp(req);
+    // ✅ A3 POLICY GATE: Check policies BEFORE auth logic
+    const policyResult = await checkAuthPolicy({
+      action: 'login',
+      ip,
+      email,
+      userAgent
+    });
 
+    if (!policyResult.allowed) {
+      logger.warn('AuthPolicyGate blocked login', {
+        email,
+        policy: policyResult.policy,
+        reason: policyResult.reason
+      });
+
+      // Map policy result to AuthError
+      const errorCode =
+        policyResult.policy === 'rate_limit'
+          ? AUTH_ERROR_CODES.RATE_LIMITED
+          : AUTH_ERROR_CODES.AUTH_DISABLED;
+
+      return sendAuthError(req, res, new AuthError(errorCode), {
+        log: { policy: `gate:${policyResult.policy}` },
+        retryAfterSeconds: policyResult.retryAfterSeconds
+      });
+    }
+
+    // Policy gate passed - proceed with auth business logic
     const session = await authService.login({
       email,
       password,
@@ -247,6 +294,9 @@ router.post('/refresh', async (req: Request, res: Response) => {
  * Rate limited: 3 intentos en 1 hora
  */
 router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, res: Response) => {
+  const ip = getClientIp(req);
+  const userAgent = (req.headers['user-agent'] as string) || null;
+
   try {
     const { email } = req.body;
 
@@ -256,8 +306,36 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
       });
     }
 
-    const ip = getClientIp(req);
+    // ✅ A3 POLICY GATE: Check policies BEFORE auth logic
+    const policyResult = await checkAuthPolicy({
+      action: 'magic_link',
+      ip,
+      email,
+      userAgent
+    });
 
+    if (!policyResult.allowed) {
+      logger.warn('AuthPolicyGate blocked magic_link', {
+        email,
+        policy: policyResult.policy,
+        reason: policyResult.reason
+      });
+
+      // Map policy result to AuthError
+      const errorCode =
+        policyResult.policy === 'rate_limit'
+          ? AUTH_ERROR_CODES.RATE_LIMITED
+          : policyResult.policy === 'feature_flag'
+            ? AUTH_ERROR_CODES.MAGIC_LINK_NOT_ALLOWED
+            : AUTH_ERROR_CODES.AUTH_DISABLED;
+
+      return sendAuthError(req, res, new AuthError(errorCode), {
+        log: { policy: `gate:${policyResult.policy}` },
+        retryAfterSeconds: policyResult.retryAfterSeconds
+      });
+    }
+
+    // Policy gate passed - proceed with auth business logic
     const result = await authService.requestMagicLink({
       email,
       ip
