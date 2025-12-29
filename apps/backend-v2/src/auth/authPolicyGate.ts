@@ -22,7 +22,7 @@
 
 import { loadSettings } from '../lib/loadSettings.js';
 import { rateLimitService } from '../services/rateLimitService.js';
-import { abuseDetectionService } from '../services/abuseDetectionService.js';
+import { abuseDetectionServiceAdapter } from '../services/abuseDetectionServiceAdapter.js';
 import { supabase } from '../lib/supabaseClient.js';
 import { logger } from '../utils/logger.js';
 
@@ -387,8 +387,8 @@ export class AuthPolicyGate {
    */
   private async checkAbuse(context: AuthPolicyContext): Promise<AuthPolicyResult> {
     try {
-      // Check with abuse detection service
-      const isAbusive = await abuseDetectionService.checkRequest({
+      // Check with abuse detection service (via adapter)
+      const isAbusive = await abuseDetectionServiceAdapter.checkRequest({
         ip: context.ip || 'unknown',
         email: context.email,
         userId: context.userId || undefined,

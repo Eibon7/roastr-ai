@@ -37,7 +37,9 @@ export type AuthErrorSlug =
   | 'ACCOUNT_BANNED'
   | 'ACCOUNT_DELETED'
   | 'ACCOUNT_EMAIL_ALREADY_EXISTS'
+  | 'ACCOUNT_BLOCKED'
   | 'POLICY_RATE_LIMITED'
+  | 'POLICY_ABUSE_DETECTED'
   | 'POLICY_BLOCKED'
   | 'POLICY_INVALID_REQUEST'
   | 'POLICY_NOT_FOUND';
@@ -202,12 +204,26 @@ export const AUTH_ERROR_TAXONOMY: Record<AuthErrorSlug, AuthErrorV2> = {
     user_message_key: 'auth.error.email_already_exists',
     category: 'account'
   },
+  ACCOUNT_BLOCKED: {
+    slug: 'ACCOUNT_BLOCKED',
+    http_status: 403,
+    retryable: false,
+    user_message_key: 'auth.error.account_blocked',
+    category: 'account'
+  },
 
   POLICY_RATE_LIMITED: {
     slug: 'POLICY_RATE_LIMITED',
     http_status: 429,
     retryable: true,
     user_message_key: 'auth.error.rate_limited',
+    category: 'policy'
+  },
+  POLICY_ABUSE_DETECTED: {
+    slug: 'POLICY_ABUSE_DETECTED',
+    http_status: 403,
+    retryable: false,
+    user_message_key: 'auth.error.abuse_detected',
     category: 'policy'
   },
   POLICY_BLOCKED: {
@@ -264,8 +280,10 @@ export const AUTH_ERROR_CODES = {
   ACCOUNT_BANNED: 'ACCOUNT_BANNED',
   ACCOUNT_DELETED: 'ACCOUNT_DELETED',
   EMAIL_ALREADY_EXISTS: 'ACCOUNT_EMAIL_ALREADY_EXISTS',
+  ACCOUNT_BLOCKED: 'ACCOUNT_BLOCKED',
 
   RATE_LIMITED: 'POLICY_RATE_LIMITED',
+  ABUSE_DETECTED: 'POLICY_ABUSE_DETECTED',
   BLOCKED: 'POLICY_BLOCKED',
   INVALID_REQUEST: 'POLICY_INVALID_REQUEST',
   NOT_FOUND: 'POLICY_NOT_FOUND'
