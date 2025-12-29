@@ -133,7 +133,11 @@ class AuditService {
   /**
    * Registra login exitoso
    */
-  async logLoginSuccess(userId: string, ip: string | null, userAgent: string | null): Promise<void> {
+  async logLoginSuccess(
+    userId: string,
+    ip: string | null,
+    userAgent: string | null
+  ): Promise<void> {
     await this.logEvent({
       action_type: 'auth.login.success',
       resource_type: 'auth',
@@ -149,7 +153,12 @@ class AuditService {
   /**
    * Registra intento de login fallido
    */
-  async logLoginFailed(email: string, reason: string, ip: string | null, userAgent: string | null): Promise<void> {
+  async logLoginFailed(
+    email: string,
+    reason: string,
+    ip: string | null,
+    userAgent: string | null
+  ): Promise<void> {
     await this.logEvent({
       action_type: 'auth.login.failed',
       resource_type: 'auth',
@@ -180,7 +189,12 @@ class AuditService {
   /**
    * Registra registro exitoso
    */
-  async logRegisterSuccess(userId: string, email: string, ip: string | null, userAgent: string | null): Promise<void> {
+  async logRegisterSuccess(
+    userId: string,
+    email: string,
+    ip: string | null,
+    userAgent: string | null
+  ): Promise<void> {
     await this.logEvent({
       action_type: 'auth.register.success',
       resource_type: 'auth',
@@ -197,7 +211,12 @@ class AuditService {
   /**
    * Registra intento de registro fallido
    */
-  async logRegisterFailed(email: string, reason: string, ip: string | null, userAgent: string | null): Promise<void> {
+  async logRegisterFailed(
+    email: string,
+    reason: string,
+    ip: string | null,
+    userAgent: string | null
+  ): Promise<void> {
     await this.logEvent({
       action_type: 'auth.register.failed',
       resource_type: 'auth',
@@ -228,7 +247,11 @@ class AuditService {
   /**
    * Registra solicitud de magic link
    */
-  async logMagicLinkRequest(email: string, ip: string | null, userAgent: string | null): Promise<void> {
+  async logMagicLinkRequest(
+    email: string,
+    ip: string | null,
+    userAgent: string | null
+  ): Promise<void> {
     await this.logEvent({
       action_type: 'auth.magic_link.request',
       resource_type: 'auth',
@@ -260,7 +283,12 @@ class AuditService {
   /**
    * Registra violación de política (blocked)
    */
-  async logPolicyBlocked(policy: string, userId: string | null, reason: string, ip: string | null): Promise<void> {
+  async logPolicyBlocked(
+    policy: string,
+    userId: string | null,
+    reason: string,
+    ip: string | null
+  ): Promise<void> {
     await this.logEvent({
       action_type: 'policy.blocked',
       resource_type: 'policy',
@@ -276,7 +304,12 @@ class AuditService {
   /**
    * Registra request inválido
    */
-  async logInvalidRequest(endpoint: string, userId: string | null, reason: string, ip: string | null): Promise<void> {
+  async logInvalidRequest(
+    endpoint: string,
+    userId: string | null,
+    reason: string,
+    ip: string | null
+  ): Promise<void> {
     await this.logEvent({
       action_type: 'policy.invalid_request',
       resource_type: 'policy',
@@ -292,7 +325,12 @@ class AuditService {
   /**
    * Registra denegación de permisos
    */
-  async logPermissionDenied(userId: string, resource: string, action: string, ip: string | null): Promise<void> {
+  async logPermissionDenied(
+    userId: string,
+    resource: string,
+    action: string,
+    ip: string | null
+  ): Promise<void> {
     await this.logEvent({
       action_type: 'authz.permission.denied',
       resource_type: 'authz',
@@ -334,4 +372,3 @@ class AuditService {
  * Instancia singleton del servicio de audit
  */
 export const auditService = new AuditService();
-

@@ -18,7 +18,6 @@ import { AuthError, AUTH_ERROR_CODES } from '../utils/authErrorTaxonomy.js';
 import { rateLimitByType } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
 import { getClientIp } from '../utils/request.js';
-import { loadSettings } from '../lib/loadSettings.js';
 import { trackEvent } from '../lib/analytics.js';
 import { sendAuthError } from '../utils/authErrorResponse.js';
 import { logger } from '../utils/logger.js';
@@ -37,7 +36,7 @@ const router = Router();
  */
 router.post('/register', rateLimitByType('login'), async (req: Request, res: Response) => {
   const ip = getClientIp(req);
-  const userAgent = req.headers['user-agent'] as string || null;
+  const userAgent = (req.headers['user-agent'] as string) || null;
 
   const { email, password } = req.body || {};
 
@@ -88,11 +87,12 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
       });
 
       // Map policy result to AuthError
-      const errorCode = policyResult.policy === 'rate_limit' 
-        ? AUTH_ERROR_CODES.RATE_LIMITED
-        : policyResult.policy === 'feature_flag'
-        ? AUTH_ERROR_CODES.NOT_FOUND // Feature disabled = 404
-        : AUTH_ERROR_CODES.AUTH_DISABLED;
+      const errorCode =
+        policyResult.policy === 'rate_limit'
+          ? AUTH_ERROR_CODES.RATE_LIMITED
+          : policyResult.policy === 'feature_flag'
+            ? AUTH_ERROR_CODES.NOT_FOUND // Feature disabled = 404
+            : AUTH_ERROR_CODES.AUTH_DISABLED;
 
       return sendAuthError(req, res, new AuthError(errorCode), {
         log: { policy: `gate:${policyResult.policy}` },
@@ -186,7 +186,7 @@ router.post('/signup', rateLimitByType('signup'), async (req: Request, res: Resp
  */
 router.post('/login', rateLimitByType('login'), async (req: Request, res: Response) => {
   const ip = getClientIp(req);
-  const userAgent = req.headers['user-agent'] as string || null;
+  const userAgent = (req.headers['user-agent'] as string) || null;
 
   try {
     const { email, password } = req.body;
@@ -213,9 +213,10 @@ router.post('/login', rateLimitByType('login'), async (req: Request, res: Respon
       });
 
       // Map policy result to AuthError
-      const errorCode = policyResult.policy === 'rate_limit' 
-        ? AUTH_ERROR_CODES.RATE_LIMITED
-        : AUTH_ERROR_CODES.AUTH_DISABLED;
+      const errorCode =
+        policyResult.policy === 'rate_limit'
+          ? AUTH_ERROR_CODES.RATE_LIMITED
+          : AUTH_ERROR_CODES.AUTH_DISABLED;
 
       return sendAuthError(req, res, new AuthError(errorCode), {
         log: { policy: `gate:${policyResult.policy}` },
@@ -294,7 +295,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
  */
 router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, res: Response) => {
   const ip = getClientIp(req);
-  const userAgent = req.headers['user-agent'] as string || null;
+  const userAgent = (req.headers['user-agent'] as string) || null;
 
   try {
     const { email } = req.body;
@@ -321,11 +322,12 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
       });
 
       // Map policy result to AuthError
-      const errorCode = policyResult.policy === 'rate_limit' 
-        ? AUTH_ERROR_CODES.RATE_LIMITED
-        : policyResult.policy === 'feature_flag'
-        ? AUTH_ERROR_CODES.MAGIC_LINK_NOT_ALLOWED
-        : AUTH_ERROR_CODES.AUTH_DISABLED;
+      const errorCode =
+        policyResult.policy === 'rate_limit'
+          ? AUTH_ERROR_CODES.RATE_LIMITED
+          : policyResult.policy === 'feature_flag'
+            ? AUTH_ERROR_CODES.MAGIC_LINK_NOT_ALLOWED
+            : AUTH_ERROR_CODES.AUTH_DISABLED;
 
       return sendAuthError(req, res, new AuthError(errorCode), {
         log: { policy: `gate:${policyResult.policy}` },

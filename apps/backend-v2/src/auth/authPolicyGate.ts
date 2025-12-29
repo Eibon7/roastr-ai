@@ -29,10 +29,10 @@ import { logger } from '../utils/logger.js';
 /**
  * Auth actions that can be gated
  */
-export type AuthAction = 
-  | 'login' 
-  | 'register' 
-  | 'password_recovery' 
+export type AuthAction =
+  | 'login'
+  | 'register'
+  | 'password_recovery'
   | 'magic_link'
   | 'token_refresh'
   | 'logout';
@@ -40,11 +40,7 @@ export type AuthAction =
 /**
  * Policy types that can block an action (EXACT CONTRACT)
  */
-export type PolicyType = 
-  | 'feature_flag' 
-  | 'account_status' 
-  | 'rate_limit' 
-  | 'abuse';
+export type PolicyType = 'feature_flag' | 'account_status' | 'rate_limit' | 'abuse';
 
 /**
  * Context for policy evaluation
@@ -233,9 +229,7 @@ export class AuthPolicyGate {
       const { data: user, error } = await supabase
         .from('users')
         .select('id, email, active, suspended, suspended_reason')
-        .or(
-          context.userId ? `id.eq.${context.userId}` : `email.eq.${context.email}`
-        )
+        .or(context.userId ? `id.eq.${context.userId}` : `email.eq.${context.email}`)
         .single();
 
       if (error) {
@@ -351,7 +345,7 @@ export class AuthPolicyGate {
           blockedUntil: result.blockedUntil
         });
 
-        const retryAfterSeconds = result.blockedUntil 
+        const retryAfterSeconds = result.blockedUntil
           ? Math.ceil((result.blockedUntil - Date.now()) / 1000)
           : 900; // 15 minutes default
 
@@ -436,7 +430,9 @@ export class AuthPolicyGate {
   /**
    * Map auth action to rate limit type
    */
-  private mapActionToRateLimitType(action: AuthAction): 'login' | 'magic_link' | 'signup' | 'password_reset' | null {
+  private mapActionToRateLimitType(
+    action: AuthAction
+  ): 'login' | 'magic_link' | 'signup' | 'password_reset' | null {
     switch (action) {
       case 'login':
         return 'login';
@@ -463,4 +459,3 @@ export const authPolicyGate = new AuthPolicyGate();
 export async function checkAuthPolicy(context: AuthPolicyContext): Promise<AuthPolicyResult> {
   return authPolicyGate.check(context);
 }
-
