@@ -1,487 +1,237 @@
 #!/usr/bin/env node
 
 /**
- * GDD Node Health Scoring System
+ * GDD Health Scoring (v2-aligned)
  *
- * Calculates a health score (0-100) for each GDD node based on:
- * 1. Sync Accuracy (25%) - spec.md ↔ node ↔ code alignment
- * 2. Update Freshness (15%) - Days since last_updated
- * 3. Dependency Integrity (20%) - Bidirectional edges, no cycles
- * 4. Coverage Evidence (20%) - Tests documented, coverage metrics
- * 5. Agent Relevance (10%) - Agent list complete and valid
- * 6. Integrity Score (10%) - Coverage authenticity (Phase 15.1)
+ * v2 MUST be deterministic and SSOT-driven:
+ * - Node IDs and docs mapping come exclusively from `docs/system-map-v2.yaml`.
+ * - v2 scoring MUST NOT penalize missing v1-only concepts (spec.md, coverageEvidence, agentRelevance, etc).
  *
- * Usage:
- *   node scripts/score-gdd-health.js
- *   node scripts/score-gdd-health.js --json
+ * CI contract (used by scripts/sync-gdd-metrics.js):
+ * - `node scripts/score-gdd-health.js --ci` prints: `Overall Health: <score>/100`
+ * - exits 1 if score < threshold (default 87, override with GDD_MIN_HEALTH_SCORE)
  */
 
 const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
-const { CoverageHelper } = require('./gdd-coverage-helper');
 
 class GDDHealthScorer {
   constructor(options = {}) {
     this.options = options;
-    this.rootDir = path.resolve(__dirname, '..');
+    this.rootDir = options.rootDir ? path.resolve(options.rootDir) : path.resolve(__dirname, '..');
     this.scores = {};
-    this.validationData = null;
+    this.validationData = { missing_refs: [], cycles: [] };
   }
 
-  /**
-   * Main scoring entry point
-   */
   async score() {
-    try {
-      // Load validation data
-      await this.loadValidationData();
+    const systemMap = await this.loadSystemMap();
+    this.validationData = await this.collectV2Validation(systemMap);
 
-      // Load nodes
-      const nodes = await this.loadAllNodes();
-      const systemMap = await this.loadSystemMap();
-      const specContent = await this.loadSpec();
+    const nodes = this.buildNodesFromSystemMap(systemMap);
+    for (const [nodeId, nodeData] of Object.entries(nodes)) {
+      this.scores[nodeId] = await this.scoreNode(nodeId, nodeData, systemMap);
+    }
 
-      // Score each node
-      for (const [nodeName, nodeData] of Object.entries(nodes)) {
-        const score = await this.scoreNode(nodeName, nodeData, nodes, systemMap, specContent);
-        this.scores[nodeName] = score;
-      }
+    const stats = this.calculateOverallStats();
+    await this.generateReports(stats);
 
-      // Calculate overall stats
-      const stats = this.calculateOverallStats();
-
-      // Generate reports
-      await this.generateReports(stats);
-
-      // Print summary
+    if (!this.options.json && !this.options.ci) {
       this.printSummary(stats);
-
-      return { scores: this.scores, stats };
-    } catch (error) {
-      console.error(`❌ Scoring failed: ${error.message}`);
-      throw error;
     }
+
+    return { scores: this.scores, stats };
   }
 
-  /**
-   * Load validation data from gdd-status.json
-   */
-  async loadValidationData() {
-    try {
-      const filePath = path.join(this.rootDir, 'gdd-status.json');
-      const content = await fs.readFile(filePath, 'utf-8');
-      this.validationData = JSON.parse(content);
-    } catch (error) {
-      this.validationData = {
-        orphans: [],
-        missing_refs: [],
-        cycles: [],
-        drift: {}
-      };
-    }
-  }
-
-  /**
-   * Load all nodes from docs/nodes-v2/ (recursive traversal for subnodes)
-   */
-  async loadAllNodes() {
-    const nodesDir = path.join(this.rootDir, 'docs', 'nodes-v2');
-    const nodes = {};
-
-    try {
-      // Recursive function to traverse subdirectories
-      const loadNodesRecursive = async (dir, basePath = '') => {
-        const entries = await fs.readdir(dir, { withFileTypes: true });
-
-        for (const entry of entries) {
-          const fullPath = path.join(dir, entry.name);
-          const relativePath = basePath ? `${basePath}/${entry.name}` : entry.name;
-
-          if (entry.isDirectory()) {
-            // Recursively load subdirectories (subnodes)
-            await loadNodesRecursive(fullPath, relativePath);
-          } else if (entry.isFile() && entry.name.endsWith('.md') && entry.name !== 'README.md') {
-            // Load markdown file
-            const content = await fs.readFile(fullPath, 'utf-8');
-            // Extract node name from path (first directory or filename without .md)
-            const pathParts = relativePath.split('/');
-            const nodeName = pathParts.length > 1 ? pathParts[0] : entry.name.replace('.md', '');
-
-            // If node already exists, merge content (for subnodes)
-            if (nodes[nodeName]) {
-              nodes[nodeName].content += `\n\n---\n\n## ${relativePath}\n\n${content}`;
-            } else {
-              nodes[nodeName] = {
-                file: `docs/nodes-v2/${relativePath}`,
-                content,
-                metadata: this.parseNodeMetadata(content),
-                name: nodeName
-              };
-            }
-          }
-        }
-      };
-
-      await loadNodesRecursive(nodesDir);
-      return nodes;
-    } catch (error) {
-      return {};
-    }
-  }
-
-  /**
-   * Parse node metadata
-   */
-  parseNodeMetadata(content) {
-    const metadata = {
-      last_updated: null,
-      status: 'active',
-      dependencies: [],
-      used_by: [],
-      agents: [],
-      tests: [],
-      coverage: null
-    };
-
-    // Extract YAML frontmatter
-    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-    if (frontmatterMatch) {
-      try {
-        const frontmatter = yaml.parse(frontmatterMatch[1]);
-        Object.assign(metadata, frontmatter);
-      } catch (e) {
-        // Ignore parse errors
-      }
-    }
-
-    // Extract last_updated (supports both "last_updated:" and "**Last Updated:**")
-    const dateMatch = content.match(/\*?\*?last[_\s]updated:?\*?\*?\s*(\d{4}-\d{2}-\d{2})/i);
-    if (dateMatch) {
-      metadata.last_updated = dateMatch[1];
-    }
-
-    // Extract status
-    const statusMatch = content.match(/status:?\s*(active|deprecated|experimental)/i);
-    if (statusMatch) {
-      metadata.status = statusMatch[1].toLowerCase();
-    }
-
-    // Extract dependencies
-    const depsSection = content.match(/##\s*Dependencies[\s\S]*?(?=##|$)/i);
-    if (depsSection) {
-      const depMatches = depsSection[0].match(/-\s*([a-z-]+)\.md/gi) || [];
-      metadata.dependencies = depMatches.map((m) => m.match(/([a-z-]+)\.md/i)[1]);
-    }
-
-    // Extract agents (supports both "- Agent" and "- **Agent**")
-    const agentsSection = content.match(/##\s*Agentes Relevantes[\s\S]*?(?=##|$)/i);
-    if (agentsSection) {
-      // Match lines starting with "- " followed by optional ** and agent name
-      const agentMatches =
-        agentsSection[0].match(
-          /-\s*\*?\*?([A-Za-z\s]+(?:Agent|Developer|Engineer|Analyst|Orchestrator))\*?\*?/gi
-        ) || [];
-      metadata.agents = agentMatches.map((m) => {
-        // Remove leading "- " and optional "**"
-        return m
-          .replace(/^-\s*\*?\*?/, '')
-          .replace(/\*?\*?$/, '')
-          .trim();
-      });
-    }
-
-    // Extract coverage (supports both "coverage: 60%" and "**Coverage:** 60%")
-    const coverageMatch = content.match(/\*?\*?coverage:?\*?\*?\s*([\d.]+)%/i);
-    if (coverageMatch) {
-      metadata.coverage = parseFloat(coverageMatch[1]);
-    }
-
-    // Extract test files
-    const testSection = content.match(/##\s*Testing[\s\S]*?(?=##|$)/i);
-    if (testSection) {
-      const testMatches = testSection[0].match(/tests\/[^\s\n)]+\.test\.js/gi) || [];
-      metadata.tests = testMatches;
-    }
-
-    return metadata;
-  }
-
-  /**
-   * Load system-map-v2.yaml
-   */
   async loadSystemMap() {
     try {
       const filePath = path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
       const content = await fs.readFile(filePath, 'utf-8');
       return yaml.parse(content);
-    } catch (error) {
-      return { nodes: {} };
+    } catch {
+      return { nodes: {}, validation: {} };
     }
   }
 
-  /**
-   * Load spec.md
-   */
-  async loadSpec() {
-    try {
-      const filePath = path.join(this.rootDir, 'spec.md');
-      return await fs.readFile(filePath, 'utf-8');
-    } catch (error) {
-      return '';
+  buildNodesFromSystemMap(systemMap) {
+    const nodes = {};
+    for (const [nodeKey, nodeData] of Object.entries(systemMap?.nodes || {})) {
+      const nodeId = nodeData?.id || nodeKey;
+      nodes[nodeId] = {
+        name: nodeId,
+        metadata: {
+          status: nodeData?.status || 'active',
+          last_updated: nodeData?.last_updated || null,
+          depends_on: Array.isArray(nodeData?.depends_on) ? nodeData.depends_on : [],
+          required_by: Array.isArray(nodeData?.required_by) ? nodeData.required_by : []
+        },
+        systemMap: nodeData
+      };
     }
+    return nodes;
   }
 
-  /**
-   * Score a single node (0-100)
-   */
-  async scoreNode(nodeName, nodeData, allNodes, systemMap, specContent) {
-    const scores = {
-      syncAccuracy: this.scoreSyncAccuracy(nodeName, nodeData, specContent),
-      updateFreshness: this.scoreUpdateFreshness(nodeData),
-      dependencyIntegrity: this.scoreDependencyIntegrity(nodeName, nodeData, systemMap),
-      coverageEvidence: this.scoreCoverageEvidence(nodeData),
-      agentRelevance: this.scoreAgentRelevance(nodeData),
-      integrityScore: await this.scoreIntegrity(nodeName, nodeData) // Phase 15.1
+  detectCycles(systemMap) {
+    const cycles = [];
+    const visited = new Set();
+    const stack = new Set();
+
+    const dfs = (node, pathAcc) => {
+      if (stack.has(node)) {
+        const idx = pathAcc.indexOf(node);
+        cycles.push(pathAcc.slice(idx).concat(node));
+        return;
+      }
+      if (visited.has(node)) return;
+
+      visited.add(node);
+      stack.add(node);
+
+      const nodeData = systemMap?.nodes?.[node];
+      const deps = Array.isArray(nodeData?.depends_on) ? nodeData.depends_on : [];
+      for (const dep of deps) dfs(dep, [...pathAcc, dep]);
+
+      stack.delete(node);
     };
 
-    // Weighted average (adjusted to include integrity score)
+    for (const nodeId of Object.keys(systemMap?.nodes || {})) {
+      if (!visited.has(nodeId)) dfs(nodeId, [nodeId]);
+    }
+    return cycles;
+  }
+
+  async collectV2Validation(systemMap) {
+    const missing_refs = [];
+    const cycles = this.detectCycles(systemMap);
+
+    for (const [nodeKey, nodeData] of Object.entries(systemMap?.nodes || {})) {
+      const nodeId = nodeData?.id || nodeKey;
+      const deps = Array.isArray(nodeData?.depends_on) ? nodeData.depends_on : [];
+
+      for (const dep of deps) {
+        if (!systemMap.nodes?.[dep]) {
+          missing_refs.push({
+            type: 'missing_dependency',
+            node: nodeId,
+            dependency: dep,
+            message: `${nodeId} depends_on ${dep} which doesn't exist in system-map-v2.yaml`
+          });
+        } else {
+          const requiredBy = Array.isArray(systemMap.nodes[dep]?.required_by)
+            ? systemMap.nodes[dep].required_by
+            : [];
+          if (!requiredBy.includes(nodeId)) {
+            missing_refs.push({
+              type: 'missing_bidirectional_edge',
+              node: nodeId,
+              dependency: dep,
+              message: `${nodeId} depends_on ${dep} but ${dep} doesn't list ${nodeId} in required_by`
+            });
+          }
+        }
+      }
+
+      const docs = Array.isArray(nodeData?.docs)
+        ? nodeData.docs
+        : nodeData?.docs
+          ? [nodeData.docs]
+          : [];
+      for (const docsPath of docs) {
+        if (typeof docsPath !== 'string' || docsPath.trim().length === 0) continue;
+        const resolved = path.resolve(this.rootDir, docsPath);
+        try {
+          await fs.access(resolved);
+        } catch {
+          missing_refs.push({
+            type: 'missing_doc_path',
+            node: nodeId,
+            doc: docsPath,
+            message: `${nodeId} references missing docs file: ${docsPath}`
+          });
+        }
+      }
+    }
+
+    return { missing_refs, cycles };
+  }
+
+  async scoreNode(nodeId, nodeData, systemMap) {
+    const breakdown = {
+      docsIntegrity: this.scoreDocsIntegrity(nodeId),
+      dependencyIntegrity: this.scoreDependencyIntegrity(nodeId),
+      symmetryIntegrity: this.scoreSymmetryIntegrity(nodeId),
+      updateFreshness: this.scoreUpdateFreshness(systemMap, nodeData)
+    };
+
     const totalScore =
-      scores.syncAccuracy * 0.25 + // 25%
-      scores.updateFreshness * 0.15 + // 15% (reduced from 20% to balance weights)
-      scores.dependencyIntegrity * 0.2 + // 20%
-      scores.coverageEvidence * 0.2 + // 20%
-      scores.agentRelevance * 0.1 + // 10%
-      scores.integrityScore * 0.1; // 10% (added in Phase 15.1)
-    // Total: 25 + 15 + 20 + 20 + 10 + 10 = 100%
+      breakdown.docsIntegrity * 0.4 +
+      breakdown.dependencyIntegrity * 0.3 +
+      breakdown.symmetryIntegrity * 0.2 +
+      breakdown.updateFreshness * 0.1;
 
+    const rounded = Math.round(totalScore);
     return {
-      score: Math.min(100, Math.max(0, Math.round(totalScore))),
-      breakdown: scores,
-      status: this.getStatusFromScore(Math.round(totalScore)),
+      score: Math.min(100, Math.max(0, rounded)),
+      breakdown,
+      status: this.getStatusFromScore(rounded),
       metadata: nodeData.metadata,
-      issues: this.getNodeIssues(nodeName)
+      issues: this.getNodeIssues(nodeId)
     };
   }
 
-  /**
-   * Score sync accuracy (30%)
-   */
-  scoreSyncAccuracy(nodeName, nodeData, specContent) {
-    let score = 100;
-    const nodeRef = `docs/nodes-v2/${nodeName}.md`;
-
-    // Check if referenced in spec.md
-    if (!specContent.includes(nodeRef) && !specContent.includes(nodeName)) {
-      const isInMissingRefs = this.validationData.missing_refs?.some(
-        (ref) => ref.node === nodeName && ref.type === 'node_not_in_spec'
-      );
-      if (isInMissingRefs) {
-        score -= 10; // Critical mismatch
-      }
-    }
-
-    // Check if node is orphaned
-    if (this.validationData.orphans?.includes(nodeName)) {
-      score -= 10;
-    }
-
-    // Check for drift
-    if (this.validationData.drift && Object.keys(this.validationData.drift).length > 0) {
-      // Check if this node has drift issues
-      const hasDrift = Object.entries(this.validationData.drift).some(([file, issues]) => {
-        return file.includes(nodeName);
-      });
-      if (hasDrift) {
-        score -= 10;
-      }
-    }
-
-    return Math.max(0, score);
-  }
-
-  /**
-   * Score update freshness (20%)
-   */
-  scoreUpdateFreshness(nodeData) {
-    if (!nodeData.metadata.last_updated) {
-      return 50; // No date = moderate penalty
-    }
-
-    const lastUpdate = new Date(nodeData.metadata.last_updated);
-    const now = new Date();
-    const daysSince = Math.floor((now - lastUpdate) / (1000 * 60 * 60 * 24));
-
-    // Formula: 100 - (days * 2), min 0
-    const score = Math.max(0, 100 - daysSince * 2);
-    return score;
-  }
-
-  /**
-   * Score dependency integrity (20%)
-   */
-  scoreDependencyIntegrity(nodeName, nodeData, systemMap) {
-    let score = 100;
-
-    // Check for cycles
-    if (this.validationData.cycles?.some((cycle) => cycle.includes(nodeName))) {
-      score -= 20;
-    }
-
-    // Check bidirectional edges
-    const hasBidirectionalIssues = this.validationData.missing_refs?.some(
-      (ref) => ref.type === 'missing_bidirectional_edge' && ref.node === nodeName
+  scoreDocsIntegrity(nodeId) {
+    const hasMissingDoc = this.validationData.missing_refs?.some(
+      (r) => r.type === 'missing_doc_path' && r.node === nodeId
     );
-    if (hasBidirectionalIssues) {
-      score -= 20;
-    }
+    return hasMissingDoc ? 0 : 100;
+  }
 
-    // Check missing dependencies
-    const hasMissingDeps = this.validationData.missing_refs?.some(
-      (ref) => ref.type === 'missing_dependency' && ref.node === nodeName
+  scoreDependencyIntegrity(nodeId) {
+    if (this.validationData.cycles?.some((c) => c.includes(nodeId))) return 0;
+    const hasMissingDep = this.validationData.missing_refs?.some(
+      (r) => r.type === 'missing_dependency' && r.node === nodeId
     );
-    if (hasMissingDeps) {
-      score -= 20;
-    }
-
-    return Math.max(0, score);
+    return hasMissingDep ? 0 : 100;
   }
 
-  /**
-   * Score coverage evidence (20%)
-   */
-  scoreCoverageEvidence(nodeData) {
-    const coverage = nodeData.metadata.coverage;
-    const hasTests = nodeData.metadata.tests && nodeData.metadata.tests.length > 0;
-
-    // If coverage is explicitly documented, use it regardless of Testing section
-    if (coverage !== null && coverage !== undefined) {
-      // Score based on coverage percentage
-      if (coverage >= 80) {
-        return 100;
-      } else if (coverage >= 60) {
-        return 70;
-      } else if (coverage >= 40) {
-        return 50;
-      } else {
-        return 30;
-      }
-    }
-
-    // If no coverage but tests are documented
-    if (hasTests) {
-      return 50; // Tests exist but no coverage documented
-    }
-
-    // No tests or coverage documented
-    return 0;
-  }
-
-  /**
-   * Score agent relevance (10%)
-   */
-  scoreAgentRelevance(nodeData) {
-    const agents = nodeData.metadata.agents;
-
-    if (!agents || agents.length === 0) {
-      return 0; // No agents listed
-    }
-
-    // Check if agents section seems complete (has at least 1-2 agents)
-    if (agents.length >= 2) {
-      return 100; // Complete
-    } else if (agents.length === 1) {
-      return 50; // Partial
-    } else {
-      return 0;
-    }
-  }
-
-  /**
-   * Score coverage integrity (10%) - Phase 15.1
-   */
-  async scoreIntegrity(nodeName, nodeData) {
-    const coverageHelper = new CoverageHelper();
-
-    // Extract declared coverage
-    const coverageMatch = nodeData.content.match(/\*?\*?coverage:?\*?\*?\s*([\d.]+)%/i);
-    if (!coverageMatch) {
-      // No declared coverage → unverifiable; apply mild penalty
-      return 80;
-    }
-
-    const declaredCoverage = parseFloat(coverageMatch[1]);
-
-    // Check coverage source
-    const sourceMatch = nodeData.content.match(/\*?\*?coverage\s+source:?\*?\*?\s*(auto|manual)/i);
-    const coverageSource = sourceMatch ? sourceMatch[1].toLowerCase() : null;
-
-    let score = 100;
-
-    // Penalize if no source specified
-    if (!coverageSource) {
-      score -= 10;
-    }
-
-    // Penalize if manual source
-    if (coverageSource === 'manual') {
-      score -= 20; // Manual coverage is discouraged
-    }
-
-    // Validate coverage authenticity
-    const validation = await coverageHelper.validateCoverageAuthenticity(
-      nodeName,
-      declaredCoverage,
-      3 // 3% tolerance
+  scoreSymmetryIntegrity(nodeId) {
+    const hasSymmetryIssue = this.validationData.missing_refs?.some(
+      (r) => r.type === 'missing_bidirectional_edge' && r.node === nodeId
     );
-
-    if (!validation.valid && validation.actual !== null) {
-      // Coverage mismatch detected - critical integrity violation
-      const diffPenalty = Math.min(50, validation.diff * 5); // Up to 50% penalty
-      score -= diffPenalty;
-    }
-
-    return Math.max(0, score);
+    return hasSymmetryIssue ? 50 : 100;
   }
 
-  /**
-   * Get status from score
-   */
+  scoreUpdateFreshness(systemMap, nodeData) {
+    const freshnessDays = systemMap?.validation?.update_freshness_days || 30;
+    const last = nodeData?.metadata?.last_updated;
+    if (!last) return 100;
+
+    const lastDate = new Date(last);
+    if (Number.isNaN(lastDate.getTime())) return 100;
+    const daysSince = Math.floor((Date.now() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+    return daysSince <= freshnessDays ? 100 : 50;
+  }
+
   getStatusFromScore(score) {
     if (score >= 80) return 'healthy';
     if (score >= 50) return 'degraded';
     return 'critical';
   }
 
-  /**
-   * Get issues for a node
-   */
-  getNodeIssues(nodeName) {
+  getNodeIssues(nodeId) {
     const issues = [];
-
-    if (this.validationData.orphans?.includes(nodeName)) {
-      issues.push('Orphan node (not in system-map-v2.yaml)');
-    }
-
-    const missingRefs = this.validationData.missing_refs?.filter((ref) => ref.node === nodeName);
-    if (missingRefs && missingRefs.length > 0) {
-      issues.push(...missingRefs.map((ref) => ref.message));
-    }
-
-    if (this.validationData.cycles?.some((cycle) => cycle.includes(nodeName))) {
+    const missingRefs = this.validationData.missing_refs?.filter((r) => r.node === nodeId) || [];
+    issues.push(...missingRefs.map((r) => r.message));
+    if (this.validationData.cycles?.some((c) => c.includes(nodeId))) {
       issues.push('Part of dependency cycle');
     }
-
     return issues;
   }
 
-  /**
-   * Calculate overall statistics
-   */
   calculateOverallStats() {
     const scores = Object.values(this.scores);
-    const totalScore = scores.reduce((sum, node) => sum + node.score, 0);
-    const averageScore = scores.length > 0 ? totalScore / scores.length : 0;
+    const total = scores.reduce((sum, n) => sum + n.score, 0);
+    const avg = scores.length > 0 ? total / scores.length : 0;
 
     const healthy = scores.filter((n) => n.status === 'healthy').length;
     const degraded = scores.filter((n) => n.status === 'degraded').length;
@@ -494,7 +244,7 @@ class GDDHealthScorer {
     return {
       generated_at: new Date().toISOString(),
       status: overallStatus,
-      overall_score: parseFloat(averageScore.toFixed(1)),
+      overall_score: parseFloat(avg.toFixed(1)),
       total_nodes: scores.length,
       healthy_count: healthy,
       degraded_count: degraded,
@@ -502,32 +252,20 @@ class GDDHealthScorer {
     };
   }
 
-  /**
-   * Generate reports
-   */
   async generateReports(stats) {
     await this.generateMarkdownReport(stats);
     await this.generateJSONReport(stats);
   }
 
-  /**
-   * Generate system-health.md
-   */
   async generateMarkdownReport(stats) {
-    const statusEmoji = {
-      healthy: '🟢',
-      degraded: '🟡',
-      critical: '🔴'
-    };
-
-    // Sort nodes by score (worst first)
+    const statusEmoji = { healthy: '🟢', degraded: '🟡', critical: '🔴' };
     const sortedNodes = Object.entries(this.scores).sort((a, b) => a[1].score - b[1].score);
 
-    let markdown = `# 📊 GDD Node Health Report
+    let markdown = `# 📊 GDD Node Health Report (v2)
 
 **Generated:** ${stats.generated_at}
 **Overall Status:** ${statusEmoji[stats.status.toLowerCase()]} ${stats.status}
-**Average Score:** ${stats.overall_score}/100
+**Overall Health:** ${stats.overall_score}/100
 
 ---
 
@@ -542,66 +280,23 @@ class GDDHealthScorer {
 
 ## Node Scores
 
-| Node | Score | Status | Last Updated | Coverage | Dependencies | Issues |
-|------|-------|--------|--------------|----------|--------------|--------|
+| Node | Score | Status | Last Updated | Issues |
+|------|-------|--------|--------------|--------|
 `;
 
     for (const [nodeName, data] of sortedNodes) {
       const emoji = statusEmoji[data.status];
       const lastUpdate = data.metadata.last_updated || 'N/A';
-      const coverage = data.metadata.coverage !== null ? `${data.metadata.coverage}%` : 'N/A';
-      const deps = data.metadata.dependencies.length;
       const issueCount = data.issues.length;
-
-      markdown += `| ${nodeName} | ${emoji} ${data.score} | ${data.status} | ${lastUpdate} | ${coverage} | ${deps} | ${issueCount} |\n`;
+      markdown += `| ${nodeName} | ${emoji} ${data.score} | ${data.status} | ${lastUpdate} | ${issueCount} |\n`;
     }
-
-    // Top 5 nodes to review
-    const topReview = sortedNodes.slice(0, 5);
-    markdown += `\n---
-
-## ⚠️ Top 5 Nodes to Review
-
-`;
-
-    for (const [nodeName, data] of topReview) {
-      markdown += `### ${nodeName} (Score: ${data.score})\n\n`;
-      markdown += `**Status:** ${statusEmoji[data.status]} ${data.status.toUpperCase()}\n\n`;
-      markdown += `**Score Breakdown:**\n`;
-      markdown += `- Sync Accuracy: ${data.breakdown.syncAccuracy}/100\n`;
-      markdown += `- Update Freshness: ${data.breakdown.updateFreshness}/100\n`;
-      markdown += `- Dependency Integrity: ${data.breakdown.dependencyIntegrity}/100\n`;
-      markdown += `- Coverage Evidence: ${data.breakdown.coverageEvidence}/100\n`;
-      markdown += `- Agent Relevance: ${data.breakdown.agentRelevance}/100\n`;
-      markdown += `- Integrity Score: ${data.breakdown.integrityScore}/100\n\n`;
-
-      if (data.issues.length > 0) {
-        markdown += `**Issues:**\n`;
-        data.issues.forEach((issue) => {
-          markdown += `- ${issue}\n`;
-        });
-      }
-      markdown += `\n`;
-    }
-
-    markdown += `---
-
-**Generated by:** GDD Health Scoring System
-`;
 
     const outputPath = path.join(this.rootDir, 'docs', 'system-health.md');
     await fs.writeFile(outputPath, markdown, 'utf-8');
   }
 
-  /**
-   * Generate gdd-health.json
-   */
   async generateJSONReport(stats) {
-    const output = {
-      ...stats,
-      nodes: {}
-    };
-
+    const output = { ...stats, nodes: {} };
     for (const [nodeName, data] of Object.entries(this.scores)) {
       output.nodes[nodeName] = {
         score: data.score,
@@ -610,50 +305,35 @@ class GDDHealthScorer {
         issues: data.issues
       };
     }
-
     const outputPath = path.join(this.rootDir, 'gdd-health.json');
     await fs.writeFile(outputPath, JSON.stringify(output, null, 2), 'utf-8');
   }
 
-  /**
-   * Print summary to console
-   */
   printSummary(stats) {
-    if (this.options.json) return;
-
-    console.log('');
-    console.log('═══════════════════════════════════════');
-    console.log('       📊 NODE HEALTH SUMMARY');
-    console.log('═══════════════════════════════════════');
-    console.log('');
-    console.log(`🟢 Healthy:   ${stats.healthy_count}`);
-    console.log(`🟡 Degraded:  ${stats.degraded_count}`);
-    console.log(`🔴 Critical:  ${stats.critical_count}`);
-    console.log('');
-    console.log(`Average Score: ${stats.overall_score}/100`);
-    console.log('');
-    console.log(`Overall Status: ${stats.status}`);
-    console.log('');
-    console.log('📄 Reports generated:');
-    console.log('   - docs/system-health.md');
-    console.log('   - gdd-health.json');
-    console.log('');
+    console.log(`Overall Health: ${stats.overall_score}/100`);
   }
 }
 
-/**
- * CLI entry point that parses command-line options and runs the GDD health scoring workflow.
- *
- * Parses the `--json` flag, instantiates a GDDHealthScorer with the derived options, and invokes its scoring process which generates the health reports and console summary (console output is suppressed when `--json` is provided).
- */
 async function main() {
   const args = process.argv.slice(2);
   const options = {
-    json: args.includes('--json')
+    json: args.includes('--json'),
+    ci: args.includes('--ci')
   };
 
   const scorer = new GDDHealthScorer(options);
-  await scorer.score();
+  const { stats } = await scorer.score();
+
+  if (options.ci) {
+    const minScore = process.env.GDD_MIN_HEALTH_SCORE
+      ? Number(process.env.GDD_MIN_HEALTH_SCORE)
+      : 87;
+    const score = stats.overall_score || 0;
+    console.log(`Overall Health: ${score}/100`);
+    if (Number.isFinite(minScore) && score < minScore) {
+      process.exit(1);
+    }
+  }
 }
 
 if (require.main === module) {

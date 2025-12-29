@@ -187,7 +187,7 @@ describe('GenerateReplyWorker - Security Validations', () => {
           mockContext
         );
 
-      expect(typeof result.valid).toBe('boolean');
+        expect(typeof result.valid).toBe('boolean');
       });
 
       test('should fail when content text differs', async () => {
@@ -202,10 +202,10 @@ describe('GenerateReplyWorker - Security Validations', () => {
           mockContext
         );
 
-      expect(typeof result.valid).toBe('boolean');
-      if (!result.valid) {
-        expect(result.reason).toBeDefined();
-      }
+        expect(typeof result.valid).toBe('boolean');
+        if (!result.valid) {
+          expect(result.reason).toBeDefined();
+        }
       });
 
       test('should handle null/undefined content gracefully', async () => {
@@ -220,8 +220,8 @@ describe('GenerateReplyWorker - Security Validations', () => {
           mockContext
         );
 
-      expect(typeof result.valid).toBe('boolean');
-      expect(result.reason).toBeDefined();
+        expect(typeof result.valid).toBe('boolean');
+        expect(result.reason).toBeDefined();
       });
     });
 
@@ -259,7 +259,7 @@ describe('GenerateReplyWorker - Security Validations', () => {
           mockContext
         );
 
-      expect(typeof result.valid).toBe('boolean');
+        expect(typeof result.valid).toBe('boolean');
 
         // Even though lengths are same, checksums should be different
         const storedChecksum = worker.calculateContentChecksum(storedResponse.response_text);
@@ -419,7 +419,7 @@ describe('GenerateReplyWorker - Security Validations', () => {
           mockContext
         );
 
-      expect(typeof result.valid).toBe('boolean');
+        expect(typeof result.valid).toBe('boolean');
       });
     });
 

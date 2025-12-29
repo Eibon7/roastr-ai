@@ -1,0 +1,132 @@
+{
+  "case_id": "2025-12-27-20-43-44-707",
+  "timestamp": "2025-12-27T20:43:44.707Z",
+  "actor": "ubuntu",
+  "domains": [],
+  "files_changed": [
+    ".issue_lock",
+    "apps/backend-v2/package-lock.json",
+    "apps/backend-v2/package.json",
+    "apps/backend-v2/src/config/admin-controlled.yaml",
+    "apps/backend-v2/src/routes/auth.ts",
+    "apps/backend-v2/src/services/authService.ts",
+    "apps/backend-v2/vitest.config.ts",
+    "docs/SSOT-V2.md",
+    "docs/SSOT/README.md",
+    "docs/SSOT/roastr-ssot-v2.md",
+    "docs/nodes-v2/11-feature-flags.md",
+    "docs/nodes-v2/auth/overview.md",
+    "scripts/ci/validate-feature-flags.js",
+    "src/services/ssotService.js"
+  ],
+  "severity": "SAFE",
+  "action": "APPROVED",
+  "violations": {
+    "critical": 0,
+    "sensitive": 0,
+    "safe": 14
+  },
+  "details": [
+    {
+      "file": ".issue_lock",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/package-lock.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/package.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/config/admin-controlled.yaml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/routes/auth.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/src/services/authService.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "apps/backend-v2/vitest.config.ts",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/SSOT-V2.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/SSOT/README.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/SSOT/roastr-ssot-v2.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/nodes-v2/11-feature-flags.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/nodes-v2/auth/overview.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "scripts/ci/validate-feature-flags.js",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "src/services/ssotService.js",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    }
+  ],
+  "approval_required": false,
+  "approved_by": null,
+  "notes": "Auto-approved"
+}

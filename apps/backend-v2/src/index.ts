@@ -8,6 +8,8 @@
 import express from 'express';
 import { initializeAmplitude } from './lib/analytics.js';
 import authRoutes from './routes/auth.js';
+import { attachRequestId } from './middleware/requestId.js';
+import { logger } from './utils/logger.js';
 
 // Initialize Amplitude Analytics
 initializeAmplitude();
@@ -16,6 +18,7 @@ const app = express();
 const PORT = process.env.PORT || 3002;
 
 app.use(express.json());
+app.use(attachRequestId);
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
@@ -32,7 +35,7 @@ app.use('/api/v2/auth', authRoutes);
 // Start server (only if not in test environment)
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
-    console.log(`🚀 Backend v2 server running on port ${PORT}`);
+    logger.info(`Backend v2 server running on port ${PORT}`);
   });
 }
 

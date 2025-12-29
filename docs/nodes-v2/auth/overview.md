@@ -146,6 +146,7 @@ Flujos completos de autenticación:
 **Endpoints principales:**
 - `POST /api/v2/auth/login`
 - `POST /api/v2/auth/magic-link`
+- `POST /api/v2/auth/register` (flag: `enable_user_registration`) - **UI:** `frontend/src/pages/auth/register.tsx` (ROA-375)
 - `GET /api/v2/auth/oauth/:platform`
 - `GET /api/v2/auth/oauth/:platform/callback`
 

@@ -1,23 +1,23 @@
-# Auth - Error Taxonomy
+# Auth - Error Taxonomy V2
 
 **Subnodo:** `auth/error-taxonomy`  
-**Última actualización:** 2025-12-26  
-**Owner:** ROA-364 (documenta ROA-372)
+**Última actualización:** 2025-12-28  
+**Owner:** ROA-405 (Auth Error Contract V2)
 
 ---
 
-## 📋 Propósito
+## 📋 Propósito (ROA-405)
 
-Este subnodo documenta la **taxonomía completa de errores de autenticación** implementada en ROA-372.
+Este subnodo documenta la **taxonomía estable de errores de Auth (V2)** y el **contrato backend → frontend**.
 
 **Strong Concept:** Este nodo es el dueño único de `authErrorTaxonomy`.
 
 **Objetivos:**
 
-1. **Códigos estructurados:** Categorías claras (AUTH_*, AUTHZ_*, SESSION_*, TOKEN_*, ACCOUNT_*)
-2. **Mapeo HTTP:** Códigos de error → HTTP status codes apropiados
-3. **User-facing messages:** Sin user enumeration, mensajes claros
-4. **Retryability logic:** Determinar si un error es retry-able
+1. **Slugs estables:** Identificadores únicos (AUTH_*, AUTHZ_*, SESSION_*, TOKEN_*, ACCOUNT_*, POLICY_*)
+2. **Contrato público:** Frontend resuelve por `slug` (NO por HTTP), backend devuelve solo `slug + retryable + request_id`
+3. **No filtrado:** ❌ No mensajes técnicos, ❌ no PII, ❌ no errores crudos de Supabase
+4. **Retryability explícito:** `retryable` definido por slug (no inferido por HTTP status)
 
 ---
 
@@ -25,161 +25,108 @@ Este subnodo documenta la **taxonomía completa de errores de autenticación** i
 
 **Archivo:** `apps/backend-v2/src/utils/authErrorTaxonomy.ts`
 
-### Clase Base: AuthError
+### Tipos base (V2)
 
 ```typescript
-export class AuthError extends Error {
-  code: AuthErrorCode;
-  statusCode: number;
-  details?: unknown;
+interface AuthErrorData {
+  slug: string; // estable (ej. AUTH_INVALID_CREDENTIALS)
+  http_status: number;
+  retryable: boolean;
+  user_message_key: string; // i18n key (NO texto literal)
+  category: 'auth' | 'authz' | 'session' | 'token' | 'account' | 'policy';
+}
 
-  constructor(code: AuthErrorCode, message?: string, details?: unknown) {
-    super(message || code);
-    this.name = 'AuthError';
-    this.code = code;
-    this.details = details;
+type PublicAuthErrorV2 = {
+  slug: string;
+  retryable: boolean;
+};
 
-    // Mapear código a HTTP status code
-    if (code.startsWith('AUTH_')) {
-      this.statusCode = 401;
-    } else if (code.startsWith('AUTHZ_')) {
-      this.statusCode = 403;
-    } else if (code.startsWith('SESSION_') || code.startsWith('TOKEN_')) {
-      this.statusCode = 401;
-    } else if (code.startsWith('ACCOUNT_')) {
-      this.statusCode = code === AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS ? 409 : 404;
-    } else {
-      this.statusCode = 500;
-    }
+type AuthErrorResponseV2 = {
+  success: false;
+  error: PublicAuthErrorV2;
+  request_id: string;
+};
+```
 
-    Error.captureStackTrace(this, this.constructor);
+### Clase AuthError
+
+```typescript
+class AuthError extends Error {
+  slug: string;
+  http_status: number;
+  retryable: boolean;
+  user_message_key: string;
+  category: string;
+  cause?: unknown;
+
+  toPublicError(): PublicAuthErrorV2 {
+    return {
+      slug: this.slug,
+      retryable: this.retryable
+    };
   }
 }
 ```
 
 ---
 
-## 📚 Categorías de Errores
+## 📚 Taxonomía de Errores (SSOT)
+
+> **IMPORTANTE:** Esta taxonomía está definida en `apps/backend-v2/src/utils/authErrorTaxonomy.ts` como `AUTH_ERROR_TAXONOMY`.
+> El backend **NO devuelve mensajes de usuario** — solo `slug` y `retryable`.
 
 ### 1. AUTH_* — Errores de Autenticación (401)
 
-**Definición:** Credenciales inválidas, cuenta bloqueada, rate limit.
-
-| Código                       | HTTP | Descripción                                | Retry? |
-| ---------------------------- | ---- | ------------------------------------------ | ------ |
-| `AUTH_INVALID_CREDENTIALS`   | 401  | Email o password incorrectos               | ❌     |
-| `AUTH_EMAIL_NOT_VERIFIED`    | 401  | Email no verificado (si aplica)            | ❌     |
-| `AUTH_ACCOUNT_LOCKED`        | 401  | Cuenta bloqueada por admin                 | ❌     |
-| `AUTH_RATE_LIMIT_EXCEEDED`   | 429  | Demasiados intentos de login               | ✅     |
-| `AUTH_DISABLED`              | 401  | Autenticación deshabilitada (maintenance)  | ✅     |
-
-**User-facing messages:**
-
-```typescript
-AUTH_INVALID_CREDENTIALS   → "Invalid email or password"
-AUTH_EMAIL_NOT_VERIFIED    → "Please verify your email before logging in"
-AUTH_ACCOUNT_LOCKED        → "Your account has been locked. Contact support."
-AUTH_RATE_LIMIT_EXCEEDED   → "Too many attempts. Please try again later."
-AUTH_DISABLED              → "Authentication is temporarily unavailable. Try again soon."
-```
-
-**⚠️ User Enumeration Prevention:**
-- `AUTH_INVALID_CREDENTIALS` usado para "email no existe" Y "password incorrecta"
-- Timing attacks mitigados con delay constante
+| Slug                       | HTTP | Retry? | user_message_key              |
+| -------------------------- | ---- | ------ | ----------------------------- |
+| `AUTH_INVALID_CREDENTIALS` | 401  | ❌     | auth.error.invalid_credentials |
+| `AUTH_EMAIL_NOT_VERIFIED`  | 401  | ❌     | auth.error.email_not_verified  |
+| `AUTH_ACCOUNT_LOCKED`      | 401  | ❌     | auth.error.account_locked      |
+| `AUTH_UNKNOWN`             | 500  | ❌     | auth.error.unknown             |
 
 ### 2. AUTHZ_* — Errores de Autorización (403)
 
-**Definición:** Usuario autenticado pero sin permisos para la acción.
-
-| Código                           | HTTP | Descripción                                | Retry? |
-| -------------------------------- | ---- | ------------------------------------------ | ------ |
-| `AUTHZ_INSUFFICIENT_PERMISSIONS` | 403  | Usuario no tiene permisos para esta acción | ❌     |
-| `AUTHZ_ROLE_NOT_ALLOWED`         | 403  | Rol de usuario no permitido (ej: no admin) | ❌     |
-| `AUTHZ_MAGIC_LINK_NOT_ALLOWED`   | 403  | Magic link deshabilitado para esta cuenta  | ❌     |
-
-**User-facing messages:**
-
-```typescript
-AUTHZ_INSUFFICIENT_PERMISSIONS → "You don't have permission to perform this action"
-AUTHZ_ROLE_NOT_ALLOWED         → "Admin access required"
-AUTHZ_MAGIC_LINK_NOT_ALLOWED   → "Magic link login is not available for your account"
-```
-
-**Diferencia con AUTH_*:**
-- `AUTH_*` → Usuario NO autenticado (credenciales inválidas)
-- `AUTHZ_*` → Usuario SÍ autenticado pero sin permisos
+| Slug                             | HTTP | Retry? | user_message_key                  |
+| -------------------------------- | ---- | ------ | --------------------------------- |
+| `AUTHZ_INSUFFICIENT_PERMISSIONS` | 403  | ❌     | auth.error.insufficient_permissions |
+| `AUTHZ_ROLE_NOT_ALLOWED`         | 403  | ❌     | auth.error.role_not_allowed         |
+| `AUTHZ_MAGIC_LINK_NOT_ALLOWED`   | 403  | ❌     | auth.error.magic_link_not_allowed   |
 
 ### 3. SESSION_* — Errores de Sesión (401)
 
-**Definición:** Sesión expirada, inválida o revocada.
-
-| Código                      | HTTP | Descripción                                | Retry? |
-| --------------------------- | ---- | ------------------------------------------ | ------ |
-| `SESSION_EXPIRED`           | 401  | Sesión expirada (>1h sin refresh)          | ✅     |
-| `SESSION_INVALID`           | 401  | Sesión malformada o corrupta               | ❌     |
-| `SESSION_REVOKED`           | 401  | Sesión revocada (logout, admin suspension) | ❌     |
-| `SESSION_INACTIVITY_TIMEOUT`| 401  | Inactividad >7 días (refresh_token expired)| ✅     |
-
-**User-facing messages:**
-
-```typescript
-SESSION_EXPIRED            → "Your session has expired. Please log in again."
-SESSION_INVALID            → "Invalid session. Please log in again."
-SESSION_REVOKED            → "Your session was ended. Please log in again."
-SESSION_INACTIVITY_TIMEOUT → "You've been logged out due to inactivity. Please log in again."
-```
-
-**Retry-able:**
-- `SESSION_EXPIRED`, `SESSION_INACTIVITY_TIMEOUT` → Usuario puede relogin
-- `SESSION_INVALID`, `SESSION_REVOKED` → Generalmente no retry-able
+| Slug                          | HTTP | Retry? | user_message_key                   |
+| ----------------------------- | ---- | ------ | ---------------------------------- |
+| `SESSION_EXPIRED`             | 401  | ✅     | auth.error.session_expired         |
+| `SESSION_INVALID`             | 401  | ❌     | auth.error.session_invalid         |
+| `SESSION_REVOKED`             | 401  | ❌     | auth.error.session_revoked         |
+| `SESSION_INACTIVITY_TIMEOUT`  | 401  | ✅     | auth.error.session_inactivity       |
 
 ### 4. TOKEN_* — Errores de Tokens (401)
 
-**Definición:** Tokens JWT o refresh inválidos, expirados, revocados.
+| Slug              | HTTP | Retry? | user_message_key         |
+| ----------------- | ---- | ------ | ------------------------ |
+| `TOKEN_EXPIRED`   | 401  | ✅     | auth.error.token_expired |
+| `TOKEN_INVALID`   | 401  | ❌     | auth.error.token_invalid |
+| `TOKEN_MISSING`   | 401  | ❌     | auth.error.token_missing |
+| `TOKEN_REVOKED`   | 401  | ❌     | auth.error.token_revoked |
 
-| Código           | HTTP | Descripción                                | Retry? |
-| ---------------- | ---- | ------------------------------------------ | ------ |
-| `TOKEN_EXPIRED`  | 401  | Token JWT expirado                         | ✅     |
-| `TOKEN_INVALID`  | 401  | Token malformado o con firma inválida     | ❌     |
-| `TOKEN_MISSING`  | 401  | Token no proporcionado en request          | ❌     |
-| `TOKEN_REVOKED`  | 401  | Token revocado manualmente                 | ❌     |
+### 5. ACCOUNT_* — Errores de Cuenta (404/409/403)
 
-**User-facing messages:**
+| Slug                            | HTTP | Retry? | user_message_key                     |
+| ------------------------------- | ---- | ------ | ------------------------------------ |
+| `ACCOUNT_NOT_FOUND`             | 404  | ❌     | auth.error.invalid_credentials (anti-enum) |
+| `ACCOUNT_SUSPENDED`             | 403  | ❌     | auth.error.account_suspended          |
+| `ACCOUNT_DELETED`               | 404  | ❌     | auth.error.account_deleted            |
+| `ACCOUNT_EMAIL_ALREADY_EXISTS`  | 409  | ❌     | auth.error.email_already_exists       |
 
-```typescript
-TOKEN_EXPIRED  → "Your session has expired. Please log in again."
-TOKEN_INVALID  → "Invalid authentication token. Please log in again."
-TOKEN_MISSING  → "Authentication required. Please log in."
-TOKEN_REVOKED  → "Your access has been revoked. Please log in again."
-```
+### 6. POLICY_* — Errores de Política (400/403/429/503)
 
-**Diferencia con SESSION_*:**
-- `TOKEN_*` → Problema técnico con el token JWT
-- `SESSION_*` → Problema conceptual con la sesión Supabase
-
-### 5. ACCOUNT_* — Errores de Cuenta (404/409)
-
-**Definición:** Cuenta no encontrada, suspendida, duplicada.
-
-| Código                        | HTTP | Descripción                                | Retry? |
-| ----------------------------- | ---- | ------------------------------------------ | ------ |
-| `ACCOUNT_NOT_FOUND`           | 404  | Cuenta no existe                           | ❌     |
-| `ACCOUNT_SUSPENDED`           | 403  | Cuenta suspendida por admin                | ❌     |
-| `ACCOUNT_DELETED`             | 404  | Cuenta eliminada (GDPR)                    | ❌     |
-| `ACCOUNT_EMAIL_ALREADY_EXISTS`| 409  | Email ya registrado (signup)               | ❌     |
-
-**User-facing messages:**
-
-```typescript
-ACCOUNT_NOT_FOUND            → "Invalid email or password" // Same as INVALID_CREDENTIALS
-ACCOUNT_SUSPENDED            → "Your account has been suspended. Contact support."
-ACCOUNT_DELETED              → "This account no longer exists."
-ACCOUNT_EMAIL_ALREADY_EXISTS → "An account with this email already exists."
-```
-
-**⚠️ User Enumeration Prevention:**
-- `ACCOUNT_NOT_FOUND` usa mismo mensaje que `AUTH_INVALID_CREDENTIALS`
-- Solo `ACCOUNT_EMAIL_ALREADY_EXISTS` revela existencia (pero solo en signup, aceptable)
+| Slug                      | HTTP | Retry? | Delay (ms)  | user_message_key              |
+| ------------------------- | ---- | ------ | ----------- | ----------------------------- |
+| `POLICY_INVALID_REQUEST`  | 400  | ❌     | 0           | auth.error.invalid_request    |
+| `POLICY_NOT_FOUND`        | 403  | ❌     | 0           | auth.error.not_found          |
+| `POLICY_RATE_LIMITED`     | 429  | ✅     | 15×60×1000  | auth.error.rate_limited       |
+| `POLICY_SERVICE_DISABLED` | 503  | ✅     | 60×60×1000  | auth.error.service_disabled   |
 
 ---
 
@@ -188,109 +135,81 @@ ACCOUNT_EMAIL_ALREADY_EXISTS → "An account with this email already exists."
 ### Función: mapSupabaseError()
 
 ```typescript
-export function mapSupabaseError(error: any): AuthError {
-  const message = error?.message || 'Unknown error';
+export function mapSupabaseError(error: unknown): AuthError {
+  const message = String(error?.message || '');
 
   // Email ya existe
   if (message.includes('already registered') || message.includes('duplicate')) {
-    return new AuthError(
-      AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS,
-      'An account with this email already exists',
-      error
-    );
+    return new AuthError(AUTH_ERROR_CODES.ACCOUNT_EMAIL_ALREADY_EXISTS);
   }
 
   // Credenciales inválidas
   if (message.includes('Invalid login credentials') || message.includes('wrong password')) {
-    return new AuthError(
-      AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-      'Invalid email or password',
-      error
-    );
+    return new AuthError(AUTH_ERROR_CODES.AUTH_INVALID_CREDENTIALS);
   }
 
   // Email no verificado
   if (message.includes('Email not confirmed')) {
-    return new AuthError(
-      AUTH_ERROR_CODES.EMAIL_NOT_VERIFIED,
-      'Please verify your email before logging in',
-      error
-    );
+    return new AuthError(AUTH_ERROR_CODES.AUTH_EMAIL_NOT_VERIFIED);
   }
 
   // Token expirado
   if (message.includes('expired') || message.includes('JWT expired')) {
-    return new AuthError(
-      AUTH_ERROR_CODES.TOKEN_EXPIRED,
-      'Your session has expired. Please log in again',
-      error
-    );
+    return new AuthError(AUTH_ERROR_CODES.TOKEN_EXPIRED);
   }
 
   // Token inválido
   if (message.includes('invalid') && message.includes('token')) {
-    return new AuthError(
-      AUTH_ERROR_CODES.TOKEN_INVALID,
-      'Invalid authentication token',
-      error
-    );
+    return new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID);
   }
 
   // Sesión inválida
   if (message.includes('session')) {
-    return new AuthError(
-      AUTH_ERROR_CODES.SESSION_INVALID,
-      'Invalid session',
-      error
-    );
+    return new AuthError(AUTH_ERROR_CODES.SESSION_INVALID);
   }
 
-  // Rate limit from Supabase
+  // Rate limit desde Supabase
   if (
     message.includes('Too many requests') ||
     message.includes('rate_limit') ||
     message.includes('over_request_rate_limit')
   ) {
-    return new AuthError(
-      AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED,
-      'Too many requests. Please try again later',
-      error
-    );
+    return new AuthError(AUTH_ERROR_CODES.POLICY_RATE_LIMITED);
   }
 
-  // Fallback genérico
-  return new AuthError(
-    AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-    'Authentication failed',
-    error
-  );
+  // Fail-closed: fallback a AUTH_UNKNOWN (no exponer mensaje crudo)
+  return new AuthError(AUTH_ERROR_CODES.AUTH_UNKNOWN, { cause: error });
 }
 ```
 
-### Uso en Auth Service
+### Función: mapPolicyResultToAuthError()
 
 ```typescript
-// apps/backend-v2/src/services/authService.ts
-import { mapSupabaseError } from '@/utils/authErrorTaxonomy';
+export function mapPolicyResultToAuthError(
+  result: PolicyCheckResult
+): AuthError | null {
+  if (result.allowed) return null;
 
-async function loginWithPassword(email: string, password: string): Promise<Session> {
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    
-    if (error) {
-      // Mapear error de Supabase a AuthError
-      throw mapSupabaseError(error);
-    }
-    
-    return data.session;
-  } catch (error) {
-    // Si ya es AuthError, re-throw
-    if (error instanceof AuthError) {
-      throw error;
-    }
-    
-    // Si es otro error, mapear
-    throw mapSupabaseError(error);
+  switch (result.reason) {
+    case 'feature_disabled':
+      return new AuthError(AUTH_ERROR_CODES.POLICY_SERVICE_DISABLED, {
+        cause: { kind: 'policy', result }
+      });
+
+    case 'rate_limited':
+      return new AuthError(AUTH_ERROR_CODES.POLICY_RATE_LIMITED, {
+        cause: { kind: 'policy', result }
+      });
+
+    case 'validation_failed':
+      return new AuthError(AUTH_ERROR_CODES.POLICY_INVALID_REQUEST, {
+        cause: { kind: 'policy', result }
+      });
+
+    default:
+      return new AuthError(AUTH_ERROR_CODES.POLICY_NOT_FOUND, {
+        cause: { kind: 'policy', result }
+      });
   }
 }
 ```
@@ -302,141 +221,90 @@ async function loginWithPassword(email: string, password: string): Promise<Sessi
 ### Función: isRetryableError()
 
 ```typescript
-export function isRetryableError(error: AuthError): boolean {
-  const retryableCodes: AuthErrorCode[] = [
-    AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED,
-    AUTH_ERROR_CODES.AUTH_DISABLED,
-    AUTH_ERROR_CODES.SESSION_EXPIRED,
-    AUTH_ERROR_CODES.SESSION_INACTIVITY_TIMEOUT,
-    AUTH_ERROR_CODES.TOKEN_EXPIRED
-  ];
-  
-  return retryableCodes.includes(error.code);
+export function isRetryableError(slug: string): boolean {
+  const entry = AUTH_ERROR_TAXONOMY.find((e) => e.slug === slug);
+  return entry?.retryable ?? false;
 }
 ```
 
 ### Función: getRetryDelay()
 
 ```typescript
-export function getRetryDelay(error: AuthError): number {
-  switch (error.code) {
-    case AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED:
+export function getRetryDelay(slug: string): number {
+  switch (slug) {
+    case 'POLICY_RATE_LIMITED':
       return 15 * 60 * 1000; // 15 minutos
-    
-    case AUTH_ERROR_CODES.AUTH_DISABLED:
-      return 5 * 60 * 1000; // 5 minutos
-    
-    case AUTH_ERROR_CODES.SESSION_EXPIRED:
-    case AUTH_ERROR_CODES.SESSION_INACTIVITY_TIMEOUT:
-    case AUTH_ERROR_CODES.TOKEN_EXPIRED:
-      return 0; // Inmediato (usuario puede relogin)
-    
+    case 'POLICY_SERVICE_DISABLED':
+      return 60 * 60 * 1000; // 1 hora
+    case 'POLICY_MAINTENANCE':
+      return 24 * 60 * 60 * 1000; // 24 horas
     default:
-      return 0;
+      return 0; // No delay (usuario decide)
   }
-}
-```
-
-### Uso en Frontend
-
-```typescript
-// Frontend: Retry automático con delay apropiado
-async function retryableLogin(email: string, password: string, maxRetries = 3): Promise<Session> {
-  let attempt = 0;
-  
-  while (attempt < maxRetries) {
-    try {
-      return await loginWithPassword(email, password);
-    } catch (error) {
-      if (error instanceof AuthError && isRetryableError(error)) {
-        const delay = getRetryDelay(error);
-        
-        if (delay > 0) {
-          console.log(`[Auth] Retrying in ${delay / 1000}s...`);
-          await sleep(delay);
-          attempt++;
-        } else {
-          // Delay 0 → no retry automático, dejar que usuario reintente manualmente
-          throw error;
-        }
-      } else {
-        // Error no retry-able
-        throw error;
-      }
-    }
-  }
-  
-  throw new Error('Max retries exceeded');
 }
 ```
 
 ---
 
-## 📊 Response Format
+## 📤 Respuesta Pública
 
-### Standard Error Response
+### Función: sendAuthError()
 
 ```typescript
-interface AuthErrorResponse {
-  success: false;
-  error: {
-    code: AuthErrorCode;
-    message: string;
-    statusCode: number;
-    details?: any;
-    retryable?: boolean;
-    retryAfter?: number; // Minutos
-  };
+export function sendAuthError(
+  req: Request,
+  res: Response,
+  error: unknown,
+  logContext?: Record<string, unknown>
+): Response {
+  const authError = asAuthError(error);
+  const requestId = getRequestId(req);
+
+  // Logging estructurado (sin PII)
+  logger.warn('auth.error.generated', {
+    error_slug: authError.slug,
+    http_status: authError.http_status,
+    retryable: authError.retryable,
+    request_id: requestId,
+    ...logContext
+  });
+
+  // Retry-After header (si delay > 0)
+  const delay = getRetryDelay(authError.slug);
+  if (delay > 0) {
+    res.setHeader('Retry-After', Math.ceil(delay / 1000));
+  }
+
+  // Respuesta pública (NO mensajes técnicos, NO PII)
+  return res.status(authError.http_status).json({
+    success: false,
+    error: authError.toPublicError(),
+    request_id: requestId
+  });
 }
 ```
 
-### Ejemplo: PASSWORD INCORRECT
+### Ejemplo de Respuesta
 
 ```json
 {
   "success": false,
   "error": {
-    "code": "AUTH_INVALID_CREDENTIALS",
-    "message": "Invalid email or password",
-    "statusCode": 401,
+    "slug": "AUTH_INVALID_CREDENTIALS",
     "retryable": false
-  }
+  },
+  "request_id": "req_1234567890abcdef"
 }
 ```
-
-### Ejemplo: RATE LIMIT EXCEEDED
 
 ```json
 {
   "success": false,
   "error": {
-    "code": "AUTH_RATE_LIMIT_EXCEEDED",
-    "message": "Too many login attempts. Please try again later.",
-    "statusCode": 429,
-    "retryable": true,
-    "retryAfter": 15,
-    "details": {
-      "attempts": 5,
-      "maxAttempts": 5,
-      "windowMs": 900000,
-      "blockExpiresAt": 1703000000
-    }
-  }
-}
-```
-
-### Ejemplo: SESSION EXPIRED
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "SESSION_EXPIRED",
-    "message": "Your session has expired. Please log in again.",
-    "statusCode": 401,
-    "retryable": true,
-    "retryAfter": 0
-  }
+    "slug": "POLICY_RATE_LIMITED",
+    "retryable": true
+  },
+  "request_id": "req_fedcba0987654321"
 }
 ```
 
@@ -448,68 +316,69 @@ interface AuthErrorResponse {
 
 **Problema:** Atacante puede determinar si un email existe.
 
-**Solución:**
+**Solución V2:**
 
 ```typescript
-// ✅ CORRECTO: Mismo mensaje para "email no existe" y "password incorrecta"
+// ✅ CORRECTO: Mismo slug para "email no existe" y "password incorrecta"
 if (userNotFound || passwordIncorrect) {
-  throw new AuthError(
-    AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-    'Invalid email or password'
-  );
+  throw new AuthError(AUTH_ERROR_CODES.AUTH_INVALID_CREDENTIALS);
 }
 
-// ❌ INCORRECTO: Revela si email existe
+// ❌ INCORRECTO: Revelar si email existe
 if (userNotFound) {
-  throw new AuthError(ACCOUNT_NOT_FOUND, 'Email not found');
+  throw new AuthError(AUTH_ERROR_CODES.ACCOUNT_NOT_FOUND);
 }
 if (passwordIncorrect) {
-  throw new AuthError(INVALID_CREDENTIALS, 'Wrong password');
+  throw new AuthError(AUTH_ERROR_CODES.AUTH_INVALID_CREDENTIALS);
 }
 ```
 
 **Excepciones aceptables:**
+
 - `ACCOUNT_EMAIL_ALREADY_EXISTS` en signup (necesario para UX)
 - `ACCOUNT_SUSPENDED` (usuario ya autenticado previamente)
 
-### 2. Timing Attacks Mitigation
+### 2. No Exponer Detalles Técnicos
 
 ```typescript
-// Añadir delay constante para prevenir timing attacks
-async function validateCredentials(email: string, password: string): Promise<boolean> {
-  const startTime = Date.now();
-  
-  try {
-    const valid = await actualValidation(email, password);
-    return valid;
-  } finally {
-    // Asegurar tiempo constante (ej: 100ms)
-    const elapsed = Date.now() - startTime;
-    const minTime = 100;
-    if (elapsed < minTime) {
-      await sleep(minTime - elapsed);
-    }
+// ✅ CORRECTO: Solo slug + retryable + request_id al frontend
+return {
+  success: false,
+  error: {
+    slug: 'AUTH_INVALID_CREDENTIALS',
+    retryable: false
+  },
+  request_id: 'req_123'
+};
+
+// ❌ INCORRECTO: Exponer mensajes crudos, stack traces, o PII
+return {
+  success: false,
+  error: {
+    message: error.message, // ❌ Puede contener detalles técnicos
+    stack: error.stack, // ❌ NUNCA en producción
+    email: user.email // ❌ PII
   }
-}
+};
 ```
 
-### 3. Error Details en Producción
+### 3. Logging Sin PII
 
 ```typescript
-// En producción, NO exponer detalles técnicos
-if (process.env.NODE_ENV === 'production') {
-  delete error.details.stack;
-  delete error.details.originalError;
-}
+// ✅ CORRECTO: Hash o prefijo para identificación
+logger.warn('auth.error.generated', {
+  error_slug: 'AUTH_INVALID_CREDENTIALS',
+  emailHash: sha256(email), // Hash irreversible
+  ipPrefix: ip.split('.').slice(0, 2).join('.') + '.x.x',
+  request_id: 'req_123'
+});
 
-// En dev, mostrar todo para debugging
-if (process.env.NODE_ENV === 'development') {
-  error.details = {
-    ...error.details,
-    stack: error.stack,
-    originalError: error.cause
-  };
-}
+// ❌ INCORRECTO: Loggear PII en plain text
+logger.warn('auth error', {
+  email: user.email, // ❌ PII
+  password: '***', // ❌ NUNCA loggear passwords
+  ip: req.ip // ❌ Puede ser PII según GDPR
+});
 ```
 
 ---
@@ -518,52 +387,80 @@ if (process.env.NODE_ENV === 'development') {
 
 ### Unit Tests
 
+Ver: `apps/backend-v2/tests/unit/utils/authErrorTaxonomy.test.ts`
+
 ```typescript
-// tests/unit/utils/authErrorTaxonomy.test.ts
 describe('AuthError', () => {
-  test('AUTH_* codes map to 401', () => {
-    const error = new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS);
-    expect(error.statusCode).toBe(401);
+  test('toPublicError() only exposes slug + retryable', () => {
+    const error = new AuthError(AUTH_ERROR_CODES.AUTH_INVALID_CREDENTIALS);
+    const publicError = error.toPublicError();
+
+    expect(publicError).toEqual({
+      slug: 'AUTH_INVALID_CREDENTIALS',
+      retryable: false
+    });
+    expect(publicError).not.toHaveProperty('http_status');
+    expect(publicError).not.toHaveProperty('user_message_key');
   });
-  
-  test('AUTHZ_* codes map to 403', () => {
-    const error = new AuthError(AUTH_ERROR_CODES.INSUFFICIENT_PERMISSIONS);
-    expect(error.statusCode).toBe(403);
+
+  test('mapSupabaseError() fail-closed to AUTH_UNKNOWN', () => {
+    const unknownError = { message: 'Something weird happened' };
+    const authError = mapSupabaseError(unknownError);
+
+    expect(authError.slug).toBe('AUTH_UNKNOWN');
   });
-  
-  test('ACCOUNT_EMAIL_ALREADY_EXISTS maps to 409', () => {
-    const error = new AuthError(AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS);
-    expect(error.statusCode).toBe(409);
+
+  test('POLICY_RATE_LIMITED is retryable with 15min delay', () => {
+    const error = new AuthError(AUTH_ERROR_CODES.POLICY_RATE_LIMITED);
+
+    expect(isRetryableError(error.slug)).toBe(true);
+    expect(getRetryDelay(error.slug)).toBe(15 * 60 * 1000);
   });
 });
+```
 
-describe('mapSupabaseError', () => {
-  test('maps "already registered" to EMAIL_ALREADY_EXISTS', () => {
-    const supabaseError = { message: 'User already registered' };
-    const authError = mapSupabaseError(supabaseError);
-    
-    expect(authError.code).toBe(AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS);
-    expect(authError.statusCode).toBe(409);
-  });
-  
-  test('maps "Invalid login credentials" to INVALID_CREDENTIALS', () => {
-    const supabaseError = { message: 'Invalid login credentials' };
-    const authError = mapSupabaseError(supabaseError);
-    
-    expect(authError.code).toBe(AUTH_ERROR_CODES.INVALID_CREDENTIALS);
-    expect(authError.statusCode).toBe(401);
-  });
-});
+### Contract Tests (Backend → Frontend)
 
-describe('isRetryableError', () => {
-  test('RATE_LIMIT_EXCEEDED is retryable', () => {
-    const error = new AuthError(AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED);
-    expect(isRetryableError(error)).toBe(true);
+Ver: `apps/backend-v2/tests/flow/auth-http.endpoints.test.ts`
+
+```typescript
+describe('Auth Error Contract V2', () => {
+  test('POST /auth/login with invalid credentials returns V2 contract', async () => {
+    const response = await request(app)
+      .post('/auth/login')
+      .send({ email: 'bad@example.com', password: 'wrong' });
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({
+      success: false,
+      error: {
+        slug: 'AUTH_INVALID_CREDENTIALS',
+        retryable: false
+      },
+      request_id: expect.any(String)
+    });
   });
-  
-  test('INVALID_CREDENTIALS is not retryable', () => {
-    const error = new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS);
-    expect(isRetryableError(error)).toBe(false);
+
+  test('Rate limited request includes Retry-After header', async () => {
+    // Trigger rate limit (5 failed attempts)
+    for (let i = 0; i < 5; i++) {
+      await request(app).post('/auth/login').send({ email: 'test@example.com', password: 'wrong' });
+    }
+
+    const response = await request(app)
+      .post('/auth/login')
+      .send({ email: 'test@example.com', password: 'wrong' });
+
+    expect(response.status).toBe(429);
+    expect(response.body).toEqual({
+      success: false,
+      error: {
+        slug: 'POLICY_RATE_LIMITED',
+        retryable: true
+      },
+      request_id: expect.any(String)
+    });
+    expect(response.headers['retry-after']).toBe('900'); // 15 min = 900 sec
   });
 });
 ```
@@ -574,25 +471,28 @@ describe('isRetryableError', () => {
 
 ### SSOT v2
 
-- **Sección 12.4:** Rate Limiting (para AUTH_RATE_LIMIT_EXCEEDED)
-- **Sección 2.1:** Billing states (para SUBSCRIPTION_REQUIRED)
+- **Sección 12.4:** Rate Limiting (para `POLICY_RATE_LIMITED`)
+- **Sección 2.1:** Billing states (para subscription errors)
 
 ### Related Subnodos
 
 - [login-flows.md](./login-flows.md) - Donde se lanzan estos errores
-- [rate-limiting.md](./rate-limiting.md) - AUTH_RATE_LIMIT_EXCEEDED detalle
-- [session-management.md](./session-management.md) - SESSION_*, TOKEN_* detalle
+- [rate-limiting.md](./rate-limiting.md) - `POLICY_RATE_LIMITED` detalle
+- [session-management.md](./session-management.md) - `SESSION_*`, `TOKEN_*` detalle
 - [security.md](./security.md) - User enumeration, timing attacks
 
 ### Implementación
 
 - **authErrorTaxonomy.ts:** `apps/backend-v2/src/utils/authErrorTaxonomy.ts` ⭐
-- **Auth Service:** `apps/backend-v2/src/services/authService.ts` (usa mapSupabaseError)
-- **Error Middleware:** `apps/backend-v2/src/middleware/errorHandler.ts` (maneja AuthError)
+- **authErrorResponse.ts:** `apps/backend-v2/src/utils/authErrorResponse.ts` ⭐
+- **Auth Service:** `apps/backend-v2/src/services/authService.ts` (usa `mapSupabaseError`, `mapPolicyResultToAuthError`)
+- **Auth Routes:** `apps/backend-v2/src/routes/auth.ts` (usa `sendAuthError`)
+- **Request ID Middleware:** `apps/backend-v2/src/middleware/requestId.ts` (genera `request_id`)
+- **Frontend API Client:** `frontend/src/lib/api.ts` (parsea contrato V2)
+- **Frontend Error Handler:** `frontend/src/lib/auth/errorHandler.ts` (resuelve por `slug`)
 
 ---
 
-**Última actualización:** 2025-12-26  
-**Owner:** ROA-364 (documenta ROA-372)  
-**Status:** ✅ Active
-
+**Última actualización:** 2025-12-28  
+**Owner:** ROA-405 (Auth Error Contract V2)  
+**Status:** ✅ Active (V2 contract implemented)

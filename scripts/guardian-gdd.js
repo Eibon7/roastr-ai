@@ -33,11 +33,13 @@ const crypto = require('crypto');
 // Configuration
 // ============================================================
 
-const PRODUCT_GUARD_CONFIG = path.join(__dirname, '../config/product-guard.yaml');
+const DEFAULT_PRODUCT_GUARD_CONFIG = path.join(__dirname, '../config/product-guard.yaml');
+let PRODUCT_GUARD_CONFIG = DEFAULT_PRODUCT_GUARD_CONFIG;
 const GUARDIAN_IGNORE_CONFIG = path.join(__dirname, '../config/guardian-ignore.yaml');
-const AUDIT_LOG_PATH = path.join(__dirname, '../docs/guardian/audit-log.md');
-const CASES_DIR = path.join(__dirname, '../docs/guardian/cases');
+let AUDIT_LOG_PATH = path.join(__dirname, '../docs/guardian/audit-log.md');
+let CASES_DIR = path.join(__dirname, '../docs/guardian/cases');
 const DIFFS_DIR = path.join(__dirname, '../docs/guardian/diffs');
+let REPORT_PATH = path.join(__dirname, '../docs/guardian/guardian-report.md');
 
 // ============================================================
 // CLI Arguments
@@ -49,8 +51,75 @@ const flags = {
   check: args.includes('--check'),
   report: args.includes('--report'),
   ci: args.includes('--ci'),
+  json: args.includes('--json'),
   help: args.includes('--help')
 };
+
+// Optional paths for tooling/tests (no behavior change unless flags used):
+// - `--config=...` to point at a different product-guard config
+// - `--cases-dir=...` to write case JSONs elsewhere
+//   - if provided and `--audit-log-path` is not provided, audit log defaults to `<cases-dir>/../audit-log.md`
+// - `--audit-log-path=...` to write audit log elsewhere
+// - `--report-path=...` to write report elsewhere
+for (const arg of args) {
+  if (arg.startsWith('--config=')) {
+    PRODUCT_GUARD_CONFIG = arg.split('=').slice(1).join('=');
+  }
+  if (arg.startsWith('--cases-dir=')) {
+    CASES_DIR = arg.split('=').slice(1).join('=');
+  }
+  if (arg.startsWith('--audit-log-path=')) {
+    AUDIT_LOG_PATH = arg.split('=').slice(1).join('=');
+  }
+  if (arg.startsWith('--report-path=')) {
+    REPORT_PATH = arg.split('=').slice(1).join('=');
+  }
+}
+
+const defaultCasesDir = path.join(__dirname, '../docs/guardian/cases');
+
+// Strict flag validation: unknown flags must fail fast (and MUST NOT write audit/cases).
+// This prevents accidental runs like `--invalid-flag` from mutating the repository.
+const isKnownArg = (arg) => {
+  const knownStandalone = new Set(['--full', '--check', '--report', '--ci', '--json', '--help']);
+  if (knownStandalone.has(arg)) return true;
+  if (arg.startsWith('--config=')) return true;
+  if (arg.startsWith('--cases-dir=')) return true;
+  if (arg.startsWith('--audit-log-path=')) return true;
+  if (arg.startsWith('--report-path=')) return true;
+  return false;
+};
+
+const unknownArgs = args.filter((a) => a.startsWith('--') && !isKnownArg(a));
+if (unknownArgs.length > 0) {
+  console.error(`❌ Unknown argument(s): ${unknownArgs.join(', ')}`);
+  console.error('   Run with --help for supported options.');
+  process.exit(2);
+}
+
+// If running with a non-default config (common in tests/automation), default all outputs next to that config
+// unless explicit paths were provided.
+const configOverridden = PRODUCT_GUARD_CONFIG !== DEFAULT_PRODUCT_GUARD_CONFIG;
+const casesDirExplicit = args.some((a) => a.startsWith('--cases-dir='));
+const auditLogExplicit = args.some((a) => a.startsWith('--audit-log-path='));
+const reportExplicit = args.some((a) => a.startsWith('--report-path='));
+
+if (configOverridden && !casesDirExplicit) {
+  CASES_DIR = path.join(path.dirname(PRODUCT_GUARD_CONFIG), 'cases');
+}
+
+if (configOverridden && !auditLogExplicit) {
+  AUDIT_LOG_PATH = path.join(path.dirname(PRODUCT_GUARD_CONFIG), 'audit-log.md');
+}
+
+if (configOverridden && !reportExplicit) {
+  REPORT_PATH = path.join(path.dirname(PRODUCT_GUARD_CONFIG), 'guardian-report.md');
+}
+
+// If cases dir is overridden (common in tests/automation), avoid writing into docs/guardian by default.
+if (CASES_DIR !== defaultCasesDir && !auditLogExplicit) {
+  AUDIT_LOG_PATH = path.join(path.dirname(CASES_DIR), 'audit-log.md');
+}
 
 // ============================================================
 // Guardian Engine Class
@@ -558,7 +627,7 @@ This file contains a chronological record of all Guardian Agent events.
    */
   generateReport() {
     const timestamp = new Date().toISOString();
-    const reportPath = path.join(__dirname, '../docs/guardian/guardian-report.md');
+    const reportPath = REPORT_PATH;
 
     // Ensure directory exists
     fs.mkdirSync(path.dirname(reportPath), { recursive: true });

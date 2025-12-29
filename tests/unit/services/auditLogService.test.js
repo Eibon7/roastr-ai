@@ -670,10 +670,10 @@ describe('AuditLogService', () => {
 
     describe('v2 event logging', () => {
       test('should log v2 event directly', async () => {
-        const result = await auditLogService.logEvent(
-          'auth.session.login.success',
-          { userId: 'user-123', ipAddress: '127.0.0.1' }
-        );
+        const result = await auditLogService.logEvent('auth.session.login.success', {
+          userId: 'user-123',
+          ipAddress: '127.0.0.1'
+        });
 
         expect(result).toBe(true);
         expect(mockFrom.insert).toHaveBeenCalledWith(
@@ -700,10 +700,10 @@ describe('AuditLogService', () => {
       });
 
       test('should support v2 password reset events', async () => {
-        const result = await auditLogService.logEvent(
-          'auth.password.reset.requested',
-          { userId: 'user-123', email: 'test@example.com' }
-        );
+        const result = await auditLogService.logEvent('auth.password.reset.requested', {
+          userId: 'user-123',
+          email: 'test@example.com'
+        });
 
         expect(result).toBe(true);
         expect(mockFrom.insert).toHaveBeenCalledWith(
@@ -717,11 +717,7 @@ describe('AuditLogService', () => {
 
     describe('v2 helper methods', () => {
       test('logUserLogin should use v2 event', async () => {
-        const result = await auditLogService.logUserLogin(
-          'user-123',
-          '127.0.0.1',
-          'Mozilla/5.0'
-        );
+        const result = await auditLogService.logUserLogin('user-123', '127.0.0.1', 'Mozilla/5.0');
 
         expect(result).toBe(true);
         expect(mockFrom.insert).toHaveBeenCalledWith(
@@ -809,10 +805,7 @@ describe('AuditLogService', () => {
       });
 
       test('logMagicLinkLoginSent should log magic link sent', async () => {
-        const result = await auditLogService.logMagicLinkLoginSent(
-          'user-123',
-          'test@example.com'
-        );
+        const result = await auditLogService.logMagicLinkLoginSent('user-123', 'test@example.com');
 
         expect(result).toBe(true);
         expect(mockFrom.insert).toHaveBeenCalledWith(

@@ -212,6 +212,7 @@ type FeatureFlagKey =
   | 'manual_approval_enabled'
   | 'custom_prompt_enabled'
   | 'sponsor_feature_enabled'
+  | 'enable_user_registration'
   | 'personal_tone_enabled'
   | 'nsfw_tone_enabled'
 
@@ -244,6 +245,8 @@ type FeatureFlagKey =
   - Habilita UI de prompt personalizado (post-MVP, no implementar sin tarea).
 - `sponsor_feature_enabled` (admin):
   - Habilita módulo de sponsors (solo Plus).
+- `enable_user_registration` (admin):
+  - Habilita el endpoint de registro de usuarios (email + password) en Auth v2.
 - `personal_tone_enabled` (admin):
   - Habilita tono personal (Pro/Plus).
 - `nsfw_tone_enabled` (admin):

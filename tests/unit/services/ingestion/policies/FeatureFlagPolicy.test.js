@@ -32,7 +32,7 @@ describe('FeatureFlagPolicy', () => {
   describe('evaluate', () => {
     it('should allow ingestion when global and account flags are enabled', async () => {
       featureFlagService.isEnabled
-        .mockResolvedValueOnce(true)  // Global flag
+        .mockResolvedValueOnce(true) // Global flag
         .mockResolvedValueOnce(true); // Account flag
 
       const result = await policy.evaluate(context);
@@ -43,8 +43,7 @@ describe('FeatureFlagPolicy', () => {
     });
 
     it('should block when global flag is disabled', async () => {
-      featureFlagService.isEnabled
-        .mockResolvedValueOnce(false); // Global flag
+      featureFlagService.isEnabled.mockResolvedValueOnce(false); // Global flag
 
       const result = await policy.evaluate(context);
 
@@ -57,7 +56,7 @@ describe('FeatureFlagPolicy', () => {
 
     it('should block when account flag is disabled', async () => {
       featureFlagService.isEnabled
-        .mockResolvedValueOnce(true)  // Global flag
+        .mockResolvedValueOnce(true) // Global flag
         .mockResolvedValueOnce(false); // Account flag
 
       const result = await policy.evaluate(context);
@@ -80,8 +79,7 @@ describe('FeatureFlagPolicy', () => {
     });
 
     it('should be retryable (no retry_after_seconds)', async () => {
-      featureFlagService.isEnabled
-        .mockResolvedValueOnce(false); // Global flag
+      featureFlagService.isEnabled.mockResolvedValueOnce(false); // Global flag
 
       const result = await policy.evaluate(context);
 

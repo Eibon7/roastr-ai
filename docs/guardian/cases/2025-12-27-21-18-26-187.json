@@ -1,0 +1,26 @@
+{
+  "case_id": "2025-12-27-21-18-26-187",
+  "timestamp": "2025-12-27T21:18:26.187Z",
+  "actor": "emiliopostigo",
+  "domains": [],
+  "files_changed": ["junit.xml"],
+  "severity": "SAFE",
+  "action": "APPROVED",
+  "violations": {
+    "critical": 0,
+    "sensitive": 0,
+    "safe": 1
+  },
+  "details": [
+    {
+      "file": "junit.xml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    }
+  ],
+  "approval_required": false,
+  "approved_by": null,
+  "notes": "Auto-approved"
+}
