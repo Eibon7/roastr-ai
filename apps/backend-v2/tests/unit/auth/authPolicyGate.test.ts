@@ -489,7 +489,7 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
       });
 
       // Rate limit and abuse would also block
-      mockRateLimitService.recordAttempt.mockReturnValueOnce({ 
+      mockRateLimitService.recordAttempt.mockReturnValueOnce({
         allowed: false,
         blockedUntil: Date.now() + 60000
       });
@@ -508,11 +508,11 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
     });
 
     it('should check Rate Limit third (after Feature Flags and Account Status)', async () => {
-      mockRateLimitService.recordAttempt.mockReturnValueOnce({ 
+      mockRateLimitService.recordAttempt.mockReturnValueOnce({
         allowed: false,
         blockedUntil: Date.now() + 60000
       });
-      
+
       // Abuse would also block
       mockAbuseDetectionService.checkRequest.mockResolvedValueOnce(true);
 
