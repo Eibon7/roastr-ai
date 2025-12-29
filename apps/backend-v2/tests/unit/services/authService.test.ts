@@ -94,14 +94,6 @@ describe('AuthService - Email Existence Check (ROA-355)', () => {
           password,
           planId
         })
-      ).rejects.toThrow(AuthError);
-
-      await expect(
-        authService.signup({
-          email,
-          password,
-          planId
-        })
       ).rejects.toMatchObject({
         code: AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS,
         statusCode: 409
@@ -314,3 +306,4 @@ describe('AuthService - Email Existence Check (ROA-355)', () => {
     });
   });
 });
+

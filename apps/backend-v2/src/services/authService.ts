@@ -467,6 +467,29 @@ export class AuthService {
    * @returns true si el email existe, false si no existe o si hay error (fallback)
    */
   private async checkEmailExists(email: string): Promise<boolean> {
+    // Feature flag check: auth.signup.checkEmailExists.enabled
+    try {
+      const settings = await loadSettings();
+      const checkEnabled = settings?.auth?.signup?.checkEmailExists?.enabled ?? true;
+
+      if (!checkEnabled) {
+        return false; // Skip check if feature disabled
+      }
+    } catch (error) {
+      // If SettingsLoader fails, fall back to process.env
+      const checkEnabled = process.env.AUTH_CHECK_EMAIL_EXISTS_ENABLED !== 'false';
+
+      if (!checkEnabled) {
+        return false;
+      }
+
+      // If it's an AuthError, rethrow it
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      // Otherwise, continue (settings loader unavailable but feature not explicitly disabled)
+    }
+
     try {
       let page = 1;
       const perPage = 100;
