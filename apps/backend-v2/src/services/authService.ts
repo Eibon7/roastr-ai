@@ -37,6 +37,11 @@ export interface MagicLinkParams {
   ip: string;
 }
 
+export interface PasswordRecoveryParams {
+  email: string;
+  ip: string;
+}
+
 export interface Session {
   access_token: string;
   refresh_token: string;
@@ -511,6 +516,97 @@ export class AuthService {
       return {
         success: true,
         message: 'Magic link sent successfully'
+      };
+    } catch (error) {
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      throw mapSupabaseError(error);
+    }
+  }
+
+  /**
+   * Solicita un email de recuperación de contraseña
+   * SOLO permitido para role=user (admin/superadmin no pueden usar password recovery)
+   */
+  async requestPasswordRecovery(
+    params: PasswordRecoveryParams
+  ): Promise<{ success: boolean; message: string }> {
+    const { email, ip } = params;
+
+    try {
+      // Rate limiting
+      const rateLimitResult = rateLimitService.recordAttempt('password_recovery', ip);
+      if (!rateLimitResult.allowed) {
+        const blockedUntil = rateLimitResult.blockedUntil;
+        const message =
+          blockedUntil === null || blockedUntil === undefined
+            ? 'Account permanently locked. Contact support.'
+            : `Too many password recovery requests. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
+
+        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED, message);
+      }
+
+      // Verificar que el usuario existe y es role=user
+      let user = null;
+      let page = 1;
+      const perPage = 100;
+
+      while (true) {
+        const { data: usersList, error: userError } = await supabase.auth.admin.listUsers({
+          page,
+          perPage
+        });
+
+        if (userError) break;
+
+        user = usersList?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+        if (
+          user ||
+          !usersList?.users?.length ||
+          (usersList.users && usersList.users.length < perPage)
+        )
+          break;
+
+        page++;
+      }
+
+      if (!user) {
+        // No revelar si el email existe (anti-enumeration)
+        return {
+          success: true,
+          message: 'If this email exists, a password recovery link has been sent'
+        };
+      }
+
+      if (!user.user_metadata) {
+        return {
+          success: true,
+          message: 'If this email exists, a password recovery link has been sent'
+        };
+      }
+
+      const role = user.user_metadata.role || 'user';
+      if (role === 'admin' || role === 'superadmin') {
+        // Return same message as non-existent user (anti-enumeration)
+        return {
+          success: true,
+          message: 'If this email exists, a password recovery link has been sent'
+        };
+      }
+
+      // Enviar email de recuperación
+      const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase(), {
+        redirectTo: process.env.SUPABASE_REDIRECT_URL || 'http://localhost:3000/auth/callback'
+      });
+
+      if (error) {
+        throw mapSupabaseError(error);
+      }
+
+      return {
+        success: true,
+        message: 'Password recovery link sent successfully'
       };
     } catch (error) {
       if (error instanceof AuthError) {
