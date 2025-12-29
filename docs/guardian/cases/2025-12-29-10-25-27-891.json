@@ -1,0 +1,74 @@
+{
+  "case_id": "2025-12-29-10-25-27-891",
+  "timestamp": "2025-12-29T10:25:27.891Z",
+  "actor": "emiliopostigo",
+  "domains": [
+    "pricing",
+    "quotas",
+    "auth_policies"
+  ],
+  "files_changed": [
+    "apps/backend-v2/src/services/authService.ts",
+    "apps/backend-v2/tests/unit/services/authService.test.ts",
+    "docs/plan/issue-ROA-355.md",
+    ".issue_lock",
+    "tests/unit/scripts/gdd-v2-tooling-alignment.test.js"
+  ],
+  "severity": "CRITICAL",
+  "action": "BLOCKED",
+  "violations": {
+    "critical": 3,
+    "sensitive": 0,
+    "safe": 2
+  },
+  "details": [
+    {
+      "file": "apps/backend-v2/src/services/authService.ts",
+      "domains": [
+        "pricing",
+        "quotas",
+        "auth_policies"
+      ],
+      "severity": "CRITICAL",
+      "lines_added": 114,
+      "lines_removed": 69
+    },
+    {
+      "file": "apps/backend-v2/tests/unit/services/authService.test.ts",
+      "domains": [
+        "pricing",
+        "auth_policies"
+      ],
+      "severity": "CRITICAL",
+      "lines_added": 144,
+      "lines_removed": 17
+    },
+    {
+      "file": "docs/plan/issue-ROA-355.md",
+      "domains": [
+        "pricing",
+        "auth_policies"
+      ],
+      "severity": "CRITICAL",
+      "lines_added": 229,
+      "lines_removed": 0
+    },
+    {
+      "file": ".issue_lock",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "tests/unit/scripts/gdd-v2-tooling-alignment.test.js",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 1
+    }
+  ],
+  "approval_required": true,
+  "approved_by": null,
+  "notes": "Requires Product Owner approval"
+}

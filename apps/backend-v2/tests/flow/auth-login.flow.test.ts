@@ -275,8 +275,28 @@ describe('Login Flow v2 - Functional Tests', () => {
   // ============================================
   // ❌ ERROR PATH 4: Feature flag deshabilitado
   // ============================================
-  // NOTE (ROA-406): Este test se movió a tests HTTP porque el feature flag
-  // ahora se valida en routes/auth.ts, no en authService.login()
+
+  it('LOGIN FLOW: login bloqueado cuando feature flag está inactivo', async () => {
+    const { loadSettings } = await import('../../src/lib/loadSettings');
+
+    // Mock: Feature flag deshabilitado
+    vi.mocked(loadSettings).mockResolvedValueOnce({
+      auth: {
+        login: {
+          enabled: false
+        }
+      }
+    } as any);
+
+    // ✅ VALIDAR: El flujo falla correctamente
+    await expect(
+      authService.login({
+        email: 'test@example.com',
+        password: 'password',
+        ip: '192.168.1.1'
+      })
+    ).rejects.toThrow('AUTH_DISABLED');
+  });
 
   // ============================================
   // 🔐 EDGE CASE: Email case-insensitive

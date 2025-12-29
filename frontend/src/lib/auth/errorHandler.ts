@@ -1,8 +1,8 @@
 /**
  * Error Handler Utility
  *
- * Maps backend error slugs to user-friendly UX actions.
- * IMPORTANT (ROA-405): Frontend resolves auth errors by `slug`, not by HTTP status.
+ * Maps backend error codes to user-friendly UX actions.
+ * Handles 401 (session expired), 403 (access denied), and 429 (rate limit) errors.
  *
  * Error codes reference: apps/backend-v2/src/utils/authErrorTaxonomy.ts
  */
@@ -21,69 +21,73 @@ export function handleAuthError(
   error: ApiError,
   redirectToLogin?: () => void
 ): boolean {
-  const slug = error.slug || error.code; // legacy fallback
+  // Use slug (v2 contract) with fallback to code (legacy)
+  const code = error.slug || error.code;
+  const status = error.status;
 
-  // Session/token related errors: redirect to login
-  if (
-    slug === 'SESSION_EXPIRED' ||
-    slug === 'SESSION_INVALID' ||
-    slug === 'SESSION_REVOKED' ||
-    slug === 'TOKEN_EXPIRED' ||
-    slug === 'TOKEN_INVALID' ||
-    slug === 'TOKEN_MISSING' ||
-    // Client-side synthetic error during refresh (legacy)
-    slug === 'TOKEN_REFRESH_FAILED'
-  ) {
-    if (redirectToLogin && !window.sessionStorage.getItem('_auth_redirecting')) {
-      window.sessionStorage.setItem('_auth_redirecting', 'true');
-      showToast('Session expired. Please log in again.', 'error');
-      setTimeout(() => {
-        redirectToLogin();
-        window.sessionStorage.removeItem('_auth_redirecting');
-      }, 1000);
+  // Handle 401 errors (session expired, token invalid)
+  if (status === 401 || code === 'TOKEN_EXPIRED') {
+    if (
+      code === 'SESSION_EXPIRED' ||
+      code === 'TOKEN_EXPIRED' ||
+      code === 'TOKEN_INVALID' ||
+      code === 'TOKEN_MISSING' ||
+      code === 'TOKEN_REFRESH_FAILED'
+    ) {
+      // Redirect to login (only once - prevent spam)
+      if (redirectToLogin && !window.sessionStorage.getItem('_auth_redirecting')) {
+        window.sessionStorage.setItem('_auth_redirecting', 'true');
+        
+        // Show toast/notification
+        showToast('Session expired. Please log in again.', 'error');
+        
+        // Redirect after short delay
+        setTimeout(() => {
+          if (redirectToLogin) {
+            redirectToLogin();
+          }
+          window.sessionStorage.removeItem('_auth_redirecting');
+        }, 1000);
+      }
+      return true;
     }
-    return true;
   }
 
-  // Authorization/account blocked
-  if (
-    slug?.startsWith('AUTHZ_') ||
-    slug === 'ACCOUNT_SUSPENDED' ||
-    slug === 'ACCOUNT_BANNED' ||
-    slug === 'POLICY_BLOCKED'
-  ) {
+  // Handle 403 errors (access denied)
+  if (status === 403 || code === 'AUTHZ_INSUFFICIENT_PERMISSIONS' || code === 'AUTHZ_ROLE_NOT_ALLOWED' || code === 'ACCOUNT_SUSPENDED') {
     let message = 'Access denied. You don\'t have permission for this action.';
     
-    if (slug === 'AUTHZ_INSUFFICIENT_PERMISSIONS') {
+    if (code === 'AUTHZ_INSUFFICIENT_PERMISSIONS') {
       message = 'You don\'t have permission to perform this action.';
-    } else if (slug === 'AUTHZ_ROLE_NOT_ALLOWED' || slug === 'AUTHZ_ADMIN_REQUIRED') {
+    } else if (code === 'AUTHZ_ROLE_NOT_ALLOWED') {
       message = 'Admin access required.';
-    } else if (slug === 'ACCOUNT_SUSPENDED') {
+    } else if (code === 'ACCOUNT_SUSPENDED') {
       message = 'Your account has been suspended. Contact support.';
-    } else if (slug === 'ACCOUNT_BANNED') {
-      message = 'Your account has been banned. Contact support.';
     }
     
     showToast(message, 'error');
     return true;
   }
 
-  // Rate limit (policy)
-  if (slug === 'POLICY_RATE_LIMITED') {
+  // Handle 429 errors (rate limit) - per-action backoff
+  if (status === 429 || code === 'POLICY_RATE_LIMITED' || code === 'AUTH_RATE_LIMIT_EXCEEDED') {
     handleRateLimit(error);
     return true;
   }
 
   // Handle other auth errors
-  if (slug?.startsWith('AUTH_')) {
+  if (code?.startsWith('AUTH_')) {
     let message = error.message || 'Authentication failed';
     
-    if (slug === 'AUTH_INVALID_CREDENTIALS') {
+    if (code === 'AUTH_INVALID_CREDENTIALS') {
       message = 'Invalid email or password';
-    } else if (slug === 'AUTH_EMAIL_NOT_CONFIRMED') {
+    } else if (code === 'AUTH_EMAIL_NOT_VERIFIED') {
       message = 'Please verify your email before logging in';
-    } else if (slug === 'AUTH_ACCOUNT_LOCKED') {
+    } else if (code === 'AUTH_ACCOUNT_LOCKED') {
       message = 'Your account has been locked. Contact support.';
+    } else if (code === 'AUTH_RATE_LIMIT_EXCEEDED') {
+      // Handled separately in handleRateLimit
+      return handleRateLimit(error);
     }
     
     showToast(message, 'error');

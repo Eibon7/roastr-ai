@@ -1,0 +1,28 @@
+{
+  "case_id": "2025-12-29-10-24-55-820",
+  "timestamp": "2025-12-29T10:24:55.820Z",
+  "actor": "emiliopostigo",
+  "domains": [],
+  "files_changed": [
+    "tests/fixtures/guardian/product-guard-cli-test.yaml"
+  ],
+  "severity": "SAFE",
+  "action": "APPROVED",
+  "violations": {
+    "critical": 0,
+    "sensitive": 0,
+    "safe": 1
+  },
+  "details": [
+    {
+      "file": "tests/fixtures/guardian/product-guard-cli-test.yaml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    }
+  ],
+  "approval_required": false,
+  "approved_by": null,
+  "notes": "Auto-approved"
+}
