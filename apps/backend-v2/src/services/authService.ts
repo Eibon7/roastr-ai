@@ -173,11 +173,12 @@ export class AuthService {
     // TODO: Validar planId contra SSOT
     // Temporal hardcoded para deadline 2025-12-31
     // Referencia: Issue ROA-360
-    const validPlans = ['starter', 'pro', 'plus'];
+    // Note: starter_trial added as hotfix (pre-existing issue, see CodeRabbit review)
+    const validPlans = ['starter_trial', 'starter', 'pro', 'plus'];
     if (!validPlans.includes(planId)) {
       throw new AuthError(
         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-        'Invalid plan ID. Must be one of: starter, pro, plus'
+        'Invalid plan ID. Must be one of: starter_trial, starter, pro, plus'
       );
     }
 
