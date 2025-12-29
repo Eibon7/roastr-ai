@@ -1,14 +1,12 @@
 /**
  * Auth Service Tests
  * ROA-355: Email existence check pre-signup validation
- *
- * Tests básicos para verificar que la verificación de email antes del signup
- * está implementada correctamente.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AuthService } from '../../../src/services/authService';
-import { AUTH_ERROR_CODES } from '../../../src/utils/authErrorTaxonomy';
+import { AuthError, AUTH_ERROR_CODES } from '../../../src/utils/authErrorTaxonomy';
+import { supabase } from '../../../src/lib/supabaseClient';
 
 // Mock supabase client
 vi.mock('../../../src/lib/supabaseClient', () => ({
@@ -57,22 +55,63 @@ vi.mock('../../../src/services/abuseDetectionService', () => ({
 
 // Mock loadSettings
 vi.mock('../../../src/lib/loadSettings', () => ({
-  loadSettings: vi.fn(() => Promise.resolve({ auth: { login: { enabled: true } } }))
+  loadSettings: vi.fn(() =>
+    Promise.resolve({
+      auth: {
+        login: { enabled: true },
+        signup: {
+          checkEmailExists: { enabled: true }
+        }
+      }
+    })
+  )
 }));
 
 describe('AuthService - Email Existence Check (ROA-355)', () => {
   let authService: AuthService;
-  let supabase: any;
 
-  beforeEach(async () => {
-    vi.clearAllMocks();
+  beforeEach(() => {
     authService = new AuthService();
-    // Import supabase after mocks are set up
-    const supabaseModule = await import('../../../src/lib/supabaseClient');
-    supabase = supabaseModule.supabase;
+    vi.clearAllMocks();
   });
 
   describe('signup - email existence check', () => {
+    it('should throw EMAIL_ALREADY_EXISTS if email exists', async () => {
+      const email = 'existing@example.com';
+      const password = 'password123';
+      const planId = 'starter';
+
+      // Mock checkEmailExists to return true (email exists)
+      // We'll mock listUsers to return a user with matching email
+      vi.mocked(supabase.auth.admin.listUsers).mockResolvedValueOnce({
+        data: {
+          users: [
+            {
+              id: 'user-123',
+              email: email,
+              created_at: new Date().toISOString(),
+              user_metadata: {}
+            }
+          ]
+        },
+        error: null
+      } as any);
+
+      await expect(
+        authService.signup({
+          email,
+          password,
+          planId
+        })
+      ).rejects.toMatchObject({
+        slug: AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS,
+        http_status: 409
+      });
+
+      // Verify that signUp was NOT called (email check prevented it)
+      expect(supabase.auth.signUp).not.toHaveBeenCalled();
+    });
+
     it('should allow signup if email does not exist', async () => {
       const email = 'new@example.com';
       const password = 'password123';
@@ -119,12 +158,39 @@ describe('AuthService - Email Existence Check (ROA-355)', () => {
       expect(supabase.auth.signUp).toHaveBeenCalled();
     });
 
-    it('should validate planId before checking email', async () => {
-      const email = 'new@example.com';
+    it('should handle pagination when checking email existence', async () => {
+      const email = 'existing@example.com';
       const password = 'password123';
-      const planId = 'invalid-plan';
+      const planId = 'starter';
 
-      // Should throw INVALID_REQUEST for plan (planId validation happens first)
+      // Mock first page (100 users, email not found)
+      vi.mocked(supabase.auth.admin.listUsers)
+        .mockResolvedValueOnce({
+          data: {
+            users: Array.from({ length: 100 }, (_, i) => ({
+              id: `user-${i}`,
+              email: `user${i}@example.com`,
+              created_at: new Date().toISOString(),
+              user_metadata: {}
+            }))
+          },
+          error: null
+        } as any)
+        // Mock second page (email found)
+        .mockResolvedValueOnce({
+          data: {
+            users: [
+              {
+                id: 'user-123',
+                email: email,
+                created_at: new Date().toISOString(),
+                user_metadata: {}
+              }
+            ]
+          },
+          error: null
+        } as any);
+
       await expect(
         authService.signup({
           email,
@@ -132,11 +198,45 @@ describe('AuthService - Email Existence Check (ROA-355)', () => {
           planId
         })
       ).rejects.toMatchObject({
-        slug: AUTH_ERROR_CODES.INVALID_REQUEST
+        slug: AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS,
+        http_status: 409
       });
 
-      // Verify that email check was NOT called (planId validation happened first)
-      expect(supabase.auth.admin.listUsers).not.toHaveBeenCalled();
+      // Verify that listUsers was called twice (pagination)
+      expect(supabase.auth.admin.listUsers).toHaveBeenCalledTimes(2);
+      expect(supabase.auth.signUp).not.toHaveBeenCalled();
+    });
+
+    it('should handle case-insensitive email comparison', async () => {
+      const email = 'Existing@Example.com';
+      const password = 'password123';
+      const planId = 'starter';
+
+      // Mock email exists with different case
+      vi.mocked(supabase.auth.admin.listUsers).mockResolvedValueOnce({
+        data: {
+          users: [
+            {
+              id: 'user-123',
+              email: 'existing@example.com', // lowercase
+              created_at: new Date().toISOString(),
+              user_metadata: {}
+            }
+          ]
+        },
+        error: null
+      } as any);
+
+      await expect(
+        authService.signup({
+          email, // Mixed case
+          password,
+          planId
+        })
+      ).rejects.toMatchObject({
+        slug: AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS,
+        http_status: 409
+      });
     });
 
     it('should continue signup if email check fails (error handling)', async () => {
@@ -183,5 +283,27 @@ describe('AuthService - Email Existence Check (ROA-355)', () => {
       // signUp should have been called (fallback behavior)
       expect(supabase.auth.signUp).toHaveBeenCalled();
     });
+
+    it('should validate planId before checking email', async () => {
+      const email = 'new@example.com';
+      const password = 'password123';
+      const planId = 'invalid-plan';
+
+      // Should throw INVALID_CREDENTIALS for plan (planId validation happens first)
+      await expect(
+        authService.signup({
+          email,
+          password,
+          planId
+        })
+      ).rejects.toMatchObject({
+        slug: AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+        http_status: 401
+      });
+
+      // Verify that email check was NOT called (planId validation happened first)
+      expect(supabase.auth.admin.listUsers).not.toHaveBeenCalled();
+    });
   });
 });
+

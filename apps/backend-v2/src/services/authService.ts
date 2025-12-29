@@ -160,11 +160,14 @@ export class AuthService {
 
     // Validar inputs
     if (!this.isValidEmail(email)) {
-      throw new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST);
+      throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email format');
     }
 
     if (!this.isValidPassword(password)) {
-      throw new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST);
+      throw new AuthError(
+        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+        'Password must be at least 8 characters'
+      );
     }
 
     // TODO: Validar planId contra SSOT
@@ -172,13 +175,19 @@ export class AuthService {
     // Referencia: Issue ROA-360
     const validPlans = ['starter', 'pro', 'plus'];
     if (!validPlans.includes(planId)) {
-      throw new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST);
+      throw new AuthError(
+        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+        'Invalid plan ID. Must be one of: starter, pro, plus'
+      );
     }
 
     // ROA-355: Verificar si el email ya existe antes de intentar crear usuario
     const emailExists = await this.checkEmailExists(email);
     if (emailExists) {
-      throw new AuthError(AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS);
+      throw new AuthError(
+        AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS,
+        'An account with this email already exists'
+      );
     }
 
     try {
@@ -200,7 +209,7 @@ export class AuthService {
       }
 
       if (!data.user || !data.session) {
-        throw new AuthError(AUTH_ERROR_CODES.SESSION_INVALID);
+        throw new AuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, 'Failed to create user session');
       }
 
       // Crear perfil en base de datos
@@ -212,10 +221,7 @@ export class AuthService {
       });
 
       if (profileError) {
-        logger.warn('auth.signup.profile_create_failed', {
-          code: profileError.code,
-          message: profileError.message
-        });
+        console.error('Failed to create profile:', profileError);
         // No lanzar error, el usuario ya está creado
       }
 
@@ -223,7 +229,10 @@ export class AuthService {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_in: data.session.expires_in,
-        expires_at: this.normalizeExpiresAt(data.session),
+        expires_at:
+          typeof data.session.expires_at === 'number'
+            ? data.session.expires_at
+            : Math.floor(new Date(data.session.expires_at).getTime() / 1000),
         token_type: data.session.token_type || 'bearer',
         user: {
           id: data.user.id,
@@ -254,14 +263,20 @@ export class AuthService {
       const loginEnabled = settings?.auth?.login?.enabled ?? true;
 
       if (!loginEnabled) {
-        throw new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED);
+        throw new AuthError(
+          AUTH_ERROR_CODES.AUTH_DISABLED,
+          'Authentication is currently unavailable.'
+        );
       }
     } catch (error) {
       // If SettingsLoader fails, fall back to process.env
       const loginEnabled = process.env.AUTH_LOGIN_ENABLED !== 'false';
 
       if (!loginEnabled) {
-        throw new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED);
+        throw new AuthError(
+          AUTH_ERROR_CODES.AUTH_DISABLED,
+          'Authentication is currently unavailable.'
+        );
       }
 
       // If it's an AuthError (AUTH_DISABLED), rethrow it
@@ -275,7 +290,13 @@ export class AuthService {
       // Rate limiting
       const rateLimitResult = rateLimitService.recordAttempt('login', ip);
       if (!rateLimitResult.allowed) {
-        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMITED, { cause: rateLimitResult });
+        const blockedUntil = rateLimitResult.blockedUntil;
+        const message =
+          blockedUntil === null || blockedUntil === undefined
+            ? 'Account permanently locked. Contact support.'
+            : `Too many login attempts. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
+
+        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED, message);
       }
 
       // Abuse detection
@@ -283,14 +304,15 @@ export class AuthService {
       if (abuseResult.isAbuse) {
         // Log patterns server-side for investigation, but don't expose to client
         // PII anonymized for GDPR compliance
-        logger.warn('auth.login.abuse_detected', {
+        console.error('Abuse detected:', {
           emailHash: this.hashForLog(email),
           ipPrefix: ip.split('.').slice(0, 2).join('.') + '.x.x',
           patterns: abuseResult.patterns
         });
-        throw new AuthError(AUTH_ERROR_CODES.ACCOUNT_LOCKED, {
-          cause: { kind: 'abuse_detection' }
-        });
+        throw new AuthError(
+          AUTH_ERROR_CODES.ACCOUNT_LOCKED,
+          'Suspicious activity detected. Please try again later or contact support.'
+        );
       }
 
       // Autenticación con Supabase
@@ -307,7 +329,10 @@ export class AuthService {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_in: data.session.expires_in,
-        expires_at: this.normalizeExpiresAt(data.session),
+        expires_at:
+          typeof data.session.expires_at === 'number'
+            ? data.session.expires_at
+            : Math.floor(new Date(data.session.expires_at).getTime() / 1000),
         token_type: data.session.token_type || 'bearer',
         user: {
           id: data.user.id,
@@ -362,14 +387,25 @@ export class AuthService {
       }
 
       if (!data.session || !data.user) {
-        throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID);
+        throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid refresh token');
+      }
+
+      // Calculate expires_at if not provided
+      let expires_at: number;
+      if (typeof data.session.expires_at === 'number') {
+        expires_at = data.session.expires_at;
+      } else if (data.session.expires_at) {
+        expires_at = Math.floor(new Date(data.session.expires_at).getTime() / 1000);
+      } else {
+        // If expires_at is undefined, calculate from expires_in
+        expires_at = Math.floor(Date.now() / 1000) + (data.session.expires_in || 3600);
       }
 
       return {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_in: data.session.expires_in,
-        expires_at: this.normalizeExpiresAt(data.session),
+        expires_at,
         token_type: data.session.token_type || 'bearer',
         user: {
           id: data.user.id,
@@ -399,7 +435,13 @@ export class AuthService {
       // Rate limiting
       const rateLimitResult = rateLimitService.recordAttempt('magic_link', ip);
       if (!rateLimitResult.allowed) {
-        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMITED, { cause: rateLimitResult });
+        const blockedUntil = rateLimitResult.blockedUntil;
+        const message =
+          blockedUntil === null || blockedUntil === undefined
+            ? 'Account permanently locked. Contact support.'
+            : `Too many magic link requests. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
+
+        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED, message);
       }
 
       // Verificar que el usuario existe y es role=user
@@ -489,7 +531,7 @@ export class AuthService {
       }
 
       if (!data.user) {
-        throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID);
+        throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid access token');
       }
 
       return {
@@ -520,38 +562,7 @@ export class AuthService {
    * Valida formato de password
    */
   private isValidPassword(password: string): boolean {
-    return password.length >= 8 && password.length <= 128;
-  }
-
-  /**
-   * Hash para logging (GDPR compliance)
-   */
-  private hashForLog(value: string): string {
-    return createHash('sha256').update(value.toLowerCase()).digest('hex').substring(0, 12);
-  }
-
-  /**
-   * Normaliza email (case-insensitive) y elimina caracteres de control.
-   */
-  private normalizeEmail(email: string): string {
-    return email
-      .trim()
-      .toLowerCase()
-      .replace(/[\x00-\x1F\x7F]/g, '');
-  }
-
-  /**
-   * Detecta error "email ya registrado" (Supabase) para anti-enumeration.
-   */
-  private isEmailAlreadyRegisteredError(error: unknown): boolean {
-    const message = (error as any)?.message?.toString?.() || '';
-    const lower = message.toLowerCase();
-    return (
-      lower.includes('already registered') ||
-      lower.includes('already exists') ||
-      lower.includes('email address already') ||
-      lower.includes('duplicate')
-    );
+    return password.length >= 8;
   }
 
   /**
@@ -565,6 +576,29 @@ export class AuthService {
    * @returns true si el email existe, false si no existe o si hay error (fallback)
    */
   private async checkEmailExists(email: string): Promise<boolean> {
+    // Feature flag check: auth.signup.checkEmailExists.enabled
+    try {
+      const settings = await loadSettings();
+      const checkEnabled = settings?.auth?.signup?.checkEmailExists?.enabled ?? true;
+
+      if (!checkEnabled) {
+        return false; // Skip check if feature disabled
+      }
+    } catch (error) {
+      // If SettingsLoader fails, fall back to process.env
+      const checkEnabled = process.env.AUTH_CHECK_EMAIL_EXISTS_ENABLED !== 'false';
+
+      if (!checkEnabled) {
+        return false;
+      }
+
+      // If it's an AuthError, rethrow it
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      // Otherwise, continue (settings loader unavailable but feature not explicitly disabled)
+    }
+
     try {
       let page = 1;
       const perPage = 100;
@@ -603,21 +637,31 @@ export class AuthService {
   }
 
   /**
-   * Normaliza `expires_at` para el contrato Session.
-   * Supabase puede devolverlo como number, string o undefined según contexto.
+   * Normaliza email (lowercase, trim)
    */
-  private normalizeExpiresAt(session: {
-    expires_at?: number | string;
-    expires_in?: number;
-  }): number {
-    if (typeof session.expires_at === 'number') {
-      return session.expires_at;
-    }
-    if (typeof session.expires_at === 'string' && session.expires_at.length > 0) {
-      return Math.floor(new Date(session.expires_at).getTime() / 1000);
-    }
-    const expiresIn = typeof session.expires_in === 'number' ? session.expires_in : 0;
-    return Math.floor(Date.now() / 1000) + expiresIn;
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+  }
+
+  /**
+   * Detecta si un error de Supabase indica que el email ya está registrado
+   */
+  private isEmailAlreadyRegisteredError(error: unknown): boolean {
+    const message = (error as any)?.message?.toString?.() || '';
+    const lowerMessage = message.toLowerCase();
+    return (
+      lowerMessage.includes('already registered') ||
+      lowerMessage.includes('already exists') ||
+      lowerMessage.includes('email address already') ||
+      lowerMessage.includes('duplicate')
+    );
+  }
+
+  /**
+   * Hash para logging (GDPR compliance)
+   */
+  private hashForLog(value: string): string {
+    return createHash('sha256').update(value.toLowerCase()).digest('hex').substring(0, 12);
   }
 }
 
