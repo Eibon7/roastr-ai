@@ -12,6 +12,7 @@
 import { loadSettings } from './loadSettings.js';
 import { logger } from '../utils/logger.js';
 import { AuthError, AUTH_ERROR_CODES } from '../utils/authErrorTaxonomy.js';
+import { trackEvent } from './analytics.js';
 
 /**
  * Auth feature flags defined in SSOT v2, section 3
@@ -88,6 +89,24 @@ export async function isAuthEndpointEnabled(
     logger.warn(`Auth endpoint disabled by feature flag: ${flag}`, {
       policy: `feature_flag:${policy}`
     });
+
+    // ROA-406: Analytics event for observability
+    try {
+      trackEvent({
+        event: 'auth_feature_blocked',
+        properties: {
+          flag,
+          policy,
+          endpoint: policy // Endpoint that was blocked
+        },
+        context: {
+          flow: 'auth'
+        }
+      });
+    } catch (error) {
+      logger.warn('analytics.track_failed', { event: 'auth_feature_blocked' });
+    }
+
     throw new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED);
   }
 

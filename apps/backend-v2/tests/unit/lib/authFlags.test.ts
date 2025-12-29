@@ -13,6 +13,7 @@ import { loadAuthFlags, isAuthEndpointEnabled } from '../../../src/lib/authFlags
 import { AuthError, AUTH_ERROR_CODES } from '../../../src/utils/authErrorTaxonomy.js';
 import { loadSettings } from '../../../src/lib/loadSettings.js';
 import { logger } from '../../../src/utils/logger.js';
+import { trackEvent } from '../../../src/lib/analytics.js';
 
 // Mock loadSettings
 vi.mock('../../../src/lib/loadSettings', () => ({
@@ -26,6 +27,11 @@ vi.mock('../../../src/utils/logger', () => ({
     info: vi.fn(),
     warn: vi.fn()
   }
+}));
+
+// Mock analytics
+vi.mock('../../../src/lib/analytics', () => ({
+  trackEvent: vi.fn()
 }));
 
 describe('AuthFlags Loader (ROA-406)', () => {
@@ -155,6 +161,30 @@ describe('AuthFlags Loader (ROA-406)', () => {
       await expect(
         isAuthEndpointEnabled('auth_enable_password_recovery', 'password_recovery_policy')
       ).resolves.toBe(true);
+    });
+
+    it('llama a trackEvent cuando un endpoint es bloqueado (ROA-406 observability)', async () => {
+      vi.mocked(loadSettings).mockResolvedValue({
+        feature_flags: {
+          auth_enable_login: false
+        }
+      } as any);
+
+      await expect(isAuthEndpointEnabled('auth_enable_login', 'login_policy')).rejects.toThrow(
+        AuthError
+      );
+
+      expect(trackEvent).toHaveBeenCalledWith({
+        event: 'auth_feature_blocked',
+        properties: {
+          flag: 'auth_enable_login',
+          policy: 'login_policy',
+          endpoint: 'login_policy'
+        },
+        context: {
+          flow: 'auth'
+        }
+      });
     });
   });
 });
