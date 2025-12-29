@@ -390,14 +390,22 @@ export class AuthService {
         throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid refresh token');
       }
 
+      // Calculate expires_at if not provided
+      let expires_at: number;
+      if (typeof data.session.expires_at === 'number') {
+        expires_at = data.session.expires_at;
+      } else if (data.session.expires_at) {
+        expires_at = Math.floor(new Date(data.session.expires_at).getTime() / 1000);
+      } else {
+        // If expires_at is undefined, calculate from expires_in
+        expires_at = Math.floor(Date.now() / 1000) + (data.session.expires_in || 3600);
+      }
+
       return {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_in: data.session.expires_in,
-        expires_at:
-          typeof data.session.expires_at === 'number'
-            ? data.session.expires_at
-            : Math.floor(new Date(data.session.expires_at).getTime() / 1000),
+        expires_at,
         token_type: data.session.token_type || 'bearer',
         user: {
           id: data.user.id,
