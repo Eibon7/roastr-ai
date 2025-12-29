@@ -67,6 +67,11 @@ vi.mock('../../../src/lib/loadSettings', () => ({
   )
 }));
 
+// Mock analytics to avoid @amplitude/analytics-node dependency
+vi.mock('../../../src/lib/analytics', () => ({
+  trackEvent: vi.fn()
+}));
+
 describe('AuthService - Email Existence Check (ROA-355)', () => {
   let authService: AuthService;
 
