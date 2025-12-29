@@ -31,7 +31,7 @@ The gate evaluates policies in this **non-negotiable** order:
 **All policies are FAIL-CLOSED** (block on error) unless explicitly specified.
 
 - ✅ Feature Flags: **FAIL-CLOSED**
-- ✅ Account Status: **FAIL-CLOSED** (placeholder implementation)
+- ✅ Account Status: **FAIL-CLOSED** (fully implemented)
 - ✅ Rate Limit: **FAIL-CLOSED**
 - ✅ Abuse: **FAIL-CLOSED**
 
@@ -54,9 +54,12 @@ No fail-open semantics implemented (maintenance mode removed).
 - **Fail-closed:** blocks if settings cannot be loaded
 
 #### Policy 2: Account Status
+- Queries user from database via Supabase
+- Checks `active` field (must be `true`)
+- Checks `suspended` field (must be `false`)
+- Returns `suspended_reason` if blocked
 - Skips for register action (no user yet)
-- **Placeholder implementation:** allows all (TODO: implement full account status checks)
-- **Fail-closed:** will block when fully implemented
+- **Fail-closed:** blocks if database query fails or throws
 
 #### Policy 3: Rate Limit
 - Uses existing `rateLimitService`
@@ -106,11 +109,11 @@ if (!policyResult.allowed) {
 
 **File:** `tests/unit/auth/authPolicyGate.test.ts`
 
-**Total:** 20 tests passing ✅
+**Total:** 25 tests passing ✅
 
 **Coverage by policy:**
 - Feature Flags: 4 tests
-- Account Status: 2 tests (placeholder)
+- Account Status: 8 tests (fully implemented)
 - Rate Limit: 4 tests
 - Abuse: 3 tests
 - Policy Order: 4 tests
@@ -213,13 +216,12 @@ if (!result.allowed) {
 
 ## 🚧 TODO (Future Work)
 
-### Account Status Policy (Placeholder)
-Current implementation allows all. Need to implement:
-- [ ] Check account.banned
-- [ ] Check account.suspended
-- [ ] Check account.deleted
-- [ ] Check account.locked
-- [ ] Add tests for each status
+### Audit Logging Integration
+Current implementation has AuditService created but not integrated:
+- [ ] Integrate audit logging in auth routes
+- [ ] Log policy blocks (rate_limit, account_status, abuse)
+- [ ] Log auth success/failure events
+- [ ] Add audit event tests
 
 ### Monitoring
 - [ ] Add metrics for policy blocks by type
