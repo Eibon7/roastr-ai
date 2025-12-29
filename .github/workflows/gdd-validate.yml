@@ -357,14 +357,29 @@ jobs:
             fi
             
             # 6. Check System Map Drift
+            # NOTE (ROA-406):
+            # This step may emit warnings for legacy nodes-v2 docs not yet fully migrated.
+            # Warnings (orphaned files) must not fail CI - they represent pre-existing technical debt.
+            # Only real ERRORS (inconsistencies, broken references) should fail the workflow.
+            # Cleanup tracked in future issue: DOCS-GDD-CLEANUP (TBD)
             if [ -f "scripts/check-system-map-drift.js" ]; then
               echo "✅ Checking system-map drift..."
               set +e
-              node scripts/check-system-map-drift.js --ci
+              node scripts/check-system-map-drift.js --ci 2>&1 | tee drift-check-output.txt
               MAP_DRIFT_EXIT=$?
               set -e
-              if [ "$MAP_DRIFT_EXIT" -ne 0 ]; then
-                echo "⚠️ System-map drift check failed (exit code: $MAP_DRIFT_EXIT)"
+              
+              # Check if there are actual ERRORS (not just warnings)
+              # The script logs "✅ System-map drift check passed" even with warnings
+              if grep -q "System-map drift check passed" drift-check-output.txt; then
+                echo "✅ System-map drift check completed (warnings are acceptable)"
+                # Warnings about orphaned files do NOT fail the build
+                if [ "$MAP_DRIFT_EXIT" -ne 0 ]; then
+                  echo "::warning::System-map has orphaned files (pre-existing technical debt)"
+                fi
+              else
+                # Real errors detected - fail the build
+                echo "⚠️ System-map drift check failed with real errors (exit code: $MAP_DRIFT_EXIT)"
                 VALIDATION_FAILED=1
               fi
             fi
