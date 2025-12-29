@@ -68,7 +68,7 @@ vi.mock('../../../src/lib/loadSettings', () => ({
 }));
 
 // Mock analytics to avoid @amplitude/analytics-node dependency
-// Only mock for ROA-355 tests (signup method doesn't use trackEvent)
+// trackEvent is used in register() method, so we need to mock it globally
 vi.mock('../../../src/lib/analytics', () => ({
   trackEvent: vi.fn(() => Promise.resolve())
 }));
