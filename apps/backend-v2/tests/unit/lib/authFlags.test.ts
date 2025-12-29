@@ -1,6 +1,6 @@
 /**
  * Unit Tests for AuthFlags Loader (ROA-406)
- * 
+ *
  * Tests the fail-closed behavior and SSOT v2 compliance:
  * - Defaults to false (fail-closed)
  * - NO environment variable fallbacks
@@ -119,10 +119,9 @@ describe('AuthFlags Loader (ROA-406)', () => {
       await expect(isAuthEndpointEnabled('auth_enable_login', 'login_policy')).rejects.toThrow(
         AuthError
       );
-      await expect(isAuthEndpointEnabled('auth_enable_login', 'login_policy')).rejects.toHaveProperty(
-        'slug',
-        AUTH_ERROR_CODES.AUTH_DISABLED
-      );
+      await expect(
+        isAuthEndpointEnabled('auth_enable_login', 'login_policy')
+      ).rejects.toHaveProperty('slug', AUTH_ERROR_CODES.AUTH_DISABLED);
     });
 
     it('lanza AuthError si loadAuthFlags falla (fail-closed)', async () => {
@@ -131,10 +130,9 @@ describe('AuthFlags Loader (ROA-406)', () => {
       await expect(isAuthEndpointEnabled('auth_enable_login', 'login_policy')).rejects.toThrow(
         AuthError
       );
-      await expect(isAuthEndpointEnabled('auth_enable_login', 'login_policy')).rejects.toHaveProperty(
-        'slug',
-        AUTH_ERROR_CODES.AUTH_DISABLED
-      );
+      await expect(
+        isAuthEndpointEnabled('auth_enable_login', 'login_policy')
+      ).rejects.toHaveProperty('slug', AUTH_ERROR_CODES.AUTH_DISABLED);
     });
 
     it('valida todos los auth flags correctamente', async () => {
@@ -147,12 +145,10 @@ describe('AuthFlags Loader (ROA-406)', () => {
         }
       } as any);
 
-      await expect(
-        isAuthEndpointEnabled('auth_enable_login', 'login_policy')
-      ).resolves.toBe(true);
-      await expect(
-        isAuthEndpointEnabled('auth_enable_register', 'register_policy')
-      ).resolves.toBe(true);
+      await expect(isAuthEndpointEnabled('auth_enable_login', 'login_policy')).resolves.toBe(true);
+      await expect(isAuthEndpointEnabled('auth_enable_register', 'register_policy')).resolves.toBe(
+        true
+      );
       await expect(
         isAuthEndpointEnabled('auth_enable_magic_link', 'magic_link_policy')
       ).resolves.toBe(true);
