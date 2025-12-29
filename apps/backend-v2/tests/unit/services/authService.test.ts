@@ -68,8 +68,9 @@ vi.mock('../../../src/lib/loadSettings', () => ({
 }));
 
 // Mock analytics to avoid @amplitude/analytics-node dependency
+// Only mock for ROA-355 tests (signup method doesn't use trackEvent)
 vi.mock('../../../src/lib/analytics', () => ({
-  trackEvent: vi.fn()
+  trackEvent: vi.fn(() => Promise.resolve())
 }));
 
 describe('AuthService - Email Existence Check (ROA-355)', () => {
