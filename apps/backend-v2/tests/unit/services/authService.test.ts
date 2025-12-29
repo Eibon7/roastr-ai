@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AuthService } from '../../../src/services/authService';
-import { AuthError, AUTH_ERROR_CODES } from '../../../src/utils/authErrorTaxonomy';
+import { AUTH_ERROR_CODES } from '../../../src/utils/authErrorTaxonomy';
 import { supabase } from '../../../src/lib/supabaseClient';
 
 // Mock supabase client
@@ -312,4 +312,3 @@ describe('AuthService - Email Existence Check (ROA-355)', () => {
     });
   });
 });
-

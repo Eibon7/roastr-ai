@@ -4,7 +4,7 @@
 **Título:** Email existence check pre-signup validation  
 **Prioridad:** P1  
 **Estimación:** 1-2 horas  
-**Branch:** `feature/ROA-355-auto`  
+**Branch:** `feature/ROA-355-email-check`  
 **GDD Nodes:** `auth`
 
 ---
