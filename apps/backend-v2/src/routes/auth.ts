@@ -22,6 +22,7 @@ import { trackEvent } from '../lib/analytics.js';
 import { sendAuthError } from '../utils/authErrorResponse.js';
 import { logger } from '../utils/logger.js';
 import { checkAuthPolicy } from '../auth/authPolicyGate.js';
+import { isAuthEndpointEnabled } from '../lib/authFlags.js';
 
 const router = Router();
 
@@ -71,6 +72,9 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
   }
 
   try {
+    // ROA-406: Feature flag check (fail-closed, no env fallback)
+    await isAuthEndpointEnabled('auth_enable_register', 'auth_enable_register');
+
     // ✅ A3 POLICY GATE: Check policies BEFORE auth logic
     const policyResult = await checkAuthPolicy({
       action: 'register',
@@ -197,6 +201,9 @@ router.post('/login', rateLimitByType('login'), async (req: Request, res: Respon
       });
     }
 
+    // ROA-406: Feature flag check (fail-closed, no env fallback)
+    await isAuthEndpointEnabled('auth_enable_login', 'auth_enable_login');
+
     // ✅ A3 POLICY GATE: Check policies BEFORE auth logic
     const policyResult = await checkAuthPolicy({
       action: 'login',
@@ -306,6 +313,9 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
       });
     }
 
+    // ROA-406: Feature flag check (fail-closed, no env fallback)
+    await isAuthEndpointEnabled('auth_enable_magic_link', 'auth_enable_magic_link');
+
     // ✅ A3 POLICY GATE: Check policies BEFORE auth logic
     const policyResult = await checkAuthPolicy({
       action: 'magic_link',
@@ -347,6 +357,63 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
     return sendAuthError(req, res, error, { log: { policy: 'magic_link' } });
   }
 });
+
+/**
+ * POST /api/v2/auth/password-recovery
+ * Solicita un email de recuperación de contraseña
+ * Rate limited: 3 intentos en 1 hora
+ */
+router.post(
+  '/password-recovery',
+  rateLimitByType('password_recovery'),
+  async (req: Request, res: Response) => {
+    const ip = getClientIp(req);
+    const userAgent = (req.headers['user-agent'] as string) || null;
+
+    try {
+      // ROA-406: Feature flag check (fail-closed, no env fallback)
+      await isAuthEndpointEnabled('auth_enable_password_recovery', 'auth_enable_password_recovery');
+
+      const { email } = req.body;
+
+      if (!email) {
+        return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+          log: { policy: 'validation:password_recovery' }
+        });
+      }
+
+      // ✅ A3 POLICY GATE: Check policies BEFORE auth logic
+      const policyResult = await checkAuthPolicy({
+        action: 'password_recovery',
+        ip,
+        email,
+        userAgent
+      });
+
+      if (!policyResult.allowed) {
+        logger.warn('AuthPolicyGate blocked password_recovery', {
+          email,
+          policy: policyResult.policy,
+          reason: policyResult.reason
+        });
+
+        return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED), {
+          log: { policy: `auth_policy_gate:${policyResult.policy}` }
+        });
+      }
+
+      const result = await authService.requestPasswordRecovery({
+        email,
+        ip
+      });
+
+      res.json(result);
+      return;
+    } catch (error) {
+      return sendAuthError(req, res, error, { log: { policy: 'password_recovery' } });
+    }
+  }
+);
 
 /**
  * GET /api/v2/auth/me

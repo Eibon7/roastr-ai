@@ -224,6 +224,12 @@ type FeatureFlagKey =
   // Ingestion
   | 'ingestion_enabled'
 
+  // Auth endpoint gates (ROA-406)
+  | 'auth_enable_login'
+  | 'auth_enable_register'
+  | 'auth_enable_magic_link'
+  | 'auth_enable_password_recovery'
+
   // UX / UI
   | 'show_two_roast_variants'
   | 'show_transparency_disclaimer'
@@ -249,6 +255,41 @@ type FeatureFlagKey =
   - Habilita módulo de sponsors (solo Plus).
 - `enable_user_registration` (admin):
   - Habilita el endpoint de registro de usuarios (email + password) en Auth v2.
+
+#### Auth Feature Flags (ROA-406)
+
+**Purpose**: Gate sensitive authentication endpoints with fail-closed semantics.
+
+- `auth_enable_login` (admin):
+  - Controls POST /api/v2/auth/login availability
+  - Default: `false` (fail-closed for security)
+  - When disabled, endpoint throws AuthError with code AUTH_DISABLED (401)
+  - Emits analytics event `auth_feature_blocked` with flag/policy context
+  - No environment variable fallbacks (SSOT v2 enforcement)
+
+- `auth_enable_register` (admin):
+  - Controls POST /api/v2/auth/register availability
+  - Default: `false` (fail-closed for security)
+  - When disabled, endpoint throws AuthError with code AUTH_DISABLED (401)
+  - Emits analytics event `auth_feature_blocked` with flag/policy context
+  - No environment variable fallbacks (SSOT v2 enforcement)
+
+- `auth_enable_magic_link` (admin):
+  - Controls POST /api/v2/auth/magic-link availability
+  - Default: `false` (fail-closed for security)
+  - When disabled, endpoint throws AuthError with code AUTH_DISABLED (401)
+  - Emits analytics event `auth_feature_blocked` with flag/policy context
+  - No environment variable fallbacks (SSOT v2 enforcement)
+
+- `auth_enable_password_recovery` (admin):
+  - Controls POST /api/v2/auth/password-recovery availability
+  - Default: `false` (fail-closed for security)
+  - When disabled, endpoint throws AuthError with code AUTH_DISABLED (401)
+  - Emits analytics event `auth_feature_blocked` with flag/policy context
+  - No environment variable fallbacks (SSOT v2 enforcement)
+
+**Integration**: Checked via `isAuthEndpointEnabled()` before AuthPolicyGate in auth routes.
+
 - `original_tone_enabled` (admin):
   - Habilita tono personal (Pro/Plus).
 - `nsfw_tone_enabled` (admin):
