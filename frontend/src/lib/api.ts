@@ -228,10 +228,7 @@ class ApiClient {
         };
         try {
           const errorData = await response.json();
-          error.slug = errorData.error?.slug;
-          error.retryable = errorData.error?.retryable;
-          error.request_id = errorData.request_id;
-          // Legacy compatibility if backend returns { error: { code } }
+          error.message = errorData.error?.message || errorData.message || error.message;
           error.code = errorData.error?.code;
         } catch {
           // If response is not JSON, use default error message
@@ -283,9 +280,7 @@ class ApiClient {
 
           try {
             const errorData = await retryResponse.json();
-            error.slug = errorData.error?.slug;
-            error.retryable = errorData.error?.retryable;
-            error.request_id = errorData.request_id;
+            error.message = errorData.error?.message || errorData.message || error.message;
             error.code = errorData.error?.code;
           } catch {
             // If response is not JSON, use default error message
@@ -337,9 +332,7 @@ class ApiClient {
 
       try {
         const errorData = await response.json();
-        error.slug = errorData.error?.slug;
-        error.retryable = errorData.error?.retryable;
-        error.request_id = errorData.request_id;
+        error.message = errorData.error?.message || errorData.message || error.message;
         error.code = errorData.error?.code;
         
         // Extract retry-after header for 429 errors
@@ -363,17 +356,7 @@ class ApiClient {
       }
 
       // Handle auth-related errors with UX actions
-      if (
-        error.slug ||
-        error.status === 403 ||
-        error.status === 429 ||
-        error.code?.startsWith('AUTH') ||
-        error.code?.startsWith('AUTHZ') ||
-        error.code?.startsWith('TOKEN') ||
-        error.code?.startsWith('SESSION') ||
-        error.code?.startsWith('ACCOUNT') ||
-        error.code?.startsWith('POLICY')
-      ) {
+      if (error.status === 403 || error.status === 429 || error.code?.startsWith('AUTH')) {
         handleAuthError(error, getLoginRedirect());
       }
 
@@ -435,9 +418,7 @@ class ApiClient {
 
           try {
             const errorData = await retryResponse.json();
-            error.slug = errorData.error?.slug;
-            error.retryable = errorData.error?.retryable;
-            error.request_id = errorData.request_id;
+            error.message = errorData.error?.message || errorData.message || error.message;
             error.code = errorData.error?.code;
           } catch {
             // If response is not JSON, use default error message
