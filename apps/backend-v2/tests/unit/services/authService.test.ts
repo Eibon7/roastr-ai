@@ -32,6 +32,13 @@ vi.mock('../../../src/lib/supabaseClient', () => ({
   }
 }));
 
+// Mock analytics
+vi.mock('@amplitude/analytics-node', () => ({
+  init: vi.fn(),
+  track: vi.fn(),
+  identify: vi.fn()
+}));
+
 // Mock logger
 vi.mock('../../../src/utils/logger', () => ({
   logger: {

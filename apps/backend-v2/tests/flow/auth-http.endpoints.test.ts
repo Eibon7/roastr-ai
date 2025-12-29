@@ -12,11 +12,15 @@ vi.mock('../../src/lib/analytics', () => ({
   initializeAmplitude: vi.fn()
 }));
 
-// Mock loadSettings (usado solo por /auth/register)
+// Mock loadSettings (ROA-406: Ahora retorna feature flags v2)
 vi.mock('../../src/lib/loadSettings', () => ({
   loadSettings: vi.fn().mockResolvedValue({
-    feature_flags: { enable_user_registration: false },
-    auth: { login: { enabled: true }, signup: { enabled: true }, magic_link: { enabled: true } }
+    feature_flags: {
+      auth_enable_login: true,
+      auth_enable_register: true,
+      auth_enable_magic_link: true,
+      auth_enable_password_recovery: true
+    }
   })
 }));
 

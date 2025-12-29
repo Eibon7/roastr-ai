@@ -207,12 +207,18 @@ Todos los webhooks deben ser **idempotentes** y pasar por un **billingStateMachi
 
 ```ts
 type FeatureFlagKey =
+  // Auth endpoints control (ROA-406)
+  | 'auth_enable_login'
+  | 'auth_enable_register'
+  | 'auth_enable_magic_link'
+  | 'auth_enable_password_recovery'
+
   // Core producto
   | 'autopost_enabled'
   | 'manual_approval_enabled'
   | 'custom_prompt_enabled'
   | 'sponsor_feature_enabled'
-  | 'enable_user_registration'
+  | 'enable_user_registration'  // DEPRECATED: Use auth_enable_register
   | 'original_tone_enabled'
   | 'nsfw_tone_enabled'
 
@@ -239,6 +245,34 @@ type FeatureFlagKey =
 
 ### 3.3 Semántica breve de cada flag
 
+**Auth Endpoint Control (ROA-406):**
+
+- `auth_enable_login` (admin):
+  - Habilita el endpoint `POST /api/v2/auth/login` (email + password).
+  - **Default:** `false` (fail-closed por seguridad)
+  - **Ubicación:** `feature_flags.auth_enable_login`
+  - **NO tiene fallback** a env vars (SSOT única fuente de verdad)
+
+- `auth_enable_register` (admin):
+  - Habilita el endpoint `POST /api/v2/auth/register` (nuevo registro).
+  - **Default:** `false` (fail-closed por seguridad)
+  - **Ubicación:** `feature_flags.auth_enable_register`
+  - **NO tiene fallback** a env vars
+
+- `auth_enable_magic_link` (admin):
+  - Habilita el endpoint `POST /api/v2/auth/magic-link` (passwordless).
+  - **Default:** `false` (fail-closed por seguridad)
+  - **Ubicación:** `feature_flags.auth_enable_magic_link`
+  - **NO tiene fallback** a env vars
+
+- `auth_enable_password_recovery` (admin):
+  - Habilita el endpoint `POST /api/v2/auth/password-recovery` (reset password).
+  - **Default:** `false` (fail-closed por seguridad)
+  - **Ubicación:** `feature_flags.auth_enable_password_recovery`
+  - **NO tiene fallback** a env vars
+
+**Core Producto:**
+
 - `autopost_enabled` (user/account):
   - Permite auto-approve de roasts.
 - `manual_approval_enabled` (user/account):
@@ -248,11 +282,14 @@ type FeatureFlagKey =
 - `sponsor_feature_enabled` (admin):
   - Habilita módulo de sponsors (solo Plus).
 - `enable_user_registration` (admin):
+  - **DEPRECATED:** Usar `auth_enable_register` en su lugar.
   - Habilita el endpoint de registro de usuarios (email + password) en Auth v2.
 - `original_tone_enabled` (admin):
   - Habilita tono personal (Pro/Plus).
 - `nsfw_tone_enabled` (admin):
   - Solo futuro con modelo dedicado, no usar en v2.
+
+**Shield / Seguridad:**
 
 - `kill_switch_autopost` (admin):
   - Apaga todos los autopost, aunque `autopost_enabled` esté ON.
@@ -261,16 +298,22 @@ type FeatureFlagKey =
 - `enable_roast` (user/account):
   - Permite desactivar Roasts y usar solo Shield.
 
+**Ingestion:**
+
 - `ingestion_enabled` (admin/account):
   - Habilita/deshabilita la ingestion de comentarios desde plataformas.
   - Cuando está OFF, el sistema no procesa nuevos comentarios.
   - No afecta histórico ni funcionalidad existente.
+
+**UX / UI:**
 
 - `show_two_roast_variants` (admin):
   - ON → 2 variantes de roast.
   - OFF → 1 variante.
 - `show_transparency_disclaimer` (admin):
   - Controla copia de transparencia IA, pero **no puede desactivar** la señalización legal obligatoria en UE para autopost.
+
+**Despliegue / Experimentales:**
 
 - `enable_style_validator` (admin):
   - Activa validador de estilo.

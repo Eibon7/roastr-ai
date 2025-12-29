@@ -244,32 +244,11 @@ export class AuthService {
 
   /**
    * Inicia sesión con email y password
+   * 
+   * NOTE: Feature flag check ahora se hace en routes/auth.ts (ROA-406)
    */
   async login(params: LoginParams): Promise<Session> {
     const { email, password, ip } = params;
-
-    // Feature flag check: auth.login.enabled
-    try {
-      const settings = await loadSettings();
-      const loginEnabled = settings?.auth?.login?.enabled ?? true;
-
-      if (!loginEnabled) {
-        throw new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED);
-      }
-    } catch (error) {
-      // If SettingsLoader fails, fall back to process.env
-      const loginEnabled = process.env.AUTH_LOGIN_ENABLED !== 'false';
-
-      if (!loginEnabled) {
-        throw new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED);
-      }
-
-      // If it's an AuthError (AUTH_DISABLED), rethrow it
-      if (error instanceof AuthError) {
-        throw error;
-      }
-      // Otherwise, continue (settings loader unavailable but auth not explicitly disabled)
-    }
 
     try {
       // Rate limiting
@@ -468,6 +447,42 @@ export class AuthService {
       return {
         success: true,
         message: 'Magic link sent successfully'
+      };
+    } catch (error) {
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      throw mapSupabaseError(error);
+    }
+  }
+
+  /**
+   * Solicita password recovery link
+   * Feature flag check se hace en routes/auth.ts (ROA-406)
+   */
+  async requestPasswordRecovery(params: MagicLinkParams): Promise<{ success: boolean; message: string }> {
+    const { email, ip } = params;
+
+    try {
+      // Rate limiting
+      const rateLimitResult = rateLimitService.recordAttempt('magic_link', ip);
+      if (!rateLimitResult.allowed) {
+        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMITED, { cause: rateLimitResult });
+      }
+
+      // Enviar password recovery link (no revelar si el usuario existe)
+      const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase(), {
+        redirectTo: process.env.SUPABASE_REDIRECT_URL || 'http://localhost:3000/auth/reset-password'
+      });
+
+      // Anti-enumeration: siempre devolver success, incluso si el email no existe
+      if (error && error.message !== 'User not found') {
+        throw mapSupabaseError(error);
+      }
+
+      return {
+        success: true,
+        message: 'If this email exists, a password recovery link has been sent'
       };
     } catch (error) {
       if (error instanceof AuthError) {

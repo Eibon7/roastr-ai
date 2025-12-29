@@ -1,13 +1,14 @@
 /**
  * Auth Register Endpoint Tests v2 (ROA-374)
  * + B3: Register Analytics Implementation (ROA-376)
+ * + ROA-406: Feature flags migration to A2 contract
  *
  * Valida el contrato de:
  * POST /api/v2/auth/register
  *
  * Reglas:
  * - Anti-enumeration: responde { success: true } incluso si el email ya existe
- * - Feature flag: feature_flags.enable_user_registration
+ * - Feature flag: feature_flags.auth_enable_register (ROA-406)
  * - Validación: email requerido/normalizado, password >= 8
  * - Analytics: trackea eventos de success/failed
  */
@@ -61,7 +62,7 @@ describe('POST /api/v2/auth/register', () => {
     const { loadSettings } = await import('../../src/lib/loadSettings');
     vi.mocked(loadSettings).mockResolvedValueOnce({
       feature_flags: {
-        enable_user_registration: false
+        auth_enable_register: false // ROA-406: Nuevo nombre de flag
       }
     } as any);
 
@@ -84,7 +85,12 @@ describe('POST /api/v2/auth/register', () => {
     const { loadSettings } = await import('../../src/lib/loadSettings');
     vi.mocked(loadSettings).mockResolvedValueOnce({
       feature_flags: {
-        enable_user_registration: true
+        auth_enable_register: true // ROA-406: Nuevo nombre de flag
+      }
+    } as any);
+    vi.mocked(loadSettings).mockResolvedValueOnce({
+      feature_flags: {
+        auth_enable_register: true
       }
     } as any);
 
@@ -107,7 +113,7 @@ describe('POST /api/v2/auth/register', () => {
     const { loadSettings } = await import('../../src/lib/loadSettings');
     vi.mocked(loadSettings).mockResolvedValueOnce({
       feature_flags: {
-        enable_user_registration: true
+        auth_enable_register: true
       }
     } as any);
 
@@ -156,7 +162,7 @@ describe('POST /api/v2/auth/register', () => {
     const { loadSettings } = await import('../../src/lib/loadSettings');
     vi.mocked(loadSettings).mockResolvedValueOnce({
       feature_flags: {
-        enable_user_registration: true
+        auth_enable_register: true
       }
     } as any);
 
@@ -183,7 +189,7 @@ describe('POST /api/v2/auth/register', () => {
     const { loadSettings } = await import('../../src/lib/loadSettings');
     vi.mocked(loadSettings).mockResolvedValueOnce({
       feature_flags: {
-        enable_user_registration: true
+        auth_enable_register: true
       }
     } as any);
 
@@ -213,7 +219,7 @@ describe('POST /api/v2/auth/register', () => {
       const { loadSettings } = await import('../../src/lib/loadSettings');
       vi.mocked(loadSettings).mockResolvedValueOnce({
         feature_flags: {
-          enable_user_registration: true
+          auth_enable_register: true
         }
       } as any);
 
@@ -273,7 +279,7 @@ describe('POST /api/v2/auth/register', () => {
       const { loadSettings } = await import('../../src/lib/loadSettings');
       vi.mocked(loadSettings).mockResolvedValueOnce({
         feature_flags: {
-          enable_user_registration: true
+          auth_enable_register: true
         }
       } as any);
 
@@ -322,7 +328,7 @@ describe('POST /api/v2/auth/register', () => {
       const { loadSettings } = await import('../../src/lib/loadSettings');
       vi.mocked(loadSettings).mockResolvedValueOnce({
         feature_flags: {
-          enable_user_registration: true
+          auth_enable_register: true
         }
       } as any);
 
@@ -362,7 +368,7 @@ describe('POST /api/v2/auth/register', () => {
       const { loadSettings } = await import('../../src/lib/loadSettings');
       vi.mocked(loadSettings).mockResolvedValueOnce({
         feature_flags: {
-          enable_user_registration: true
+          auth_enable_register: true
         }
       } as any);
 

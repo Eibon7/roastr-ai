@@ -18,7 +18,7 @@ import { AuthError, AUTH_ERROR_CODES } from '../utils/authErrorTaxonomy.js';
 import { rateLimitByType } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
 import { getClientIp } from '../utils/request.js';
-import { loadSettings } from '../lib/loadSettings.js';
+import { isAuthEndpointEnabled } from '../lib/authFlags.js';
 import { trackEvent } from '../lib/analytics.js';
 import { sendAuthError } from '../utils/authErrorResponse.js';
 import { logger } from '../utils/logger.js';
@@ -31,22 +31,14 @@ const router = Router();
  *
  * - Input: { email, password }
  * - Output: { success: true } (anti-enumeration: homogéneo incluso si el email ya existe)
- * - Feature flag: feature_flags.enable_user_registration (default: false)
+ * - Feature flag: feature_flags.auth_enable_register (default: false, fail-closed)
  * - Rate limit: misma política que login
  */
 router.post('/register', rateLimitByType('login'), async (req: Request, res: Response) => {
-  // Feature flag (fail-closed si no se puede cargar settings)
-  try {
-    const settings = await loadSettings();
-    const enabled = settings?.feature_flags?.enable_user_registration ?? false;
-    if (!enabled) {
-      return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.NOT_FOUND), {
-        log: { policy: 'feature_flag:enable_user_registration' }
-      });
-    }
-  } catch {
+  // Feature flag check (fail-closed, no env var fallback)
+  if (!(await isAuthEndpointEnabled('register'))) {
     return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.NOT_FOUND), {
-      log: { policy: 'feature_flag:enable_user_registration' }
+      log: { policy: 'feature_flag:auth_enable_register' }
     });
   }
 
@@ -165,8 +157,16 @@ router.post('/signup', rateLimitByType('signup'), async (req: Request, res: Resp
  * POST /api/v2/auth/login
  * Inicia sesión con email y password
  * Rate limited: 5 intentos en 15 minutos
+ * Feature flag: feature_flags.auth_enable_login (default: false, fail-closed)
  */
 router.post('/login', rateLimitByType('login'), async (req: Request, res: Response) => {
+  // Feature flag check (fail-closed, no env var fallback)
+  if (!(await isAuthEndpointEnabled('login'))) {
+    return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED), {
+      log: { policy: 'feature_flag:auth_enable_login' }
+    });
+  }
+
   try {
     const { email, password } = req.body;
 
@@ -245,8 +245,16 @@ router.post('/refresh', async (req: Request, res: Response) => {
  * Solicita un magic link para login passwordless
  * SOLO permitido para role=user
  * Rate limited: 3 intentos en 1 hora
+ * Feature flag: feature_flags.auth_enable_magic_link (default: false, fail-closed)
  */
 router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, res: Response) => {
+  // Feature flag check (fail-closed, no env var fallback)
+  if (!(await isAuthEndpointEnabled('magic_link'))) {
+    return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED), {
+      log: { policy: 'feature_flag:auth_enable_magic_link' }
+    });
+  }
+
   try {
     const { email } = req.body;
 
@@ -267,6 +275,43 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
     return;
   } catch (error) {
     return sendAuthError(req, res, error, { log: { policy: 'magic_link' } });
+  }
+});
+
+/**
+ * POST /api/v2/auth/password-recovery
+ * Solicita un enlace de recuperación de contraseña
+ * Rate limited: 3 intentos en 1 hora
+ * Feature flag: feature_flags.auth_enable_password_recovery (default: false, fail-closed)
+ */
+router.post('/password-recovery', rateLimitByType('magic_link'), async (req: Request, res: Response) => {
+  // Feature flag check (fail-closed, no env var fallback)
+  if (!(await isAuthEndpointEnabled('password_recovery'))) {
+    return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED), {
+      log: { policy: 'feature_flag:auth_enable_password_recovery' }
+    });
+  }
+
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+        log: { policy: 'validation:password_recovery' }
+      });
+    }
+
+    const ip = getClientIp(req);
+
+    const result = await authService.requestPasswordRecovery({
+      email,
+      ip
+    });
+
+    res.json(result);
+    return;
+  } catch (error) {
+    return sendAuthError(req, res, error, { log: { policy: 'password_recovery' } });
   }
 });
 
