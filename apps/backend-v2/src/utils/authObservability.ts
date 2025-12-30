@@ -166,7 +166,10 @@ export function trackAuthAttempt(
 /**
  * Create auth event context from request
  */
-export function createAuthContext(req: any, additional?: Partial<AuthEventContext>): AuthEventContext {
+export function createAuthContext(
+  req: any,
+  additional?: Partial<AuthEventContext>
+): AuthEventContext {
   const requestId = (req as any)?.request_id || req.headers['x-request-id'] || undefined;
   const correlationId = req.headers['x-correlation-id'] || undefined;
   const ip = (req as any)?.ip || req.socket?.remoteAddress || undefined;

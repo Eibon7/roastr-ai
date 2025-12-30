@@ -192,7 +192,7 @@ export class AuthService {
       const duration = Date.now() - startTime;
       logRegisterAttempt({ ...context, user_id: data.user.id }, true);
       trackAuthDuration('register', { ...context, user_id: data.user.id }, duration);
-      
+
       try {
         trackEvent({
           userId: data.user.id,
@@ -215,7 +215,7 @@ export class AuthService {
       const authError = error instanceof AuthError ? error : mapSupabaseError(error);
       logRegisterAttempt(context, false, authError);
       trackAuthDuration('register', context, duration);
-      
+
       try {
         trackEvent({
           event: 'auth_register_failed',
@@ -648,7 +648,7 @@ export class AuthService {
         logMagicLinkRequest(context, false, authError);
         trackAuthDuration('magic_link', context, duration);
       }
-      
+
       if (error instanceof AuthError) {
         throw error;
       }
@@ -757,7 +757,7 @@ export class AuthService {
         logPasswordRecoveryRequest(context, false, authError);
         trackAuthDuration('password_recovery', context, duration);
       }
-      
+
       if (error instanceof AuthError) {
         throw error;
       }

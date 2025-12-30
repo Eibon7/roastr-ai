@@ -95,11 +95,7 @@ class AuthObservabilityService {
   /**
    * Log auth event with structured logging
    */
-  logAuthEvent(
-    level: 'info' | 'warn' | 'error',
-    event: string,
-    context: AuthEventContext
-  ): void {
+  logAuthEvent(level: 'info' | 'warn' | 'error', event: string, context: AuthEventContext): void {
     const sanitizedContext = sanitizeContext(context);
 
     const logEntry = {
@@ -140,11 +136,7 @@ class AuthObservabilityService {
   /**
    * Track auth event via Amplitude
    */
-  trackAuthEvent(
-    event: string,
-    context: AuthEventContext,
-    properties?: Record<string, any>
-  ): void {
+  trackAuthEvent(event: string, context: AuthEventContext, properties?: Record<string, any>): void {
     trackEvent({
       userId: context.user_id,
       event: `auth_${event}`,
@@ -207,11 +199,7 @@ class AuthObservabilityService {
   /**
    * Track auth duration (latency)
    */
-  trackAuthDuration(
-    event: string,
-    context: AuthEventContext,
-    durationMs: number
-  ): void {
+  trackAuthDuration(event: string, context: AuthEventContext, durationMs: number): void {
     this.trackAuthMetric({
       event: `${event}.duration`,
       timestamp: Date.now(),
