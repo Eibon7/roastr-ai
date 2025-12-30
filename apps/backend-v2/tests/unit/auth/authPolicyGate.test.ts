@@ -72,7 +72,9 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
     // Default: all policies allow
     mockLoadSettings.mockResolvedValue({
       feature_flags: {
-        enable_user_registration: true
+        enable_user_registration: true,
+        ENABLE_RATE_LIMIT: true,
+        ENABLE_ABUSE_DETECTION: true
       },
       auth: {
         login: { enabled: true },
@@ -586,6 +588,113 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
 
       // Abuse check fails
       mockAbuseDetectionServiceAdapter.checkRequest.mockRejectedValueOnce(new Error());
+
+      const result = await gate.check({ action: 'login', ip: '127.0.0.1' });
+
+      expect(result.allowed).toBe(false);
+      expect(result.policy).toBe('abuse');
+    });
+  });
+
+  describe('Feature Flag Behavior (ROA-408)', () => {
+    it('should skip rate limit check when ENABLE_RATE_LIMIT is OFF', async () => {
+      mockLoadSettings.mockResolvedValue({
+        feature_flags: {
+          enable_user_registration: true,
+          ENABLE_RATE_LIMIT: false, // Feature flag OFF
+          ENABLE_ABUSE_DETECTION: true
+        },
+        auth: {
+          login: { enabled: true }
+        }
+      });
+
+      // Rate limit would block if checked
+      mockRateLimitService.recordAttempt.mockReturnValueOnce({
+        allowed: false
+      });
+
+      const result = await gate.check({ action: 'login', ip: '127.0.0.1' });
+
+      // Should pass because rate limit was skipped
+      expect(result.allowed).toBe(true);
+      // recordAttempt should not have been called
+      expect(mockRateLimitService.recordAttempt).not.toHaveBeenCalled();
+    });
+
+    it('should skip abuse check when ENABLE_ABUSE_DETECTION is OFF', async () => {
+      mockLoadSettings.mockResolvedValue({
+        feature_flags: {
+          enable_user_registration: true,
+          ENABLE_RATE_LIMIT: true,
+          ENABLE_ABUSE_DETECTION: false // Feature flag OFF
+        },
+        auth: {
+          login: { enabled: true }
+        }
+      });
+
+      // Rate limit passes
+      mockRateLimitService.recordAttempt.mockReturnValueOnce({
+        allowed: true,
+        remaining: 3
+      });
+
+      // Abuse would block if checked
+      mockAbuseDetectionServiceAdapter.checkRequest.mockResolvedValueOnce(true);
+
+      const result = await gate.check({ action: 'login', ip: '127.0.0.1' });
+
+      // Should pass because abuse was skipped
+      expect(result.allowed).toBe(true);
+      // checkRequest should not have been called
+      expect(mockAbuseDetectionServiceAdapter.checkRequest).not.toHaveBeenCalled();
+    });
+
+    it('should enforce rate limit when ENABLE_RATE_LIMIT is ON', async () => {
+      mockLoadSettings.mockResolvedValue({
+        feature_flags: {
+          enable_user_registration: true,
+          ENABLE_RATE_LIMIT: true, // Feature flag ON
+          ENABLE_ABUSE_DETECTION: true
+        },
+        auth: {
+          login: { enabled: true }
+        }
+      });
+
+      // Rate limit blocks
+      mockRateLimitService.recordAttempt.mockReturnValueOnce({
+        allowed: false,
+        blockedUntil: Date.now() + 60000
+      });
+
+      const result = await gate.check({ action: 'login', ip: '127.0.0.1' });
+
+      expect(result.allowed).toBe(false);
+      expect(result.policy).toBe('rate_limit');
+    });
+
+    it('should enforce abuse check when ENABLE_ABUSE_DETECTION is ON', async () => {
+      mockLoadSettings.mockResolvedValue({
+        feature_flags: {
+          enable_user_registration: true,
+          ENABLE_RATE_LIMIT: true,
+          ENABLE_ABUSE_DETECTION: true // Feature flag ON
+        },
+        auth: {
+          login: { enabled: true }
+        }
+      });
+
+      // Rate limit passes
+      mockRateLimitService.recordAttempt.mockReturnValueOnce({
+        allowed: true,
+        remaining: 3
+      });
+
+      // Abuse blocks
+      mockAbuseDetectionServiceAdapter.checkRequest.mockResolvedValueOnce(true);
 
       const result = await gate.check({ action: 'login', ip: '127.0.0.1' });
 

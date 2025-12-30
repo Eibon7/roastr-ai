@@ -319,6 +319,7 @@ export class AuthPolicyGate {
    *
    * Check if the action is rate limited.
    * Fail-closed: block if rate limit check fails.
+   * Exception: If ENABLE_RATE_LIMIT flag is OFF, policy is skipped.
    */
   private async checkRateLimit(context: AuthPolicyContext): Promise<AuthPolicyResult> {
     // Skip rate limit for logout and token refresh (low risk)
@@ -327,6 +328,12 @@ export class AuthPolicyGate {
     }
 
     try {
+      // Check if rate limiting is enabled (ROA-408 requirement)
+      const settings = await loadSettings();
+      if (!settings?.feature_flags?.ENABLE_RATE_LIMIT) {
+        return { allowed: true, retryable: false };
+      }
+
       // Build identifier (prefer user, fallback to email, fallback to IP)
       const identifier = context.userId || context.email || context.ip || 'unknown';
 
@@ -384,9 +391,16 @@ export class AuthPolicyGate {
    *
    * Check if the action is blocked by abuse detection.
    * Fail-closed: block if abuse check fails.
+   * Exception: If ENABLE_ABUSE_DETECTION flag is OFF, policy is skipped.
    */
   private async checkAbuse(context: AuthPolicyContext): Promise<AuthPolicyResult> {
     try {
+      // Check if abuse detection is enabled (ROA-408 requirement)
+      const settings = await loadSettings();
+      if (!settings?.feature_flags?.ENABLE_ABUSE_DETECTION) {
+        return { allowed: true, retryable: false };
+      }
+
       // Check with abuse detection service (via adapter)
       const isAbusive = await abuseDetectionServiceAdapter.checkRequest({
         ip: context.ip || 'unknown',
@@ -431,9 +445,7 @@ export class AuthPolicyGate {
   /**
    * Map auth action to rate limit type
    */
-  private mapActionToRateLimitType(
-    action: AuthAction
-  ): 'login' | 'magic_link' | 'signup' | 'password_reset' | null {
+  private mapActionToRateLimitType(action: AuthAction): 'login' | 'magic_link' | 'signup' | null {
     switch (action) {
       case 'login':
         return 'login';
@@ -441,8 +453,6 @@ export class AuthPolicyGate {
         return 'signup';
       case 'magic_link':
         return 'magic_link';
-      case 'password_recovery':
-        return 'password_reset';
       default:
         return null;
     }

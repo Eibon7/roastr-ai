@@ -96,6 +96,41 @@ Auth Action → Rate Limit Type:
 
 **NO existe fail-open silencioso.**
 
+## 🚩 Feature Flags (ROA-408 CRITICAL)
+
+**Respetando AC6:**
+
+| Feature Flag | Comportamiento OFF | Comportamiento ON |
+|-------------|-------------------|-------------------|
+| `ENABLE_RATE_LIMIT` | Policy omitida (no evalúa) | Rate limit se enforce |
+| `ENABLE_ABUSE_DETECTION` | Policy omitida (no evalúa) | Abuse detection se enforce |
+
+**Implementación:**
+
+En `authPolicyGate.ts`:
+
+```typescript
+private async checkRateLimit(context: AuthPolicyContext): Promise<AuthPolicyResult> {
+  // Check if rate limiting is enabled (ROA-408 requirement)
+  const settings = await loadSettings();
+  if (!settings?.feature_flags?.ENABLE_RATE_LIMIT) {
+    return { allowed: true, retryable: false };
+  }
+  // ... rest of rate limit logic
+}
+
+private async checkAbuse(context: AuthPolicyContext): Promise<AuthPolicyResult> {
+  // Check if abuse detection is enabled (ROA-408 requirement)
+  const settings = await loadSettings();
+  if (!settings?.feature_flags?.ENABLE_ABUSE_DETECTION) {
+    return { allowed: true, retryable: false };
+  }
+  // ... rest of abuse detection logic
+}
+```
+
+**⚠️ CRITICAL:** Si feature flag es ON y policy falla (error interno), se aplica fail-closed (bloquea).
+
 ## 📋 Contrato de Policy Result
 
 **Input (desde Auth):**
@@ -131,9 +166,17 @@ Auth Action → Rate Limit Type:
 **SÍ se testea:**
 - ✅ Login bloqueado por rate limit
 - ✅ Recovery bloqueado por abuse
-- ✅ Feature flag OFF → no bloquea
+- ✅ Feature flag OFF → no bloquea (CRÍTICO ROA-408)
+- ✅ Feature flag ON → policy se enforcea (CRÍTICO ROA-408)
 - ✅ `retry_after_seconds` se preserva
 - ✅ `allowed: true` → Auth continúa
+- ✅ Policy order enforcement
+- ✅ Fail-closed en cada policy
+
+**Tests añadidos (29 total):**
+- 4 tests de feature flags (`ENABLE_RATE_LIMIT`, `ENABLE_ABUSE_DETECTION`)
+- 10 tests de fail semantics
+- 15 tests existentes de policy order y contracts
 
 ## 📖 Referencias
 

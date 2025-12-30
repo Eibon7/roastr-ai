@@ -26,6 +26,10 @@ class AbuseDetectionServiceAdapter {
   /**
    * Check if request shows abuse patterns.
    * Adapta recordAttempt + isAbusive a interfaz esperada por authPolicyGate.
+   *
+   * Note: This is NOT async despite returning a Promise.
+   * The async signature is maintained for interface compatibility with authPolicyGate,
+   * which expects all policy checks to be async.
    */
   async checkRequest(request: AbuseCheckRequest): Promise<boolean> {
     const { ip, email } = request;

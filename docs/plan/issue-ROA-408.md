@@ -1,295 +1,166 @@
-# Implementation Plan: Issue ROA-408 - Auth Rate Limiting and Abuse V2
+# Issue ROA-408: A4 Auth Rate Limiting & Abuse Wiring v2
 
-**Issue:** ROA-408  
-**Title:** A4-Auth-Rate-Limiting-and-Abuse-v2  
-**Type:** Backend / Security  
-**Priority:** P0  
-**Area:** Authentication  
-**Status:** Planning  
-**Created:** 2025-12-29
+## 🎯 Objetivo
 
-## Objective
+Conectar las policies de **Rate Limit & Abuse** (ROA-359) con el **Auth Policy Gate** (A3), asegurando que:
 
-Implementar rate limiting y protección contra abuse para todos los endpoints de autenticación en backend-v2, utilizando el sistema de errores ya existente en `authErrorTaxonomy.ts`.
+> **"Si llego a ejecutar lógica de Auth, entonces rate limit y abuse ya fueron evaluados y resueltos."**
 
-## Context (GDD Nodes Loaded)
-
-**Primary nodes:**
-- `workers` (líneas 1-422) - Sistema de workers y rate limiting
-- `infraestructura` (líneas 1-293) - Rate limits y políticas
-
-**Total context:** ~715 líneas
-
-## Current State
-
-Actualmente existe:
-- ✅ `apps/backend-v2/src/utils/authErrorTaxonomy.ts` - Taxonomía completa de errores auth
-- ✅ `AUTH_ERROR_CODES.RATE_LIMITED` y `POLICY_RATE_LIMITED` - Slugs ya definidos
-- ✅ `mapPolicyResultToAuthError()` - Mapper de políticas a errores
-- ❌ NO existe rate limiting middleware para auth v2
-- ❌ NO existe sistema de tracking de intentos fallidos
-- ❌ NO existe protección contra credential stuffing
-- ❌ NO existe protección contra brute force
-
-## Acceptance Criteria
-
-### AC1: Rate Limiting Middleware
-- [ ] Middleware de rate limiting para auth endpoints v2
-- [ ] Configuración por endpoint (login, registro, refresh, magic link)
-- [ ] Almacenamiento en Redis/Upstash con TTL
-- [ ] Headers estándar (`X-RateLimit-*`, `Retry-After`)
-- [ ] Integración con `POLICY_RATE_LIMITED` slug
-
-### AC2: Abuse Detection
-- [ ] Tracking de intentos fallidos por IP
-- [ ] Tracking de intentos fallidos por email (anti-enumeration safe)
-- [ ] Lockout temporal progresivo (5→15→60 min)
-- [ ] Logs estructurados sin PII
-- [ ] Integración con `AUTH_ACCOUNT_LOCKED` slug
-
-### AC3: Credential Stuffing Protection
-- [ ] Detección de patrones de credential stuffing
-- [ ] Bloqueo temporal de IP tras N intentos fallidos
-- [ ] Whitelist de IPs conocidas (opcional)
-- [ ] CAPTCHA challenge tras intentos sospechosos (feature flag)
-
-### AC4: Rate Limits por Endpoint
-| Endpoint | Autenticado | Anónimo | Window | Lockout |
-|----------|-------------|---------|--------|---------|
-| `/auth/login` | 10/5min | 5/5min | 5min | Progressive |
-| `/auth/register` | N/A | 3/15min | 15min | 15min |
-| `/auth/refresh` | 30/15min | N/A | 15min | No lockout |
-| `/auth/magic-link` | N/A | 5/hour | 1hour | 1hour |
-| `/auth/password-reset` | N/A | 3/hour | 1hour | 1hour |
-
-### AC5: Observability
-- [ ] Métricas de rate limiting (intentos, blocks, lockouts)
-- [ ] Logs estructurados con `request_id`, `ip_hash`, `endpoint`
-- [ ] Dashboard en Admin Panel (issue futura)
-- [ ] Alertas para patrones sospechosos (>100 blocks/min)
-
-### AC6: Testing
-- [ ] Unit tests para middleware de rate limiting
-- [ ] Unit tests para abuse detection
-- [ ] Integration tests para cada endpoint con rate limits
-- [ ] E2E tests para flujos de lockout y recovery
-- [ ] Performance tests (mínimo 100 req/s sin degradación)
-
-### AC7: Documentation
-- [ ] Actualizar nodo GDD `workers.md` con rate limiting policies
-- [ ] Actualizar nodo GDD `infraestructura.md` con rate limits
-- [ ] API documentation con ejemplos de headers y errores
-- [ ] Runbook para operadores (desbloqueo manual, whitelist)
-
-## Architecture Overview
-
-### Rate Limiting Flow
-
-```
-Request → RateLimitMiddleware
-    ↓
-[Check Redis Cache] → Key: `rl:auth:{endpoint}:{identifier}`
-    ↓
-    Hits < Limit? → YES → Increment + Continue
-    ↓
-    Hits >= Limit? → NO → Return 429 + Headers
-    ↓
-[Abuse Detection] → Parallel check for patterns
-    ↓
-    Suspicious? → Log + Optional CAPTCHA challenge
-```
-
-### Abuse Detection Flow
-
-```
-Failed Login Attempt
-    ↓
-[Increment Counters] → Redis keys:
-    - `abuse:ip:{ip_hash}` (TTL: 1 hour)
-    - `abuse:email:{email_hash}` (TTL: 1 hour)
-    ↓
-[Check Thresholds]
-    - IP: 5 failed → 5min lockout
-    - IP: 10 failed → 15min lockout
-    - IP: 20 failed → 60min lockout
-    - Email: 3 failed → progressive lockout
-    ↓
-[Apply Lockout] → Return AUTH_ACCOUNT_LOCKED
-    ↓
-[Log Event] → Structured log (no PII)
-```
-
-### Key Components to Implement
-
-| Component | Path | Responsibility |
-|-----------|------|----------------|
-| **RateLimitMiddleware** | `apps/backend-v2/src/middleware/rateLimitMiddleware.ts` | Rate limiting enforcement |
-| **AbuseDetector** | `apps/backend-v2/src/services/abuseDetector.ts` | Pattern detection + lockout |
-| **RateLimitService** | `apps/backend-v2/src/services/rateLimitService.ts` | Redis interaction + metrics |
-| **RateLimitConfig** | `apps/backend-v2/src/config/rateLimitConfig.ts` | Limits por endpoint |
-| **Tests** | `apps/backend-v2/tests/unit/middleware/rateLimitMiddleware.test.ts` | Unit tests |
-| **Integration Tests** | `apps/backend-v2/tests/integration/auth/rateLimitAuth.test.ts` | Integration tests |
-
-## Implementation Steps
-
-### Step 1: Rate Limit Service (Base)
-```typescript
-// apps/backend-v2/src/services/rateLimitService.ts
-export class RateLimitService {
-  async checkLimit(key: string, limit: number, window: number): Promise<RateLimitResult>;
-  async increment(key: string, ttl: number): Promise<number>;
-  async reset(key: string): Promise<void>;
-  async getRemainingHits(key: string, limit: number): Promise<number>;
-}
-```
-
-### Step 2: Rate Limit Middleware
-```typescript
-// apps/backend-v2/src/middleware/rateLimitMiddleware.ts
-export function createRateLimitMiddleware(config: RateLimitConfig) {
-  return async (req, res, next) => {
-    const identifier = getIdentifier(req, config);
-    const result = await rateLimitService.checkLimit(identifier, config.limit, config.window);
-    
-    if (result.blocked) {
-      res.set('X-RateLimit-Limit', config.limit);
-      res.set('X-RateLimit-Remaining', 0);
-      res.set('X-RateLimit-Reset', result.resetAt);
-      res.set('Retry-After', result.retryAfter);
-      
-      throw new AuthError(AUTH_ERROR_CODES.RATE_LIMITED);
-    }
-    
-    res.set('X-RateLimit-Limit', config.limit);
-    res.set('X-RateLimit-Remaining', result.remaining);
-    next();
-  };
-}
-```
-
-### Step 3: Abuse Detector
-```typescript
-// apps/backend-v2/src/services/abuseDetector.ts
-export class AbuseDetector {
-  async recordFailedAttempt(ip: string, email?: string): Promise<AbuseResult>;
-  async checkLockout(ip: string, email?: string): Promise<LockoutStatus>;
-  async clearLockout(ip: string, email?: string): Promise<void>;
-  async getAbuseMetrics(): Promise<AbuseMetrics>;
-}
-```
-
-### Step 4: Integration con Auth Endpoints
-```typescript
-// apps/backend-v2/src/routes/auth.ts
-router.post('/login',
-  createRateLimitMiddleware(rateLimitConfig.login),
-  abuseProtectionMiddleware,
-  loginController
-);
-
-router.post('/register',
-  createRateLimitMiddleware(rateLimitConfig.register),
-  registerController
-);
-
-router.post('/refresh',
-  createRateLimitMiddleware(rateLimitConfig.refresh),
-  refreshController
-);
-```
-
-### Step 5: Tests
-- Unit tests para `RateLimitService` (mock Redis)
-- Unit tests para `AbuseDetector` (mock Redis)
-- Unit tests para middleware (mock service)
-- Integration tests para cada endpoint
-- E2E tests para flujos completos
-
-### Step 6: Documentation
-- Actualizar nodos GDD con nuevas políticas
-- Documentar API contracts
-- Crear runbook operacional
-
-## Testing Strategy
-
-### Unit Tests (Vitest)
-- ✅ Rate limit logic (increment, check, reset)
-- ✅ Abuse detection thresholds
-- ✅ Lockout progression (5→15→60 min)
-- ✅ Header generation
-- ❌ NO testear: Redis real, timers reales
-
-### Integration Tests (Supabase Test)
-- ✅ `/auth/login` con rate limit respetado
-- ✅ `/auth/login` con rate limit excedido → 429
-- ✅ Failed attempts → lockout progresivo
-- ✅ Lockout expired → access restored
-- ✅ Refresh token NO afectado por abuse detection
-- ✅ Headers correctos en todas las respuestas
-
-### E2E Tests (Playwright)
-- ✅ Login fallido 5 veces → lockout 5min
-- ✅ Esperar lockout → login exitoso
-- ✅ Rate limit excedido → 429 visible en UI
-- ✅ Refresh automático NO bloqueado
-
-## SSOT References
-
-Del nodo `infraestructura.md`:
-- `rate_limits` - Rate limits por servicio
-- `queue_configuration` - Configuración de workers
-
-Del nodo `workers.md`:
-- `worker_routing` - Routing de workers a colas
-
-## Edge Cases
-
-1. **Redis down**: Fail-open con log crítico (NO bloquear auth)
-2. **IP shared (NAT)**: Rate limit por IP + email combined key
-3. **IPv6 compression**: Normalizar IPv6 antes de hash
-4. **Clock skew**: Usar Redis TTL, no timestamps locales
-5. **Distributed requests**: Redis garantiza atomicidad
-6. **Lockout durante password reset**: Allow password reset endpoint
-7. **Admin override**: Endpoint manual para clear lockouts
-
-## Security Considerations
-
-- ❌ NO exponer contadores exactos (anti-enumeration)
-- ❌ NO logear passwords ni emails en plaintext
-- ✅ Hash IPs antes de almacenar
-- ✅ Hash emails antes de usar como key
-- ✅ TTL automático en Redis (no cleanup manual)
-- ✅ Fail-open si Redis falla (con alerta crítica)
-- ✅ Rate limit también en refresh (más permisivo)
-
-## Dependencies
-
-**Bloqueantes:**
-- Ninguna (issue independiente)
-
-**Desbloqueadas por esta issue:**
-- Admin Dashboard - Métricas de abuse
-- Security Monitoring - Alertas de patrones
-
-## Definition of Done
-
-Esta issue se considera **100% completa** cuando:
-
-1. ✅ Rate limiting middleware implementado y testeado
-2. ✅ Abuse detector implementado y testeado
-3. ✅ Todos los auth endpoints protegidos
-4. ✅ Headers estándar en todas las respuestas
-5. ✅ **TODOS los tests pasando al 100%** (unit + integration + E2E)
-6. ✅ Logs estructurados sin PII
-7. ✅ Nodos GDD actualizados con cobertura
-8. ✅ Documentation completa (API + Runbook)
-9. ✅ Pre-Flight Checklist ejecutado sin issues
-10. ✅ CodeRabbit review con 0 comentarios
+**⚠️ SCOPE:** Esta issue **NO implementa** rate limiting ni abuse detection. Es **exclusivamente wiring y traducción semántica** dentro del dominio Auth.
 
 ---
 
-**Created:** 2025-12-29  
-**Agent:** Cursor Orchestrator  
-**Worktree:** `/Users/emiliopostigo/roastr-ai/roastr-ai-worktrees/ROA-408`  
-**Branch:** `feature/ROA-408-auto`
+## 📋 Acceptance Criteria
 
+### AC1: Integración sin Reimplementar Lógica
+- ✅ Usar servicios de ROA-359 (rateLimitService, abuseDetectionService)
+- ✅ Crear adaptador si interfaz no es compatible
+- ✅ NO duplicar lógica de rate limiting
+- ✅ NO duplicar lógica de abuse detection
+
+### AC2: Timing y Orden de Evaluación
+- ✅ Evaluar políticas DENTRO del Auth Policy Gate (A3)
+- ✅ Orden: Feature Flags → Account Status → Rate Limit → Abuse → Auth Logic
+- ✅ ANTES de ejecutar lógica de auth (login/register/recovery)
+
+### AC3: Mapeo a Auth Errors (A1)
+- ✅ `rate_limited + temporary` → `POLICY_RATE_LIMITED` (retryable: true)
+- ✅ `rate_limited + permanent` → `ACCOUNT_BLOCKED` (retryable: false)
+- ✅ `abuse_detected` → `POLICY_ABUSE_DETECTED` (retryable: false)
+
+### AC4: Mapping de Acciones
+- ✅ Mapeo declarativo Auth Action → rate_limit.action
+  - `login` → `auth_login`
+  - `register` → `auth_register`
+  - `magic_link` → `auth_magic_link`
+
+### AC5: Contexto Mínimo
+- ✅ Policy recibe SOLO: `{ action, ip, email?, user_id?, auth_type }`
+- ✅ NO tokens
+- ✅ NO payload sensible
+
+### AC6: Feature Flags
+- ✅ Respetar `ENABLE_RATE_LIMIT` y `ENABLE_ABUSE_DETECTION`
+- ✅ Flag OFF → policy se omite explícitamente
+- ✅ Error interno con flag ON → fail-closed
+
+### AC7: Fail Semantics
+- ✅ Fail-closed por defecto (Redis/Upstash error, timeout, exception)
+- ✅ ÚNICA excepción: Feature flag OFF
+- ✅ NO fail-open silencioso
+
+### AC8: Observabilidad
+- ✅ Logs con `warn` level
+- ✅ Sin PII en logs
+- ✅ `request_id` obligatorio
+- ✅ Contexto: `{ auth_action, auth_type, retryable }`
+
+### AC9: Tests de Integración
+- ✅ Login bloqueado por rate limit
+- ✅ Recovery bloqueado por abuse
+- ✅ Feature flag OFF → no bloquea
+- ✅ `retry_after_seconds` se preserva
+- ✅ `allowed: true` → Auth continúa
+- ✅ Policy order enforcement
+- ✅ Fail-closed en cada policy
+
+---
+
+## 🚀 Implementation Plan
+
+### Paso 1: Auth Error Taxonomy (A1)
+- Añadir 3 nuevos error slugs:
+  - `POLICY_RATE_LIMITED` (429, retryable: true)
+  - `POLICY_ABUSE_DETECTED` (403, retryable: false)
+  - `ACCOUNT_BLOCKED` (403, retryable: false)
+- Actualizar `AUTH_ERROR_CODES` export
+
+### Paso 2: Adaptador de Abuse Detection
+- Crear `abuseDetectionServiceAdapter.ts`
+- Adaptar `recordAttempt` + `isAbusive` → `checkRequest`
+- Interface compatible con authPolicyGate
+- Solo traducción, NO lógica
+
+### Paso 3: Wiring en Auth Policy Gate (A3)
+- Modificar `checkRateLimit()`:
+  - Verificar `ENABLE_RATE_LIMIT` flag
+  - Usar `rateLimitService` de ROA-359
+  - Fail-closed si error
+- Modificar `checkAbuse()`:
+  - Verificar `ENABLE_ABUSE_DETECTION` flag
+  - Usar `abuseDetectionServiceAdapter`
+  - Fail-closed si error
+
+### Paso 4: Tests de Integración
+- Actualizar mocks en `authPolicyGate.test.ts`
+- Añadir tests de feature flags:
+  - Flag OFF → permite acción
+  - Flag ON + rate limit exceeded → bloquea
+  - Flag ON + abuse detected → bloquea
+- Verificar fail-closed scenarios
+
+### Paso 5: Documentación
+- Crear `docs/A4-AUTH-RATE-LIMIT-ABUSE-WIRING.md`
+- Documentar:
+  - Arquitectura del wiring
+  - Pipeline de evaluación
+  - Contratos de entrada/salida
+  - Fail semantics
+  - Testing scope
+
+---
+
+## 🛡️ Constraints
+
+### PROHIBIDO (Blocker si se hace)
+- ❌ Implementar rate limiting desde cero
+- ❌ Implementar abuse detection desde cero
+- ❌ Añadir middlewares fuera del A3 gate
+- ❌ Introducir fail-open silencioso
+- ❌ Cambiar contratos de ROA-359
+- ❌ Añadir lógica de UI, admin o dashboards
+
+### PERMITIDO
+- ✅ Crear adaptadores de interfaz
+- ✅ Añadir error slugs a taxonomy
+- ✅ Modificar authPolicyGate (solo wiring)
+- ✅ Tests de integración Auth ↔ Policy
+- ✅ Documentación de wiring
+
+---
+
+## 📦 Entregables
+
+1. ✅ `authErrorTaxonomy.ts` - 3 nuevos error slugs
+2. ✅ `abuseDetectionServiceAdapter.ts` - Adaptador de interfaz
+3. ✅ `authPolicyGate.ts` - Wiring de rate limit & abuse
+4. ✅ `authPolicyGate.test.ts` - Tests de integración actualizados
+5. ✅ `docs/A4-AUTH-RATE-LIMIT-ABUSE-WIRING.md` - Documentación
+
+---
+
+## 🔗 Dependencies
+
+- ✅ **ROA-359:** Rate Limiting & Abuse Detection (mergeada en main)
+- ✅ **ROA-407:** A3 Auth Policy Gate (mergeada en main)
+- ✅ **ROA-405:** Auth Error Taxonomy v2 (mergeada en main)
+
+---
+
+## ✅ Definition of Done
+
+- [ ] Feature flag checks implementados (`ENABLE_RATE_LIMIT`, `ENABLE_ABUSE_DETECTION`)
+- [ ] Wiring correcto en A3 (después de Feature Flags y Account Status)
+- [ ] Traducción clara a Auth errors (3 nuevos slugs)
+- [ ] Tests de integración pasando (25/25)
+- [ ] Fail-closed enforcement validado
+- [ ] Sin fail-open silencioso
+- [ ] Documentación completa
+- [ ] CI/CD passing (todos los checks)
+- [ ] CodeRabbit: 0 comentarios
+- [ ] No hardcoded values
+- [ ] No legacy v1 references
+
+---
+
+**Issue ROA-408 - Wiring y Traducción Semántica SOLO**
