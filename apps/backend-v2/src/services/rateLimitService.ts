@@ -175,7 +175,7 @@ export class RateLimitService {
     if (this.isBlocked(authType, identifier)) {
       const remaining = this.getBlockRemaining(authType, identifier);
       const blockedUntil = remaining === Infinity ? null : now + (remaining || 0);
-      
+
       // ROA-410: Log rate limit event
       if (this.observability) {
         this.observability.logRateLimit(
