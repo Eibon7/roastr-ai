@@ -29,12 +29,12 @@ vi.mock('../../../src/services/rateLimitService.js', () => ({
   rateLimitService: mockRateLimitService
 }));
 
-// Mock abuseDetectionService
-const mockAbuseDetectionService = {
+// Mock abuseDetectionServiceAdapter (ROA-408)
+const mockAbuseDetectionServiceAdapter = {
   checkRequest: vi.fn()
 };
-vi.mock('../../../src/services/abuseDetectionService.js', () => ({
-  abuseDetectionService: mockAbuseDetectionService
+vi.mock('../../../src/services/abuseDetectionServiceAdapter.js', () => ({
+  abuseDetectionServiceAdapter: mockAbuseDetectionServiceAdapter
 }));
 
 // Mock supabase client
@@ -61,13 +61,20 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
   let gate: InstanceType<typeof AuthPolicyGate>;
 
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
+
+    // Reset all mock implementations
+    mockRateLimitService.recordAttempt.mockReset();
+    mockAbuseDetectionServiceAdapter.checkRequest.mockReset();
+
     gate = new AuthPolicyGate();
 
     // Default: all policies allow
     mockLoadSettings.mockResolvedValue({
       feature_flags: {
-        enable_user_registration: true
+        enable_user_registration: true,
+        ENABLE_RATE_LIMIT: true,
+        ENABLE_ABUSE_DETECTION: true
       },
       auth: {
         login: { enabled: true },
@@ -81,7 +88,7 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
       remaining: 4
     });
 
-    mockAbuseDetectionService.checkRequest.mockResolvedValue(false);
+    mockAbuseDetectionServiceAdapter.checkRequest.mockResolvedValue(false);
 
     // Mock supabaseAdmin query chain - default: active user
     const mockSelect = vi.fn().mockReturnValue({
@@ -396,7 +403,7 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
 
   describe('Policy 4: Abuse (Lowest Priority)', () => {
     it('should allow when no abuse detected', async () => {
-      mockAbuseDetectionService.checkRequest.mockResolvedValueOnce(false);
+      mockAbuseDetectionServiceAdapter.checkRequest.mockResolvedValueOnce(false);
 
       const result = await gate.check({
         action: 'login',
@@ -405,7 +412,7 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
       });
 
       expect(result.allowed).toBe(true);
-      expect(mockAbuseDetectionService.checkRequest).toHaveBeenCalledWith({
+      expect(mockAbuseDetectionServiceAdapter.checkRequest).toHaveBeenCalledWith({
         ip: '127.0.0.1',
         email: 'user@example.com',
         userId: undefined,
@@ -415,7 +422,7 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
     });
 
     it('should block when abuse detected', async () => {
-      mockAbuseDetectionService.checkRequest.mockResolvedValueOnce(true);
+      mockAbuseDetectionServiceAdapter.checkRequest.mockResolvedValueOnce(true);
 
       const result = await gate.check({
         action: 'login',
@@ -429,7 +436,7 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
     });
 
     it('should fail-closed when abuse check fails', async () => {
-      mockAbuseDetectionService.checkRequest.mockRejectedValueOnce(
+      mockAbuseDetectionServiceAdapter.checkRequest.mockRejectedValueOnce(
         new Error('Abuse service error')
       );
 
@@ -453,7 +460,7 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
 
       // Even if rate limit and abuse would also block
       mockRateLimitService.recordAttempt.mockReturnValueOnce({ allowed: false });
-      mockAbuseDetectionService.checkRequest.mockResolvedValueOnce(true);
+      mockAbuseDetectionServiceAdapter.checkRequest.mockResolvedValueOnce(true);
 
       const result = await gate.check({
         action: 'login',
@@ -463,7 +470,7 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
       expect(result.policy).toBe('feature_flag');
       // Subsequent checks should not have been called
       expect(mockRateLimitService.recordAttempt).not.toHaveBeenCalled();
-      expect(mockAbuseDetectionService.checkRequest).not.toHaveBeenCalled();
+      expect(mockAbuseDetectionServiceAdapter.checkRequest).not.toHaveBeenCalled();
     });
 
     it('should check Account Status second (after Feature Flags)', async () => {
@@ -493,7 +500,7 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
         allowed: false,
         blockedUntil: Date.now() + 60000
       });
-      mockAbuseDetectionService.checkRequest.mockResolvedValueOnce(true);
+      mockAbuseDetectionServiceAdapter.checkRequest.mockResolvedValueOnce(true);
 
       const result = await gate.check({
         action: 'login',
@@ -504,7 +511,7 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
       expect(result.policy).toBe('account_status');
       // Subsequent checks should not have been called
       expect(mockRateLimitService.recordAttempt).not.toHaveBeenCalled();
-      expect(mockAbuseDetectionService.checkRequest).not.toHaveBeenCalled();
+      expect(mockAbuseDetectionServiceAdapter.checkRequest).not.toHaveBeenCalled();
     });
 
     it('should check Rate Limit third (after Feature Flags and Account Status)', async () => {
@@ -514,7 +521,7 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
       });
 
       // Abuse would also block
-      mockAbuseDetectionService.checkRequest.mockResolvedValueOnce(true);
+      mockAbuseDetectionServiceAdapter.checkRequest.mockResolvedValueOnce(true);
 
       const result = await gate.check({
         action: 'login',
@@ -523,22 +530,31 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
 
       expect(result.policy).toBe('rate_limit');
       // Abuse check should not have been called
-      expect(mockAbuseDetectionService.checkRequest).not.toHaveBeenCalled();
+      expect(mockAbuseDetectionServiceAdapter.checkRequest).not.toHaveBeenCalled();
     });
 
     it('should check Abuse last (only if all other policies pass)', async () => {
-      mockAbuseDetectionService.checkRequest.mockResolvedValueOnce(true);
+      // Clear and reconfigure rate limit to explicitly allow
+      mockRateLimitService.recordAttempt.mockClear();
+      mockRateLimitService.recordAttempt.mockReturnValue({
+        allowed: true,
+        remaining: 3
+      });
+
+      // Abuse blocks
+      mockAbuseDetectionServiceAdapter.checkRequest.mockResolvedValueOnce(true);
 
       const result = await gate.check({
         action: 'login',
-        ip: '127.0.0.1'
+        ip: '127.0.0.1',
+        email: 'user@example.com'
       });
 
       expect(result.policy).toBe('abuse');
       // All previous checks should have been called
       expect(mockLoadSettings).toHaveBeenCalled();
       expect(mockRateLimitService.recordAttempt).toHaveBeenCalled();
-      expect(mockAbuseDetectionService.checkRequest).toHaveBeenCalled();
+      expect(mockAbuseDetectionServiceAdapter.checkRequest).toHaveBeenCalled();
     });
   });
 
@@ -564,7 +580,121 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
     });
 
     it('should fail-closed for Abuse', async () => {
-      mockAbuseDetectionService.checkRequest.mockRejectedValueOnce(new Error());
+      // Rate limit passes
+      mockRateLimitService.recordAttempt.mockReturnValueOnce({
+        allowed: true,
+        remaining: 3
+      });
+
+      // Abuse check fails
+      mockAbuseDetectionServiceAdapter.checkRequest.mockRejectedValueOnce(new Error());
+
+      const result = await gate.check({ action: 'login', ip: '127.0.0.1' });
+
+      expect(result.allowed).toBe(false);
+      expect(result.policy).toBe('abuse');
+    });
+  });
+
+  describe('Feature Flag Behavior (ROA-408)', () => {
+    it('should skip rate limit check when ENABLE_RATE_LIMIT is OFF', async () => {
+      mockLoadSettings.mockResolvedValue({
+        feature_flags: {
+          enable_user_registration: true,
+          ENABLE_RATE_LIMIT: false, // Feature flag OFF
+          ENABLE_ABUSE_DETECTION: true
+        },
+        auth: {
+          login: { enabled: true }
+        }
+      });
+
+      // Rate limit would block if checked
+      mockRateLimitService.recordAttempt.mockReturnValueOnce({
+        allowed: false
+      });
+
+      const result = await gate.check({ action: 'login', ip: '127.0.0.1' });
+
+      // Should pass because rate limit was skipped
+      expect(result.allowed).toBe(true);
+      // recordAttempt should not have been called
+      expect(mockRateLimitService.recordAttempt).not.toHaveBeenCalled();
+    });
+
+    it('should skip abuse check when ENABLE_ABUSE_DETECTION is OFF', async () => {
+      mockLoadSettings.mockResolvedValue({
+        feature_flags: {
+          enable_user_registration: true,
+          ENABLE_RATE_LIMIT: true,
+          ENABLE_ABUSE_DETECTION: false // Feature flag OFF
+        },
+        auth: {
+          login: { enabled: true }
+        }
+      });
+
+      // Rate limit passes
+      mockRateLimitService.recordAttempt.mockReturnValueOnce({
+        allowed: true,
+        remaining: 3
+      });
+
+      // Abuse would block if checked
+      mockAbuseDetectionServiceAdapter.checkRequest.mockResolvedValueOnce(true);
+
+      const result = await gate.check({ action: 'login', ip: '127.0.0.1' });
+
+      // Should pass because abuse was skipped
+      expect(result.allowed).toBe(true);
+      // checkRequest should not have been called
+      expect(mockAbuseDetectionServiceAdapter.checkRequest).not.toHaveBeenCalled();
+    });
+
+    it('should enforce rate limit when ENABLE_RATE_LIMIT is ON', async () => {
+      mockLoadSettings.mockResolvedValue({
+        feature_flags: {
+          enable_user_registration: true,
+          ENABLE_RATE_LIMIT: true, // Feature flag ON
+          ENABLE_ABUSE_DETECTION: true
+        },
+        auth: {
+          login: { enabled: true }
+        }
+      });
+
+      // Rate limit blocks
+      mockRateLimitService.recordAttempt.mockReturnValueOnce({
+        allowed: false,
+        blockedUntil: Date.now() + 60000
+      });
+
+      const result = await gate.check({ action: 'login', ip: '127.0.0.1' });
+
+      expect(result.allowed).toBe(false);
+      expect(result.policy).toBe('rate_limit');
+    });
+
+    it('should enforce abuse check when ENABLE_ABUSE_DETECTION is ON', async () => {
+      mockLoadSettings.mockResolvedValue({
+        feature_flags: {
+          enable_user_registration: true,
+          ENABLE_RATE_LIMIT: true,
+          ENABLE_ABUSE_DETECTION: true // Feature flag ON
+        },
+        auth: {
+          login: { enabled: true }
+        }
+      });
+
+      // Rate limit passes
+      mockRateLimitService.recordAttempt.mockReturnValueOnce({
+        allowed: true,
+        remaining: 3
+      });
+
+      // Abuse blocks
+      mockAbuseDetectionServiceAdapter.checkRequest.mockResolvedValueOnce(true);
 
       const result = await gate.check({ action: 'login', ip: '127.0.0.1' });
 
