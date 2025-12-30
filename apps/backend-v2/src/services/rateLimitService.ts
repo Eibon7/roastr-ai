@@ -186,7 +186,7 @@ export class RateLimitService {
           `rate_limit_blocked:${authType}:${identifier}`
         );
       }
-      
+
       return {
         allowed: false,
         blockedUntil
