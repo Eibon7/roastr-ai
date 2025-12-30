@@ -23,12 +23,9 @@ import {
   logRegisterAttempt,
   logMagicLinkRequest,
   logPasswordRecoveryRequest,
-  logLogout,
-  logSessionRefresh,
   trackAuthDuration,
   logRateLimit
 } from '../utils/authObservability.js';
-import { getClientIp } from '../utils/request.js';
 
 export interface SignupParams {
   email: string;

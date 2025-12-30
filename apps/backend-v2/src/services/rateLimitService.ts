@@ -69,7 +69,7 @@ const PROGRESSIVE_BLOCK_DURATIONS = [
 export class RateLimitService {
   private store: Map<string, RateLimitEntry>;
   private observability?: {
-    logRateLimit: (context: any, reason: string) => void;
+    logRateLimit: (_context: any, _reason: string) => void;
   };
 
   constructor() {
@@ -80,7 +80,7 @@ export class RateLimitService {
    * Set observability hooks (ROA-410)
    * Allows dependency injection for testing
    */
-  setObservability(hooks: { logRateLimit: (context: any, reason: string) => void }): void {
+  setObservability(hooks: { logRateLimit: (_context: any, _reason: string) => void }): void {
     this.observability = hooks;
   }
 
