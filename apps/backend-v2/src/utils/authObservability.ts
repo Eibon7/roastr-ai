@@ -178,4 +178,3 @@ export function createAuthContext(req: any, additional?: Partial<AuthEventContex
     ...additional
   };
 }
-

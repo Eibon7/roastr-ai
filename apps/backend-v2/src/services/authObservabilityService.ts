@@ -243,4 +243,3 @@ class AuthObservabilityService {
 
 // Singleton instance
 export const authObservability = new AuthObservabilityService();
-
