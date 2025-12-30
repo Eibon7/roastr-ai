@@ -80,9 +80,19 @@ class AuthError extends Error {
 | Slug                       | HTTP | Retry? | user_message_key              |
 | -------------------------- | ---- | ------ | ----------------------------- |
 | `AUTH_INVALID_CREDENTIALS` | 401  | ❌     | auth.error.invalid_credentials |
-| `AUTH_EMAIL_NOT_VERIFIED`  | 401  | ❌     | auth.error.email_not_verified  |
+| `AUTH_EMAIL_NOT_CONFIRMED` | 401  | ❌     | auth.error.email_not_confirmed |
 | `AUTH_ACCOUNT_LOCKED`      | 401  | ❌     | auth.error.account_locked      |
+| `AUTH_DISABLED`            | 401  | ✅     | auth.error.auth_disabled       |
 | `AUTH_UNKNOWN`             | 500  | ❌     | auth.error.unknown             |
+
+### 1.1 AUTH_EMAIL_* — Infra de emails de Auth (ROA-409)
+
+| Slug                      | HTTP | Retry? | user_message_key                 |
+| ------------------------- | ---- | ------ | -------------------------------- |
+| `AUTH_EMAIL_DISABLED`     | 403  | ❌     | auth.error.email_disabled        |
+| `AUTH_EMAIL_PROVIDER_ERROR` | 502 | ✅     | auth.error.email_provider_error  |
+| `AUTH_EMAIL_RATE_LIMITED` | 429  | ✅     | auth.error.email_rate_limited    |
+| `AUTH_EMAIL_SEND_FAILED`  | 500  | ❌     | auth.error.email_send_failed     |
 
 ### 2. AUTHZ_* — Errores de Autorización (403)
 

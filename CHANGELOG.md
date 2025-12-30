@@ -2,6 +2,77 @@
 
 ## [Unreleased]
 
+### 🔐 ROA-409: Auth Email Infrastructure v2 - 2025-12-30
+
+#### Auth Email Service Implementation
+
+- **Centralized Email Infrastructure**: New `authEmailService.ts` for register and password recovery flows
+- **Fail-Closed Behavior**: Requests fail if email infrastructure is disabled or misconfigured (no simulated success)
+- **Feature Flag Integration**: 
+  - `auth_enable_emails` - Global email enablement
+  - `auth_enable_register` - Register email flow
+  - `auth_enable_password_recovery` - Password recovery email flow
+- **Environment Validation**: 
+  - Validates `RESEND_API_KEY`, `AUTH_EMAIL_FROM`, `SUPABASE_REDIRECT_URL`
+  - HTTPS enforcement in production for redirect URLs
+  - Fail-closed if configuration is missing
+
+#### PII Protection
+
+- **Email Truncation**: Emails truncated in logs as `foo***@` (first 3 chars)
+- **No PII in Analytics**: All analytics events sanitized
+- **Privacy-First Logging**: `truncateEmailForLog` utility implemented and used consistently
+
+#### Error Taxonomy Extension
+
+- **New Error Slugs**:
+  - `AUTH_EMAIL_DISABLED` (403, retryable: false) - Feature flag disabled
+  - `AUTH_EMAIL_SEND_FAILED` (500, retryable: true) - Generic send failure
+  - `AUTH_EMAIL_RATE_LIMITED` (429, retryable: true) - Provider rate limit
+  - `AUTH_EMAIL_PROVIDER_ERROR` (502, retryable: true) - Provider error
+- **Stable Error Handling**: All errors mapped to `AuthError` with consistent slugs
+
+#### Integration
+
+- **Register Flow**: `assertAuthEmailInfrastructureEnabled('register')` before signup
+- **Password Recovery Flow**: `assertAuthEmailInfrastructureEnabled('recovery')` before resetPasswordForEmail
+- **Provider Detection**: Resend (via Supabase SMTP configuration)
+
+#### Observability
+
+- **Analytics Events**:
+  - `auth_email_blocked` - When email is blocked (feature flag/env error)
+  - `auth_email_sent` - When email is sent successfully
+- **Structured Logging**: Context includes `{ flow, email: truncated, request_id, reason }`
+- **Warning Level**: Blocked emails logged at `warn` level
+
+#### Test Coverage
+
+- **Unit Tests**: `authEmailService.test.ts` - 15+ test cases
+- **Integration Tests**: Register and password recovery flows
+- **Privacy Tests**: PII truncation verification
+- **Feature Flag Tests**: Enabled/disabled scenarios
+- **Environment Validation Tests**: Missing config scenarios
+
+#### Files Added
+
+- `apps/backend-v2/src/services/authEmailService.ts` - Core email service
+- `apps/backend-v2/src/utils/pii.ts` - PII protection utilities
+- `apps/backend-v2/tests/unit/services/authEmailService.test.ts` - Service tests
+- `apps/backend-v2/tests/unit/services/authService-passwordRecovery.privacy.test.ts` - Privacy tests
+
+#### Files Modified
+
+- `apps/backend-v2/src/services/authService.ts` - Email infrastructure integration
+- `apps/backend-v2/src/utils/authErrorTaxonomy.ts` - New error slugs
+- `apps/backend-v2/src/lib/authFlags.ts` - Email feature flags
+- `apps/backend-v2/src/routes/auth.ts` - Route integration
+- `docs/SSOT-V2.md` - Feature flags documentation
+- `docs/nodes-v2/auth/overview.md` - Auth node updates
+- `docs/nodes-v2/auth/error-taxonomy.md` - Error taxonomy updates
+
+---
+
 ### 🛡️ CodeRabbit Round 2 Security Enhancements - Issue #405 Auto-Approval Flow - 2025-01-27
 
 #### Critical Security Fixes Applied

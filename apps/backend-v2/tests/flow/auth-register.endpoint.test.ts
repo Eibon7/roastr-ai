@@ -16,6 +16,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 
 const mockTrackEvent = vi.fn();
+const originalEnv = process.env;
 
 vi.mock('../../src/lib/analytics', () => ({
   initializeAmplitude: vi.fn(),
@@ -60,11 +61,20 @@ vi.mock('../../src/lib/supabaseClient', () => ({
 describe('POST /api/v2/auth/register', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // ROA-409: Auth register now requires auth email infra env to be present.
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: 'test',
+      RESEND_API_KEY: 'test-resend-key',
+      AUTH_EMAIL_FROM: 'Roastr <noreply@roastr.ai>',
+      SUPABASE_REDIRECT_URL: 'http://localhost:3000/auth/callback'
+    };
   });
 
   it('devuelve 401 cuando el feature flag está OFF (ROA-406)', async () => {
     const { loadSettings } = await import('../../src/lib/loadSettings');
-    vi.mocked(loadSettings).mockResolvedValueOnce({
+    vi.mocked(loadSettings).mockResolvedValue({
       feature_flags: {
         auth_enable_register: false
       }
@@ -87,8 +97,9 @@ describe('POST /api/v2/auth/register', () => {
 
   it('devuelve 400 si el payload es inválido', async () => {
     const { loadSettings } = await import('../../src/lib/loadSettings');
-    vi.mocked(loadSettings).mockResolvedValueOnce({
+    vi.mocked(loadSettings).mockResolvedValue({
       feature_flags: {
+        auth_enable_emails: true,
         auth_enable_register: true
       }
     } as any);
@@ -110,8 +121,9 @@ describe('POST /api/v2/auth/register', () => {
 
   it('registra email nuevo y responde homogéneo { success: true }', async () => {
     const { loadSettings } = await import('../../src/lib/loadSettings');
-    vi.mocked(loadSettings).mockResolvedValueOnce({
+    vi.mocked(loadSettings).mockResolvedValue({
       feature_flags: {
+        auth_enable_emails: true,
         auth_enable_register: true
       }
     } as any);
@@ -159,8 +171,9 @@ describe('POST /api/v2/auth/register', () => {
 
   it('si el email ya existe, NO lo revela y responde { success: true }', async () => {
     const { loadSettings } = await import('../../src/lib/loadSettings');
-    vi.mocked(loadSettings).mockResolvedValueOnce({
+    vi.mocked(loadSettings).mockResolvedValue({
       feature_flags: {
+        auth_enable_emails: true,
         auth_enable_register: true
       }
     } as any);
@@ -186,8 +199,9 @@ describe('POST /api/v2/auth/register', () => {
 
   it('devuelve 500 ante error técnico no recuperable', async () => {
     const { loadSettings } = await import('../../src/lib/loadSettings');
-    vi.mocked(loadSettings).mockResolvedValueOnce({
+    vi.mocked(loadSettings).mockResolvedValue({
       feature_flags: {
+        auth_enable_emails: true,
         auth_enable_register: true
       }
     } as any);
@@ -216,8 +230,9 @@ describe('POST /api/v2/auth/register', () => {
   describe('Analytics Integration (B3)', () => {
     it('FLOW: registro exitoso trackea "auth_register_success" y "auth_register_endpoint_success"', async () => {
       const { loadSettings } = await import('../../src/lib/loadSettings');
-      vi.mocked(loadSettings).mockResolvedValueOnce({
+      vi.mocked(loadSettings).mockResolvedValue({
         feature_flags: {
+          auth_enable_emails: true,
           auth_enable_register: true
         }
       } as any);
@@ -276,8 +291,9 @@ describe('POST /api/v2/auth/register', () => {
 
     it('FLOW: registro fallido trackea "auth_register_failed" y "auth_register_endpoint_failed"', async () => {
       const { loadSettings } = await import('../../src/lib/loadSettings');
-      vi.mocked(loadSettings).mockResolvedValueOnce({
+      vi.mocked(loadSettings).mockResolvedValue({
         feature_flags: {
+          auth_enable_emails: true,
           auth_enable_register: true
         }
       } as any);
@@ -325,8 +341,9 @@ describe('POST /api/v2/auth/register', () => {
 
     it('FLOW: analytics NO crashea el flujo si falla (graceful degradation)', async () => {
       const { loadSettings } = await import('../../src/lib/loadSettings');
-      vi.mocked(loadSettings).mockResolvedValueOnce({
+      vi.mocked(loadSettings).mockResolvedValue({
         feature_flags: {
+          auth_enable_emails: true,
           auth_enable_register: true
         }
       } as any);
@@ -365,8 +382,9 @@ describe('POST /api/v2/auth/register', () => {
 
     it('FLOW: analytics NO incluye PII en eventos', async () => {
       const { loadSettings } = await import('../../src/lib/loadSettings');
-      vi.mocked(loadSettings).mockResolvedValueOnce({
+      vi.mocked(loadSettings).mockResolvedValue({
         feature_flags: {
+          auth_enable_emails: true,
           auth_enable_register: true
         }
       } as any);

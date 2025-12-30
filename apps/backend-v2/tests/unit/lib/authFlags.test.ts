@@ -52,6 +52,7 @@ describe('AuthFlags Loader (ROA-406)', () => {
       const flags = await loadAuthFlags();
 
       expect(flags).toEqual({
+        auth_enable_emails: false,
         auth_enable_login: false,
         auth_enable_register: false,
         auth_enable_magic_link: false,
@@ -65,6 +66,7 @@ describe('AuthFlags Loader (ROA-406)', () => {
       const flags = await loadAuthFlags();
 
       expect(flags).toEqual({
+        auth_enable_emails: false,
         auth_enable_login: false,
         auth_enable_register: false,
         auth_enable_magic_link: false,
@@ -76,6 +78,7 @@ describe('AuthFlags Loader (ROA-406)', () => {
     it('carga flags correctamente cuando están definidos en settings', async () => {
       vi.mocked(loadSettings).mockResolvedValueOnce({
         feature_flags: {
+          auth_enable_emails: true,
           auth_enable_login: true,
           auth_enable_register: false,
           auth_enable_magic_link: true,
@@ -86,6 +89,7 @@ describe('AuthFlags Loader (ROA-406)', () => {
       const flags = await loadAuthFlags();
 
       expect(flags).toEqual({
+        auth_enable_emails: true,
         auth_enable_login: true,
         auth_enable_register: false,
         auth_enable_magic_link: true,
@@ -144,6 +148,7 @@ describe('AuthFlags Loader (ROA-406)', () => {
     it('valida todos los auth flags correctamente', async () => {
       vi.mocked(loadSettings).mockResolvedValue({
         feature_flags: {
+          auth_enable_emails: true,
           auth_enable_login: true,
           auth_enable_register: true,
           auth_enable_magic_link: true,

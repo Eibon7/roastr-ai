@@ -2,7 +2,7 @@
 
 **Nodo:** `auth`  
 **Tipo:** Strong Concept (authErrorTaxonomy, rateLimitConfig)  
-**Última actualización:** 2025-12-26  
+**Última actualización:** 2025-12-30  
 **Owner:** ROA-364
 
 ---
@@ -146,7 +146,8 @@ Flujos completos de autenticación:
 **Endpoints principales:**
 - `POST /api/v2/auth/login`
 - `POST /api/v2/auth/magic-link`
-- `POST /api/v2/auth/register` (flag: `enable_user_registration`) - **UI:** `frontend/src/pages/auth/register.tsx` (ROA-375)
+- `POST /api/v2/auth/register` (flags: `auth_enable_register` + `auth_enable_emails`)
+- `POST /api/v2/auth/password-recovery` (flags: `auth_enable_password_recovery` + `auth_enable_emails`)
 - `GET /api/v2/auth/oauth/:platform`
 - `GET /api/v2/auth/oauth/:platform/callback`
 
@@ -322,7 +323,7 @@ sequenceDiagram
 **⚠️ Datos sensibles NO se loguean:**
 - Passwords
 - Tokens completos (solo últimos 4 caracteres)
-- Emails completos (solo hash)
+- Emails completos (solo truncado: `foo***@`)
 
 ### Health Checks
 
@@ -362,6 +363,14 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # JWT
 JWT_SECRET=your-jwt-secret
+
+# Auth Email Infrastructure (ROA-409)
+# - Supabase Auth envía emails (verification, recovery) vía SMTP configurado (Resend)
+# - Backend v2 NO genera HTML de emails
+RESEND_API_KEY=your-resend-api-key
+AUTH_EMAIL_FROM="Roastr.ai <noreply@roastr.ai>"
+AUTH_EMAIL_REPLY_TO=support@roastr.ai # opcional
+SUPABASE_REDIRECT_URL=https://app.roastr.ai/auth/callback
 ```
 
 **Opcionales (Feature Flags):**
@@ -387,9 +396,20 @@ Desde `admin_settings.feature_flags` (SSOT v2, sección 3):
 'autopost_enabled'              // Usuario puede auto-approve roasts
 'manual_approval_enabled'       // Requiere aprobación manual
 'kill_switch_autopost'          // Admin: Apaga todos los autopost
+
+// Auth endpoint gates (ROA-406)
+'auth_enable_login'
+'auth_enable_register'
+'auth_enable_magic_link'
+'auth_enable_password_recovery'
+
+// Auth email master switch (ROA-409)
+'auth_enable_emails'
 ```
 
-**⚠️ Nota:** Feature flags de autenticación son **estáticos** (env vars), no dinámicos.
+**Semántica (Auth emails):**
+- Si `auth_enable_emails` está OFF → endpoints que requieren email deben **fail-closed** (no simular éxito).
+- Eventos de observabilidad: `auth_email_blocked` con reason (sin PII).
 
 ---
 

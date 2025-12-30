@@ -13,6 +13,11 @@ import { createHash } from 'crypto';
 import { loadSettings } from '../lib/loadSettings.js';
 import { logger } from '../utils/logger.js';
 import { trackEvent } from '../lib/analytics.js';
+import {
+  assertAuthEmailInfrastructureEnabled,
+  sendPasswordRecoveryEmailAfterPreflight
+} from './authEmailService.js';
+import { truncateEmailForLog } from '../utils/pii.js';
 
 export interface SignupParams {
   email: string;
@@ -24,6 +29,7 @@ export interface SignupParams {
 export interface RegisterParams {
   email: string;
   password: string;
+  request_id?: string;
 }
 
 export interface LoginParams {
@@ -35,11 +41,13 @@ export interface LoginParams {
 export interface MagicLinkParams {
   email: string;
   ip: string;
+  request_id?: string;
 }
 
 export interface PasswordRecoveryParams {
   email: string;
   ip: string;
+  request_id?: string;
 }
 
 export interface Session {
@@ -78,6 +86,33 @@ export class AuthService {
         throw new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST);
       }
 
+      const { provider } = await assertAuthEmailInfrastructureEnabled('register', normalizedEmail, {
+        request_id: params.request_id
+      });
+
+      // Observability (ROA-409): request to send auth email (register verification)
+      logger.info('auth_email_requested', {
+        request_id: params.request_id,
+        flow: 'register',
+        provider,
+        email: truncateEmailForLog(normalizedEmail)
+      });
+      try {
+        trackEvent({
+          event: 'auth_email_requested',
+          properties: {
+            flow: 'register',
+            provider
+          },
+          context: {
+            flow: 'auth',
+            request_id: params.request_id
+          }
+        });
+      } catch {
+        logger.warn('analytics.track_failed', { event: 'auth_email_requested' });
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
@@ -94,6 +129,27 @@ export class AuthService {
           return;
         }
         throw mapSupabaseError(error);
+      }
+
+      // Observability (ROA-409): Supabase accepted signup (verification email should be enqueued by provider)
+      logger.info('auth_email_sent', {
+        request_id: params.request_id,
+        flow: 'register',
+        email: truncateEmailForLog(normalizedEmail)
+      });
+      try {
+        trackEvent({
+          event: 'auth_email_sent',
+          properties: {
+            flow: 'register'
+          },
+          context: {
+            flow: 'auth',
+            request_id: params.request_id
+          }
+        });
+      } catch {
+        logger.warn('analytics.track_failed', { event: 'auth_email_sent' });
       }
 
       // Supabase puede devolver session null si requiere verificación. Aun así, user puede existir.
@@ -301,7 +357,7 @@ export class AuthService {
             ? 'Account permanently locked. Contact support.'
             : `Too many login attempts. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
 
-        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED, message);
+        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMITED, { cause: { blockedUntil, message } });
       }
 
       // Abuse detection
@@ -434,7 +490,7 @@ export class AuthService {
    * SOLO permitido para role=user (admin/superadmin no pueden usar magic links)
    */
   async requestMagicLink(params: MagicLinkParams): Promise<{ success: boolean; message: string }> {
-    const { email, ip } = params;
+    const { email, ip, request_id } = params;
 
     try {
       // Rate limiting
@@ -446,7 +502,7 @@ export class AuthService {
             ? 'Account permanently locked. Contact support.'
             : `Too many magic link requests. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
 
-        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED, message);
+        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMITED, { cause: { blockedUntil, message } });
       }
 
       // Verificar que el usuario existe y es role=user
@@ -499,12 +555,24 @@ export class AuthService {
         };
       }
 
+      // ROA-409: Require configurable redirect URL (no hardcoded defaults)
+      const redirectUrl = process.env.SUPABASE_REDIRECT_URL;
+      if (!redirectUrl) {
+        throw new AuthError(AUTH_ERROR_CODES.AUTH_EMAIL_SEND_FAILED, {
+          cause: { reason: 'missing_redirect_url', request_id }
+        });
+      }
+      if (process.env.NODE_ENV === 'production' && !/^https:\/\//i.test(redirectUrl)) {
+        throw new AuthError(AUTH_ERROR_CODES.AUTH_EMAIL_SEND_FAILED, {
+          cause: { reason: 'redirect_url_must_be_https_in_production', request_id }
+        });
+      }
+
       // Enviar magic link
       const { error } = await supabase.auth.signInWithOtp({
         email: email.toLowerCase(),
         options: {
-          emailRedirectTo:
-            process.env.SUPABASE_REDIRECT_URL || 'http://localhost:3000/auth/callback'
+          emailRedirectTo: redirectUrl
         }
       });
 
@@ -531,7 +599,7 @@ export class AuthService {
   async requestPasswordRecovery(
     params: PasswordRecoveryParams
   ): Promise<{ success: boolean; message: string }> {
-    const { email, ip } = params;
+    const { email, ip, request_id } = params;
 
     try {
       // Rate limiting
@@ -543,8 +611,11 @@ export class AuthService {
             ? 'Account permanently locked. Contact support.'
             : `Too many password recovery requests. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
 
-        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED, message);
+        throw new AuthError(AUTH_ERROR_CODES.RATE_LIMITED, { cause: { blockedUntil, message } });
       }
+
+      // ROA-409: Fail-closed if auth email infra is disabled/misconfigured (uniform for all emails)
+      await assertAuthEmailInfrastructureEnabled('recovery', email, { request_id });
 
       // Verificar que el usuario existe y es role=user
       let user = null;
@@ -594,14 +665,8 @@ export class AuthService {
         };
       }
 
-      // Enviar email de recuperación
-      const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase(), {
-        redirectTo: process.env.SUPABASE_REDIRECT_URL || 'http://localhost:3000/auth/callback'
-      });
-
-      if (error) {
-        throw mapSupabaseError(error);
-      }
+      // Enviar email de recuperación (Supabase Auth → SMTP provider = Resend)
+      await sendPasswordRecoveryEmailAfterPreflight(email, { request_id });
 
       return {
         success: true,

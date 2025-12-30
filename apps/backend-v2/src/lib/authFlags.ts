@@ -18,6 +18,7 @@ import { trackEvent } from './analytics.js';
  * Auth feature flags defined in SSOT v2, section 3
  */
 export interface AuthFlags {
+  auth_enable_emails: boolean;
   auth_enable_login: boolean;
   auth_enable_register: boolean;
   auth_enable_magic_link: boolean;
@@ -29,6 +30,7 @@ export interface AuthFlags {
  * All auth endpoints disabled by default for security
  */
 const DEFAULT_AUTH_FLAGS: AuthFlags = {
+  auth_enable_emails: false,
   auth_enable_login: false,
   auth_enable_register: false,
   auth_enable_magic_link: false,
@@ -50,6 +52,8 @@ export async function loadAuthFlags(): Promise<AuthFlags> {
     const settings = await loadSettings();
 
     return {
+      auth_enable_emails:
+        settings?.feature_flags?.auth_enable_emails ?? DEFAULT_AUTH_FLAGS.auth_enable_emails,
       auth_enable_login:
         settings?.feature_flags?.auth_enable_login ?? DEFAULT_AUTH_FLAGS.auth_enable_login,
       auth_enable_register:
