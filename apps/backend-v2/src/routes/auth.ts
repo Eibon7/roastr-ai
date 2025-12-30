@@ -17,12 +17,13 @@ import { authService } from '../services/authService.js';
 import { AuthError, AUTH_ERROR_CODES } from '../utils/authErrorTaxonomy.js';
 import { rateLimitByType } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
-import { getClientIp } from '../utils/request.js';
+import { getClientIp, getRequestId } from '../utils/request.js';
 import { trackEvent } from '../lib/analytics.js';
 import { sendAuthError } from '../utils/authErrorResponse.js';
 import { logger } from '../utils/logger.js';
 import { checkAuthPolicy } from '../auth/authPolicyGate.js';
 import { isAuthEndpointEnabled } from '../lib/authFlags.js';
+import { truncateEmailForLog } from '../utils/pii.js';
 
 const router = Router();
 
@@ -38,6 +39,7 @@ const router = Router();
 router.post('/register', rateLimitByType('login'), async (req: Request, res: Response) => {
   const ip = getClientIp(req);
   const userAgent = (req.headers['user-agent'] as string) || null;
+  const request_id = getRequestId(req);
 
   const { email, password } = req.body || {};
 
@@ -85,7 +87,7 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
 
     if (!policyResult.allowed) {
       logger.warn('AuthPolicyGate blocked register', {
-        email: normalizedEmail,
+        email: truncateEmailForLog(normalizedEmail),
         policy: policyResult.policy,
         reason: policyResult.reason
       });
@@ -107,7 +109,8 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
     // Policy gate passed - proceed with auth business logic
     await authService.register({
       email: normalizedEmail,
-      password
+      password,
+      request_id
     });
 
     // Track successful registration at endpoint level (B3: Register Analytics)
@@ -191,6 +194,7 @@ router.post('/signup', rateLimitByType('signup'), async (req: Request, res: Resp
 router.post('/login', rateLimitByType('login'), async (req: Request, res: Response) => {
   const ip = getClientIp(req);
   const userAgent = (req.headers['user-agent'] as string) || null;
+  const request_id = getRequestId(req);
 
   try {
     const { email, password } = req.body;
@@ -214,7 +218,7 @@ router.post('/login', rateLimitByType('login'), async (req: Request, res: Respon
 
     if (!policyResult.allowed) {
       logger.warn('AuthPolicyGate blocked login', {
-        email,
+        email: truncateEmailForLog(String(email ?? '')),
         policy: policyResult.policy,
         reason: policyResult.reason
       });
@@ -303,6 +307,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
 router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, res: Response) => {
   const ip = getClientIp(req);
   const userAgent = (req.headers['user-agent'] as string) || null;
+  const request_id = getRequestId(req);
 
   try {
     const { email } = req.body;
@@ -326,7 +331,7 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
 
     if (!policyResult.allowed) {
       logger.warn('AuthPolicyGate blocked magic_link', {
-        email,
+        email: truncateEmailForLog(String(email ?? '')),
         policy: policyResult.policy,
         reason: policyResult.reason
       });
@@ -348,7 +353,8 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
     // Policy gate passed - proceed with auth business logic
     const result = await authService.requestMagicLink({
       email,
-      ip
+      ip,
+      request_id
     });
 
     res.json(result);
@@ -369,6 +375,7 @@ router.post(
   async (req: Request, res: Response) => {
     const ip = getClientIp(req);
     const userAgent = (req.headers['user-agent'] as string) || null;
+    const request_id = getRequestId(req);
 
     try {
       // ROA-406: Feature flag check (fail-closed, no env fallback)
@@ -392,7 +399,7 @@ router.post(
 
       if (!policyResult.allowed) {
         logger.warn('AuthPolicyGate blocked password_recovery', {
-          email,
+          email: truncateEmailForLog(String(email ?? '')),
           policy: policyResult.policy,
           reason: policyResult.reason
         });
@@ -404,7 +411,8 @@ router.post(
 
       const result = await authService.requestPasswordRecovery({
         email,
-        ip
+        ip,
+        request_id
       });
 
       res.json(result);

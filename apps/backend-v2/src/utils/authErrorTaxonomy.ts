@@ -20,6 +20,10 @@ export type AuthErrorSlug =
   | 'AUTH_EMAIL_NOT_CONFIRMED'
   | 'AUTH_ACCOUNT_LOCKED'
   | 'AUTH_DISABLED'
+  | 'AUTH_EMAIL_DISABLED'
+  | 'AUTH_EMAIL_PROVIDER_ERROR'
+  | 'AUTH_EMAIL_RATE_LIMITED'
+  | 'AUTH_EMAIL_SEND_FAILED'
   | 'AUTH_UNKNOWN'
   | 'AUTHZ_INSUFFICIENT_PERMISSIONS'
   | 'AUTHZ_ROLE_NOT_ALLOWED'
@@ -77,6 +81,34 @@ export const AUTH_ERROR_TAXONOMY: Record<AuthErrorSlug, AuthErrorV2> = {
     http_status: 401,
     retryable: true,
     user_message_key: 'auth.error.auth_disabled',
+    category: 'auth'
+  },
+  AUTH_EMAIL_DISABLED: {
+    slug: 'AUTH_EMAIL_DISABLED',
+    http_status: 403,
+    retryable: false,
+    user_message_key: 'auth.error.email_disabled',
+    category: 'auth'
+  },
+  AUTH_EMAIL_PROVIDER_ERROR: {
+    slug: 'AUTH_EMAIL_PROVIDER_ERROR',
+    http_status: 502,
+    retryable: true,
+    user_message_key: 'auth.error.email_provider_error',
+    category: 'auth'
+  },
+  AUTH_EMAIL_RATE_LIMITED: {
+    slug: 'AUTH_EMAIL_RATE_LIMITED',
+    http_status: 429,
+    retryable: true,
+    user_message_key: 'auth.error.email_rate_limited',
+    category: 'auth'
+  },
+  AUTH_EMAIL_SEND_FAILED: {
+    slug: 'AUTH_EMAIL_SEND_FAILED',
+    http_status: 500,
+    retryable: false,
+    user_message_key: 'auth.error.email_send_failed',
     category: 'auth'
   },
   AUTH_UNKNOWN: {
@@ -243,6 +275,10 @@ export const AUTH_ERROR_CODES = {
   EMAIL_NOT_CONFIRMED: 'AUTH_EMAIL_NOT_CONFIRMED',
   ACCOUNT_LOCKED: 'AUTH_ACCOUNT_LOCKED',
   AUTH_DISABLED: 'AUTH_DISABLED',
+  AUTH_EMAIL_DISABLED: 'AUTH_EMAIL_DISABLED',
+  AUTH_EMAIL_PROVIDER_ERROR: 'AUTH_EMAIL_PROVIDER_ERROR',
+  AUTH_EMAIL_RATE_LIMITED: 'AUTH_EMAIL_RATE_LIMITED',
+  AUTH_EMAIL_SEND_FAILED: 'AUTH_EMAIL_SEND_FAILED',
   UNKNOWN: 'AUTH_UNKNOWN',
 
   INSUFFICIENT_PERMISSIONS: 'AUTHZ_INSUFFICIENT_PERMISSIONS',

@@ -7,7 +7,7 @@
  * Issue: ROA-407 - A3 Auth Policy Wiring v2
  */
 
-import { supabaseAdmin } from '../lib/supabase.js';
+import { supabase as supabaseAdmin } from '../lib/supabaseClient.js';
 import { logger } from '../utils/logger.js';
 
 /**

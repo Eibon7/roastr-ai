@@ -12,16 +12,18 @@ const mockSupabaseInsert = vi.fn();
 const mockSupabaseSelect = vi.fn();
 const mockSupabaseSingle = vi.fn();
 
-vi.mock('../../src/lib/supabase.js', () => ({
-  supabaseAdmin: {
-    from: vi.fn(() => ({
-      insert: mockSupabaseInsert
-    }))
+const mockFrom = vi.fn(() => ({
+  insert: mockSupabaseInsert
+}));
+
+vi.mock('../../../src/lib/supabaseClient.js', () => ({
+  supabase: {
+    from: mockFrom
   }
 }));
 
 // Mock logger
-vi.mock('../../src/utils/logger.js', () => ({
+vi.mock('../../../src/utils/logger.js', () => ({
   logger: {
     info: vi.fn(),
     error: vi.fn(),
@@ -31,8 +33,8 @@ vi.mock('../../src/utils/logger.js', () => ({
 }));
 
 // Import auditService AFTER mocks
-const { auditService } = await import('../../src/services/auditService.js');
-const { AuditEvent } = await import('../../src/services/auditService.js');
+const { auditService } = await import('../../../src/services/auditService.js');
+const { AuditEvent } = await import('../../../src/services/auditService.js');
 
 describe('AuditService', () => {
   beforeEach(() => {
@@ -48,6 +50,10 @@ describe('AuditService', () => {
     });
     mockSupabaseInsert.mockReturnValue({
       select: mockSupabaseSelect
+    });
+
+    mockFrom.mockReturnValue({
+      insert: mockSupabaseInsert
     });
   });
 

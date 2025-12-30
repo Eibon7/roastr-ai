@@ -225,6 +225,7 @@ type FeatureFlagKey =
   | 'ingestion_enabled'
 
   // Auth endpoint gates (ROA-406)
+  | 'auth_enable_emails'
   | 'auth_enable_login'
   | 'auth_enable_register'
   | 'auth_enable_magic_link'
@@ -289,6 +290,15 @@ type FeatureFlagKey =
   - No environment variable fallbacks (SSOT v2 enforcement)
 
 **Integration**: Checked via `isAuthEndpointEnabled()` before AuthPolicyGate in auth routes.
+
+#### Auth Email Infrastructure Flag (ROA-409)
+
+- `auth_enable_emails` (admin):
+  - Master kill-switch for Auth emails (register verification, password recovery, future magic link)
+  - Default: `false` (fail-closed)
+  - When disabled, Auth endpoints that require sending emails must fail closed (no simulated success)
+  - Observability events must include explicit `auth_email_blocked`
+  - No environment variable fallbacks
 
 - `original_tone_enabled` (admin):
   - Habilita tono personal (Pro/Plus).

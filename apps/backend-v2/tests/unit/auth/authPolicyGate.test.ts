@@ -61,7 +61,7 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
   let gate: InstanceType<typeof AuthPolicyGate>;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     gate = new AuthPolicyGate();
 
     // Default: all policies allow

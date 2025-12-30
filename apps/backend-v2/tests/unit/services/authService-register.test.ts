@@ -10,6 +10,7 @@ const mockSignUp = vi.fn();
 const mockInsert = vi.fn();
 const mockFrom = vi.fn(() => ({ insert: mockInsert }));
 const mockTrackEvent = vi.fn();
+const mockAssertAuthEmailInfrastructureEnabled = vi.fn();
 
 vi.mock('../../../src/lib/supabaseClient', () => ({
   supabase: {
@@ -24,9 +25,17 @@ vi.mock('../../../src/lib/analytics', () => ({
   trackEvent: mockTrackEvent
 }));
 
+// ROA-409: AuthService.register now requires auth email infra preflight.
+// In register unit tests we mock this dependency to keep tests focused on register logic.
+vi.mock('../../../src/services/authEmailService', () => ({
+  assertAuthEmailInfrastructureEnabled: mockAssertAuthEmailInfrastructureEnabled,
+  sendPasswordRecoveryEmailAfterPreflight: vi.fn()
+}));
+
 describe('AuthService.register', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAssertAuthEmailInfrastructureEnabled.mockResolvedValue({ provider: 'resend' });
   });
 
   it('rechaza email inválido con AuthError', async () => {
