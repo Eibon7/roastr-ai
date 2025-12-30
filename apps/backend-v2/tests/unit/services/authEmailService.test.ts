@@ -157,4 +157,3 @@ describe('authEmailService (ROA-409)', () => {
     expect(mockResetPasswordForEmail).not.toHaveBeenCalled();
   });
 });
-

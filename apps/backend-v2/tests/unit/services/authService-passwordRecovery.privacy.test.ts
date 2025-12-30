@@ -86,4 +86,3 @@ describe('AuthService.requestPasswordRecovery (ROA-409)', () => {
     ).rejects.toHaveProperty('slug', AUTH_ERROR_CODES.AUTH_EMAIL_DISABLED);
   });
 });
-

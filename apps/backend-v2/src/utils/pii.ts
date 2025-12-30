@@ -27,4 +27,3 @@ export function truncateEmailForLog(email: string): string {
   if (!prefix) return '***@';
   return `${prefix}***@`;
 }
-

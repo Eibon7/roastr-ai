@@ -107,7 +107,11 @@ function trackSafe(event: string, payload: Parameters<typeof trackEvent>[0]): vo
   }
 }
 
-function logContext(flow: AuthEmailFlow, email: string, context?: AuthEmailContext): Record<string, any> {
+function logContext(
+  flow: AuthEmailFlow,
+  email: string,
+  context?: AuthEmailContext
+): Record<string, any> {
   return {
     request_id: context?.request_id,
     flow,
@@ -195,7 +199,9 @@ export async function sendPasswordRecoveryEmailAfterPreflight(
 
   try {
     const redirectTo = getRedirectUrlOrThrow();
-    const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase(), { redirectTo });
+    const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase(), {
+      redirectTo
+    });
 
     if (error) throw error;
 
@@ -230,4 +236,3 @@ export async function sendPasswordRecoveryEmailAfterPreflight(
     throw mapped;
   }
 }
-
