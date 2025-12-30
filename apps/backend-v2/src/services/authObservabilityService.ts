@@ -113,10 +113,16 @@ class AuthObservabilityService {
 
   /**
    * Track auth metric
+   * Only emits analytics when ENABLE_ANALYTICS is true (ROA-410 AC)
    */
   trackAuthMetric(metric: AuthMetric): void {
-    // Log structured metric
+    // Log structured metric (always log, regardless of analytics flag)
     this.logAuthEvent('info', `auth.metric.${metric.event}`, metric.context);
+
+    // Check ENABLE_ANALYTICS feature flag
+    if (!process.env.ENABLE_ANALYTICS || process.env.ENABLE_ANALYTICS === 'false') {
+      return; // Skip analytics when disabled
+    }
 
     // Track via Amplitude
     trackEvent({
