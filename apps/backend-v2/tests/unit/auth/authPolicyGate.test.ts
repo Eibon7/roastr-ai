@@ -62,11 +62,11 @@ describe('AuthPolicyGate - Contractual Behavior', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Reset all mock implementations
     mockRateLimitService.recordAttempt.mockReset();
     mockAbuseDetectionServiceAdapter.checkRequest.mockReset();
-    
+
     gate = new AuthPolicyGate();
 
     // Default: all policies allow

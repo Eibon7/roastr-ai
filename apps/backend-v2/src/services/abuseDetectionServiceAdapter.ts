@@ -44,4 +44,3 @@ class AbuseDetectionServiceAdapter {
 
 // Singleton export para usar en authPolicyGate
 export const abuseDetectionServiceAdapter = new AbuseDetectionServiceAdapter();
-
