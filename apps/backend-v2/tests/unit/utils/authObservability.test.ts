@@ -64,11 +64,9 @@ describe('authObservability helpers', () => {
 
       logAuthFlowStarted(context);
 
-      expect(authObservability.trackAuthEvent).toHaveBeenCalledWith(
-        'flow_started',
-        context,
-        { flow: 'magic_link' }
-      );
+      expect(authObservability.trackAuthEvent).toHaveBeenCalledWith('flow_started', context, {
+        flow: 'magic_link'
+      });
     });
   });
 
@@ -78,11 +76,9 @@ describe('authObservability helpers', () => {
     it('should emit auth_flow_completed on success', () => {
       logLoginAttempt(context, true);
 
-      expect(authObservability.trackAuthEvent).toHaveBeenCalledWith(
-        'flow_completed',
-        context,
-        { flow: 'login' }
-      );
+      expect(authObservability.trackAuthEvent).toHaveBeenCalledWith('flow_completed', context, {
+        flow: 'login'
+      });
     });
 
     it('should increment auth_success_total on success', () => {
@@ -100,14 +96,10 @@ describe('authObservability helpers', () => {
 
       logLoginAttempt(context, false, authError);
 
-      expect(authObservability.trackAuthEvent).toHaveBeenCalledWith(
-        'flow_failed',
-        context,
-        {
-          flow: 'login',
-          error_slug: 'AUTH_INVALID_CREDENTIALS'
-        }
-      );
+      expect(authObservability.trackAuthEvent).toHaveBeenCalledWith('flow_failed', context, {
+        flow: 'login',
+        error_slug: 'AUTH_INVALID_CREDENTIALS'
+      });
     });
 
     it('should increment auth_failures_total on failure', () => {
@@ -130,10 +122,7 @@ describe('authObservability helpers', () => {
 
       logLoginAttempt(context, false, authError);
 
-      expect(authObservability.logAuthError).toHaveBeenCalledWith(
-        context,
-        authError
-      );
+      expect(authObservability.logAuthError).toHaveBeenCalledWith(context, authError);
     });
   });
 
@@ -143,11 +132,9 @@ describe('authObservability helpers', () => {
     it('should emit auth_flow_completed on success', () => {
       logRegisterAttempt(context, true);
 
-      expect(authObservability.trackAuthEvent).toHaveBeenCalledWith(
-        'flow_completed',
-        context,
-        { flow: 'register' }
-      );
+      expect(authObservability.trackAuthEvent).toHaveBeenCalledWith('flow_completed', context, {
+        flow: 'register'
+      });
     });
 
     it('should increment auth_success_total on success', () => {
@@ -165,14 +152,10 @@ describe('authObservability helpers', () => {
 
       logRegisterAttempt(context, false, authError);
 
-      expect(authObservability.trackAuthEvent).toHaveBeenCalledWith(
-        'flow_failed',
-        context,
-        {
-          flow: 'register',
-          error_slug: 'ACCOUNT_EMAIL_ALREADY_EXISTS'
-        }
-      );
+      expect(authObservability.trackAuthEvent).toHaveBeenCalledWith('flow_failed', context, {
+        flow: 'register',
+        error_slug: 'ACCOUNT_EMAIL_ALREADY_EXISTS'
+      });
     });
 
     it('should increment auth_failures_total on failure', () => {
@@ -198,15 +181,11 @@ describe('authObservability helpers', () => {
     it('should emit auth_flow_blocked event', () => {
       logRateLimit(context, reason);
 
-      expect(authObservability.trackAuthEvent).toHaveBeenCalledWith(
-        'flow_blocked',
-        context,
-        {
-          flow: 'login',
-          reason: 'rate_limit',
-          details: reason
-        }
-      );
+      expect(authObservability.trackAuthEvent).toHaveBeenCalledWith('flow_blocked', context, {
+        flow: 'login',
+        reason: 'rate_limit',
+        details: reason
+      });
     });
 
     it('should increment auth_blocks_total counter', () => {
@@ -225,14 +204,10 @@ describe('authObservability helpers', () => {
     it('should log rate limit with reason', () => {
       logRateLimit(context, reason);
 
-      expect(authObservability.logAuthEvent).toHaveBeenCalledWith(
-        'warn',
-        'auth.rate_limit',
-        {
-          ...context,
-          reason
-        }
-      );
+      expect(authObservability.logAuthEvent).toHaveBeenCalledWith('warn', 'auth.rate_limit', {
+        ...context,
+        reason
+      });
     });
   });
 
@@ -243,15 +218,11 @@ describe('authObservability helpers', () => {
     it('should emit auth_flow_blocked event with feature_flag', () => {
       logFeatureDisabled(context, featureFlag);
 
-      expect(authObservability.trackAuthEvent).toHaveBeenCalledWith(
-        'flow_blocked',
-        context,
-        {
-          flow: 'login',
-          reason: 'feature_disabled',
-          feature_flag: featureFlag
-        }
-      );
+      expect(authObservability.trackAuthEvent).toHaveBeenCalledWith('flow_blocked', context, {
+        flow: 'login',
+        reason: 'feature_disabled',
+        feature_flag: featureFlag
+      });
     });
 
     it('should increment auth_blocks_total with feature_flag label', () => {
@@ -271,15 +242,11 @@ describe('authObservability helpers', () => {
     it('should log feature disabled event', () => {
       logFeatureDisabled(context, featureFlag, 'Login disabled by admin');
 
-      expect(authObservability.logAuthEvent).toHaveBeenCalledWith(
-        'warn',
-        'auth.feature_disabled',
-        {
-          ...context,
-          feature_flag: featureFlag,
-          reason: 'Login disabled by admin'
-        }
-      );
+      expect(authObservability.logAuthEvent).toHaveBeenCalledWith('warn', 'auth.feature_disabled', {
+        ...context,
+        feature_flag: featureFlag,
+        reason: 'Login disabled by admin'
+      });
     });
   });
 
@@ -335,4 +302,3 @@ describe('authObservability helpers', () => {
     });
   });
 });
-

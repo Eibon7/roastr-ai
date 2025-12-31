@@ -9,7 +9,10 @@
  * - Error handling en trackEvent (graceful degradation)
  */
 
-import { authObservability, AuthEventContext } from '../../../src/services/authObservabilityService';
+import {
+  authObservability,
+  AuthEventContext
+} from '../../../src/services/authObservabilityService';
 import { logger } from '../../../src/utils/logger';
 import { trackEvent } from '../../../src/lib/analytics';
 import { AuthError } from '../../../src/utils/authErrorTaxonomy';
@@ -38,18 +41,12 @@ describe('AuthObservabilityService', () => {
     it('should log with correct structure (timestamp, level, service, event)', () => {
       authObservability.logAuthEvent('info', 'auth.test.event', mockContext);
 
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('"level":"info"')
-      );
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('"service":"auth"')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('"level":"info"'));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('"service":"auth"'));
       expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('"event":"auth.test.event"')
       );
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('"timestamp":')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('"timestamp":'));
     });
 
     it('should include request_id in all logs', () => {
@@ -243,4 +240,3 @@ describe('AuthObservabilityService', () => {
     });
   });
 });
-
