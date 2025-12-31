@@ -9,17 +9,15 @@
  * - Error handling en trackEvent (graceful degradation)
  */
 
-import {
-  authObservability,
-  AuthEventContext
-} from '../../../src/services/authObservabilityService';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { authObservability, AuthEventContext } from '../../../src/services/authObservabilityService';
 import { logger } from '../../../src/utils/logger';
 import { trackEvent } from '../../../src/lib/analytics';
 import { AuthError } from '../../../src/utils/authErrorTaxonomy';
 
 // Mock dependencies
-jest.mock('../../../src/utils/logger');
-jest.mock('../../../src/lib/analytics');
+vi.mock('../../../src/utils/logger');
+vi.mock('../../../src/lib/analytics');
 
 describe('AuthObservabilityService', () => {
   const mockContext: AuthEventContext = {
@@ -32,7 +30,7 @@ describe('AuthObservabilityService', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset ENABLE_ANALYTICS for each test
     delete process.env.ENABLE_ANALYTICS;
   });
@@ -41,18 +39,24 @@ describe('AuthObservabilityService', () => {
     it('should log with correct structure (timestamp, level, service, event)', () => {
       authObservability.logAuthEvent('info', 'auth.test.event', mockContext);
 
-      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('"level":"info"'));
-      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('"service":"auth"'));
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('"level":"info"')
+      );
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('"service":"auth"')
+      );
       expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('"event":"auth.test.event"')
       );
-      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('"timestamp":'));
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('"timestamp":')
+      );
     });
 
     it('should include request_id in all logs', () => {
       authObservability.logAuthEvent('info', 'auth.test', mockContext);
 
-      const logCall = (logger.info as jest.Mock).mock.calls[0][0];
+      const logCall = (logger.info as any).mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
 
       expect(logEntry.request_id).toBe('req_123');
@@ -61,7 +65,7 @@ describe('AuthObservabilityService', () => {
     it('should sanitize email (truncate)', () => {
       authObservability.logAuthEvent('info', 'auth.test', mockContext);
 
-      const logCall = (logger.info as jest.Mock).mock.calls[0][0];
+      const logCall = (logger.info as any).mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
 
       // Email should be truncated (e.g., "t***@e***.com")
@@ -72,7 +76,7 @@ describe('AuthObservabilityService', () => {
     it('should sanitize IP (prefix only)', () => {
       authObservability.logAuthEvent('info', 'auth.test', mockContext);
 
-      const logCall = (logger.info as jest.Mock).mock.calls[0][0];
+      const logCall = (logger.info as any).mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
 
       // IP should be prefixed (e.g., "192.168.x.x")
@@ -90,7 +94,7 @@ describe('AuthObservabilityService', () => {
 
       authObservability.logAuthEvent('info', 'auth.test', contextWithSensitive);
 
-      const logCall = (logger.info as jest.Mock).mock.calls[0][0];
+      const logCall = (logger.info as any).mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
 
       expect(logEntry.password).toBeUndefined();
@@ -137,7 +141,7 @@ describe('AuthObservabilityService', () => {
 
     it('should gracefully handle trackEvent errors (no propagation)', () => {
       process.env.ENABLE_ANALYTICS = 'true';
-      (trackEvent as jest.Mock).mockImplementation(() => {
+      (trackEvent as any).mockImplementation(() => {
         throw new Error('Amplitude API failed');
       });
 
@@ -162,7 +166,7 @@ describe('AuthObservabilityService', () => {
       });
 
       expect(logger.info).toHaveBeenCalled();
-      const logCall = (logger.info as jest.Mock).mock.calls[0][0];
+      const logCall = (logger.info as any).mock.calls[0][0];
       expect(logCall).toContain('auth.metric.counter.auth_requests_total');
     });
 
@@ -197,7 +201,7 @@ describe('AuthObservabilityService', () => {
 
     it('should gracefully handle counter errors', () => {
       process.env.ENABLE_ANALYTICS = 'true';
-      (trackEvent as jest.Mock).mockImplementation(() => {
+      (trackEvent as any).mockImplementation(() => {
         throw new Error('Counter failed');
       });
 
@@ -218,7 +222,7 @@ describe('AuthObservabilityService', () => {
       authObservability.logAuthError(mockContext, authError);
 
       expect(logger.error).toHaveBeenCalled();
-      const logCall = (logger.error as jest.Mock).mock.calls[0][0];
+      const logCall = (logger.error as any).mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
 
       expect(logEntry.error_slug).toBe('AUTH_INVALID_CREDENTIALS');
@@ -240,3 +244,4 @@ describe('AuthObservabilityService', () => {
     });
   });
 });
+
