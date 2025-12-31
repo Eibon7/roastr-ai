@@ -1,22 +1,13 @@
 /**
  * Auth Observability Service (V2) - ROA-410
  *
- * Centralized observability for authentication events:
- * - Structured logging with correlation IDs and request IDs
- * - Metrics tracking (attempts, errors, durations, rate limits)
- * - Event tracking via Amplitude
+ * Centralized observability for authentication events with:
+ * - Structured logging (timestamp, level, service, event, request_id)
+ * - Spec-compliant event names (auth_flow_*)
+ * - Specific metric counters (auth_*_total)
+ * - ENABLE_ANALYTICS feature flag for conditional analytics
  * - PII sanitization (emails truncated, IPs prefixed)
- *
- * Usage:
- * ```typescript
- * import { authObservability } from './authObservabilityService';
- *
- * authObservability.logAuthEvent('info', 'auth.login.success', {
- *   request_id: 'req_123',
- *   user_id: 'user_456',
- *   flow: 'login'
- * });
- * ```
+ * - Graceful degradation (try/catch around analytics)
  */
 
 import { logger } from '../utils/logger.js';
@@ -94,6 +85,7 @@ function sanitizeContext(context: AuthEventContext): Record<string, any> {
 class AuthObservabilityService {
   /**
    * Log auth event with structured logging
+   * Always emits logs (regardless of ENABLE_ANALYTICS flag)
    */
   logAuthEvent(level: 'info' | 'warn' | 'error', event: string, context: AuthEventContext): void {
     const sanitizedContext = sanitizeContext(context);
@@ -112,8 +104,43 @@ class AuthObservabilityService {
   }
 
   /**
+   * Track auth event via Amplitude
+   * Only emits when ENABLE_ANALYTICS is true (ROA-410 AC)
+   * Wrapped in try/catch for graceful degradation (CodeRabbit safety)
+   */
+  trackAuthEvent(event: string, context: AuthEventContext, properties?: Record<string, any>): void {
+    // Check ENABLE_ANALYTICS feature flag
+    if (!process.env.ENABLE_ANALYTICS || process.env.ENABLE_ANALYTICS === 'false') {
+      return; // Skip analytics when disabled
+    }
+
+    try {
+      trackEvent({
+        userId: context.user_id,
+        event: `auth_${event}`,
+        properties: {
+          ...properties,
+          flow: context.flow
+        },
+        context: {
+          flow: 'auth',
+          request_id: context.request_id,
+          correlation_id: context.correlation_id
+        }
+      });
+    } catch (error) {
+      // Log error but don't propagate - observability should never break auth flow
+      this.logAuthEvent('warn', 'observability.track_event_failed', {
+        ...context,
+        error: String(error)
+      });
+    }
+  }
+
+  /**
    * Track auth metric
    * Only emits analytics when ENABLE_ANALYTICS is true (ROA-410 AC)
+   * Wrapped in try/catch for graceful degradation (CodeRabbit safety)
    */
   trackAuthMetric(metric: AuthMetric): void {
     // Log structured metric (always log, regardless of analytics flag)
@@ -124,68 +151,78 @@ class AuthObservabilityService {
       return; // Skip analytics when disabled
     }
 
-    // Track via Amplitude
-    trackEvent({
-      userId: metric.context.user_id,
-      event: `auth_${metric.event}`,
-      properties: {
-        ...metric.metadata,
-        flow: metric.context.flow
-      },
-      context: {
-        flow: 'auth',
-        request_id: metric.context.request_id
-      }
-    });
-  }
-
-  /**
-   * Track auth event via Amplitude
-   */
-  trackAuthEvent(event: string, context: AuthEventContext, properties?: Record<string, any>): void {
-    trackEvent({
-      userId: context.user_id,
-      event: `auth_${event}`,
-      properties: {
-        ...properties,
-        flow: context.flow
-      },
-      context: {
-        flow: 'auth',
-        request_id: context.request_id,
-        correlation_id: context.correlation_id
-      }
-    });
-  }
-
-  /**
-   * Log login attempt
-   */
-  logLoginAttempt(context: AuthEventContext, success: boolean, error?: AuthError): void {
-    if (success) {
-      this.logAuthEvent('info', 'auth.login.success', context);
-      this.trackAuthEvent('login_success', context);
-    } else {
-      this.logAuthError(context, error || new AuthError('AUTH_UNKNOWN'));
-      this.trackAuthEvent('login_failed', context, {
-        error_slug: error?.slug || 'AUTH_UNKNOWN'
+    // Track via Amplitude (with error handling)
+    try {
+      trackEvent({
+        userId: metric.context.user_id,
+        event: `auth_${metric.event}`,
+        properties: {
+          ...metric.metadata,
+          flow: metric.context.flow
+        },
+        context: {
+          flow: 'auth',
+          request_id: metric.context.request_id
+        }
+      });
+    } catch (error) {
+      // Log error but don't propagate - observability should never break auth flow
+      this.logAuthEvent('warn', 'observability.track_metric_failed', {
+        ...metric.context,
+        error: String(error)
       });
     }
   }
 
   /**
-   * Log rate limit event
+   * Track specific metric counter with labels
+   * ROA-410 AC: auth_requests_total, auth_success_total, auth_failures_total, auth_blocks_total
    */
-  logRateLimit(context: AuthEventContext, reason: string): void {
-    this.logAuthEvent('warn', 'auth.rate_limit', {
+  trackMetricCounter(
+    name:
+      | 'auth_requests_total'
+      | 'auth_success_total'
+      | 'auth_failures_total'
+      | 'auth_blocks_total',
+    context: AuthEventContext,
+    labels: Record<string, any>
+  ): void {
+    // Log structured counter (always log, regardless of analytics flag)
+    this.logAuthEvent('info', `auth.metric.counter.${name}`, {
       ...context,
-      reason
+      ...labels
     });
-    this.trackAuthEvent('rate_limited', context, { reason });
+
+    // Check ENABLE_ANALYTICS feature flag
+    if (!process.env.ENABLE_ANALYTICS || process.env.ENABLE_ANALYTICS === 'false') {
+      return; // Skip analytics when disabled
+    }
+
+    // Track via Amplitude (with error handling)
+    try {
+      trackEvent({
+        userId: context.user_id,
+        event: `auth_metric_${name}`,
+        properties: {
+          ...labels,
+          counter: name
+        },
+        context: {
+          flow: 'auth',
+          request_id: context.request_id
+        }
+      });
+    } catch (error) {
+      // Log error but don't propagate - observability should never break auth flow
+      this.logAuthEvent('warn', 'observability.track_counter_failed', {
+        ...context,
+        error: String(error)
+      });
+    }
   }
 
   /**
-   * Log auth error
+   * Log auth error with full details
    */
   logAuthError(context: AuthEventContext, error: AuthError): void {
     this.logAuthEvent('error', 'auth.error', {
@@ -194,11 +231,6 @@ class AuthObservabilityService {
       error_category: error.category,
       error_retryable: error.retryable,
       http_status: error.http_status
-    });
-    this.trackAuthEvent('error', context, {
-      error_slug: error.slug,
-      error_category: error.category,
-      error_retryable: error.retryable
     });
   }
 
@@ -212,24 +244,6 @@ class AuthObservabilityService {
       context,
       metadata: {
         duration_ms: durationMs
-      }
-    });
-  }
-
-  /**
-   * Track auth attempt
-   */
-  trackAuthAttempt(
-    flow: AuthEventContext['flow'],
-    context: AuthEventContext,
-    success: boolean
-  ): void {
-    this.trackAuthMetric({
-      event: `${flow}.attempt`,
-      timestamp: Date.now(),
-      context: { ...context, flow },
-      metadata: {
-        success
       }
     });
   }
