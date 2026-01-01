@@ -12,12 +12,12 @@ import { logger } from '../utils/logger.js';
 
 /**
  * Middleware que refresca access tokens expirados automáticamente.
- * 
+ *
  * Comportamiento:
  * - Token válido → continúa sin modificar
  * - Token expirado + refresh válido → refresca y continúa
  * - Token expirado + refresh inválido → AuthError SESSION_EXPIRED
- * 
+ *
  * NO incluye:
  * - Redirects a login
  * - Modificación de response headers
@@ -31,18 +31,18 @@ export async function sessionRefresh(
   try {
     // Extraer tokens del header Authorization
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       // Sin token → no hay sesión que refrescar, continuar
       return next();
     }
 
     const accessToken = authHeader.substring(7);
-    
+
     // Intentar obtener usuario con token actual
     try {
       const user = await authService.getCurrentUser(accessToken);
-      
+
       // Token válido → adjuntar usuario y continuar
       req.user = {
         id: user.id,
@@ -50,7 +50,7 @@ export async function sessionRefresh(
         role: user.role,
         email_verified: user.email_verified
       };
-      
+
       return next();
     } catch (error) {
       // Si error NO es token expirado → propagar error
@@ -60,7 +60,7 @@ export async function sessionRefresh(
 
       // Token expirado → intentar refresh
       const refreshToken = extractRefreshToken(req);
-      
+
       if (!refreshToken) {
         // Sin refresh token → no se puede refrescar
         logger.debug('sessionRefresh: access token expired, no refresh token available');
@@ -70,7 +70,7 @@ export async function sessionRefresh(
       try {
         // Intentar refresh
         const newSession = await authService.refreshSession(refreshToken);
-        
+
         // Refresh exitoso → adjuntar usuario actualizado
         req.user = {
           id: newSession.user.id,
@@ -78,21 +78,21 @@ export async function sessionRefresh(
           role: newSession.user.role,
           email_verified: newSession.user.email_verified
         };
-        
+
         // Adjuntar nuevos tokens al request (para que endpoint los retorne si quiere)
         (req as any).newSession = newSession;
-        
+
         logger.info('sessionRefresh: session refreshed successfully', {
           userId: newSession.user.id
         });
-        
+
         return next();
       } catch (refreshError) {
         // Refresh falló → sesión inválida
         logger.warn('sessionRefresh: refresh failed', {
           error: refreshError instanceof AuthError ? refreshError.slug : 'unknown'
         });
-        
+
         return next(); // Dejar que requireAuth maneje
       }
     }
@@ -105,7 +105,7 @@ export async function sessionRefresh(
 
 /**
  * Helper: Extrae refresh token de headers/cookies/body.
- * 
+ *
  * Prioridad:
  * 1. Header X-Refresh-Token
  * 2. Cookie refresh_token (si httpOnly cookies implementadas)
@@ -132,4 +132,3 @@ function extractRefreshToken(req: Request): string | null {
 
   return null;
 }
-

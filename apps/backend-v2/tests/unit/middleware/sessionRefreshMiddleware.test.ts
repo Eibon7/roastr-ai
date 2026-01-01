@@ -1,6 +1,6 @@
 /**
  * Session Refresh Middleware Tests
- * 
+ *
  * Tests mínimos de infraestructura:
  * - Token válido → continúa
  * - Token expirado + refresh OK → continúa
@@ -48,14 +48,14 @@ describe('sessionRefresh Middleware', () => {
 
   it('should continue without auth header', async () => {
     await sessionRefresh(req, res, next);
-    
+
     expect(next).toHaveBeenCalledOnce();
     expect(req.user).toBeUndefined();
   });
 
   it('should continue with valid token', async () => {
     req.headers.authorization = 'Bearer valid-token';
-    
+
     vi.mocked(authService.getCurrentUser).mockResolvedValueOnce({
       id: 'user-123',
       email: 'test@example.com',
@@ -149,9 +149,7 @@ describe('sessionRefresh Middleware', () => {
   it('should continue on unexpected errors', async () => {
     req.headers.authorization = 'Bearer token';
 
-    vi.mocked(authService.getCurrentUser).mockRejectedValueOnce(
-      new Error('Unexpected error')
-    );
+    vi.mocked(authService.getCurrentUser).mockRejectedValueOnce(new Error('Unexpected error'));
 
     await sessionRefresh(req, res, next);
 
@@ -159,4 +157,3 @@ describe('sessionRefresh Middleware', () => {
     expect(next).toHaveBeenCalledOnce();
   });
 });
-

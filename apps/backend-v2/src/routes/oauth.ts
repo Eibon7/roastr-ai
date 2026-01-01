@@ -2,12 +2,12 @@
  * OAuth Routes v2 (Infra Only)
  *
  * SCOPE: Infraestructura OAuth sin providers reales.
- * 
+ *
  * Implementado:
  * - Feature flag validation
  * - Provider enum validation
  * - Error contracts (OAUTH_DISABLED, OAUTH_PROVIDER_NOT_SUPPORTED)
- * 
+ *
  * NO implementado (post-MVP):
  * - SDKs OAuth (X, YouTube, Google)
  * - Token exchange
@@ -25,7 +25,7 @@ const router = Router();
 
 /**
  * OAuth Providers soportados (enum contractual)
- * 
+ *
  * v2 MVP: x, youtube
  * Futuro: instagram, facebook, discord, etc.
  */
@@ -39,14 +39,14 @@ function isSupportedProvider(provider: string): provider is OAuthProvider {
 /**
  * POST /api/v2/auth/oauth/:provider
  * OAuth initiation endpoint (infra only)
- * 
+ *
  * Request: POST /api/v2/auth/oauth/x
  * Response: 501 Not Implemented (providers post-MVP)
- * 
+ *
  * Validaciones:
  * - Feature flag: auth_enable_oauth
  * - Provider soportado: x | youtube
- * 
+ *
  * Errores:
  * - OAUTH_DISABLED (si feature flag OFF)
  * - OAUTH_PROVIDER_NOT_SUPPORTED (si provider no válido)
@@ -57,7 +57,7 @@ router.post('/oauth/:provider', async (req: Request, res: Response) => {
 
   try {
     // Feature flag check: auth_enable_oauth
-    await isAuthEndpointEnabled('auth_enable_oauth', 'oauth').catch((err) => {
+    await isAuthEndpointEnabled('auth_enable_oauth', 'oauth').catch(() => {
       logger.warn('OAuth disabled by feature flag', { provider });
       throw new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED, { cause: 'oauth_disabled' });
     });
@@ -103,7 +103,7 @@ router.post('/oauth/:provider', async (req: Request, res: Response) => {
 /**
  * GET /api/v2/auth/oauth/:provider/callback
  * OAuth callback endpoint (infra only)
- * 
+ *
  * Response: 501 Not Implemented (providers post-MVP)
  */
 router.get('/oauth/:provider/callback', async (req: Request, res: Response) => {
@@ -111,7 +111,7 @@ router.get('/oauth/:provider/callback', async (req: Request, res: Response) => {
 
   try {
     // Feature flag check
-    await isAuthEndpointEnabled('auth_enable_oauth', 'oauth').catch((err) => {
+    await isAuthEndpointEnabled('auth_enable_oauth', 'oauth').catch(() => {
       throw new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED, { cause: 'oauth_disabled' });
     });
 
@@ -144,4 +144,3 @@ router.get('/oauth/:provider/callback', async (req: Request, res: Response) => {
 });
 
 export default router;
-

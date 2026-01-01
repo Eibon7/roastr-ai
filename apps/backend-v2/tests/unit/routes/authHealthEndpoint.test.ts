@@ -1,6 +1,6 @@
 /**
  * Auth Health Endpoint Tests
- * 
+ *
  * Tests de infraestructura:
  * - Endpoint accesible (public)
  * - Response format correcto
@@ -47,9 +47,7 @@ describe('GET /auth/health', () => {
 
     // Supabase check (throws expected error but is reachable)
     vi.mocked(authService.getCurrentUser).mockRejectedValueOnce(
-      new (await import('../../../src/utils/authErrorTaxonomy')).AuthError(
-        'TOKEN_INVALID' as any
-      )
+      new (await import('../../../src/utils/authErrorTaxonomy')).AuthError('TOKEN_INVALID' as any)
     );
 
     // Settings loader OK
@@ -72,9 +70,7 @@ describe('GET /auth/health', () => {
 
     // Supabase OK
     vi.mocked(authService.getCurrentUser).mockRejectedValueOnce(
-      new (await import('../../../src/utils/authErrorTaxonomy')).AuthError(
-        'TOKEN_INVALID' as any
-      )
+      new (await import('../../../src/utils/authErrorTaxonomy')).AuthError('TOKEN_INVALID' as any)
     );
 
     // Settings loader fails
@@ -95,9 +91,7 @@ describe('GET /auth/health', () => {
     const { loadSettings } = await import('../../../src/lib/loadSettings');
 
     vi.mocked(authService.getCurrentUser).mockRejectedValueOnce(
-      new (await import('../../../src/utils/authErrorTaxonomy')).AuthError(
-        'TOKEN_INVALID' as any
-      )
+      new (await import('../../../src/utils/authErrorTaxonomy')).AuthError('TOKEN_INVALID' as any)
     );
     vi.mocked(loadSettings).mockResolvedValueOnce({} as any);
 
@@ -107,4 +101,3 @@ describe('GET /auth/health', () => {
     expect(res.status).toBe(200);
   });
 });
-

@@ -1,6 +1,6 @@
 /**
  * OAuth Infra Tests
- * 
+ *
  * Tests de infraestructura (sin providers reales):
  * - Feature flag validation
  * - Provider enum validation
@@ -38,11 +38,9 @@ describe('OAuth Infra Routes', () => {
   describe('POST /oauth/:provider', () => {
     it('should block when feature flag disabled', async () => {
       const { isAuthEndpointEnabled } = await import('../../../src/lib/authFlags');
-      
+
       vi.mocked(isAuthEndpointEnabled).mockRejectedValueOnce(
-        new (await import('../../../src/utils/authErrorTaxonomy')).AuthError(
-          'AUTH_DISABLED' as any
-        )
+        new (await import('../../../src/utils/authErrorTaxonomy')).AuthError('AUTH_DISABLED' as any)
       );
 
       const res = await request(app).post('/oauth/x');
@@ -54,7 +52,7 @@ describe('OAuth Infra Routes', () => {
 
     it('should reject unsupported provider', async () => {
       const { isAuthEndpointEnabled } = await import('../../../src/lib/authFlags');
-      
+
       vi.mocked(isAuthEndpointEnabled).mockResolvedValueOnce(true);
 
       const res = await request(app).post('/oauth/unsupported-provider');
@@ -66,7 +64,7 @@ describe('OAuth Infra Routes', () => {
 
     it('should return 501 for supported but unimplemented provider', async () => {
       const { isAuthEndpointEnabled } = await import('../../../src/lib/authFlags');
-      
+
       vi.mocked(isAuthEndpointEnabled).mockResolvedValueOnce(true);
 
       const res = await request(app).post('/oauth/x');
@@ -79,7 +77,7 @@ describe('OAuth Infra Routes', () => {
 
     it('should accept "youtube" as supported provider', async () => {
       const { isAuthEndpointEnabled } = await import('../../../src/lib/authFlags');
-      
+
       vi.mocked(isAuthEndpointEnabled).mockResolvedValueOnce(true);
 
       const res = await request(app).post('/oauth/youtube');
@@ -93,11 +91,9 @@ describe('OAuth Infra Routes', () => {
   describe('GET /oauth/:provider/callback', () => {
     it('should block when feature flag disabled', async () => {
       const { isAuthEndpointEnabled } = await import('../../../src/lib/authFlags');
-      
+
       vi.mocked(isAuthEndpointEnabled).mockRejectedValueOnce(
-        new (await import('../../../src/utils/authErrorTaxonomy')).AuthError(
-          'AUTH_DISABLED' as any
-        )
+        new (await import('../../../src/utils/authErrorTaxonomy')).AuthError('AUTH_DISABLED' as any)
       );
 
       const res = await request(app).get('/oauth/x/callback');
@@ -108,7 +104,7 @@ describe('OAuth Infra Routes', () => {
 
     it('should reject unsupported provider', async () => {
       const { isAuthEndpointEnabled } = await import('../../../src/lib/authFlags');
-      
+
       vi.mocked(isAuthEndpointEnabled).mockResolvedValueOnce(true);
 
       const res = await request(app).get('/oauth/unsupported/callback');
@@ -119,7 +115,7 @@ describe('OAuth Infra Routes', () => {
 
     it('should return 501 for supported but unimplemented callback', async () => {
       const { isAuthEndpointEnabled } = await import('../../../src/lib/authFlags');
-      
+
       vi.mocked(isAuthEndpointEnabled).mockResolvedValueOnce(true);
 
       const res = await request(app).get('/oauth/x/callback');
@@ -129,4 +125,3 @@ describe('OAuth Infra Routes', () => {
     });
   });
 });
-
