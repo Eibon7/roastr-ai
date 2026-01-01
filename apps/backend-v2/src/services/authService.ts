@@ -18,6 +18,22 @@ import {
   sendPasswordRecoveryEmailAfterPreflight
 } from './authEmailService.js';
 import { truncateEmailForLog } from '../utils/pii.js';
+import {
+  logLoginAttempt,
+  logRegisterAttempt,
+  logMagicLinkRequest,
+  logPasswordRecoveryRequest,
+  logFeatureDisabled,
+  logAuthFlowStarted
+} from '../utils/authObservability.js';
+import {
+  logLoginAttempt,
+  logRegisterAttempt,
+  logMagicLinkRequest,
+  logPasswordRecoveryRequest,
+  trackAuthDuration,
+  logRateLimit
+} from '../utils/authObservability.js';
 
 export interface SignupParams {
   email: string;
@@ -79,6 +95,12 @@ export class AuthService {
   async register(params: RegisterParams): Promise<void> {
     const normalizedEmail = this.normalizeEmail(params.email);
     const { password } = params;
+    const startTime = Date.now();
+    const context = {
+      request_id: params.request_id,
+      flow: 'register' as const,
+      email: normalizedEmail
+    };
 
     try {
       // Validaciones dentro del try-catch para capturar analytics
@@ -171,7 +193,11 @@ export class AuthService {
         });
       }
 
-      // Track successful registration (B3: Register Analytics)
+      // Track successful registration (B3: Register Analytics + ROA-410 observability)
+      const duration = Date.now() - startTime;
+      logRegisterAttempt({ ...context, user_id: data.user.id }, true);
+      trackAuthDuration('register', { ...context, user_id: data.user.id }, duration);
+
       try {
         trackEvent({
           userId: data.user.id,
@@ -189,12 +215,17 @@ export class AuthService {
         logger.warn('analytics.track_failed', { event: 'auth_register_success' });
       }
     } catch (error) {
-      // Track failed registration (B3: Register Analytics)
+      // Track failed registration (B3: Register Analytics + ROA-410 observability)
+      const duration = Date.now() - startTime;
+      const authError = error instanceof AuthError ? error : mapSupabaseError(error);
+      logRegisterAttempt(context, false, authError);
+      trackAuthDuration('register', context, duration);
+
       try {
         trackEvent({
           event: 'auth_register_failed',
           properties: {
-            error_slug: error instanceof AuthError ? error.slug : AUTH_ERROR_CODES.UNKNOWN,
+            error_slug: authError.slug,
             method: 'email_password'
           },
           context: {
@@ -206,10 +237,7 @@ export class AuthService {
         logger.warn('analytics.track_failed', { event: 'auth_register_failed' });
       }
 
-      if (error instanceof AuthError) {
-        throw error;
-      }
-      throw mapSupabaseError(error);
+      throw authError;
     }
   }
 
@@ -317,6 +345,15 @@ export class AuthService {
    */
   async login(params: LoginParams): Promise<Session> {
     const { email, password, ip } = params;
+    const startTime = Date.now();
+    const context = {
+      flow: 'login' as const,
+      email: email.toLowerCase(),
+      ip
+    };
+
+    // Log flow started (emits auth_flow_started + auth_requests_total)
+    logAuthFlowStarted(context);
 
     // Feature flag check: auth.login.enabled
     try {
@@ -324,6 +361,8 @@ export class AuthService {
       const loginEnabled = settings?.auth?.login?.enabled ?? true;
 
       if (!loginEnabled) {
+        // Log feature-disabled (emits auth_flow_blocked + auth_blocks_total)
+        logFeatureDisabled(context, 'auth_enable_login', 'Login endpoint disabled by settings');
         throw new AuthError(
           AUTH_ERROR_CODES.AUTH_DISABLED,
           'Authentication is currently unavailable.'
@@ -334,6 +373,8 @@ export class AuthService {
       const loginEnabled = process.env.AUTH_LOGIN_ENABLED !== 'false';
 
       if (!loginEnabled) {
+        // Log feature-disabled (emits auth_flow_blocked + auth_blocks_total)
+        logFeatureDisabled(context, 'auth_enable_login', 'Login endpoint disabled by env');
         throw new AuthError(
           AUTH_ERROR_CODES.AUTH_DISABLED,
           'Authentication is currently unavailable.'
@@ -357,6 +398,7 @@ export class AuthService {
             ? 'Account permanently locked. Contact support.'
             : `Too many login attempts. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
 
+        logRateLimit(context, `login_rate_limit:${ip}`);
         throw new AuthError(AUTH_ERROR_CODES.RATE_LIMITED, { cause: { blockedUntil, message } });
       }
 
@@ -383,8 +425,17 @@ export class AuthService {
       });
 
       if (error || !data.session) {
-        throw mapSupabaseError(error);
+        const authError = mapSupabaseError(error);
+        const duration = Date.now() - startTime;
+        logLoginAttempt({ ...context, user_id: data.user?.id }, false, authError);
+        trackAuthDuration('login', context, duration);
+        throw authError;
       }
+
+      // Success: log and track
+      const duration = Date.now() - startTime;
+      logLoginAttempt({ ...context, user_id: data.user.id }, true);
+      trackAuthDuration('login', { ...context, user_id: data.user.id }, duration);
 
       return {
         access_token: data.session.access_token,
@@ -491,6 +542,13 @@ export class AuthService {
    */
   async requestMagicLink(params: MagicLinkParams): Promise<{ success: boolean; message: string }> {
     const { email, ip, request_id } = params;
+    const startTime = Date.now();
+    const context = {
+      request_id,
+      flow: 'magic_link' as const,
+      email: email.toLowerCase(),
+      ip
+    };
 
     try {
       // Rate limiting
@@ -502,6 +560,7 @@ export class AuthService {
             ? 'Account permanently locked. Contact support.'
             : `Too many magic link requests. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
 
+        logRateLimit(context, `magic_link_rate_limit:${ip}`);
         throw new AuthError(AUTH_ERROR_CODES.RATE_LIMITED, { cause: { blockedUntil, message } });
       }
 
@@ -577,14 +636,31 @@ export class AuthService {
       });
 
       if (error) {
-        throw mapSupabaseError(error);
+        const authError = mapSupabaseError(error);
+        const duration = Date.now() - startTime;
+        logMagicLinkRequest(context, false, authError);
+        trackAuthDuration('magic_link', context, duration);
+        throw authError;
       }
+
+      // Success
+      const duration = Date.now() - startTime;
+      logMagicLinkRequest(context, true);
+      trackAuthDuration('magic_link', context, duration);
 
       return {
         success: true,
         message: 'Magic link sent successfully'
       };
     } catch (error) {
+      // Ensure observability even if error wasn't caught above
+      if (!(error instanceof AuthError && error.slug === AUTH_ERROR_CODES.RATE_LIMITED)) {
+        const duration = Date.now() - startTime;
+        const authError = error instanceof AuthError ? error : mapSupabaseError(error);
+        logMagicLinkRequest(context, false, authError);
+        trackAuthDuration('magic_link', context, duration);
+      }
+
       if (error instanceof AuthError) {
         throw error;
       }
@@ -600,6 +676,13 @@ export class AuthService {
     params: PasswordRecoveryParams
   ): Promise<{ success: boolean; message: string }> {
     const { email, ip, request_id } = params;
+    const startTime = Date.now();
+    const context = {
+      request_id,
+      flow: 'password_recovery' as const,
+      email: email.toLowerCase(),
+      ip
+    };
 
     try {
       // Rate limiting
@@ -611,6 +694,7 @@ export class AuthService {
             ? 'Account permanently locked. Contact support.'
             : `Too many password recovery requests. Try again in ${Math.ceil((blockedUntil - Date.now()) / 60000)} minutes.`;
 
+        logRateLimit(context, `password_recovery_rate_limit:${ip}`);
         throw new AuthError(AUTH_ERROR_CODES.RATE_LIMITED, { cause: { blockedUntil, message } });
       }
 
@@ -668,11 +752,24 @@ export class AuthService {
       // Enviar email de recuperación (Supabase Auth → SMTP provider = Resend)
       await sendPasswordRecoveryEmailAfterPreflight(email, { request_id });
 
+      // Success
+      const duration = Date.now() - startTime;
+      logPasswordRecoveryRequest(context, true);
+      trackAuthDuration('password_recovery', context, duration);
+
       return {
         success: true,
         message: 'Password recovery link sent successfully'
       };
     } catch (error) {
+      // Ensure observability
+      if (!(error instanceof AuthError && error.slug === AUTH_ERROR_CODES.RATE_LIMITED)) {
+        const duration = Date.now() - startTime;
+        const authError = error instanceof AuthError ? error : mapSupabaseError(error);
+        logPasswordRecoveryRequest(context, false, authError);
+        trackAuthDuration('password_recovery', context, duration);
+      }
+
       if (error instanceof AuthError) {
         throw error;
       }
