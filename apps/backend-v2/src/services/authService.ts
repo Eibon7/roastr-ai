@@ -23,6 +23,14 @@ import {
   logRegisterAttempt,
   logMagicLinkRequest,
   logPasswordRecoveryRequest,
+  logFeatureDisabled,
+  logAuthFlowStarted
+} from '../utils/authObservability.js';
+import {
+  logLoginAttempt,
+  logRegisterAttempt,
+  logMagicLinkRequest,
+  logPasswordRecoveryRequest,
   trackAuthDuration,
   logRateLimit
 } from '../utils/authObservability.js';
@@ -344,6 +352,9 @@ export class AuthService {
       ip
     };
 
+    // Log flow started (emits auth_flow_started + auth_requests_total)
+    logAuthFlowStarted(context);
+
     // Feature flag check: auth.login.enabled
     try {
       const settings = await loadSettings();
@@ -360,6 +371,8 @@ export class AuthService {
       const loginEnabled = process.env.AUTH_LOGIN_ENABLED !== 'false';
 
       if (!loginEnabled) {
+        // Log feature-disabled (emits auth_flow_blocked + auth_blocks_total)
+        logFeatureDisabled(context, 'auth_enable_login', 'Login endpoint disabled by env');
         throw new AuthError(
           AUTH_ERROR_CODES.AUTH_DISABLED,
           'Authentication is currently unavailable.'
