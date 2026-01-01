@@ -2,6 +2,69 @@
 
 ## [Unreleased]
 
+### 🔍 ROA-410: Auth Observability Base v2 - 2026-01-01
+
+#### Core Observability Service
+
+- **Centralized Observability**: New `authObservabilityService.ts` for structured logging, analytics, and metrics
+- **Structured JSON Logs**: Consistent format with timestamp, level, service, event fields
+- **request_id & correlation_id Propagation**: Included in all logs, events, and metrics for tracing
+- **PII Sanitization**:
+  - Emails truncated as `joh***@example.com` (first 3 chars)
+  - IPs sanitized as `192.168.1.xxx` (IPv4) or `xxxx::xxxx` (IPv6)
+  - Automatic sanitization in all contexts
+
+#### Event Taxonomy
+
+- **Spec-Compliant Event Names**:
+  - `auth_flow_started` - Flow iniciado
+  - `auth_flow_completed` - Flow completado exitosamente
+  - `auth_flow_failed` - Flow falló (validación, credenciales)
+  - `auth_flow_blocked` - Flow bloqueado (rate limit, feature flag)
+
+#### Metrics
+
+- **Counter Metrics with Dimensions**:
+  - `auth_requests_total` (labels: flow, auth_type)
+  - `auth_success_total` (labels: flow, auth_type)
+  - `auth_failures_total` (labels: flow, auth_type, reason)
+  - `auth_blocks_total` (labels: flow, reason)
+
+#### Feature Flag Integration
+
+- **ENABLE_ANALYTICS Flag**: Gates analytics events with graceful degradation
+- **Fail-Safe Design**: Analytics failures never crash auth flows (try/catch)
+- **Independent Logging**: Logging and metrics work regardless of flag state
+
+#### Integration Points
+
+- **authService.ts**: Instrumented register, login, magic link, password recovery
+- **routes/auth.ts**: Feature-flag-disabled observability (4 gates)
+- **rateLimitService.ts**: Optional observability hooks for rate limit events
+- **index.ts**: Wiring of observability hooks on startup
+
+#### Test Coverage
+
+- **37 Test Cases** (490 lines):
+  - Structured logging validation
+  - PII sanitization (emails, IPs)
+  - request_id presence in all logs
+  - ENABLE_ANALYTICS flag gating
+  - Metric counter tracking
+  - Event emission
+  - Error handling (graceful degradation)
+
+#### Documentation
+
+- **`docs/observability/auth-v2.md`**: Complete observability documentation
+  - Architecture diagrams
+  - Event taxonomy
+  - Metric definitions
+  - PII sanitization policies
+  - Integration examples
+  - Best practices
+- **`docs/plan/issue-ROA-410.md`**: Implementation plan and validation checklist
+
 ### 🔐 ROA-409: Auth Email Infrastructure v2 - 2025-12-30
 
 #### Auth Email Service Implementation
