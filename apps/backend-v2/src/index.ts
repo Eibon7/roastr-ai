@@ -8,6 +8,7 @@
 import express from 'express';
 import { initializeAmplitude } from './lib/analytics.js';
 import authRoutes from './routes/auth.js';
+import oauthRoutes from './routes/oauth.js';
 import { attachRequestId } from './middleware/requestId.js';
 import { logger } from './utils/logger.js';
 import { rateLimitService } from './services/rateLimitService.js';
@@ -38,6 +39,7 @@ app.get('/health', (_req, res) => {
 
 // API routes
 app.use('/api/v2/auth', authRoutes);
+app.use('/api/v2/auth', oauthRoutes);
 
 // Start server (only if not in test environment)
 if (process.env.NODE_ENV !== 'test') {
