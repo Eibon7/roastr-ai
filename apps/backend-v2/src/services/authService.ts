@@ -361,6 +361,8 @@ export class AuthService {
       const loginEnabled = settings?.auth?.login?.enabled ?? true;
 
       if (!loginEnabled) {
+        // Log feature-disabled (emits auth_flow_blocked + auth_blocks_total)
+        logFeatureDisabled(context, 'auth_enable_login', 'Login endpoint disabled by settings');
         throw new AuthError(
           AUTH_ERROR_CODES.AUTH_DISABLED,
           'Authentication is currently unavailable.'
