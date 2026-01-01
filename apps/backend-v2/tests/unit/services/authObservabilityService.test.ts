@@ -23,6 +23,8 @@ vi.mock('../../../src/utils/logger');
 vi.mock('../../../src/lib/analytics');
 
 describe('AuthObservabilityService', () => {
+  const originalEnableAnalytics = process.env.ENABLE_ANALYTICS;
+
   const mockContext: AuthEventContext = {
     request_id: 'req_123',
     correlation_id: 'corr_456',
@@ -35,7 +37,7 @@ describe('AuthObservabilityService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset ENABLE_ANALYTICS for each test
-    delete process.env.ENABLE_ANALYTICS;
+    process.env.ENABLE_ANALYTICS = originalEnableAnalytics;
   });
 
   describe('logAuthEvent', () => {
