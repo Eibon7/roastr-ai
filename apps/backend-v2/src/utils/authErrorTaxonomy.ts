@@ -109,7 +109,7 @@ export const AUTH_ERROR_TAXONOMY: Record<AuthErrorSlug, AuthErrorV2> = {
   AUTH_EMAIL_SEND_FAILED: {
     slug: 'AUTH_EMAIL_SEND_FAILED',
     http_status: 500,
-    retryable: true, // Infrastructure errors are retryable per spec
+    retryable: false,
     user_message_key: 'auth.error.email_send_failed',
     category: 'auth'
   },

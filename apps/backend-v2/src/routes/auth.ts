@@ -24,7 +24,6 @@ import { logger } from '../utils/logger.js';
 import { checkAuthPolicy } from '../auth/authPolicyGate.js';
 import { isAuthEndpointEnabled } from '../lib/authFlags.js';
 import { truncateEmailForLog } from '../utils/pii.js';
-import { createAuthContext, logFeatureDisabled } from '../utils/authObservability.js';
 
 const router = Router();
 
@@ -75,15 +74,8 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
   }
 
   try {
-    // ROA-406: Feature flag check (fail-closed, no env fallback) + ROA-410: observability
-    await isAuthEndpointEnabled('auth_enable_register', 'auth_enable_register').catch((err) => {
-      const context = createAuthContext(req, {
-        flow: 'register',
-        email: truncateEmailForLog(String(normalizedEmail ?? ''))
-      });
-      logFeatureDisabled(context, 'auth_enable_register', 'feature_disabled');
-      throw err;
-    });
+    // ROA-406: Feature flag check (fail-closed, no env fallback)
+    await isAuthEndpointEnabled('auth_enable_register', 'auth_enable_register');
 
     // ✅ A3 POLICY GATE: Check policies BEFORE auth logic
     const policyResult = await checkAuthPolicy({
@@ -213,15 +205,8 @@ router.post('/login', rateLimitByType('login'), async (req: Request, res: Respon
       });
     }
 
-    // ROA-406: Feature flag check (fail-closed, no env fallback) + ROA-410: observability
-    await isAuthEndpointEnabled('auth_enable_login', 'auth_enable_login').catch((err) => {
-      const context = createAuthContext(req, {
-        flow: 'login',
-        email: truncateEmailForLog(String(email ?? ''))
-      });
-      logFeatureDisabled(context, 'auth_enable_login', 'feature_disabled');
-      throw err;
-    });
+    // ROA-406: Feature flag check (fail-closed, no env fallback)
+    await isAuthEndpointEnabled('auth_enable_login', 'auth_enable_login');
 
     // ✅ A3 POLICY GATE: Check policies BEFORE auth logic
     const policyResult = await checkAuthPolicy({
@@ -333,15 +318,8 @@ router.post('/magic-link', rateLimitByType('magic_link'), async (req: Request, r
       });
     }
 
-    // ROA-406: Feature flag check (fail-closed, no env fallback) + ROA-410: observability
-    await isAuthEndpointEnabled('auth_enable_magic_link', 'auth_enable_magic_link').catch((err) => {
-      const context = createAuthContext(req, {
-        flow: 'magic_link',
-        email: truncateEmailForLog(String(email ?? ''))
-      });
-      logFeatureDisabled(context, 'auth_enable_magic_link', 'feature_disabled');
-      throw err;
-    });
+    // ROA-406: Feature flag check (fail-closed, no env fallback)
+    await isAuthEndpointEnabled('auth_enable_magic_link', 'auth_enable_magic_link');
 
     // ✅ A3 POLICY GATE: Check policies BEFORE auth logic
     const policyResult = await checkAuthPolicy({
@@ -400,18 +378,8 @@ router.post(
     const request_id = getRequestId(req);
 
     try {
-      // ROA-406: Feature flag check (fail-closed, no env fallback) + ROA-410: observability
-      await isAuthEndpointEnabled(
-        'auth_enable_password_recovery',
-        'auth_enable_password_recovery'
-      ).catch((err) => {
-        const context = createAuthContext(req, {
-          flow: 'password_recovery',
-          email: truncateEmailForLog(String(req.body?.email ?? ''))
-        });
-        logFeatureDisabled(context, 'auth_enable_password_recovery', 'feature_disabled');
-        throw err;
-      });
+      // ROA-406: Feature flag check (fail-closed, no env fallback)
+      await isAuthEndpointEnabled('auth_enable_password_recovery', 'auth_enable_password_recovery');
 
       const { email } = req.body;
 

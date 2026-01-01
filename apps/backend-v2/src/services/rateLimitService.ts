@@ -10,8 +10,6 @@
  * - password_reset: 3 intentos en 1h → bloqueo 1h
  *
  * Bloqueo progresivo: 15min → 1h → 24h → permanente
- *
- * ROA-410: Integrado con auth observability para logging estructurado
  */
 
 export type AuthType = 'login' | 'magic_link' | 'oauth' | 'password_reset' | 'signup';
@@ -68,20 +66,9 @@ const PROGRESSIVE_BLOCK_DURATIONS = [
 
 export class RateLimitService {
   private store: Map<string, RateLimitEntry>;
-  private observability?: {
-    logRateLimit: (_context: any, _reason: string) => void;
-  };
 
   constructor() {
     this.store = new Map();
-  }
-
-  /**
-   * Set observability hooks (ROA-410)
-   * Allows dependency injection for testing
-   */
-  setObservability(hooks: { logRateLimit: (_context: any, _reason: string) => void }): void {
-    this.observability = hooks;
   }
 
   /**
@@ -174,22 +161,9 @@ export class RateLimitService {
     // Verificar si está bloqueado
     if (this.isBlocked(authType, identifier)) {
       const remaining = this.getBlockRemaining(authType, identifier);
-      const blockedUntil = remaining === Infinity ? null : now + (remaining || 0);
-
-      // ROA-410: Log rate limit event
-      if (this.observability) {
-        this.observability.logRateLimit(
-          {
-            flow: authType,
-            ip: identifier.includes(':') ? identifier.split(':')[0] : identifier
-          },
-          `rate_limit_blocked:${authType}:${identifier}`
-        );
-      }
-
       return {
         allowed: false,
-        blockedUntil
+        blockedUntil: remaining === Infinity ? null : now + (remaining || 0)
       };
     }
 
@@ -225,17 +199,6 @@ export class RateLimitService {
       entry.attempts = 0;
 
       this.store.set(key, entry);
-
-      // ROA-410: Log rate limit exceeded
-      if (this.observability) {
-        this.observability.logRateLimit(
-          {
-            flow: authType,
-            ip: identifier.includes(':') ? identifier.split(':')[0] : identifier
-          },
-          `rate_limit_exceeded:${authType}:${entry.blockCount}:${blockDuration === null ? 'permanent' : `${blockDuration}ms`}`
-        );
-      }
 
       return {
         allowed: false,

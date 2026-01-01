@@ -10,16 +10,9 @@ import { initializeAmplitude } from './lib/analytics.js';
 import authRoutes from './routes/auth.js';
 import { attachRequestId } from './middleware/requestId.js';
 import { logger } from './utils/logger.js';
-import { rateLimitService } from './services/rateLimitService.js';
-import { logRateLimit } from './utils/authObservability.js';
 
 // Initialize Amplitude Analytics
 initializeAmplitude();
-
-// ROA-410: Connect rate limit service with observability
-rateLimitService.setObservability({
-  logRateLimit
-});
 
 const app = express();
 const PORT = process.env.PORT || 3002;
