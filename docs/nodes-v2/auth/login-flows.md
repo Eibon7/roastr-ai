@@ -1,115 +1,70 @@
 # Auth - Login Flows
 
-**Subnodo:** `auth/login-flows`  
-**Última actualización:** 2025-12-26  
-**Owner:** ROA-364
+**Subnodo de:** `auth`  
+**Última actualización:** 2026-01-01  
+**Owner:** ROA-403
 
 ---
 
 ## 📋 Propósito
 
-Este subnodo documenta los flujos completos de autenticación soportados en Roastr v2:
-
-1. **Password Login:** Email + password tradicional
-2. **Magic Link:** Passwordless login vía email
-3. **OAuth:** Autenticación con X (Twitter) y YouTube
-
-Todos los flujos están protegidos por **rate limiting v2** (ROA-359) para prevenir brute force attacks.
+Define los flujos completos de autenticación disponibles en Roastr v2:
+- Password Login (email + password)
+- Magic Link (passwordless)
+- OAuth (preparado para X/Twitter y YouTube)
 
 ---
 
-## 🔑 1. Password Login
+## 🔐 Password Login
 
 ### Endpoint
 
-```http
+```
 POST /api/v2/auth/login
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "securePassword123"
-}
 ```
 
-### Request Schema
+### Request
 
 ```typescript
-interface PasswordLoginRequest {
-  email: string;      // Valid email format
-  password: string;   // Min 8 chars (enforced by Supabase)
+{
+  email: string;      // Normalizado a lowercase
+  password: string;   // Mínimo 8 caracteres
 }
 ```
 
 ### Response (Success)
 
-```json
+```typescript
 {
-  "success": true,
-  "data": {
-    "user": {
-      "id": "uuid-v4",
-      "email": "user@example.com",
-      "name": "John Doe",
-      "plan": "starter",
-      "is_admin": false
-    },
-    "session": {
-      "access_token": "jwt-token-here",
-      "refresh_token": "refresh-token-here",
-      "expires_at": 1703000000,
-      "expires_in": 3600
+  session: {
+    access_token: string;      // JWT, válido 1h
+    refresh_token: string;     // Válido 7 días
+    expires_in: number;        // Segundos hasta expiración
+    expires_at: number;        // Unix timestamp
+    token_type: "bearer";
+    user: {
+      id: string;
+      email: string;
+      role: "user" | "admin" | "superadmin";
+      email_verified: boolean;
+      created_at: string;
+      metadata: Record<string, any>;
     }
-  }
+  },
+  message: "Login successful"
 }
 ```
 
 ### Response (Error)
 
-```json
-{
-  "success": false,
-  "error": {
-    "code": "AUTH_INVALID_CREDENTIALS",
-    "message": "Invalid email or password",
-    "statusCode": 401
-  }
-}
-```
-
-**⚠️ User Enumeration Prevention:**
-- Mismo mensaje para "email no existe" y "password incorrecta"
-- Timing attacks mitigados con delay constante
-
-### Rate Limiting
-
-**Configuración oficial** (SSOT v2, sección 12.4):
-
 ```typescript
 {
-  windowMs: 900000,       // 15 minutos
-  maxAttempts: 5,
-  blockDurationMs: 900000 // 15 minutos
-}
-```
-
-**Bloqueo progresivo:**
-- 1ra infracción: 15 min
-- 2da infracción: 1 h
-- 3ra infracción: 24 h
-- 4ta+ infracción: Permanente (requiere admin)
-
-**Response cuando bloqueado (429):**
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "AUTH_RATE_LIMIT_EXCEEDED",
-    "message": "Too many login attempts. Please try again later.",
-    "statusCode": 429,
-    "retryAfter": 12
-  }
+  success: false,
+  error: {
+    slug: AuthErrorSlug;     // Ej: "AUTH_INVALID_CREDENTIALS"
+    retryable: boolean;
+  },
+  request_id: string;
 }
 ```
 
@@ -117,441 +72,435 @@ interface PasswordLoginRequest {
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Frontend
-    participant RateLimiter
-    participant AuthService
-    participant Supabase
-    participant BillingEngine
+    participant U as Usuario
+    participant F as Frontend
+    participant RL as Rate Limiter
+    participant PG as Policy Gate
+    participant AS as Auth Service
+    participant SB as Supabase
+    participant BE as Billing Engine
 
-    User->>Frontend: Ingresar email/password
-    Frontend->>RateLimiter: POST /api/v2/auth/login
+    U->>F: Ingresar email + password
+    F->>RL: POST /api/v2/auth/login
     
-    RateLimiter->>RateLimiter: Check attempts<br/>(IP + email hash)
-    
-    alt Límite excedido
-        RateLimiter-->>Frontend: 429 RATE_LIMIT_EXCEEDED
-        Frontend-->>User: "Espera 15 minutos"
-    else OK (<5 intentos)
-        RateLimiter->>AuthService: Forward request
-        AuthService->>Supabase: signInWithPassword()
+    RL->>RL: Check rate limit (IP)
+    alt Rate limit excedido
+        RL-->>F: 429 TOO_MANY_REQUESTS
+        RL-->>F: Header: Retry-After
+        F-->>U: "Espera X minutos"
+    else Rate limit OK
+        RL->>PG: Forward request
         
-        alt Credenciales inválidas
-            Supabase-->>AuthService: Error
-            AuthService->>AuthService: Map to AUTH_INVALID_CREDENTIALS
-            AuthService->>RateLimiter: Increment attempts
-            AuthService-->>Frontend: 401 INVALID_CREDENTIALS
-            Frontend-->>User: "Email o password incorrectos"
-        else Credenciales OK
-            Supabase-->>AuthService: { user, session }
-            AuthService->>BillingEngine: Check subscription status
+        PG->>PG: Check feature flag (auth_enable_login)
+        alt Feature flag OFF
+            PG-->>F: 404 NOT_FOUND (feature disabled)
+            F-->>U: "Login temporalmente no disponible"
+        else Feature flag ON
+            PG->>PG: Check abuse detection (IP + email patterns)
+            
+            alt Abuse detected
+                PG-->>F: 403 ACCOUNT_LOCKED
+                F-->>U: "Actividad sospechosa detectada"
+            else Abuse check OK
+                PG->>AS: Forward to AuthService
+                AS->>SB: signInWithPassword(email, password)
+                
+                alt Credenciales inválidas
+                    SB-->>AS: Error: Invalid credentials
+                    AS->>AS: Map to AUTH_INVALID_CREDENTIALS
+                    AS-->>F: 401 UNAUTHORIZED
+                    F-->>U: "Email o contraseña incorrectos"
+                else Credenciales válidas
+                    SB-->>AS: { access_token, refresh_token, user }
+                    AS->>BE: Check subscription status
+                    BE-->>AS: { status: "active" | "paused" | "trial" }
             
             alt Subscription paused
-                BillingEngine-->>AuthService: { status: 'paused' }
-                AuthService-->>Frontend: 403 SUBSCRIPTION_REQUIRED
-                Frontend-->>User: "Reactiva tu plan"
+                        AS-->>F: 403 FORBIDDEN
+                        F-->>U: "Reactiva tu plan para continuar"
             else Subscription OK
-                BillingEngine-->>AuthService: { status: 'active' | 'trialing' }
-                AuthService->>RateLimiter: Reset attempts
-                AuthService-->>Frontend: 200 + { user, session }
-                Frontend->>Frontend: Store tokens
-                Frontend-->>User: Redirect to dashboard
+                        AS-->>F: 200 OK + session
+                        F->>F: Store tokens in localStorage
+                        F-->>U: Redirect to dashboard
+                    end
+                end
             end
         end
     end
 ```
 
-### Error Codes
+### Rate Limiting
 
-| Code                        | HTTP | Descripción                       |
-| --------------------------- | ---- | --------------------------------- |
-| `AUTH_INVALID_CREDENTIALS`  | 401  | Email o password incorrectos      |
-| `AUTH_RATE_LIMIT_EXCEEDED`  | 429  | Demasiados intentos               |
-| `AUTH_EMAIL_NOT_VERIFIED`   | 401  | Email no verificado (si aplica)   |
-| `AUTH_ACCOUNT_LOCKED`       | 401  | Cuenta bloqueada por admin        |
-| `SUBSCRIPTION_REQUIRED`     | 403  | Plan pausado, requiere reactivar  |
+**Configuración (SSOT v2, sección 12.4):**
+- **Max attempts:** 5 intentos / 15 minutos
+- **Bloqueo inicial:** 15 minutos
+- **Bloqueo progresivo:**
+  - 1ra infracción: 15 min
+  - 2da infracción: 1 hora
+  - 3ra infracción: 24 horas
+  - 4ta+ infracción: Permanente (requiere intervención manual)
 
-Ver taxonomía completa en [error-taxonomy.md](./error-taxonomy.md).
+### Feature Flags
+
+**Flag requerido:** `auth_enable_login` (desde `admin_settings.feature_flags`)
+
+**Comportamiento si OFF:**
+- Endpoint retorna `404 NOT_FOUND` (feature disabled)
+- Log: `auth_flow_blocked` con reason `feature_disabled`
+- Métricas: `auth_blocks_total{reason="feature_disabled"}`
+
+### Observability
+
+**Eventos logged:**
+- `auth_flow_started` (contador: `auth_requests_total`)
+- `auth_login_attempt` (success/failure)
+- `auth_duration_seconds` (histogram)
+- `auth_flow_blocked` (si rate limit o feature flag)
+- `auth_blocks_total` (contador con labels: reason, policy)
+
+**Amplitude events:**
+- `auth_login_success`
+- `auth_login_failed` (con `error_slug`)
+- `auth_endpoint_login_success`
+- `auth_endpoint_login_failed`
 
 ---
 
-## ✉️ 2. Magic Link
+## ✉️ Magic Link (Passwordless)
 
-### Endpoint (Enviar Magic Link)
+### Endpoint
 
-```http
+```
 POST /api/v2/auth/magic-link
-Content-Type: application/json
-
-{
-  "email": "user@example.com"
-}
 ```
 
-### Request Schema
-
-```typescript
-interface MagicLinkRequest {
-  email: string;  // Valid email format
-}
-```
-
-### Response (Success)
-
-```json
-{
-  "success": true,
-  "message": "If an account exists, we sent a magic link to your email."
-}
-```
-
-**⚠️ User Enumeration Prevention:**
-- Siempre responde con éxito, incluso si email no existe
-- No revela si el email está registrado
-
-### Rate Limiting
-
-**Configuración oficial** (SSOT v2, sección 12.4):
+### Request
 
 ```typescript
 {
-  windowMs: 3600000,      // 1 hora
-  maxAttempts: 3,
-  blockDurationMs: 3600000 // 1 hora
+  email: string;  // Normalizado a lowercase
 }
 ```
 
-**Más restrictivo que password login:**
-- Máx. 3 intentos/hora (vs 5/15min de password)
-- Previene spam de emails
+### Response (Success - Anti-Enumeration)
+
+```typescript
+{
+  success: true,
+  message: "If this email exists, a magic link has been sent"
+}
+```
+
+**⚠️ Nota:** Respuesta homogénea independientemente de si el email existe o no (prevenir user enumeration).
 
 ### Flujo Completo
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Frontend
-    participant RateLimiter
-    participant AuthService
-    participant Supabase
-    participant Email
+    participant U as Usuario
+    participant F as Frontend
+    participant RL as Rate Limiter
+    participant PG as Policy Gate
+    participant AS as Auth Service
+    participant SB as Supabase
+    participant Email as Email Provider (Resend)
 
-    User->>Frontend: Ingresar email
-    Frontend->>RateLimiter: POST /api/v2/auth/magic-link
+    U->>F: Solicitar magic link (email)
+    F->>RL: POST /api/v2/auth/magic-link
     
-    RateLimiter->>RateLimiter: Check attempts (IP + email)
-    
-    alt Límite excedido
-        RateLimiter-->>Frontend: 429 RATE_LIMIT_EXCEEDED
-        Frontend-->>User: "Demasiados intentos, espera 1h"
-    else OK (<3 intentos)
-        RateLimiter->>AuthService: Forward request
-        AuthService->>Supabase: signInWithOtp({ email, type: 'magiclink' })
-        Supabase->>Email: Send magic link
-        Supabase-->>AuthService: Success
-        AuthService-->>Frontend: 200 (siempre éxito)
-        Frontend-->>User: "Revisa tu email"
+    RL->>RL: Check rate limit (IP)
+    alt Rate limit excedido
+        RL-->>F: 429 TOO_MANY_REQUESTS
+        F-->>U: "Espera X minutos"
+    else Rate limit OK
+        RL->>PG: Forward request
         
-        Note over User,Email: Usuario revisa email
+        PG->>PG: Check feature flags
+        Note over PG: auth_enable_magic_link AND<br/>auth_enable_emails
         
-        User->>Email: Click magic link
-        Email->>Supabase: GET /auth/v1/verify?token=...
-        Supabase->>Supabase: Validate token
-        
-        alt Token válido
-            Supabase-->>Frontend: Redirect + session params
-            Frontend->>Frontend: Store tokens
-            Frontend-->>User: Redirect to dashboard
-        else Token expirado/inválido
-            Supabase-->>Frontend: Redirect + error
-            Frontend-->>User: "Link expirado, solicita uno nuevo"
+        alt Feature flag OFF
+            PG-->>F: 403 FORBIDDEN (magic link not allowed)
+            F-->>U: "Magic link no disponible"
+        else Feature flags ON
+            PG->>AS: Forward to AuthService
+            AS->>SB: admin.listUsers (buscar email)
+            
+            alt Email no existe
+                AS-->>F: 200 OK (anti-enumeration)
+                F-->>U: "Si el email existe, recibirás un magic link"
+            else Email existe
+                AS->>AS: Verificar role != admin/superadmin
+                
+                alt Role = admin o superadmin
+                    AS-->>F: 200 OK (anti-enumeration)
+                    F-->>U: "Si el email existe, recibirás un magic link"
+                else Role = user
+                    AS->>SB: signInWithOtp(email, redirectUrl)
+                    SB->>Email: Enviar magic link
+                    Email-->>U: Email con link
+                    AS-->>F: 200 OK
+                    F-->>U: "Si el email existe, recibirás un magic link"
+                    
+                    Note over U: Usuario hace clic en link
+                    U->>F: Redirect desde email (con token)
+                    F->>SB: Verificar token OTP
+                    SB-->>F: { session }
+                    F->>F: Store tokens
+                    F-->>U: Redirect to dashboard
+                end
+            end
         end
     end
 ```
-
-### Magic Link Lifecycle
-
-| Estado         | TTL           | Descripción                              |
-| -------------- | ------------- | ---------------------------------------- |
-| Generado       | -             | Token único generado por Supabase        |
-| Enviado        | -             | Email despachado                         |
-| Válido         | 1 hora        | Usuario puede hacer click                |
-| Consumido      | -             | Token usado, no se puede reusar          |
-| Expirado       | > 1 hora      | Ya no válido, solicitar nuevo            |
-
-### Error Codes
-
-| Code                       | HTTP | Descripción                       |
-| -------------------------- | ---- | --------------------------------- |
-| `AUTH_RATE_LIMIT_EXCEEDED` | 429  | Demasiados intentos (3/hora)      |
-| `TOKEN_EXPIRED`            | 401  | Magic link expirado (>1h)         |
-| `TOKEN_INVALID`            | 401  | Token malformado o ya usado       |
-
----
-
-## 🔗 3. OAuth (X y YouTube)
-
-### Providers Soportados
-
-**v2 MVP** (SSOT v2, sección 8.1):
-
-```typescript
-type SupportedPlatform = 'x' | 'youtube';
-```
-
-- **X (Twitter):** Via Twitter OAuth 2.0
-- **YouTube:** Via Google OAuth 2.0
-
-### Endpoints
-
-#### Iniciar OAuth Flow
-
-```http
-GET /api/v2/auth/oauth/:platform?redirect_uri={uri}
-```
-
-**Parámetros:**
-- `platform`: `x` | `youtube`
-- `redirect_uri` (opcional): URL de retorno después de auth
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "authUrl": "https://platform.com/oauth/authorize?...",
-    "state": "base64url-encoded-state"
-  }
-}
-```
-
-#### OAuth Callback
-
-```http
-GET /api/v2/auth/oauth/:platform/callback?code={code}&state={state}
-```
-
-**Parámetros:**
-- `code`: Authorization code del provider
-- `state`: State parameter para validación
-
-**Response (Success):**
-```json
-{
-  "success": true,
-  "data": {
-    "user": { ...},
-    "session": {
-      "access_token": "...",
-      "refresh_token": "..."
-    },
-    "platform_account": {
-      "platform": "x",
-      "platform_user_id": "123456",
-      "username": "@username"
-    }
-  }
-}
-```
-
-### State Parameter Security
-
-**Generación:**
-
-```typescript
-function generateState(userId: string, platform: string): string {
-  const timestamp = Date.now().toString();
-  const random = crypto.randomBytes(16).toString('hex');
-  const payload = `${userId}:${platform}:${timestamp}:${random}`;
-  return Buffer.from(payload).toString('base64url');
-}
-```
-
-**Validación:**
-
-```typescript
-function parseState(state: string): StatePayload {
-  const payload = Buffer.from(state, 'base64url').toString();
-  const [userId, platform, timestamp, random] = payload.split(':');
-  
-  const age = Date.now() - parseInt(timestamp);
-  const maxAge = 10 * 60 * 1000; // 10 minutos
-  
-  if (age > maxAge) {
-    throw new AuthError('STATE_EXPIRED', 'State parameter expired');
-  }
-  
-  return { userId, platform, timestamp: parseInt(timestamp) };
-}
-```
-
-**TTL:** 10 minutos (previene ataques de replay)
 
 ### Rate Limiting
 
-**Configuración oficial** (SSOT v2, sección 12.4):
+**Configuración (SSOT v2, sección 12.4):**
+- **Max attempts:** 3 intentos / 1 hora
+- **Bloqueo inicial:** 1 hora
+- **Bloqueo progresivo:** Mismo esquema que login
 
-```typescript
+### Feature Flags
+
+**Flags requeridos:**
+- `auth_enable_magic_link` (endpoint gate)
+- `auth_enable_emails` (infra de emails)
+
+**Comportamiento si OFF:**
+- `auth_enable_magic_link` OFF → `403 FORBIDDEN` (AUTHZ_MAGIC_LINK_NOT_ALLOWED)
+- `auth_enable_emails` OFF → Fail-closed (AUTH_EMAIL_SEND_FAILED)
+
+### Restricciones
+
+**❌ Magic Link NO permitido para:**
+- `role=admin`
+- `role=superadmin`
+
+**Razón:** Admins deben usar password login (mayor seguridad).
+
+**Comportamiento:** Si el email es admin, respuesta sigue siendo homogénea (anti-enumeration).
+
+### Redirect URL
+
+**Environment variable:** `SUPABASE_REDIRECT_URL`
+
+**Validación:**
+- **Requerida:** Variable DEBE estar configurada (no fallback)
+- **Producción:** DEBE ser HTTPS (si `NODE_ENV=production`)
+
+**Ejemplo:**
+```bash
+SUPABASE_REDIRECT_URL=https://app.roastr.ai/auth/callback
+```
+
+### Observability
+
+**Eventos logged:**
+- `auth_magic_link_request` (success/failure)
+- `auth_email_requested` (antes de enviar)
+- `auth_email_sent` (después de enviar)
+- `auth_duration_seconds`
+
+**Amplitude events:**
+- `auth_email_requested` (flow: magic_link)
+- `auth_email_sent` (flow: magic_link)
+
+---
+
+## 🔗 OAuth (X/Twitter, YouTube)
+
+**Status:** ✅ **INFRA IMPLEMENTADA** (Providers post-MVP)
+
+### Endpoints (Implementados - Infra Only)
+
+```
+POST /api/v2/auth/oauth/:provider
+GET /api/v2/auth/oauth/:provider/callback
+```
+
+**Plataformas soportadas (enum contractual):**
+- `x` (X/Twitter) - ✅ Wiring completo
+- `youtube` (YouTube via Google OAuth) - ✅ Wiring completo
+
+**Implementado:**
+- ✅ Feature flag validation (`auth_enable_oauth`)
+- ✅ Provider enum validation
+- ✅ Error contracts (AUTH_DISABLED, OAUTH_PROVIDER_NOT_SUPPORTED)
+- ✅ Tests de infraestructura
+
+**NO implementado (post-MVP):**
+- ❌ SDKs OAuth (X, Google)
+- ❌ Token exchange real
+- ❌ State parameter con Redis
+- ❌ PKCE flow completo
+
+**Response actual (501 Not Implemented):**
+```json
 {
-  windowMs: 900000,       // 15 minutos
-  maxAttempts: 10,
-  blockDurationMs: 900000 // 15 minutos
+  "success": false,
+  "error": {
+    "slug": "NOT_IMPLEMENTED",
+    "message": "OAuth provider 'x' is supported but not implemented yet (post-MVP).",
+    "provider": "x",
+    "supported_providers": ["x", "youtube"]
+  }
 }
 ```
 
-**Más permisivo que password/magic link:**
-- OAuth failures a menudo son errores UX (cancelar flow)
-- 10 intentos/15min previene abuse pero permite errores legítimos
-
-### Flujo Completo (X Example)
+### Flujo PKCE (SSOT v2, sección 8.1)
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Frontend
-    participant Backend
-    participant XOAuth
-    participant Supabase
+    participant U as Usuario
+    participant F as Frontend
+    participant API as Backend API
+    participant OAuth as OAuth Provider (X/YouTube)
 
-    User->>Frontend: Click "Connect X"
-    Frontend->>Backend: GET /api/v2/auth/oauth/x
-    Backend->>Backend: Generate state parameter
-    Backend-->>Frontend: { authUrl, state }
-    Frontend->>Frontend: Store state en sessionStorage
-    Frontend-->>User: Redirect to authUrl
-    
-    User->>XOAuth: Authorize Roastr
-    
-    alt User approves
-        XOAuth-->>Frontend: Redirect /callback?code=...&state=...
-        Frontend->>Backend: GET /callback?code=...&state=...
-        Backend->>Backend: Validate state (10min TTL)
-        
-        alt State válido
-            Backend->>XOAuth: Exchange code for tokens
-            XOAuth-->>Backend: { access_token, refresh_token }
-            Backend->>Supabase: Create/update user
-            Backend->>Supabase: Store platform connection
-            Backend-->>Frontend: { user, session, platform_account }
-            Frontend->>Frontend: Store tokens
-            Frontend-->>User: Redirect to dashboard
-        else State inválido/expirado
-            Backend-->>Frontend: 401 STATE_INVALID
-            Frontend-->>User: "Error, intenta de nuevo"
-        end
-    else User cancels
-        XOAuth-->>Frontend: Redirect /callback?error=access_denied
-        Frontend-->>User: "Autorización cancelada"
-    end
+    U->>F: Click "Login con X"
+    F->>API: GET /api/v2/auth/oauth/x
+    API->>API: Generate state (TTL 10 min)
+    API->>API: Generate PKCE challenge
+    API-->>F: Redirect URL + state + challenge
+    F->>OAuth: Redirect to authorization URL
+    OAuth-->>U: Mostrar pantalla de permisos
+    U->>OAuth: Autorizar
+    OAuth->>API: GET /callback?code=...&state=...
+    API->>API: Validate state (TTL check)
+    API->>OAuth: Exchange code for token (PKCE verifier)
+    OAuth-->>API: { access_token, refresh_token }
+    API->>API: Get user profile
+    API->>API: Create/update user in Supabase
+    API-->>F: Redirect with session
+    F->>F: Store tokens
+    F-->>U: Redirect to dashboard
 ```
 
-### Error Codes
+### Configuración OAuth
 
-| Code                       | HTTP | Descripción                                |
-| -------------------------- | ---- | ------------------------------------------ |
-| `AUTH_RATE_LIMIT_EXCEEDED` | 429  | Demasiados intentos OAuth (10/15min)       |
-| `STATE_INVALID`            | 401  | State parameter inválido o malformado      |
-| `STATE_EXPIRED`            | 401  | State parameter expirado (>10min)          |
-| `OAUTH_CANCELLED`          | 400  | Usuario canceló autorización               |
-| `OAUTH_PROVIDER_ERROR`     | 502  | Error del provider externo (X, Google)     |
-
-### Platform-Specific Config
-
-#### X (Twitter)
+**Environment variables (SSOT v2, sección 11.2):**
 
 ```bash
-# Environment Variables (SSOT v2, sección 11.2)
+# X (Twitter)
 X_CLIENT_ID=your-x-client-id
 X_CLIENT_SECRET=your-x-client-secret
-X_CALLBACK_URL=https://roastr.ai/api/v2/auth/oauth/x/callback
-```
 
-**Scopes requeridos:**
-- `tweet.read` - Leer tweets y comentarios
-- `tweet.write` - Publicar roasts
-- `users.read` - Info de usuario
-
-#### YouTube
-
-```bash
-# Environment Variables (SSOT v2, sección 11.2)
+# YouTube (Google OAuth)
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_CALLBACK_URL=https://roastr.ai/api/v2/auth/oauth/youtube/callback
+
+# Redirect URL
+SUPABASE_REDIRECT_URL=https://app.roastr.ai/auth/callback
 ```
 
-**Scopes requeridos:**
-- `https://www.googleapis.com/auth/youtube.readonly` - Leer comentarios
-- `https://www.googleapis.com/auth/youtube.force-ssl` - Responder comentarios
+### Scopes Requeridos
+
+**X (Twitter) - SSOT v2, sección 8.1.2:**
+- `tweet.read`
+- `users.read`
+- `offline.access` (para refresh token)
+
+**YouTube (Google) - SSOT v2, sección 8.1.3:**
+- `https://www.googleapis.com/auth/youtube.readonly`
+- `https://www.googleapis.com/auth/userinfo.profile`
+- `https://www.googleapis.com/auth/userinfo.email`
+
+### Security
+
+**State Parameter:**
+- **TTL:** 10 minutos (prevenir replay attacks)
+- **Storage:** Redis con expiración automática
+- **Validación:** DEBE coincidir en callback
+
+**PKCE:**
+- **Code verifier:** Random string 43-128 caracteres
+- **Code challenge:** SHA256(code_verifier), base64url encoded
+- **Challenge method:** S256
+
+### Rate Limiting
+
+**Configuración (SSOT v2, sección 12.4):**
+- **Max attempts:** 10 intentos / 15 minutos
+- **Bloqueo inicial:** 15 minutos
+
+### Implementación Pendiente
+
+**Archivos a crear:**
+1. `apps/backend-v2/src/services/oauthService.ts` - Wrapper OAuth logic
+2. `apps/backend-v2/src/middleware/oauthState.ts` - State validation
+3. `apps/backend-v2/src/routes/oauth.ts` - Endpoints OAuth
+
+**Tests a crear:**
+1. `apps/backend-v2/tests/unit/services/oauthService.test.ts`
+2. `apps/backend-v2/tests/flow/auth-oauth.flow.test.ts`
+
+**Prioridad:** 🟢 P2 (Post-MVP)
 
 ---
 
-## 🔄 Comparación de Métodos
+## 🔄 Common Patterns
 
-| Método      | Rate Limit      | TTL Token     | Use Case Principal                   |
-| ----------- | --------------- | ------------- | ------------------------------------ |
-| **Password**| 5 / 15min       | N/A           | Login frecuente, usuarios regulares  |
-| **Magic Link** | 3 / 1h       | 1 hora        | Login ocasional, más seguro          |
-| **OAuth**   | 10 / 15min      | 10min (state) | Conectar cuentas de redes sociales   |
+### Anti-Enumeration
 
-### Recomendaciones
+**Regla:** NUNCA revelar si un email existe o no.
 
-- **Password:** Default para usuarios frecuentes
-- **Magic Link:** Recomendado para usuarios que priorizan seguridad
-- **OAuth:** Solo para conectar cuentas de plataformas (no reemplaza login principal)
+**Implementación:**
+- Magic link: Respuesta homogénea "If this email exists..."
+- Password recovery: Respuesta homogénea "If this email exists..."
+- Register: Respuesta homogénea incluso si email ya existe
 
----
-
-## 🛠️ Implementación
-
-### Backend Services
-
+**Ejemplo (authService.ts líneas 149-152):**
 ```typescript
-// apps/backend-v2/src/services/authService.ts
-class AuthService {
-  async loginWithPassword(email: string, password: string): Promise<Session>
-  async sendMagicLink(email: string): Promise<void>
-  async initiateOAuth(platform: 'x' | 'youtube'): Promise<OAuthUrl>
-  async handleOAuthCallback(platform: string, code: string, state: string): Promise<Session>
+if (this.isEmailAlreadyRegisteredError(error)) {
+  return; // Success silencioso, no throw
 }
 ```
 
-### Middleware Stack
+### Role Validation
 
+**Regla:** Ciertos métodos solo para `role=user`.
+
+**Restricciones:**
+- Magic link: ❌ admin, ❌ superadmin
+- Password recovery: ❌ admin, ❌ superadmin
+- OAuth: ✅ todos (cuando se implemente)
+
+**Implementación (authService.ts líneas 608-615):**
 ```typescript
-// Order matters!
-app.use(sessionRefreshMiddleware);     // Check token expiry
-app.use(rateLimiterMiddleware);        // Enforce rate limits
-app.use(authRouter);                   // Auth endpoints
+const role = user.user_metadata.role || 'user';
+if (role === 'admin' || role === 'superadmin') {
+  // Return same message as non-existent user (anti-enumeration)
+  return {
+    success: true,
+    message: 'If this email exists, a magic link has been sent'
+  };
+}
 ```
+
+### Fail-Closed
+
+**Regla:** Si feature flag está OFF, endpoint DEBE fallar (no simular éxito).
+
+**Implementación:**
+- Login: `auth_enable_login` OFF → `404 NOT_FOUND`
+- Register: `auth_enable_register` OFF → `404 NOT_FOUND`
+- Magic link: `auth_enable_magic_link` OFF → `403 FORBIDDEN`
+- Password recovery: `auth_enable_password_recovery` OFF → Fail-closed
+
+**Observability:** Log `auth_flow_blocked` con reason.
 
 ---
 
 ## 📚 Referencias
 
-### SSOT v2
-
-- **Sección 8.1:** Integraciones (X, YouTube providers)
-- **Sección 11.2:** Environment Variables (OAuth credentials)
-- **Sección 12.4:** Rate Limiting Configuration ⭐
-- **Sección 12.5:** Abuse Detection Thresholds
-
-### Related Subnodos
-
-- [session-management.md](./session-management.md) - Gestión de tokens JWT
-- [rate-limiting.md](./rate-limiting.md) - Detalle de rate limiting v2
-- [error-taxonomy.md](./error-taxonomy.md) - Códigos de error completos
-- [security.md](./security.md) - Prevención de user enumeration, state validation
-
-### Implementación
-
-- **authErrorTaxonomy.ts:** `apps/backend-v2/src/utils/authErrorTaxonomy.ts`
-- **Rate Limiter:** `apps/backend-v2/src/middleware/rateLimiter.ts` (TBD)
-- **OAuth Service:** `apps/backend-v2/src/services/oauthService.ts` (TBD)
+- **SSOT v2 (Auth):** Sección 12.4 (Rate Limiting), 12.5 (Abuse Detection)
+- **SSOT v2 (OAuth):** Sección 8.1 (Scopes, PKCE)
+- **SSOT v2 (Environment):** Sección 11.2
+- **Implementación:** `apps/backend-v2/src/services/authService.ts`
+- **Routes:** `apps/backend-v2/src/routes/auth.ts`
+- **Tests:** `apps/backend-v2/tests/flow/auth-login.flow.test.ts`
 
 ---
 
-**Última actualización:** 2025-12-26  
-**Owner:** ROA-364  
-**Status:** ✅ Active
-
+**Última actualización:** 2026-01-01  
+**Owner:** ROA-403  
+**Status:** ✅ Active (OAuth pending implementation)

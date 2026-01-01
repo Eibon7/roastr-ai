@@ -465,4 +465,67 @@ router.get('/me', requireAuth, (req: Request, res: Response) => {
   });
 });
 
+/**
+ * GET /api/v2/auth/health
+ * Health check endpoint (infra)
+ * 
+ * Verifica:
+ * - Supabase reachable
+ * - SSOT/Settings loader reachable
+ * 
+ * Response contractual:
+ * {
+ *   status: "ok" | "degraded" | "error",
+ *   supabase: "ok" | "error",
+ *   ssot: "ok" | "error",
+ *   timestamp: ISO string
+ * }
+ * 
+ * Acceso: Public (no auth requerida)
+ */
+router.get('/health', async (req: Request, res: Response) => {
+  const timestamp = new Date().toISOString();
+  const checks: Record<string, string> = {};
+  
+  try {
+    // Check 1: Supabase reachable
+    try {
+      await authService.getCurrentUser('invalid-token-for-health-check');
+      checks.supabase = 'ok'; // Si llega aquí, Supabase respondió (aunque sea error)
+    } catch (error) {
+      // Error esperado (token inválido), pero Supabase respondió
+      checks.supabase = error instanceof AuthError ? 'ok' : 'error';
+    }
+    
+    // Check 2: SSOT/Settings loader
+    try {
+      const { loadSettings } = await import('../lib/loadSettings.js');
+      await loadSettings();
+      checks.ssot = 'ok';
+    } catch {
+      checks.ssot = 'error';
+    }
+    
+    // Determine overall status
+    const allOk = Object.values(checks).every(v => v === 'ok');
+    const someError = Object.values(checks).some(v => v === 'error');
+    
+    const status = allOk ? 'ok' : someError ? 'degraded' : 'error';
+    
+    return res.status(status === 'ok' ? 200 : 503).json({
+      status,
+      ...checks,
+      timestamp
+    });
+  } catch (error) {
+    logger.error('auth.health: unexpected error', { error });
+    return res.status(500).json({
+      status: 'error',
+      supabase: 'unknown',
+      ssot: 'unknown',
+      timestamp
+    });
+  }
+});
+
 export default router;

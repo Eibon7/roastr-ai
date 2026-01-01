@@ -1,830 +1,358 @@
 # Auth - Security
 
-**Subnodo:** `auth/security`  
-**Última actualización:** 2025-12-26  
-**Owner:** ROA-364
+**Subnodo de:** `auth`  
+**Última actualización:** 2026-01-01  
+**Owner:** ROA-403
 
 ---
 
 ## 📋 Propósito
 
-Este subnodo documenta las características de seguridad del sistema de autenticación de Roastr v2.
-
-**Áreas cubiertas:**
-
-1. **JWT Validation:** Verificación de tokens en endpoints protegidos
-2. **State Parameter Security:** OAuth flow protection
-3. **Request Sanitization:** Prevención de injection attacks
-4. **Error Message Security:** User enumeration prevention
-5. **RLS Enforcement:** Database-level access control
-6. **Token Rotation:** Refresh token best practices
+Define las características de seguridad implementadas en el sistema de autenticación v2.
 
 ---
 
-## 🔐 1. JWT Validation
+## 🔐 JWT Validation
 
-### Middleware: authenticateToken
+### Verificación en Cada Request
 
-**Ubicación:** Aplicado a TODOS los endpoints protegidos
+**Middleware:** `requireAuth` (apps/backend-v2/src/middleware/auth.ts)
 
-**Workflow:**
+**Validaciones automáticas (Supabase):**
+- ✅ Firma JWT válida (verificación criptográfica)
+- ✅ Token no expirado (`exp` claim)
+- ✅ Token no revocado (check en Supabase DB)
+- ✅ Usuario existe y está activo
 
-```typescript
-function authenticateToken(req, res, next) {
-  const token = extractToken(req); // From Authorization header
-  
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      error: {
-        code: 'TOKEN_MISSING',
-        message: 'Access token required',
-        statusCode: 401
-      }
-    });
-  }
-  
-  try {
-    // Verificar firma + expiration
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Validar claims requeridos
-    if (!decoded.sub || !decoded.email) {
-      throw new Error('Invalid token structure');
-    }
-    
-    // Añadir user a request para uso en endpoints
-    req.user = {
-      id: decoded.sub,
-      email: decoded.email,
-      name: decoded.name,
-      plan: decoded.plan,
-      is_admin: decoded.is_admin || false
-    };
-    
-    next();
-  } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'TOKEN_EXPIRED',
-          message: 'Your session has expired. Please log in again.',
-          statusCode: 401
-        }
-      });
-    }
-    
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(403).json({
-        success: false,
-        error: {
-          code: 'TOKEN_INVALID',
-          message: 'Invalid authentication token',
-          statusCode: 403
-        }
-      });
-    }
-    
-    // Error genérico
-    return res.status(500).json({
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: 'Authentication error',
-        statusCode: 500
-      }
-    });
-  }
-}
-```
-
-### Token Extraction
-
-```typescript
-function extractToken(req: Request): string | null {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader) {
-    return null;
-  }
-  
-  // Formato esperado: "Bearer <token>"
-  const parts = authHeader.split(' ');
-  
-  if (parts.length !== 2 || parts[0] !== 'Bearer') {
-    return null;
-  }
-  
-  return parts[1];
-}
-```
-
-### JWT Claims Validation
-
-**Claims obligatorios:**
-
-```typescript
-interface RequiredJWTClaims {
-  sub: string;              // userId (UUID)
-  email: string;
-  iat: number;              // Issued at
-  exp: number;              // Expiration
-  aud: 'authenticated';
-  iss: 'https://roastr.ai';
-}
-```
-
-**Validación adicional:**
-
-```typescript
-function validateClaims(decoded: any): boolean {
-  // Verificar audience
-  if (decoded.aud !== 'authenticated') {
-    throw new Error('Invalid audience');
-  }
-  
-  // Verificar issuer
-  if (decoded.iss !== 'https://roastr.ai') {
-    throw new Error('Invalid issuer');
-  }
-  
-  // Verificar expiration (jwt.verify ya lo hace, pero doble check)
-  if (decoded.exp * 1000 < Date.now()) {
-    throw new Error('Token expired');
-  }
-  
-  return true;
-}
-```
+**Enforcement:**
+- Todos los endpoints protegidos DEBEN usar `requireAuth`
+- Extracción segura de `userId` del token
+- Adjunta `req.user` con shape validado
 
 ---
 
-## 🔗 2. OAuth State Parameter Security
+## 🛡️ Anti-Enumeration
+
+### Respuestas Homogéneas
+
+**Regla:** NUNCA revelar si un email/usuario existe o no.
+
+**Implementación:**
+
+#### Register
+```typescript
+// Respuesta SIEMPRE igual (incluso si email ya existe)
+return res.json({ success: true });
+```
+
+#### Magic Link
+```typescript
+// Respuesta SIEMPRE igual (incluso si email no existe o es admin)
+return res.json({
+  success: true,
+  message: "If this email exists, a magic link has been sent"
+});
+```
+
+#### Password Recovery
+```typescript
+// Respuesta SIEMPRE igual
+return res.json({
+  success: true,
+  message: "If this email exists, a password recovery link has been sent"
+});
+```
+
+**Beneficio:** Previene user enumeration attacks.
+
+---
+
+## 🔒 State Parameter (OAuth)
+
+**Status:** ⚠️ Preparado pero no implementado (OAuth pendiente)
 
 ### Propósito
 
-El **state parameter** previene:
+Prevenir CSRF attacks en OAuth flows.
 
-- **CSRF attacks:** Atacante no puede iniciar OAuth sin conocer state
-- **Replay attacks:** State tiene TTL de 10 minutos
-- **Session fixation:** State vinculado a userId específico
+### Implementación Esperada
 
-### Generación de State
-
+**Generación (initiation):**
 ```typescript
-function generateState(userId: string, platform: 'x' | 'youtube'): string {
-  const timestamp = Date.now().toString();
-  const random = crypto.randomBytes(16).toString('hex'); // 128 bits entropy
-  const payload = `${userId}:${platform}:${timestamp}:${random}`;
-  
-  // Base64url encoding (safe para URLs)
-  return Buffer.from(payload).toString('base64url');
-}
+const state = crypto.randomBytes(32).toString('hex');
+
+await redis.set(`oauth:state:${state}`, userId, {
+  EX: 600 // TTL 10 minutos
+});
+
+return redirectToOAuthProvider({
+  state,
+  redirect_uri: process.env.SUPABASE_REDIRECT_URL
+});
 ```
 
-**Ejemplo output:**
-
-```
-dXNlci0xMjM6eDoxNzAzMDAwMDAwOmFiY2RlZjEyMzQ1Njc4OTA=
-```
-
-### Validación de State
-
+**Validación (callback):**
 ```typescript
-function parseState(state: string): StatePayload {
-  try {
-    // Decode base64url
-    const payload = Buffer.from(state, 'base64url').toString('utf8');
-    const [userId, platform, timestamp, random] = payload.split(':');
-    
-    // Validar formato
-    if (!userId || !platform || !timestamp || !random) {
-      throw new AuthError('STATE_INVALID', 'Malformed state parameter');
-    }
-    
-    // Validar TTL (10 minutos)
-    const age = Date.now() - parseInt(timestamp);
-    const maxAge = 10 * 60 * 1000; // 10 minutos
-    
-    if (age > maxAge) {
-      throw new AuthError('STATE_EXPIRED', 'State parameter expired');
-    }
-    
-    if (age < 0) {
-      throw new AuthError('STATE_INVALID', 'Future timestamp not allowed');
-    }
-    
-    return {
-      userId,
-      platform: platform as 'x' | 'youtube',
-      timestamp: parseInt(timestamp),
-      random
-    };
-  } catch (error) {
-    if (error instanceof AuthError) {
-      throw error;
-    }
-    throw new AuthError('STATE_INVALID', 'Invalid state parameter');
-  }
-}
-```
+const { state } = req.query;
 
-### Flujo Completo con State
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Backend
-    participant Redis
-    participant OAuthProvider
-
-    User->>Backend: GET /api/v2/auth/oauth/x
-    Backend->>Backend: Generate state(userId, 'x')
-    Backend->>Redis: SETEX state:{state} userId (TTL 10min)
-    Backend-->>User: { authUrl: "...?state={state}" }
-    
-    User->>OAuthProvider: Click authUrl
-    OAuthProvider->>OAuthProvider: User authorizes
-    OAuthProvider-->>Backend: Redirect /callback?code=...&state={state}
-    
-    Backend->>Redis: GET state:{state}
-    Redis-->>Backend: userId
-    
-    Backend->>Backend: Parse state
-    Backend->>Backend: Verify userId matches
-    Backend->>Backend: Verify TTL (<10min)
-    Backend->>Backend: Verify state not reused
-    
-    Backend->>Redis: DEL state:{state} (consume once)
-    Backend->>OAuthProvider: Exchange code for tokens
-    Backend-->>User: Session created
-```
-
-### State Storage (Redis)
-
-```typescript
-// Almacenar state temporalmente
-await redis.setex(
-  `oauth:state:${state}`,
-  600, // 10 minutos TTL
-  userId
-);
-
-// Validar y consumir (una sola vez)
 const storedUserId = await redis.get(`oauth:state:${state}`);
 
 if (!storedUserId) {
-  throw new AuthError('STATE_INVALID', 'State parameter not found or already used');
+  throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID); // State expired or invalid
 }
 
-// Eliminar inmediatamente (no reusar)
-await redis.del(`oauth:state:${state}`);
+await redis.del(`oauth:state:${state}`); // Single-use
 ```
+
+**TTL:** 10 minutos (suficiente para flujo OAuth normal, previene replay attacks)
 
 ---
 
-## 🛡️ 3. Request Sanitization
+## 🧹 Request Sanitization
 
-### Platform Parameter (OAuth)
+### Input Validation
 
+**Email sanitization:**
 ```typescript
-function sanitizePlatform(platform: string): 'x' | 'youtube' {
-  if (!platform || typeof platform !== 'string') {
-    throw new Error('Platform parameter is required');
-  }
-
-  // Solo caracteres alfanuméricos y guiones
-  const sanitized = platform.toLowerCase().replace(/[^a-z0-9_-]/g, '');
-
-  // Whitelist de platforms soportados
-  const SUPPORTED_PLATFORMS = ['x', 'youtube'];
-  
-  if (!SUPPORTED_PLATFORMS.includes(sanitized)) {
-    throw new Error(`Unsupported platform: ${sanitized}`);
-  }
-
-  return sanitized as 'x' | 'youtube';
+function normalizeEmail(email: string): string {
+  return email
+    .trim()
+    .toLowerCase()
+    .replace(/[\x00-\x1F\x7F]/g, ''); // Remove control characters
 }
 ```
 
-### Email Sanitization
+**Password validation:**
+- Mínimo 8 caracteres
+- Máximo 128 caracteres (prevenir DoS)
+- NO stripped (preservar espacios si usuario los quiere)
 
-```typescript
-function sanitizeEmail(email: string): string {
-  if (!email || typeof email !== 'string') {
-    throw new Error('Email is required');
-  }
-
-  // Trim whitespace
-  let sanitized = email.trim().toLowerCase();
-
-  // Remove control characters
-  sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '');
-
-  // Validar formato básico
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(sanitized)) {
-    throw new Error('Invalid email format');
-  }
-
-  // Length check (RFC 5321: max 254 chars)
-  if (sanitized.length > 254) {
-    throw new Error('Email too long');
-  }
-
-  return sanitized;
-}
-```
-
-### Password Sanitization
-
-```typescript
-function validatePassword(password: string): void {
-  if (!password || typeof password !== 'string') {
-    throw new Error('Password is required');
-  }
-
-  // Min length (enforced por Supabase también)
-  if (password.length < 8) {
-    throw new Error('Password must be at least 8 characters');
-  }
-
-  // Max length (prevenir DoS con passwords gigantes)
-  if (password.length > 128) {
-    throw new Error('Password too long (max 128 characters)');
-  }
-
-  // NO sanitizar password (preservar caracteres especiales)
-  // Supabase hace bcrypt, no hay riesgo de injection
-}
-```
-
-### SQL Injection Prevention
-
-**✅ CORRECTO:** Usar parameterized queries
-
-```typescript
-// Supabase client automáticamente parametriza
-const { data } = await supabase
-  .from('users')
-  .select('*')
-  .eq('email', userEmail); // Parámetro, no concatenación
-
-// Prisma también parametriza automáticamente
-const user = await prisma.user.findUnique({
-  where: { email: userEmail }
-});
-```
-
-**❌ INCORRECTO:** Concatenación directa
-
-```typescript
-// NUNCA hacer esto
-const query = `SELECT * FROM users WHERE email = '${userEmail}'`;
-```
+**Injection prevention:**
+- Parameterized queries en DB (Supabase ORM)
+- No eval() ni Function() con user input
+- No concatenación de SQL strings
 
 ---
 
-## 🚫 4. Error Message Security (User Enumeration Prevention)
+## 🙈 Error Messages Genéricos
 
-### Problema
+### Anti-Information Leakage
 
-Atacante puede determinar si un email existe basándose en mensajes de error diferentes.
+**Regla:** Mensajes de error NUNCA deben revelar detalles internos.
 
-### Solución: Mensajes Genéricos
-
-#### Login
-
-```typescript
-// ✅ CORRECTO: Mismo mensaje para ambos casos
-try {
-  const user = await findUserByEmail(email);
-  
-  if (!user) {
-    throw new AuthError('AUTH_INVALID_CREDENTIALS', 'Invalid email or password');
-  }
-  
-  const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
-  
-  if (!passwordMatch) {
-    throw new AuthError('AUTH_INVALID_CREDENTIALS', 'Invalid email or password');
-  }
-  
-  return createSession(user);
-} catch (error) {
-  // Mismo error, sin revelar qué falló
-  throw new AuthError('AUTH_INVALID_CREDENTIALS', 'Invalid email or password');
-}
-
-// ❌ INCORRECTO: Mensajes diferentes
-if (!user) {
-  throw new Error('Email not found'); // Revela que email no existe
-}
-if (!passwordMatch) {
-  throw new Error('Wrong password'); // Revela que email SÍ existe
-}
-```
-
-#### Password Reset
-
-```typescript
-// ✅ CORRECTO: Siempre responde con éxito
-async function sendPasswordReset(email: string): Promise<void> {
-  const user = await findUserByEmail(email);
-  
-  if (user) {
-    // Usuario existe → enviar email
-    await sendResetEmail(user.email);
-  }
-  
-  // NO revelar si usuario existe o no
-  // Siempre retornar éxito
-}
-
-// Response al cliente (siempre):
+**❌ MAL:**
+```json
 {
-  "success": true,
-  "message": "If an account exists, we sent a password reset link to your email."
-}
-
-// ❌ INCORRECTO: Respuesta diferente según existencia
-if (!user) {
-  return { success: false, error: 'Email not found' }; // Revela que no existe
+  "error": "User with email user@example.com not found in database table 'users'"
 }
 ```
 
-#### Signup
-
-```typescript
-// ✅ ACEPTABLE: Revelar email duplicado en signup
-try {
-  await createUser(email, password);
-} catch (error) {
-  if (error.code === 'EMAIL_ALREADY_EXISTS') {
-    throw new AuthError(
-      'ACCOUNT_EMAIL_ALREADY_EXISTS',
-      'An account with this email already exists'
-    );
+**✅ BIEN:**
+```json
+{
+  "success": false,
+  "error": {
+    "slug": "AUTH_INVALID_CREDENTIALS",
+    "retryable": false
   }
 }
-
-// Es aceptable porque:
-// 1. Necesario para UX (usuario debe saber que ya tiene cuenta)
-// 2. Atacante puede verificar existencia intentando signup de cualquier forma
 ```
 
-### Timing Attacks Mitigation
+**Implementación:**
+- AuthError taxonomy mapea a slugs genéricos
+- Detalles técnicos solo en logs backend (no expuestos a cliente)
+
+---
+
+## 🔐 RLS Enforcement (Database-Level)
+
+### Row Level Security
+
+**Propósito:** Aislamiento multi-tenant a nivel de base de datos.
+
+**Implementación (Supabase):**
+
+```sql
+-- Política RLS en tabla profiles
+CREATE POLICY "Users can only access their own profile"
+ON profiles
+FOR ALL
+USING (auth.uid() = user_id);
+
+-- Política RLS en tabla roasts
+CREATE POLICY "Users can only access their own roasts"
+ON roasts
+FOR ALL
+USING (auth.uid() = user_id);
+```
+
+**Enforcement automático:**
+- Supabase Auth provee `auth.uid()` en queries
+- RLS policies se aplican automáticamente (no bypasseable desde código)
+- Incluso service role queries pueden usar RLS (configuración)
+
+**Testing:**
+```sql
+-- Intentar acceder a datos de otro usuario (DEBE fallar)
+SELECT * FROM profiles WHERE user_id = 'otro-usuario-uuid';
+-- Result: 0 rows (RLS blocked)
+```
+
+---
+
+## 🚫 Security Headers
+
+### Content Security Policy
+
+**⚠️ Configurado en frontend, NO en backend API.**
+
+Backend API es stateless (JSON-only), no sirve HTML.
+
+### Recommended Frontend Headers
 
 ```typescript
-async function validateCredentials(email: string, password: string): Promise<boolean> {
-  const startTime = Date.now();
-  let valid = false;
-  
-  try {
-    const user = await findUserByEmail(email);
-    
-    if (user) {
-      valid = await bcrypt.compare(password, user.hashedPassword);
-    } else {
-      // Ejecutar bcrypt con hash dummy para mantener timing constante
-      await bcrypt.compare(password, '$2b$10$dummyhashXXXXXXXXXXXXXXXX');
+// Next.js middleware o Vercel config
+{
+  headers: [
+    {
+      key: 'X-Frame-Options',
+      value: 'DENY'
+    },
+    {
+      key: 'X-Content-Type-Options',
+      value: 'nosniff'
+    },
+    {
+      key: 'Referrer-Policy',
+      value: 'strict-origin-when-cross-origin'
+    },
+    {
+      key: 'Permissions-Policy',
+      value: 'camera=(), microphone=(), geolocation=()'
     }
-    
-    return valid;
-  } finally {
-    // Asegurar tiempo mínimo constante (100ms)
-    const elapsed = Date.now() - startTime;
-    const minTime = 100;
-    
-    if (elapsed < minTime) {
-      await sleep(minTime - elapsed);
-    }
-  }
-}
-```
-
----
-
-## 🗃️ 5. RLS (Row Level Security) Enforcement
-
-### Propósito
-
-**Row Level Security (RLS)** asegura que:
-
-- Usuarios solo pueden acceder a SUS propios datos
-- Organizaciones solo pueden acceder a SUS propias cuentas
-- Admins tienen acceso completo (pero auditado)
-
-### RLS Policies (Supabase/PostgreSQL)
-
-#### Users Table
-
-```sql
--- Política: Usuarios solo ven su propia fila
-CREATE POLICY user_isolation ON users
-FOR ALL
-USING (id = auth.uid());
-
--- Admins pueden ver todos los usuarios
-CREATE POLICY admin_access ON users
-FOR ALL
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM users
-    WHERE id = auth.uid()
-    AND is_admin = true
-  )
-);
-```
-
-#### Organizations Table
-
-```sql
--- Política: Solo el owner ve su organización
-CREATE POLICY org_owner_access ON organizations
-FOR ALL
-USING (owner_id = auth.uid());
-
--- Admins pueden ver todas las organizaciones
-CREATE POLICY org_admin_access ON organizations
-FOR ALL
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM users
-    WHERE id = auth.uid()
-    AND is_admin = true
-  )
-);
-```
-
-#### Integration Configs Table
-
-```sql
--- Política: Solo usuarios de la org acceden a configs
-CREATE POLICY integration_org_access ON integration_configs
-FOR ALL
-USING (
-  organization_id IN (
-    SELECT id FROM organizations
-    WHERE owner_id = auth.uid()
-  )
-);
-```
-
-### Backend Enforcement
-
-```typescript
-// El userId viene del JWT verificado
-app.get('/api/v2/accounts', authenticateToken, async (req, res) => {
-  const userId = req.user.id; // Extraído del JWT
-  
-  // Supabase automáticamente aplica RLS policies
-  const { data: accounts } = await supabase
-    .from('organizations')
-    .select('*')
-    .eq('owner_id', userId); // RLS ya filtra, pero explicit es mejor
-  
-  res.json({ accounts });
-});
-
-// ❌ INCORRECTO: Confiar en parámetro del cliente
-app.get('/api/v2/accounts', async (req, res) => {
-  const userId = req.query.userId; // ⚠️ Peligroso! Cliente controla esto
-  
-  const { data: accounts } = await supabase
-    .from('organizations')
-    .select('*')
-    .eq('owner_id', userId); // Atacante puede cambiar userId en query
-  
-  res.json({ accounts });
-});
-```
-
-### Admin Bypass (Auditado)
-
-```typescript
-// Admins pueden bypass RLS, pero se audita
-app.get('/api/v2/admin/accounts', authenticateToken, requireAdmin, async (req, res) => {
-  const adminId = req.user.id;
-  
-  // Log de acceso admin
-  await logAdminAction({
-    adminId,
-    action: 'LIST_ALL_ACCOUNTS',
-    timestamp: Date.now(),
-    ip: req.ip
-  });
-  
-  // Usar service role key para bypass RLS
-  const { data: accounts } = await supabaseAdmin
-    .from('organizations')
-    .select('*'); // Sin filtros, RLS no aplica con service role
-  
-  res.json({ accounts });
-});
-```
-
----
-
-## 🔄 6. Token Rotation Best Practices
-
-### Automatic Refresh Token Rotation
-
-**Supabase automáticamente rota refresh tokens:**
-
-```typescript
-// Cada refresh devuelve NUEVO refresh_token
-const { data, error } = await supabase.auth.refreshSession({ refreshToken });
-
-// data.session contiene:
-// - access_token (nuevo)
-// - refresh_token (NUEVO, el viejo ya no es válido)
-```
-
-**Frontend debe actualizar ambos tokens:**
-
-```typescript
-api.interceptors.response.use((response) => {
-  const newAccessToken = response.headers['x-new-access-token'];
-  const newRefreshToken = response.headers['x-new-refresh-token'];
-  
-  if (newAccessToken && newRefreshToken) {
-    // Actualizar AMBOS tokens
-    localStorage.setItem('access_token', newAccessToken);
-    localStorage.setItem('refresh_token', newRefreshToken);
-    
-    // ⚠️ NO reusar refresh_token viejo
-  }
-  
-  return response;
-});
-```
-
-### Refresh Token Revocation
-
-**Cuándo revocar refresh tokens:**
-
-1. **User logout:** Revocar inmediatamente
-2. **Password change:** Revocar todos los tokens existentes
-3. **Suspicious activity:** Revocar + forzar relogin
-4. **Admin suspension:** Revocar todos los tokens
-
-```typescript
-// Logout: Revocar refresh token
-async function logout(userId: string): Promise<void> {
-  await supabase.auth.admin.signOut(userId);
-  
-  // Supabase automáticamente revoca refresh_token
-  // Access tokens siguen válidos hasta expiration (1h max)
-}
-
-// Password reset: Revocar TODO
-async function resetPassword(userId: string, newPassword: string): Promise<void> {
-  // Cambiar password
-  await supabase.auth.admin.updateUserById(userId, { password: newPassword });
-  
-  // Revocar TODAS las sesiones
-  await supabase.auth.admin.signOut(userId);
-  
-  // Usuario debe relogin con nuevo password
-}
-```
-
----
-
-## 🔒 7. Additional Security Measures
-
-### CORS Configuration
-
-```typescript
-import cors from 'cors';
-
-app.use(cors({
-  origin: process.env.FRONTEND_URL, // Solo frontend autorizado
-  credentials: true,                // Permitir cookies/auth headers
-  exposedHeaders: [
-    'X-New-Access-Token',
-    'X-New-Refresh-Token',
-    'X-Token-Refreshed'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Refresh-Token'
   ]
-}));
-```
-
-### CSP (Content Security Policy)
-
-```typescript
-import helmet from 'helmet';
-
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"], // Solo si necesario
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'", process.env.API_URL],
-      fontSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'none'"]
-    }
-  }
-}));
-```
-
-### HTTPS Only (Producción)
-
-```typescript
-// Force HTTPS in production
-if (process.env.NODE_ENV === 'production') {
-  app.use((req, res, next) => {
-    if (req.header('x-forwarded-proto') !== 'https') {
-      res.redirect(`https://${req.header('host')}${req.url}`);
-    } else {
-      next();
-    }
-  });
 }
-```
-
-### Secure Headers
-
-```typescript
-app.use(helmet({
-  hsts: {
-    maxAge: 31536000, // 1 año
-    includeSubDomains: true,
-    preload: true
-  },
-  frameguard: { action: 'deny' },
-  xssFilter: true,
-  noSniff: true,
-  ieNoOpen: true
-}));
 ```
 
 ---
 
-## 📊 Security Monitoring
+## 🔍 PII Protection
 
-### Logs de Seguridad
+### Logging Sanitization
 
+**Helper:** `truncateEmailForLog(email)`
+
+**Implementación:**
 ```typescript
-interface SecurityLog {
-  timestamp: ISO8601;
-  event: 'login_success' | 'login_failure' | 'rate_limit_block' | 'token_expired' | 'suspicious_activity';
-  userId?: string;
-  ip: string;
-  userAgent: string;
-  errorCode?: AuthErrorCode;
-  details?: any;
+export function truncateEmailForLog(email: string): string {
+  const [localPart, domain] = email.split('@');
+  if (!domain) return '***';
+  
+  const visibleChars = Math.min(3, localPart.length);
+  const truncated = localPart.substring(0, visibleChars) + '***';
+  
+  return `${truncated}@${domain}`;
 }
 ```
 
-### Alertas Críticas
+**Ejemplo:**
+- `john.doe@example.com` → `joh***@example.com`
+- `a@example.com` → `a***@example.com`
 
-**Trigger alerta inmediata si:**
+**Aplicación:**
+- Todos los logs que incluyen emails DEBEN usar `truncateEmailForLog`
+- Passwords NUNCA se loguean (ni truncados)
+- Tokens solo últimos 4 caracteres: `...xyz`
 
-1. **Permanent block activado** (4ta+ infracción rate limit)
-2. **Admin account compromised** (sospecha de acceso no autorizado)
-3. **Burst attack detectado** (10+ intentos en 1 min)
-4. **Mass token revocation** (múltiples usuarios afectados)
+### IP Anonymization
+
+**Logging seguro:**
+```typescript
+const ipPrefix = ip.split('.').slice(0, 2).join('.') + '.x.x';
+// 192.168.1.1 → 192.168.x.x
+```
+
+**GDPR compliance:** No almacenar IPs completas en logs persistentes.
+
+---
+
+## 🧪 Testing Security
+
+### Unit Tests
+
+**Ubicación:** `apps/backend-v2/tests/unit/`
+
+**Test cases:**
+- ✅ JWT validation con token inválido → 401
+- ✅ JWT validation con token expirado → 401
+- ✅ Anti-enumeration: register con email existente → 200 (no 409)
+- ✅ Anti-enumeration: magic link con email no existente → 200
+- ✅ Role validation: admin intenta magic link → respuesta homogénea
+- ✅ Input sanitization: control characters removidos
+- ✅ SQL injection attempts → sanitized/blocked
+
+### Flow Tests
+
+**Ubicación:** `apps/backend-v2/tests/flow/`
+
+**Scenario: SQL Injection Attempt**
+```typescript
+it('should sanitize SQL injection in email', async () => {
+  const maliciousEmail = "'; DROP TABLE users; --@example.com";
+  
+  const res = await request(app)
+    .post('/api/v2/auth/login')
+    .send({ email: maliciousEmail, password: 'password' });
+  
+  // Should fail auth (sanitized), NOT execute SQL
+  expect(res.status).toBe(401);
+  
+  // Verify users table still exists
+  const { data } = await supabase.from('users').select('count');
+  expect(data).toBeDefined();
+});
+```
+
+---
+
+## 📚 Security Best Practices
+
+### Checklist
+
+- [x] JWT validation en todos los endpoints protegidos
+- [x] Anti-enumeration en register, magic link, password recovery
+- [x] State parameter con TTL en OAuth (preparado, no implementado)
+- [x] Input sanitization (control characters, length limits)
+- [x] Error messages genéricos (slugs, no detalles técnicos)
+- [x] RLS policies en tablas multi-tenant
+- [x] PII truncation en logs (emails, IPs)
+- [x] NUNCA loguear passwords o tokens completos
+- [x] Rate limiting + abuse detection
+- [x] HTTPS-only en producción (redirect automático)
+
+### Auditorías Periódicas
+
+**Recomendación:** Audit security cada trimestre.
+
+**Checklist de auditoría:**
+1. Revisar logs por intentos de injection
+2. Verificar rate limit effectiveness (métricas Prometheus)
+3. Revisar abuse detection patterns (false positives/negatives)
+4. Verificar RLS policies actualizadas
+5. Penetration testing (externa o interna)
+6. Dependency scan (npm audit, Snyk)
 
 ---
 
 ## 📚 Referencias
 
-### SSOT v2
-
-- **Sección 10.1:** GDPR Retention (datos a borrar al eliminar cuenta)
-- **Sección 11.2:** Environment Variables (JWT_SECRET, CORS config)
-- **Sección 12.4:** Rate Limiting (prevención de brute force)
-
-### Related Subnodos
-
-- [login-flows.md](./login-flows.md) - Donde se aplican estas medidas
-- [session-management.md](./session-management.md) - JWT validation, token rotation
-- [rate-limiting.md](./rate-limiting.md) - Brute force prevention
-- [error-taxonomy.md](./error-taxonomy.md) - User enumeration prevention
-
-### Implementación
-
-- **authenticateToken:** `apps/backend-v2/src/middleware/auth.ts` (TBD)
-- **OAuth State:** `apps/backend-v2/src/services/oauthService.ts` (TBD)
-- **Sanitization:** `apps/backend-v2/src/utils/sanitize.ts` (TBD)
+- **OWASP Top 10:** https://owasp.org/www-project-top-ten/
+- **JWT Best Practices:** https://datatracker.ietf.org/doc/html/rfc8725
+- **Supabase RLS:** https://supabase.com/docs/guides/auth/row-level-security
+- **GDPR Compliance:** `docs/nodes-v2/12-gdpr-legal.md`
 
 ---
 
-**Última actualización:** 2025-12-26  
-**Owner:** ROA-364  
+**Última actualización:** 2026-01-01  
+**Owner:** ROA-403  
 **Status:** ✅ Active
-
