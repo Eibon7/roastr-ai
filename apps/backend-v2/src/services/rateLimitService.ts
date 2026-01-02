@@ -64,6 +64,11 @@ const RATE_LIMITS: Record<AuthType, RateLimitConfig> = {
     blockDurationMs: 60 * 60 * 1000 // 1 hora
   },
   // ROA-373: Email verification
+  // Justificación de 10/hour:
+  // - Tokens tienen protección adicional (TTL + single-use)
+  // - Permite casos legítimos excepcionales (email spam, token mal copiado, expiración)
+  // - Industria standard (Auth0 usa 10/hour)
+  // - Balance seguridad/UX sin evidencia de abuse
   email_verification: {
     windowMs: 60 * 60 * 1000, // 1 hora
     maxAttempts: 10,
