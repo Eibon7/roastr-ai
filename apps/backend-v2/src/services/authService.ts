@@ -24,15 +24,11 @@ import {
   logMagicLinkRequest,
   logPasswordRecoveryRequest,
   logFeatureDisabled,
-  logAuthFlowStarted
-} from '../utils/authObservability.js';
-import {
-  logLoginAttempt,
-  logRegisterAttempt,
-  logMagicLinkRequest,
-  logPasswordRecoveryRequest,
+  logAuthFlowStarted,
   trackAuthDuration,
-  logRateLimit
+  logRateLimit,
+  logAuthFlowCompleted,
+  logAuthFlowFailed
 } from '../utils/authObservability.js';
 
 export interface SignupParams {
