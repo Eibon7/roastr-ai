@@ -1,9 +1,12 @@
-# Plan de Implementación — ROA-373: Register Email Verification V2
+# Plan de Implementación — ROA-373: Register Email Verification V2 (Phase 1: Backend)
 
 **Fecha:** 2025-01-02  
 **Issue:** https://linear.app/roastrai/issue/ROA-373/register-email-verification-v2  
 **Worktree:** `/Users/emiliopostigo/roastr-ai/roastr-ai-worktrees/feature-ROA-373-auto`  
-**Rama:** `feature/ROA-373-auto`
+**Rama:** `feature/ROA-373-clean`
+
+**⚠️ IMPORTANTE: Este plan cubre SOLO Phase 1 (Backend)**  
+**Phase 2 (Frontend) será implementada en issue de seguimiento: ROA-373-frontend**
 
 ---
 
@@ -220,6 +223,42 @@ CHANGELOG.md
 
 ---
 
-**Estado:** ⏳ En progreso  
+## 📋 Phased Delivery Strategy
+
+### Phase 1: Backend (Esta PR)
+
+**Scope:**
+- ✅ Endpoint `/api/v2/auth/verify-email`
+- ✅ Método `authService.verifyEmail()`
+- ✅ Login enforcement (email confirmado)
+- ✅ Rate limiting
+- ✅ Tests unitarios + flow
+- ✅ Documentación completa
+
+**Status:** ✅ COMPLETADO
+
+### Phase 2: Frontend (Issue de Seguimiento)
+
+**Scope:**
+- ⏳ Register UI con estados
+- ⏳ Email Verification Page
+- ⏳ Login Form updates
+- ⏳ Resend verification endpoint
+- ⏳ Tests E2E
+
+**Status:** ⏳ PENDIENTE
+
+**Documentación:** `FRONTEND-PHASE-2.md`  
+**Issue tracking:** ROA-373-frontend (a crear)
+
+**Razón de separación:**
+1. Backend funcional permite testing independiente
+2. Frontend puede iterar diseño sin bloquear funcionalidad
+3. Permite despliegue gradual con feature flag
+4. Reduce scope de PR inicial
+
+---
+
+**Estado:** ✅ Phase 1 Completa  
 **Última actualización:** 2025-01-02
 
