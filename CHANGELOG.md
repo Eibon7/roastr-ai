@@ -2,6 +2,38 @@
 
 ## [Unreleased]
 
+### 📚 ROA-378: Register Documentation v2 (B5) - 2026-01-02
+
+#### Register Endpoint Documentation
+
+- **Contractual Documentation**: Complete documentation for `/api/v2/auth/register` endpoint with MUST/MUST NOT language
+- **Location**: `docs/nodes-v2/auth/register.md` (correct location per ROA-378)
+- **Visibility Table**: Table differentiating user-visible vs internal behavior
+- **Onboarding Integration**: Documentation of onboarding state initialization (`onboarding_state: 'welcome'`)
+- **Anti-Enumeration Contract**: Critical rules preventing email enumeration
+- **Feature Flag Behavior**: Contractual documentation of `auth_enable_register` flag
+- **Rate Limiting**: Contractual documentation of rate limiting policy (same as login)
+- **Analytics Integration**: Contractual documentation of analytics events and PII protection
+- **Error Taxonomy**: Complete error codes with contractual behavior
+- **Integration Flow**: Mermaid diagram showing registration → onboarding → login flow
+
+#### Documentation Structure
+
+- **Request/Response Contracts**: Complete schema with validation rules
+- **Security Considerations**: Implemented measures and considerations
+- **Configuration**: Environment variables and SSOT configuration
+- **Usage Examples**: TypeScript code snippets for common scenarios
+- **Troubleshooting**: Solutions for common errors
+- **Related Documentation**: Links to all related auth documentation
+
+#### Files Created/Modified
+
+- ✅ `docs/nodes-v2/auth/register.md` (NEW) - Complete contractual documentation
+- ✅ `docs/plan/issue-ROA-378.md` (NEW) - Implementation plan
+- ✅ `docs/system-map-v2.yaml` (MODIFIED) - Added register.md to auth node docs and subnodes
+- ✅ `CHANGELOG.md` (MODIFIED) - Added ROA-378 entry
+- ✅ `docs/auth/register-v2.md` (DELETED) - Replaced by correct location
+
 ### 🔍 ROA-410: Auth Observability Base v2 - 2026-01-01
 
 #### Core Observability Service
