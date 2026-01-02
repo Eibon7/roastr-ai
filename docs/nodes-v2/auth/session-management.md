@@ -1,337 +1,310 @@
 # Auth - Session Management
 
-**Subnodo:** `auth/session-management`  
-**Última actualización:** 2025-12-26  
-**Owner:** ROA-364
+**Subnodo de:** `auth`  
+**Última actualización:** 2026-01-01  
+**Owner:** ROA-403
 
 ---
 
 ## 📋 Propósito
 
-Este subnodo documenta la gestión completa de sesiones en Roastr v2:
-
-1. **Estructura de tokens:** access_token + refresh_token
-2. **Expiration policies:** 1h access, 7d refresh
-3. **Automatic refresh:** Middleware transparente
-4. **Sliding expiration:** Usuarios activos mantienen sesión
-5. **Session revocation:** Logout y limpieza
+Define la gestión de sesiones JWT en Roastr v2:
+- Emisión de tokens (access + refresh)
+- Refresh automático (manual vía endpoint)
+- Sliding expiration  
+- Revocación (logout)
 
 ---
 
-## 🎫 Estructura de Tokens
+## 🎫 Tokens JWT
 
-### Access Token (JWT)
-
-**TTL:** 1 hora
-
-**Payload:**
-
-```typescript
-interface AccessTokenPayload {
-  sub: string;              // userId (UUID)
-  email: string;
-  name?: string;
-  plan: 'starter' | 'pro' | 'plus';
-  is_admin: boolean;
-  iat: number;              // Issued at (Unix timestamp)
-  exp: number;              // Expiration (Unix timestamp)
-  aud: 'authenticated';
-  iss: 'https://roastr.ai';
-}
-```
-
-**Uso:**
-- Enviado en **todas** las requests a endpoints protegidos
-- Header: `Authorization: Bearer {access_token}`
-- Verificado por middleware `authenticateToken`
-
-### Refresh Token (Opaque)
-
-**TTL:** 7 días (configurable en Supabase)
+### Access Token
 
 **Características:**
-- Opaque token (no JWT, manejado por Supabase)
-- Solo válido para endpoint `/auth/refresh`
-- Revocado automáticamente al hacer logout
-- Rotación automática: cada refresh genera nuevo refresh_token
+- **Emisor:** Supabase Auth
+- **Duración:** 1 hora (3600 segundos)
+- **Storage:** Frontend localStorage
+- **Uso:** Header `Authorization: Bearer <access_token>`
 
-**Uso:**
-- Enviado solo cuando access_token está próximo a expirar
-- Header: `X-Refresh-Token: {refresh_token}`
-- Manejado por middleware `sessionRefreshMiddleware`
-
----
-
-## 🔄 Automatic Refresh Flow
-
-### Middleware: sessionRefreshMiddleware
-
-**Ubicación:** Antes de todos los endpoints protegidos
-
-**Lógica:**
-
+**Claims (payload):**
 ```typescript
-async function sessionRefreshMiddleware(req, res, next) {
-  const accessToken = extractToken(req); // From Authorization header
-  const refreshToken = req.headers['x-refresh-token'];
-  
-  if (!accessToken) {
-    return next(); // Sin token, dejar que authenticateToken maneje
-  }
-  
-  try {
-    const decoded = jwt.decode(accessToken, { complete: true });
-    const expiresAt = decoded.payload.exp * 1000; // Convert to ms
-    const now = Date.now();
-    const timeUntilExpiry = expiresAt - now;
-    const threshold = 5 * 60 * 1000; // 5 minutos
-    
-    if (timeUntilExpiry < threshold && refreshToken) {
-      // Token cerca de expirar, intentar refresh
-      const newSession = await refreshSession(refreshToken);
-      
-      // Enviar nuevos tokens via headers
-      res.set({
-        'X-New-Access-Token': newSession.access_token,
-        'X-New-Refresh-Token': newSession.refresh_token,
-        'X-Token-Refreshed': 'true'
-      });
-      
-      // Actualizar req para usar nuevo token
-      req.headers.authorization = `Bearer ${newSession.access_token}`;
-    }
-    
-    next();
-  } catch (error) {
-    // Si falla, dejar que authenticateToken maneje
-    next();
-  }
+{
+  sub: string;         // User ID (UUID)
+  email: string;
+  role: string;        // "user" | "admin" | "superadmin"
+  aud: "authenticated";
+  exp: number;         // Unix timestamp expiración
+  iat: number;         // Unix timestamp emisión
+  ...
 }
 ```
 
-### Secuencia Completa
+**Validación:** Middleware `requireAuth` en backend verifica firma y expiración.
+
+### Refresh Token
+
+**Características:**
+- **Emisor:** Supabase Auth
+- **Duración:** 7 días (604800 segundos)
+- **Storage:** Frontend localStorage (⚠️ seguro solo en dominios HTTPS)
+- **Uso:** Endpoint `POST /api/v2/auth/refresh`
+
+**Propósito:** Obtener nuevo access_token sin re-autenticarse.
+
+**⚠️ Security Note:** 
+- Refresh token es single-use en Supabase (cada refresh genera nuevo par de tokens)
+- Si refresh token expira → usuario debe hacer login nuevamente
+
+---
+
+## 🔄 Token Refresh Flow
+
+### Manual Refresh (Implementado)
+
+**Endpoint:**
+```
+POST /api/v2/auth/refresh
+```
+
+**Request:**
+```typescript
+{
+  refresh_token: string;  // Refresh token actual
+}
+```
+
+**Response (Success):**
+```typescript
+{
+  session: {
+    access_token: string;      // Nuevo JWT
+    refresh_token: string;     // Nuevo refresh token
+    expires_in: number;        // 3600 (1h)
+    expires_at: number;        // Unix timestamp
+    token_type: "bearer";
+    user: {
+      id: string;
+      email: string;
+      role: "user" | "admin" | "superadmin";
+      email_verified: boolean;
+      created_at: string;
+      metadata: Record<string, any>;
+    }
+  },
+  message: "Token refreshed successfully"
+}
+```
+
+**Response (Error):**
+```typescript
+{
+  success: false,
+  error: {
+    slug: "TOKEN_EXPIRED" | "TOKEN_INVALID",
+    retryable: false
+  },
+  request_id: string
+}
+```
+
+**Flujo:**
 
 ```mermaid
 sequenceDiagram
-    participant Frontend
-    participant SessionMW as Session Refresh<br/>Middleware
-    participant AuthMW as Authenticate<br/>Middleware
-    participant Supabase
-    participant Endpoint
+    participant F as Frontend
+    participant API as Backend API
+    participant SB as Supabase
 
-    Frontend->>SessionMW: Request + access_token + refresh_token
-    SessionMW->>SessionMW: Decode access_token
-    SessionMW->>SessionMW: Check expiry (< 5min?)
+    F->>F: Detectar access_token próximo a expirar
+    Note over F: O recibir 401 UNAUTHORIZED
     
-    alt Token cerca de expirar
-        SessionMW->>Supabase: refreshSession(refresh_token)
+    F->>API: POST /api/v2/auth/refresh
+    Note over F: Body: { refresh_token }
+    
+    API->>SB: supabase.auth.refreshSession(refresh_token)
+    
+    alt Refresh token válido
+        SB-->>API: { session: { access_token, refresh_token } }
+        API-->>F: 200 OK + nueva session
+        F->>F: Actualizar tokens en localStorage
+        F->>F: Reintentar request original
+    else Refresh token inválido/expirado
+        SB-->>API: Error: Invalid/expired token
+        API->>API: Map to TOKEN_EXPIRED o TOKEN_INVALID
+        API-->>F: 401 UNAUTHORIZED
+        F->>F: Limpiar tokens
+        F-->>F: Redirect to /login
+    end
+```
+
+**Implementación:**
+- **Service:** `authService.refreshSession()` (líneas 491-537)
+- **Route:** `POST /api/v2/auth/refresh` (líneas 294-314)
+
+### Automatic Refresh (✅ IMPLEMENTADO)
+
+**✅ Implementación completa:** Middleware `sessionRefresh.ts` implementado.
+
+**Funcionalidad:**
+- Detecta tokens expirados automáticamente
+- Renueva con `refresh_token` si disponible
+- Adjunta nueva sesión al request context
+- Fail-open: continúa si falla (deja que requireAuth maneje)
+
+**Flujo propuesto:**
+
+```mermaid
+sequenceDiagram
+    participant F as Frontend
+    participant MW as Session Refresh MW
+    participant API as Backend Endpoint
+    participant SB as Supabase
+
+    F->>MW: GET /api/v2/user (con Authorization header)
+    MW->>MW: Extraer access_token
+    MW->>MW: Decodificar JWT (sin verificar firma aún)
+    MW->>MW: Check exp claim
+    
+    alt Token expira en > 5 min
+        MW->>API: Forward request (no refresh)
+        API-->>F: 200 OK + data
+    else Token expira en < 5 min
+        MW->>SB: refreshSession(refresh_token)
         
-        alt Refresh OK
-            Supabase-->>SessionMW: New tokens
-            SessionMW->>SessionMW: Update req.headers.authorization
-            SessionMW->>Frontend: Add X-New-Access-Token header
-            SessionMW->>Frontend: Add X-New-Refresh-Token header
-            SessionMW->>AuthMW: Forward (con nuevo token)
-        else Refresh fail
-            SessionMW->>AuthMW: Forward (con token viejo)
-            Note over AuthMW: Manejará expiration
+        alt Refresh éxito
+            SB-->>MW: { access_token, refresh_token }
+            MW->>API: Forward request con nuevo token
+            API-->>F: 200 OK + data
+            MW-->>F: Headers: X-New-Access-Token, X-New-Refresh-Token
+            F->>F: Actualizar tokens en localStorage
+        else Refresh falla
+            SB-->>MW: Error
+            MW-->>F: 401 UNAUTHORIZED
+            F-->>F: Redirect to /login
         end
-    else Token aún válido
-        SessionMW->>AuthMW: Forward sin cambios
-    end
-    
-    AuthMW->>AuthMW: Verify JWT signature
-    
-    alt JWT válido
-        AuthMW->>Endpoint: Forward + req.user
-        Endpoint-->>Frontend: Response + headers
-    else JWT expirado/inválido
-        AuthMW-->>Frontend: 401 TOKEN_EXPIRED
     end
 ```
 
-### Frontend Handling
+**Ubicación esperada:**
+- `apps/backend-v2/src/middleware/sessionRefresh.ts`
 
-**Implementation:** `frontend/src/lib/api.ts` (ApiClient class)
-
-**Token Storage:**
-- **Single Source of Truth:** localStorage (no in-memory storage)
-- `access_token`: `localStorage.getItem('auth_token')`
-- `refresh_token`: `localStorage.getItem('refresh_token')`
-- **Utility:** `frontend/src/lib/auth/tokenStorage.ts`
-
-**Auto-Refresh on 401:**
+**Integración esperada (Express):**
 ```typescript
-// ApiClient.request() detects 401 and triggers refresh
-if (response.status === 401 && !isRetry) {
-  // Block retry for auth endpoints
-  if (this.isAuthEndpoint(endpoint)) {
-    throw error; // No retry
-  }
-  
-  // Queue concurrent requests (FIFO)
-  if (this._isRefreshing) {
-    return new Promise((resolve, reject) => {
-      this._pendingRequests.push({ resolve, reject, endpoint, options });
-    });
-  }
-  
-  // Refresh token
-  await refreshAccessToken();
-  
-  // Retry original request (max 1 retry)
-  return this.request(endpoint, { ...options, headers: { ...headers, Authorization: `Bearer ${newToken}` } }, true);
-}
+app.use('/api/v2', sessionRefresh); // ANTES de rutas protegidas
+app.use('/api/v2', requireAuth);     // Después de sessionRefresh
 ```
 
-**FIFO Queue:**
-- Concurrent 401s are queued in `_pendingRequests` array
-- Queue processed in First-In-First-Out order after refresh completes
-- All queued requests retried with new token
-- If refresh fails, all queued requests rejected immediately
-
-**Error Handling:**
-- 401 after refresh failure → clear tokens, redirect to login (toast shown once)
-- 403 → show message, no redirect
-- 429 → per-action backoff (not global lock)
-
-**Reference:** `docs/flows/login-registration.md` - "Frontend Auto-Refresh Strategy" section
+**Prioridad:** 🔴 P0 si UX requiere sliding expiration automática
 
 ---
 
-## ⏱️ Sliding Expiration
+## 🛡️ Token Validation
 
-### Concepto
+### Middleware `requireAuth`
 
-**Sliding expiration:** Usuarios activos mantienen su sesión sin relogin.
+**Ubicación:** `apps/backend-v2/src/middleware/auth.ts`
 
-- Cada request API resetea el "countdown" de expiration
-- Access token se renueva automáticamente mientras usuario esté activo
-- Refresh token también se renueva (rotación automática)
-
-### Comportamiento por Actividad
-
-| Escenario                      | access_token | refresh_token | Resultado                         |
-| ------------------------------ | ------------ | ------------- | --------------------------------- |
-| Usuario activo (< 5min expiry)| Renovado     | Renovado      | Sesión continúa sin interrupción  |
-| Usuario inactivo (> 1h)        | Expirado     | Válido        | Próximo request renueva tokens    |
-| Usuario inactivo (> 7d)        | Expirado     | Expirado      | Requiere relogin                  |
-
-### Inactivity Timeout
-
-**Configuración:**
+**Flujo:**
 
 ```typescript
-const INACTIVITY_TIMEOUT = 7 * 24 * 60 * 60 * 1000; // 7 días
-```
-
-- Después de 7 días sin actividad → refresh_token expira
-- Usuario debe hacer login nuevamente
-- No hay prolongación automática del refresh_token
-
----
-
-## 🔐 Session Security
-
-### Token Storage
-
-#### Frontend (localStorage)
-
-```typescript
-// Almacenar tokens
-localStorage.setItem('auth_token', session.access_token);
-localStorage.setItem('refresh_token', session.refresh_token);
-
-// Leer tokens
-const accessToken = localStorage.getItem('auth_token');
-const refreshToken = localStorage.getItem('refresh_token');
-
-// Limpiar tokens (logout)
-localStorage.removeItem('auth_token');
-localStorage.removeItem('refresh_token');
-```
-
-**⚠️ Security Considerations:**
-
-- localStorage vulnerable a XSS
-- Mitigación: CSP headers, sanitización de inputs
-- Alternativa futura: httpOnly cookies (requiere cambio arquitectónico)
-
-#### Backend (Supabase)
-
-- Refresh tokens almacenados en Supabase Auth
-- Hasheados y asociados a user_id
-- Revocados automáticamente al logout
-- Limpieza automática de tokens expirados
-
-### JWT Validation Middleware
-
-```typescript
-function authenticateToken(req, res, next) {
-  const token = extractToken(req); // From Authorization header
-  
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      error: {
-        code: 'TOKEN_MISSING',
-        message: 'Access token required',
-        statusCode: 401
-      }
-    });
-  }
-  
+export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Add user to request
-    next();
-  } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'TOKEN_EXPIRED',
-          message: 'Your session has expired. Please log in again.',
-          statusCode: 401
-        }
-      });
+    // 1. Extraer token del header Authorization
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new AuthError(AUTH_ERROR_CODES.TOKEN_MISSING);
     }
     
-    return res.status(403).json({
-      success: false,
-      error: {
-        code: 'TOKEN_INVALID',
-        message: 'Invalid authentication token',
-        statusCode: 403
-      }
-    });
+    const token = authHeader.substring(7); // Remove 'Bearer '
+    
+    // 2. Verificar token con Supabase
+    const user = await authService.getCurrentUser(token);
+    
+    // 3. Adjuntar usuario a request
+    req.user = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      email_verified: user.email_verified
+    };
+    
+    next();
+  } catch (error) {
+    return sendAuthError(req, res, error, { log: { policy: 'require_auth' } });
   }
 }
 ```
 
+**Validaciones internas (Supabase):**
+- ✅ Firma JWT válida
+- ✅ Token no expirado (exp claim)
+- ✅ Token no revocado
+- ✅ Usuario existe y está activo
+
+**Errores posibles:**
+- `TOKEN_MISSING` (401) - No header Authorization
+- `TOKEN_INVALID` (401) - Firma inválida o formato incorrecto
+- `TOKEN_EXPIRED` (401) - Token expirado
+- `TOKEN_REVOKED` (401) - Token revocado (logout)
+
+### Middleware `requireRole`
+
+**Uso:** RBAC (Role-Based Access Control)
+
+**Ejemplo:**
+```typescript
+router.get('/admin/users', 
+  requireAuth, 
+  requireRole('admin', 'superadmin'), 
+  getUsersHandler
+);
+```
+
+**Flujo:**
+```typescript
+export function requireRole(...allowedRoles: Array<'user' | 'admin' | 'superadmin'>) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.TOKEN_MISSING));
+    }
+    
+    if (!allowedRoles.includes(req.user.role)) {
+      return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.ROLE_NOT_ALLOWED));
+    }
+    
+    next();
+  };
+}
+```
+
+**Errores posibles:**
+- `TOKEN_MISSING` (401) - No autenticado
+- `AUTHZ_ROLE_NOT_ALLOWED` (403) - Role no permitido
+- `AUTHZ_INSUFFICIENT_PERMISSIONS` (403) - Permisos insuficientes
+
 ---
 
-## 🚪 Logout & Session Revocation
+## 🔐 Logout (Revocación)
 
 ### Endpoint
 
-```http
+```
 POST /api/v2/auth/logout
-Authorization: Bearer {access_token}
 ```
 
-### Request
+**Autenticación requerida:** ✅ (middleware `requireAuth`)
 
+**Request:**
+```
+Headers:
+  Authorization: Bearer <access_token>
+```
+
+**Response (Success):**
 ```typescript
-// No body required, user extracted from JWT
-```
-
-### Response (Success)
-
-```json
 {
-  "success": true,
-  "message": "Logged out successfully"
+  message: "Logout successful"
 }
 ```
 
@@ -339,288 +312,144 @@ Authorization: Bearer {access_token}
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Frontend
-    participant Backend
-    participant Supabase
+    participant U as Usuario
+    participant F as Frontend
+    participant API as Backend API
+    participant SB as Supabase
 
-    User->>Frontend: Click "Logout"
-    Frontend->>Backend: POST /api/v2/auth/logout<br/>(Authorization: Bearer token)
-    Backend->>Backend: Extract user from JWT
-    Backend->>Supabase: signOut(userId)
-    Supabase->>Supabase: Revoke refresh_token
-    Supabase-->>Backend: Success
-    Backend-->>Frontend: 200 Success
-    Frontend->>Frontend: Clear localStorage
-    Frontend->>Frontend: Clear app state
-    Frontend-->>User: Redirect to login
-```
-
-### Frontend Cleanup
-
-```typescript
-async function logout() {
-  try {
-    // Call backend logout endpoint
-    await fetch('/api/v2/auth/logout', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-      }
-    });
-  } catch (error) {
-    console.error('[Session] Logout error:', error);
-    // Continue cleanup anyway
-  } finally {
-    // Always clear local state
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+    U->>F: Click "Logout"
+    F->>API: POST /api/v2/auth/logout
+    Note over F: Header: Authorization Bearer <token>
     
-    // Clear app state
-    setUser(null);
-    setSession(null);
+    API->>SB: admin.signOut(access_token)
+    SB->>SB: Revocar access_token
+    SB->>SB: Invalidar refresh_token
+    SB-->>API: Success
     
-    // Redirect to login
-    navigate('/login');
-  }
-}
+    API-->>F: 200 OK
+    F->>F: Limpiar localStorage (tokens, user)
+    F-->>U: Redirect to /login
 ```
 
-### Session Revocation Scenarios
+**Implementación:**
+- **Service:** `authService.logout()` (líneas 469-486)
+- **Route:** `POST /api/v2/auth/logout` (líneas 274-288)
 
-| Escenario                   | Trigger                      | Comportamiento                            |
-| --------------------------- | ---------------------------- | ----------------------------------------- |
-| **User logout**             | User clicks logout           | Revoke refresh_token, clear localStorage  |
-| **Admin suspension**        | Admin suspends account       | Revoke all tokens, block new logins       |
-| **Password reset**          | User resets password         | Revoke all existing sessions              |
-| **Security breach**         | Suspicious activity detected | Revoke all tokens, force reauth           |
-| **Token expiration**        | refresh_token expires (7d)   | Require relogin                           |
+**Comportamiento:**
+- ✅ Revoca access_token en Supabase (invalida JWT)
+- ✅ Invalida refresh_token (no se puede usar para refresh)
+- ✅ Frontend limpia localStorage
+- ⚠️ Sessions existentes en otros dispositivos NO se revocan (limitación Supabase)
 
 ---
 
-## 🔄 Manual Refresh Endpoint
+## 📊 Session Lifecycle
 
-### Endpoint
+### Timeline
 
-```http
-POST /api/v2/auth/session/refresh
-Content-Type: application/json
+```
+┌───────────────────────────────────────────────────────────┐
+│ Session Lifecycle (1 sesión activa)                       │
+└───────────────────────────────────────────────────────────┘
 
-{
-  "refresh_token": "user-refresh-token"
-}
+Login/Register (t=0)
+│
+├─ Access Token emitido (válido 1h)
+├─ Refresh Token emitido (válido 7 días)
+│
+└─► Usuario activo (t=0 → t=55min)
+    │
+    ├─ Access Token próximo a expirar (t=55min)
+    │  └─► Frontend detecta → POST /api/v2/auth/refresh
+    │      ├─ Nuevo Access Token (válido 1h)
+    │      └─ Nuevo Refresh Token (válido 7 días)
+    │
+    └─► Usuario activo (t=55min → t=1h50min)
+        │
+        └─ Repite refresh cada ~55min
+            └─► Sliding expiration: sesión se mantiene activa
+
+Usuario inactivo > 7 días
+│
+└─► Refresh Token expira
+    └─► Próximo intento → TOKEN_EXPIRED
+        └─► Redirect to /login
 ```
 
-### Request Schema
+### Estados de Token
 
-```typescript
-interface RefreshRequest {
-  refresh_token: string;  // Valid refresh token
-}
-```
-
-### Response (Success)
-
-```json
-{
-  "success": true,
-  "data": {
-    "access_token": "new-jwt-token",
-    "refresh_token": "new-refresh-token",
-    "expires_at": 1703000000,
-    "expires_in": 3600,
-    "user": {
-      "id": "uuid-v4",
-      "email": "user@example.com",
-      "name": "John Doe",
-      "plan": "starter"
-    }
-  }
-}
-```
-
-### Response (Error)
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "TOKEN_INVALID",
-    "message": "Invalid or expired refresh token",
-    "statusCode": 401
-  }
-}
-```
-
-### Use Case
-
-**Manual refresh es útil para:**
-
-- Frontend detect token expiration antes de request
-- Recovery de sesión al recargar página
-- Testing y debugging
-
-**⚠️ Middleware automático es preferido:**
-- Transparente para el usuario
-- Menos llamadas API explícitas
-- Mejor UX (sin interrupciones)
+| Estado | Access Token | Refresh Token | Acción Frontend |
+|--------|--------------|---------------|-----------------|
+| **Activo** | Válido | Válido | Usar access_token normalmente |
+| **Próximo a expirar** | Expira < 5min | Válido | Refrescar tokens |
+| **Access expirado** | Expirado | Válido | Refrescar tokens |
+| **Ambos expirados** | Expirado | Expirado | Redirect to /login |
+| **Revocado** | Revocado | Revocado | Redirect to /login |
 
 ---
 
-## 📊 Session Monitoring
+## 🔄 Sliding Expiration
 
-### Logs Mínimos (Por Evento de Sesión)
+**Concepto:** Usuarios activos mantienen su sesión indefinidamente (sin re-login).
 
-```typescript
-{
-  timestamp: ISO8601,
-  event: 'session_created' | 'session_refreshed' | 'session_revoked',
-  userId: string,
-  ip: string,
-  user_agent: string,
-  access_token_exp: number,   // Unix timestamp
-  refresh_token_exp: number,  // Unix timestamp
-  auto_refresh: boolean       // true si fue por middleware
-}
-```
+**Implementación actual:** ⚠️ **MANUAL**
+- Frontend debe detectar token próximo a expirar
+- Frontend llama manualmente a `/api/v2/auth/refresh`
+- Frontend actualiza tokens en localStorage
 
-**⚠️ Datos sensibles NO se loguean:**
-- Tokens completos (solo últimos 4 caracteres)
-- Passwords
-- Refresh tokens completos
+**Implementación ideal:** ✅ **AUTOMÁTICA** (con sessionRefresh middleware)
+- Middleware detecta token próximo a expirar
+- Middleware refresca automáticamente
+- Frontend recibe nuevos tokens vía headers transparentes
+- **Ventaja:** UX mejorada, menos lógica en frontend
 
-### Health Check
-
-```bash
-# Verificar estado de sesión
-GET /api/v2/auth/me
-Authorization: Bearer {access_token}
-
-# Response esperado:
-{
-  "success": true,
-  "data": {
-    "user": {
-      "id": "uuid-v4",
-      "email": "user@example.com",
-      "name": "John Doe",
-      "plan": "starter",
-      "is_admin": false
-    },
-    "session": {
-      "expires_at": 1703000000,
-      "expires_in": 2400,
-      "near_expiry": false
-    }
-  }
-}
-```
+**Gap:** Middleware `sessionRefresh.ts` NO existe (ver [Gap 1 en análisis](#)).
 
 ---
 
-## 🛠️ Configuración
+## 🛡️ Security Considerations
 
-### Environment Variables
+### Storage
 
-```bash
-# JWT Configuration
-JWT_SECRET=your-jwt-secret-here
+**✅ Recomendado:**
+- **localStorage** (Frontend) - Solo en HTTPS
+- **httpOnly cookies** (alternativa más segura) - ⚠️ No implementado
 
-# Session Settings
-SESSION_EXPIRY_HOURS=1            # Access token TTL (default: 1h)
-SESSION_REFRESH_DAYS=7            # Refresh token TTL (default: 7d)
-SESSION_REFRESH_THRESHOLD_MIN=5   # Auto-refresh threshold (default: 5min)
+**❌ Evitar:**
+- sessionStorage (se pierde al cerrar pestaña)
+- Cookies sin httpOnly (vulnerable a XSS)
 
-# Feature Flags
-ENABLE_SESSION_REFRESH=true       # Enable automatic refresh
-DEBUG_SESSION=false               # Debug logging
-```
+### Token Rotation
 
-### Frontend Configuration
+**Supabase behavior:**
+- Cada refresh genera **nuevo par de tokens**
+- Refresh token anterior se invalida (single-use)
+- **Ventaja:** Mitiga robo de refresh token
 
-```bash
-# React Environment Variables
-REACT_APP_ENABLE_SESSION_REFRESH=true
-REACT_APP_SESSION_CHECK_INTERVAL=60000  # Check every 60s
-REACT_APP_DEBUG_SESSION=false
-```
+### Revocation
 
----
+**Limitación Supabase:**
+- `admin.signOut(access_token)` revoca tokens del servidor
+- **NO revoca sesiones en otros dispositivos** (limitación de Supabase Auth)
+- Para revocación multi-device → implementar session tracking custom
 
-## 🔗 Integración con Otros Nodos
-
-### billing-engine
-
-**Verificación de suscripción en cada request:**
-
-```typescript
-async function checkSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
-  const subscription = await billingEngine.getSubscription(userId);
-  
-  if (subscription.status === 'paused') {
-    throw new AuthError(
-      'SUBSCRIPTION_REQUIRED',
-      'Your subscription is paused. Please reactivate to continue.'
-    );
-  }
-  
-  return subscription;
-}
-```
-
-**Estados que bloquean sesión:**
-- `paused`: Plan pausado, requiere reactivación
-- `expired_trial_pending_payment`: Trial expirado, esperando pago
-
-Ver [billing-engine node](../billing-engine/overview.md) para detalles.
-
-### workers
-
-**AccountDeletion worker (GDPR):**
-
-```typescript
-// Cuando usuario solicita eliminar cuenta
-await queueWorker('AccountDeletion', {
-  userId,
-  scheduledFor: Date.now() + (90 * 24 * 60 * 60 * 1000) // 90 días
-});
-
-// Worker revoca todas las sesiones inmediatamente
-await supabase.auth.admin.signOut(userId);
-```
-
-Ver [workers node](../workers/overview.md) para detalles.
+**Workaround (futuro):**
+- Tabla `active_sessions` en DB
+- Middleware verifica si session_id está activa
+- Logout revoca todas las sessions del usuario
 
 ---
 
 ## 📚 Referencias
 
-### SSOT v2
-
-- **Sección 2.1:** Billing v2 - Estados de suscripción
-- **Sección 10.1:** GDPR Retention (90 días antes de purga)
-- **Sección 11.2:** Environment Variables
-
-### Related Subnodos
-
-- [login-flows.md](./login-flows.md) - Cómo se crean las sesiones
-- [rate-limiting.md](./rate-limiting.md) - Rate limiting no aplica a refresh automático
-- [error-taxonomy.md](./error-taxonomy.md) - SESSION_*, TOKEN_* error codes
-- [security.md](./security.md) - JWT validation, token rotation
-
-### Implementación
-
-- **Session Middleware:** `apps/backend-v2/src/middleware/sessionRefresh.ts` (TBD)
-- **Auth Service:** `apps/backend-v2/src/services/authService.ts` (TBD)
-- **Frontend Hook:** `apps/frontend/src/hooks/useAuth.ts` (TBD)
-
-### Documentación Legacy (Referencia)
-
-- `AUTH_GUIDE.md` - Secciones "Session Management", "Token Refresh"
+- **Implementación (Service):** `apps/backend-v2/src/services/authService.ts`
+- **Middleware:** `apps/backend-v2/src/middleware/auth.ts`
+- **Routes:** `apps/backend-v2/src/routes/auth.ts`
+- **Supabase Auth:** [Docs oficiales](https://supabase.com/docs/guides/auth/server-side/oauth)
+- **JWT:** [RFC 7519](https://datatracker.ietf.org/doc/html/rfc7519)
 
 ---
 
-**Última actualización:** 2025-12-26  
-**Owner:** ROA-364  
-**Status:** ✅ Active
-
+**Última actualización:** 2026-01-01  
+**Owner:** ROA-403  
+**Status:** ⚠️ Active (sessionRefresh middleware pending)

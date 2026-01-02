@@ -230,6 +230,7 @@ type FeatureFlagKey =
   | 'auth_enable_register'
   | 'auth_enable_magic_link'
   | 'auth_enable_password_recovery'
+  | 'auth_enable_oauth'
 
   // UX / UI
   | 'show_two_roast_variants'
@@ -287,6 +288,15 @@ type FeatureFlagKey =
   - Default: `false` (fail-closed for security)
   - When disabled, endpoint throws AuthError with code AUTH_DISABLED (401)
   - Emits analytics event `auth_feature_blocked` with flag/policy context
+  - No environment variable fallbacks (SSOT v2 enforcement)
+
+- `auth_enable_oauth` (admin):
+  - Controls OAuth endpoints (POST /api/v2/auth/oauth/:provider, GET /api/v2/auth/oauth/:provider/callback)
+  - Default: `false` (fail-closed for security)
+  - When disabled, endpoint throws AuthError with code AUTH_DISABLED (401)
+  - Emits analytics event `auth_feature_blocked` with flag/policy context
+  - Supported providers: `x`, `youtube`, `google` (infrastructure only, post-MVP)
+  - Returns 501 NOT_IMPLEMENTED for actual provider authentication (post-MVP stub)
   - No environment variable fallbacks (SSOT v2 enforcement)
 
 **Integration**: Checked via `isAuthEndpointEnabled()` before AuthPolicyGate in auth routes.

@@ -1,646 +1,503 @@
-# Auth - Rate Limiting v2
+# Auth - Rate Limiting
 
-**Subnodo:** `auth/rate-limiting`  
-**Última actualización:** 2025-12-26  
-**Owner:** ROA-364 (documenta ROA-359)
+**Subnodo de:** `auth`  
+**Última actualización:** 2026-01-01  
+**Owner:** ROA-403 (ROA-359 implementación)
 
 ---
 
 ## 📋 Propósito
 
-Este subnodo documenta el sistema de **rate limiting v2** para endpoints de autenticación, implementado en ROA-359.
+Define la protección contra brute force y abuse patterns en endpoints de autenticación mediante rate limiting v2.
 
-**Objetivos:**
-
-1. **Prevenir brute force attacks:** Limitar intentos de login
-2. **Detectar abuse patterns:** multi-ip, multi-email, burst attacks
-3. **Bloqueo progresivo:** Escalación de castigos por reincidencia
-4. **Performance:** Redis en producción, memoria en dev/test
+**Strong Concept Owner:** `rateLimitConfig` ⭐
 
 ---
 
-## ⚙️ Configuración Oficial (Strong Concept)
-
-Este nodo es el **dueño único** de `rateLimitConfig`.
+## 🛡️ Configuración Oficial (SSOT v2)
 
 **Fuente de verdad:** SSOT v2, sección 12.4
 
-### Rate Limits por Método de Autenticación
+### Límites por Tipo de Endpoint
 
-```typescript
-type AuthRateLimitConfig = {
-  password: {
-    windowMs: 900000;        // 15 minutos
-    maxAttempts: 5;
-    blockDurationMs: 900000; // 15 minutos
-  };
-  magic_link: {
-    windowMs: 3600000;       // 1 hora
-    maxAttempts: 3;
-    blockDurationMs: 3600000; // 1 hora
-  };
-  oauth: {
-    windowMs: 900000;        // 15 minutos
-    maxAttempts: 10;
-    blockDurationMs: 900000; // 15 minutos
-  };
-  password_reset: {
-    windowMs: 3600000;       // 1 hora
-    maxAttempts: 3;
-    blockDurationMs: 3600000; // 1 hora
-  };
-};
-```
+| Endpoint | Max Attempts | Window | Bloqueo Inicial |
+|----------|--------------|--------|-----------------|
+| **Password Login** | 5 | 15 min | 15 min |
+| **Magic Link** | 3 | 1 hora | 1 hora |
+| **OAuth** | 10 | 15 min | 15 min |
+| **Password Reset** | 3 | 1 hora | 1 hora |
+| **Register/Signup** | 5 | 1 hora | 1 hora |
 
-### Bloqueo Progresivo (Escalación)
-
-```typescript
-type ProgressiveBlockDurations = [
-  900000,      // 15 minutos (1ra infracción)
-  3600000,     // 1 hora      (2da infracción)
-  86400000,    // 24 horas    (3ra infracción)
-  null         // Permanente  (4ta+ infracción, requiere intervención manual)
-];
-```
-
-**Cómo funciona:**
-
-- **1ra vez:** Bloqueo 15 minutos
-- **2da vez (dentro de 24h):** Bloqueo 1 hora
-- **3ra vez (dentro de 24h):** Bloqueo 24 horas
-- **4ta+ vez:** Bloqueo permanente (admin debe desbloquear)
+**⚠️ CRÍTICO:** Estos valores SON la única fuente de verdad. Cualquier cambio DEBE hacerse en SSOT v2.
 
 ---
 
-## 🎯 Abuse Detection Thresholds
+## 🔄 Bloqueo Progresivo
 
-**Fuente de verdad:** SSOT v2, sección 12.5
+### Escalamiento Automático
 
-```typescript
-type AbuseDetectionThresholds = {
-  multi_ip: number;        // Número de IPs diferentes para mismo email (default: 3)
-  multi_email: number;     // Número de emails diferentes para misma IP (default: 5)
-  burst: number;           // Intentos en ventana corta (1 min) para trigger burst attack (default: 10)
-  slow_attack: number;     // Intentos en ventana larga (1 hora) para trigger slow attack (default: 20)
-};
+```
+1ra infracción → Bloqueo 15 minutos
+2da infracción → Bloqueo 1 hora
+3ra infracción → Bloqueo 24 horas
+4ta+ infracción → Bloqueo permanente (requiere intervención manual)
 ```
 
-### Valores por Defecto (Fallback)
-
-Si SSOT no disponible o configuración corrupta:
-
-```typescript
-const DEFAULT_THRESHOLDS = {
-  multi_ip: 3,
-  multi_email: 5,
-  burst: 10,
-  slow_attack: 20
-};
-```
-
-**⚠️ Fail-Safe:** Sistema siempre tiene fallback seguro (fail-closed).
-
----
-
-## 🗄️ Storage
-
-### Producción: Redis/Upstash
-
-**Preferido para producción:**
-
-```typescript
-// Key patterns
-auth:ratelimit:ip:${authType}:${ip}          // Track por IP
-auth:ratelimit:email:${authType}:${emailHash} // Track por email (hasheado)
-auth:ratelimit:block:${identifier}            // Track bloqueos
-auth:ratelimit:infractions:${identifier}      // Track infracciones (escalación)
-```
-
-**Ventajas:**
-- Persistencia entre restarts
-- Distribuido (múltiples instancias backend)
-- TTL automático (limpieza sin cron jobs)
-- Performance óptimo
-
-**Configuración:**
-
-```bash
-# Environment Variables
-REDIS_URL=redis://localhost:6379
-# O para Upstash (producción):
-UPSTASH_REDIS_REST_URL=https://your-instance.upstash.io
-UPSTASH_REDIS_REST_TOKEN=your-token
-```
-
-### Fallback: Memoria (Dev/Test)
-
-**Solo para desarrollo y testing:**
-
-```typescript
-// In-memory store
-const rateLimitStore = new Map<string, RateLimitData>();
-```
-
-**Limitaciones:**
-- No persiste entre restarts
-- No funciona con múltiples instancias
-- No es production-ready
-
-**⚠️ Warning:** Si Redis falla en producción, sistema usa memoria temporalmente pero logea error crítico.
-
----
-
-## 🔑 Key Generation (Privacy-Preserving)
-
-### IP + Email Hash
-
-```typescript
-function generateRateLimitKey(
-  authType: 'password' | 'magic_link' | 'oauth' | 'password_reset',
-  ip: string,
-  email: string
-): string {
-  // Hash email para no almacenar emails en plain text
-  const emailHash = crypto
-    .createHash('sha256')
-    .update(email.toLowerCase().trim())
-    .digest('hex')
-    .substring(0, 8); // Solo primeros 8 chars
-  
-  return `auth:ratelimit:ip:${authType}:${ip}:${emailHash}`;
-}
-```
+**Tracking:** Por combinación IP + endpoint type.
 
 **Ejemplo:**
-
 ```
-Input:  authType='password', ip='192.168.1.1', email='user@example.com'
-Output: auth:ratelimit:ip:password:192.168.1.1:a1b2c3d4
+Usuario intenta login 5 veces → Bloqueado 15 min (1ra infracción)
+Usuario intenta de nuevo después de 15 min → Bloqueado 1 hora (2da infracción)
+Usuario intenta de nuevo después de 1 hora → Bloqueado 24 horas (3ra infracción)
+Usuario intenta de nuevo después de 24 horas → Bloqueado permanente (4ta infracción)
 ```
 
-### Por qué Hash el Email
-
-- **Privacy:** No almacenar emails en Redis plain text
-- **GDPR:** Minimización de datos sensibles
-- **Suficiente:** 8 chars SHA-256 proveen colisión negligible para rate limiting
+**Reseteo:** Counter de infracciones NO se resetea (persistente en Redis).
 
 ---
 
-## 🛡️ Feature Flags
+## 🏗️ Arquitectura
 
-```bash
-# Enable rate limiting v2 (reemplaza v1)
-ENABLE_AUTH_RATE_LIMIT_V2=true
+### rateLimitService
 
-# Enable rate limiting general (requerido para v2)
-ENABLE_RATE_LIMIT=true
+**Ubicación:** `apps/backend-v2/src/services/rateLimitService.ts`
+
+**Storage:**
+- **Producción:** Redis/Upstash (persistente, multi-instance)
+- **Development:** In-memory Map (solo single instance)
+
+**Método principal:**
+
+```typescript
+recordAttempt(
+  authType: AuthType, 
+  ip: string
+): { allowed: boolean; blockedUntil: number | null }
 ```
 
-**Precedencia:**
-- Si `ENABLE_AUTH_RATE_LIMIT_V2=false` → No rate limiting en auth endpoints
-- Si `ENABLE_RATE_LIMIT=false` → No rate limiting en toda la app
+**AuthType:**
+```typescript
+type AuthType = 
+  | 'login'
+  | 'signup'
+  | 'magic_link'
+  | 'password_recovery'
+  | 'oauth';
+```
 
-**⚠️ Producción:** Ambos DEBEN estar en `true`.
+**Retorno:**
+- `allowed: true` → Puede proceder
+- `allowed: false` → Bloqueado
+  - `blockedUntil: number` → Unix timestamp cuando se desbloquea (temporal)
+  - `blockedUntil: null` → Bloqueo permanente
 
----
+### rateLimitMiddleware
 
-## 🔄 Workflow Completo
+**Ubicación:** `apps/backend-v2/src/middleware/rateLimit.ts`
+
+**Uso en rutas:**
+
+```typescript
+router.post('/login', rateLimitByType('login'), loginHandler);
+router.post('/magic-link', rateLimitByType('magic_link'), magicLinkHandler);
+router.post('/password-recovery', rateLimitByType('password_recovery'), passwordRecoveryHandler);
+```
+
+**Flujo:**
 
 ```mermaid
 sequenceDiagram
-    participant Client
-    participant RateLimiter
-    participant Redis
-    participant AuthService
-    participant AbuseDetector
+    participant Req as Request
+    participant MW as rateLimitMiddleware
+    participant RS as rateLimitService
+    participant Redis as Redis/Upstash
+    participant Next as Next Middleware
 
-    Client->>RateLimiter: POST /api/v2/auth/login
-    RateLimiter->>Redis: GET auth:ratelimit:ip:password:192.168.1.1:a1b2c3d4
+    Req->>MW: POST /api/v2/auth/login
+    MW->>MW: Extract IP (getClientIp)
+    MW->>RS: recordAttempt('login', ip)
+    RS->>Redis: GET rate:login:{ip}
     
-    alt Key existe en Redis
-        Redis-->>RateLimiter: { attempts: 4, firstAttempt: ..., blocked: false }
-        
-        alt attempts >= maxAttempts (5)
-            RateLimiter->>Redis: SET ...blocked = true (TTL 15min)
-            RateLimiter-->>Client: 429 RATE_LIMIT_EXCEEDED
-        else attempts < maxAttempts
-            RateLimiter->>AuthService: Forward request
-            AuthService->>AuthService: Attempt login
-            
-            alt Login fail
-                AuthService->>RateLimiter: Increment attempts
-                RateLimiter->>Redis: INCR attempts
-                RateLimiter->>AbuseDetector: Check patterns
-                
-                alt Abuse pattern detected (burst, multi-ip, etc.)
-                    AbuseDetector->>Redis: INCR infractions
-                    AbuseDetector->>Redis: SET block (progressive duration)
-                    AbuseDetector-->>Client: 429 + escalated block
-                else Normal behavior
-                    AuthService-->>Client: 401 INVALID_CREDENTIALS
-                end
-            else Login success
-                AuthService->>RateLimiter: Reset attempts
-                RateLimiter->>Redis: DEL key
-                AuthService-->>Client: 200 + session
-            end
-        end
-    else Key no existe (primer intento)
-        RateLimiter->>Redis: SET { attempts: 1, firstAttempt: now }
-        RateLimiter->>AuthService: Forward request
-        AuthService-->>Client: 401/200 según resultado
+    alt Límite NO excedido
+        Redis-->>RS: { attempts: 3, blockedUntil: null }
+        RS->>Redis: INCR rate:login:{ip}
+        RS-->>MW: { allowed: true }
+        MW->>Next: next()
+    else Límite excedido (temporal)
+        Redis-->>RS: { attempts: 5, blockedUntil: 1672531200 }
+        RS-->>MW: { allowed: false, blockedUntil: 1672531200 }
+        MW->>MW: Calculate Retry-After header
+        MW-->>Req: 429 TOO_MANY_REQUESTS<br/>Header: Retry-After: 900
+    else Límite excedido (permanente)
+        Redis-->>RS: { attempts: 20, blockedUntil: null }
+        RS-->>MW: { allowed: false, blockedUntil: null }
+        MW-->>Req: 429 TOO_MANY_REQUESTS<br/>Message: "Permanently locked"
     end
 ```
 
 ---
 
-## 📊 Response Formats
+## 🔑 Identificación de Clientes
 
-### Request Allowed (Dentro del Límite)
+### IP Extraction
 
-```json
-// Header añadido (opcional, para debugging)
-X-RateLimit-Limit: 5
-X-RateLimit-Remaining: 2
-X-RateLimit-Reset: 1703000000
-```
+**Helper:** `getClientIp(req)` (apps/backend-v2/src/utils/request.ts)
 
-### Request Blocked (429)
+**Prioridad:**
+1. `X-Forwarded-For` header (primer IP)
+2. `X-Real-IP` header
+3. `req.connection.remoteAddress`
+4. `req.socket.remoteAddress`
 
-```json
-{
-  "success": false,
-  "error": {
-    "code": "AUTH_RATE_LIMIT_EXCEEDED",
-    "message": "Too many login attempts. Please try again later.",
-    "statusCode": 429,
-    "retryAfter": 12,  // Minutos hasta desbloqueo
-    "details": {
-      "attempts": 5,
-      "maxAttempts": 5,
-      "windowMs": 900000,
-      "blockExpiresAt": 1703000000
-    }
-  }
-}
-```
+**Edge cases:**
+- Proxies: Usa primer IP de `X-Forwarded-For`
+- IPv6: Normaliza a formato estándar
+- Localhost: Tracking normal (útil para dev)
 
-### Abuse Pattern Detected
+**Security:**
+- ⚠️ `X-Forwarded-For` puede ser spoofed
+- ✅ Usar solo si hay proxy confiable (Vercel, Cloudflare)
 
-```json
-{
-  "success": false,
-  "error": {
-    "code": "AUTH_RATE_LIMIT_EXCEEDED",
-    "message": "Suspicious activity detected. Account temporarily locked.",
-    "statusCode": 429,
-    "retryAfter": 60,  // Minutos (depende de escalación)
-    "details": {
-      "pattern": "burst_attack",
-      "infractions": 2,
-      "blockDuration": 3600000,  // 1 hora (2da infracción)
-      "permanent": false
-    }
-  }
-}
-```
+### Rate Limit Key
 
-### Permanent Block (4ta+ Infracción)
+**Formato:** `rate:{authType}:{ip}`
 
-```json
-{
-  "success": false,
-  "error": {
-    "code": "AUTH_ACCOUNT_LOCKED",
-    "message": "Your account has been locked due to suspicious activity. Contact support.",
-    "statusCode": 403,
-    "details": {
-      "infractions": 4,
-      "permanent": true,
-      "supportEmail": "support@roastr.ai"
-    }
-  }
-}
-```
+**Ejemplos:**
+- `rate:login:192.168.1.1`
+- `rate:magic_link:203.0.113.45`
+- `rate:password_recovery:2001:db8::8a2e:370:7334`
+
+**TTL (Redis):**
+- `login`: 15 minutos
+- `magic_link`: 1 hora
+- `password_recovery`: 1 hora
+- `oauth`: 15 minutos
+- `signup`: 1 hora
 
 ---
 
-## 🚨 Abuse Pattern Detection
+## 📊 Respuestas HTTP
 
-### 1. Multi-IP Attack
+### 429 Too Many Requests
 
-**Definición:** Mismo email intentado desde múltiples IPs en corto tiempo.
-
-**Threshold:** 3 IPs diferentes en 1 hora (SSOT 12.5: `multi_ip`)
-
-**Detección:**
-
-```typescript
-async function detectMultiIP(email: string, ip: string): Promise<boolean> {
-  const key = `auth:abuse:multi_ip:${emailHash}`;
-  const ips = await redis.smembers(key);
-  
-  // Añadir IP actual
-  await redis.sadd(key, ip);
-  await redis.expire(key, 3600); // TTL 1 hora
-  
-  if (ips.length >= THRESHOLDS.multi_ip) {
-    // Trigger escalación
-    await escalateInfraction(email);
-    return true;
-  }
-  
-  return false;
-}
+**Headers:**
 ```
-
-**Acción:** Bloqueo escalado (1ra → 15min, 2da → 1h, etc.)
-
-### 2. Multi-Email Attack
-
-**Definición:** Múltiples emails diferentes desde misma IP.
-
-**Threshold:** 5 emails diferentes en 1 hora (SSOT 12.5: `multi_email`)
-
-**Detección:**
-
-```typescript
-async function detectMultiEmail(email: string, ip: string): Promise<boolean> {
-  const key = `auth:abuse:multi_email:${ip}`;
-  const emails = await redis.smembers(key);
-  
-  // Añadir email actual (hasheado)
-  const emailHash = hash(email);
-  await redis.sadd(key, emailHash);
-  await redis.expire(key, 3600); // TTL 1 hora
-  
-  if (emails.length >= THRESHOLDS.multi_email) {
-    // Trigger escalación
-    await escalateInfraction(ip);
-    return true;
-  }
-  
-  return false;
-}
-```
-
-**Acción:** Bloquear IP completamente por 1 hora (mínimo)
-
-### 3. Burst Attack
-
-**Definición:** Muchos intentos en ventana MUY corta (bot).
-
-**Threshold:** 10 intentos en 1 minuto (SSOT 12.5: `burst`)
-
-**Detección:**
-
-```typescript
-async function detectBurst(identifier: string): Promise<boolean> {
-  const key = `auth:abuse:burst:${identifier}`;
-  const attempts = await redis.incr(key);
-  
-  // Primera vez, establecer TTL
-  if (attempts === 1) {
-    await redis.expire(key, 60); // TTL 1 minuto
-  }
-  
-  if (attempts >= THRESHOLDS.burst) {
-    // Trigger escalación inmediata
-    await escalateInfraction(identifier);
-    return true;
-  }
-  
-  return false;
-}
-```
-
-**Acción:** Bloqueo escalado + log de seguridad crítico
-
-### 4. Slow Attack
-
-**Definición:** Muchos intentos distribuidos en tiempo largo (evade rate limit).
-
-**Threshold:** 20 intentos en 1 hora (SSOT 12.5: `slow_attack`)
-
-**Detección:**
-
-```typescript
-async function detectSlowAttack(identifier: string): Promise<boolean> {
-  const key = `auth:abuse:slow:${identifier}`;
-  const attempts = await redis.incr(key);
-  
-  // Primera vez, establecer TTL
-  if (attempts === 1) {
-    await redis.expire(key, 3600); // TTL 1 hora
-  }
-  
-  if (attempts >= THRESHOLDS.slow_attack) {
-    // Trigger escalación
-    await escalateInfraction(identifier);
-    return true;
-  }
-  
-  return false;
-}
-```
-
-**Acción:** Bloqueo escalado + revisar manualmente
-
----
-
-## 📈 Escalación de Infracciones
-
-### Tracking de Infracciones
-
-```typescript
-async function escalateInfraction(identifier: string): Promise<BlockDuration> {
-  const key = `auth:ratelimit:infractions:${identifier}`;
-  const infractions = await redis.incr(key);
-  
-  // TTL 24 horas (después de 24h sin infracciones, se resetea)
-  await redis.expire(key, 86400);
-  
-  // Determinar duración de bloqueo
-  const blockDuration = PROGRESSIVE_BLOCK_DURATIONS[infractions - 1] || null;
-  
-  if (blockDuration === null) {
-    // Permanente (4ta+ infracción)
-    await redis.set(`auth:ratelimit:block:permanent:${identifier}`, '1');
-    // No TTL → requiere admin para desbloquear
-    
-    // Log crítico
-    logger.critical('[RateLimit] Permanent block', {
-      identifier,
-      infractions,
-      timestamp: Date.now()
-    });
-  } else {
-    // Temporal (1ra, 2da, 3ra infracción)
-    await redis.setex(
-      `auth:ratelimit:block:${identifier}`,
-      blockDuration / 1000, // Redis usa segundos
-      infractions.toString()
-    );
-  }
-  
-  return blockDuration;
-}
-```
-
-### Reseteo de Infracciones
-
-- **Automático:** 24 horas sin nuevas infracciones → counter resetea a 0
-- **Manual (Admin):** Endpoint para limpiar infracciones
-
-```bash
-# Admin endpoint (requiere auth admin)
-POST /api/v2/admin/rate-limit/reset
-{
-  "identifier": "192.168.1.1:a1b2c3d4"
-}
-```
-
----
-
-## 🛠️ Admin Tools
-
-### Métricas de Rate Limiting
-
-```bash
-GET /api/v2/admin/rate-limit/metrics
-Authorization: Bearer {admin-token}
-
-# Response:
-{
-  "success": true,
-  "data": {
-    "totalAttempts": 1250,
-    "blockedAttempts": 45,
-    "uniqueIPs": 320,
-    "activeBlocks": 12,
-    "permanentBlocks": 2,
-    "abusePatternsDetected": {
-      "multi_ip": 5,
-      "multi_email": 3,
-      "burst": 8,
-      "slow_attack": 1
-    },
-    "timestamp": "2025-12-26T10:30:00Z"
-  }
-}
-```
-
-### Desbloqueo Manual
-
-```bash
-POST /api/v2/admin/rate-limit/unblock
-Authorization: Bearer {admin-token}
+HTTP/1.1 429 Too Many Requests
 Content-Type: application/json
+Retry-After: 900
+X-Request-ID: uuid-v4
+```
 
+**Body (temporal block):**
+```json
 {
-  "identifier": "192.168.1.1:a1b2c3d4",
-  "reason": "False positive, usuario legítimo"
-}
-
-# Response:
-{
-  "success": true,
-  "message": "Identifier unblocked successfully"
+  "success": false,
+  "error": {
+    "slug": "POLICY_RATE_LIMITED",
+    "retryable": true
+  },
+  "request_id": "uuid-v4"
 }
 ```
 
----
-
-## 📊 Logs y Observabilidad
-
-### Logs Mínimos (Por Evento de Rate Limit)
-
-```typescript
+**Body (permanent block):**
+```json
 {
-  timestamp: ISO8601,
-  event: 'rate_limit_check' | 'rate_limit_block' | 'abuse_detected',
-  authType: 'password' | 'magic_link' | 'oauth' | 'password_reset',
-  ip: string,
-  emailHash: string,      // Solo hash, no email completo
-  attempts: number,
-  maxAttempts: number,
-  blocked: boolean,
-  blockDuration?: number, // ms
-  abusePattern?: 'multi_ip' | 'multi_email' | 'burst' | 'slow_attack',
-  infractions?: number,
-  permanent?: boolean
+  "success": false,
+  "error": {
+    "slug": "POLICY_RATE_LIMITED",
+    "retryable": false
+  },
+  "request_id": "uuid-v4"
 }
 ```
 
-### Alertas Críticas
+**Retry-After header:**
+- Valor en **segundos** hasta desbloqueo
+- Omitido si bloqueo permanente
 
-**Trigger alerta si:**
-
-1. **Permanent block activado** (4ta+ infracción)
-2. **Burst attack detectado** (10+ intentos en 1 min)
-3. **Más de 100 blocked attempts en 1 hora** (posible ataque coordinado)
-
----
-
-## 🔗 Integración con Otros Nodos
-
-### login-flows
-
-Rate limiting se aplica ANTES de llamar a Supabase:
-
+**Frontend handling:**
 ```typescript
-// En cada endpoint de login
-app.post('/api/v2/auth/login', 
-  rateLimiterMiddleware('password'), // PRIMERO
-  async (req, res) => {
-    // Solo llega aquí si pasa rate limit
-    const session = await authService.loginWithPassword(...);
-    res.json(session);
+if (response.status === 429) {
+  const retryAfter = response.headers.get('Retry-After');
+  if (retryAfter) {
+    const seconds = parseInt(retryAfter, 10);
+    showMessage(`Intenta de nuevo en ${Math.ceil(seconds / 60)} minutos`);
+  } else {
+    showMessage('Cuenta bloqueada permanentemente. Contacta soporte.');
   }
+}
+```
+
+---
+
+## 🛡️ Abuse Detection Integration
+
+### abuseDetectionService
+
+**Ubicación:** `apps/backend-v2/src/services/abuseDetectionService.ts`
+
+**Propósito:** Detectar patrones sospechosos ANTES de rate limiting.
+
+**Patterns detectados:**
+
+#### 1. Multi-IP Attack
+- Mismo email desde múltiples IPs en ventana corta
+- **Threshold (SSOT v2, 12.5):** 5+ IPs en 15 min
+
+#### 2. Multi-Email Attack
+- Múltiples emails desde misma IP en ventana corta
+- **Threshold:** 10+ emails en 15 min
+
+#### 3. Burst Attack
+- Múltiples intentos desde misma IP en segundos
+- **Threshold:** 10+ intentos en 60 segundos
+
+#### 4. Slow Attack
+- Intentos espaciados para evitar rate limit
+- **Threshold:** 50+ intentos en 24 horas (bajo threshold individual)
+
+### Integration Flow
+
+```mermaid
+sequenceDiagram
+    participant Req as Request
+    participant RL as Rate Limiter
+    participant AD as Abuse Detection
+    participant AS as Auth Service
+
+    Req->>RL: POST /api/v2/auth/login
+    RL->>RL: Check rate limit (IP)
+    
+    alt Rate limit OK
+        RL->>AD: recordAttempt(email, ip)
+        AD->>AD: Check abuse patterns
+        
+        alt Abuse detected
+            AD-->>RL: { isAbuse: true, patterns: [...] }
+            RL-->>Req: 403 FORBIDDEN (ACCOUNT_LOCKED)
+        else No abuse
+            AD-->>RL: { isAbuse: false }
+            RL->>AS: Forward to auth logic
+        end
+    else Rate limit exceeded
+        RL-->>Req: 429 TOO_MANY_REQUESTS
+    end
+```
+
+**Error mapping:**
+- Abuse detected → `AUTH_ACCOUNT_LOCKED` (403)
+- Rate limit → `POLICY_RATE_LIMITED` (429)
+
+**Logging:**
+```typescript
+// PII anonymized (GDPR compliance)
+logger.error('Abuse detected', {
+  emailHash: sha256(email).substring(0, 12),
+  ipPrefix: ip.split('.').slice(0, 2).join('.') + '.x.x',
+  patterns: ['multi_ip', 'burst']
+});
+```
+
+---
+
+## 🔄 Rate Limit Bypass (Admin)
+
+### ⚠️ NO IMPLEMENTADO
+
+**Caso de uso:** Permitir admins/superadmins bypass rate limiting.
+
+**Implementación propuesta:**
+
+```typescript
+export function rateLimitByType(authType: AuthType, options?: { allowBypass?: boolean }) {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    // Si bypass habilitado Y usuario es admin → skip rate limit
+    if (options?.allowBypass && req.user?.role === 'admin') {
+      return next();
+    }
+    
+    // Rate limit normal
+    const ip = getClientIp(req);
+    const result = rateLimitService.recordAttempt(authType, ip);
+    
+    if (!result.allowed) {
+      return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.RATE_LIMITED));
+    }
+    
+    next();
+  };
+}
+```
+
+**Uso:**
+```typescript
+router.post('/admin/impersonate', 
+  rateLimitByType('login', { allowBypass: true }), 
+  impersonateHandler
 );
 ```
 
-### error-taxonomy
+**Prioridad:** 🟢 P3 (low priority)
 
-Rate limit usa `AUTH_RATE_LIMIT_EXCEEDED` del taxonomy:
+---
 
-```typescript
-import { AuthError, AUTH_ERROR_CODES } from '@/utils/authErrorTaxonomy';
+## 📈 Observability
 
-if (isBlocked) {
-  throw new AuthError(
-    AUTH_ERROR_CODES.RATE_LIMIT_EXCEEDED,
-    'Too many attempts. Please try again later.',
-    { retryAfter }
-  );
+### Métricas Prometheus
+
+**Counter: `auth_rate_limits_total`**
+```
+Labels:
+  - auth_type (login, magic_link, etc.)
+  - blocked (true/false)
+  - block_type (temporary, permanent)
+```
+
+**Histogram: `auth_rate_limit_check_duration_seconds`**
+```
+Labels:
+  - auth_type
+Buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+```
+
+### Logs Estructurados
+
+**Rate limit blocked:**
+```json
+{
+  "timestamp": "2026-01-01T10:30:00Z",
+  "level": "warn",
+  "event": "auth_rate_limit_blocked",
+  "ip": "192.168.1.1",
+  "auth_type": "login",
+  "blocked_until": 1672531200,
+  "block_type": "temporary",
+  "attempts": 5,
+  "request_id": "uuid-v4"
 }
 ```
+
+**Permanent block:**
+```json
+{
+  "timestamp": "2026-01-01T10:35:00Z",
+  "level": "error",
+  "event": "auth_rate_limit_permanent",
+  "ip": "192.168.1.1",
+  "auth_type": "login",
+  "total_infractions": 4,
+  "request_id": "uuid-v4"
+}
+```
+
+### Amplitude Events
+
+**Event: `auth_rate_limit_triggered`**
+```typescript
+{
+  event: 'auth_rate_limit_triggered',
+  properties: {
+    auth_type: 'login',
+    block_type: 'temporary',
+    retry_after_seconds: 900
+  },
+  context: {
+    flow: 'auth',
+    request_id: 'uuid-v4'
+  }
+}
+```
+
+---
+
+## 🧪 Testing
+
+### Unit Tests
+
+**Ubicación:** `apps/backend-v2/tests/unit/services/rateLimitService.test.ts`
+
+**Test cases:**
+- ✅ First attempt allowed
+- ✅ 5th attempt blocked (login)
+- ✅ 6th attempt still blocked (within window)
+- ✅ Attempt after window → counter reset
+- ✅ Escalating blocks (15min → 1h → 24h → permanent)
+- ✅ Different IPs isolated
+- ✅ Redis failure fallback to memory
+
+**Middleware tests:** `apps/backend-v2/tests/unit/middleware/rateLimitMiddleware.test.ts`
+
+### Flow Tests
+
+**Ubicación:** `apps/backend-v2/tests/flow/auth-login.flow.test.ts`
+
+**Scenario: Rate limit during login**
+```typescript
+it('should block after 5 failed login attempts', async () => {
+  // Attempt 1-4: Should fail with 401 (invalid credentials)
+  for (let i = 0; i < 4; i++) {
+    const res = await request(app)
+      .post('/api/v2/auth/login')
+      .send({ email: 'test@example.com', password: 'wrong' });
+    expect(res.status).toBe(401);
+  }
+  
+  // Attempt 5: Should still fail with 401
+  const res5 = await request(app)
+    .post('/api/v2/auth/login')
+    .send({ email: 'test@example.com', password: 'wrong' });
+  expect(res5.status).toBe(401);
+  
+  // Attempt 6: Should be rate limited (429)
+  const res6 = await request(app)
+    .post('/api/v2/auth/login')
+    .send({ email: 'test@example.com', password: 'wrong' });
+  expect(res6.status).toBe(429);
+  expect(res6.headers['retry-after']).toBeDefined();
+});
+```
+
+---
+
+## 🛠️ Configuration
+
+### Environment Variables
+
+```bash
+# Redis/Upstash (rate limiting storage)
+REDIS_URL=redis://localhost:6379
+UPSTASH_REDIS_REST_URL=https://your-upstash.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-token
+
+# Feature flags
+ENABLE_RATE_LIMIT=true
+ENABLE_AUTH_RATE_LIMIT_V2=true
+```
+
+### Feature Flags Dinámicos
+
+**Flag (SSOT v2, sección 3):**
+- `ENABLE_RATE_LIMIT` (global rate limit master switch)
+- `ENABLE_AUTH_RATE_LIMIT_V2` (auth-specific rate limit v2)
+
+**Behavior si OFF:**
+- Rate limiting completamente deshabilitado
+- Útil para debugging o emergencias
 
 ---
 
 ## 📚 Referencias
 
-### SSOT v2
-
-- **Sección 12.4:** Rate Limiting Configuration ⭐ (Strong Concept owner)
-- **Sección 12.5:** Abuse Detection Thresholds ⭐ (Strong Concept owner)
-- **Sección 11.2:** Environment Variables (Redis config)
-
-### Related Subnodos
-
-- [login-flows.md](./login-flows.md) - Donde se aplica rate limiting
-- [error-taxonomy.md](./error-taxonomy.md) - AUTH_RATE_LIMIT_EXCEEDED
-- [security.md](./security.md) - Prevención de brute force
-
-### Implementación
-
-- **Rate Limiter Middleware:** `apps/backend-v2/src/middleware/rateLimiter.ts` (TBD)
-- **Abuse Detector:** `apps/backend-v2/src/services/abuseDetector.ts` (TBD)
-- **Redis Client:** `apps/backend-v2/src/config/redis.ts` (TBD)
+- **SSOT v2 (Rate Limiting):** Sección 12.4 ⭐
+- **SSOT v2 (Abuse Detection):** Sección 12.5
+- **Implementación (Service):** `apps/backend-v2/src/services/rateLimitService.ts`
+- **Implementación (Middleware):** `apps/backend-v2/src/middleware/rateLimit.ts`
+- **Tests:** `apps/backend-v2/tests/unit/services/rateLimitService.test.ts`
 
 ---
 
-**Última actualización:** 2025-12-26  
-**Owner:** ROA-364 (documenta ROA-359)  
+**Última actualización:** 2026-01-01  
+**Owner:** ROA-403 (ROA-359 implementación)  
 **Status:** ✅ Active
-

@@ -144,12 +144,13 @@ Flujos completos de autenticación:
 - **OAuth:** X (Twitter) y YouTube
 
 **Endpoints principales:**
-- `POST /api/v2/auth/login`
-- `POST /api/v2/auth/magic-link`
-- `POST /api/v2/auth/register` (flags: `auth_enable_register` + `auth_enable_emails`)
-- `POST /api/v2/auth/password-recovery` (flags: `auth_enable_password_recovery` + `auth_enable_emails`)
-- `GET /api/v2/auth/oauth/:platform`
-- `GET /api/v2/auth/oauth/:platform/callback`
+- `POST /api/v2/auth/login` ✅
+- `POST /api/v2/auth/magic-link` ✅
+- `POST /api/v2/auth/register` ✅
+- `POST /api/v2/auth/password-recovery` ✅
+- `POST /api/v2/auth/oauth/:provider` ✅ (Infra only, providers post-MVP)
+- `GET /api/v2/auth/oauth/:provider/callback` ✅ (Infra only, providers post-MVP)
+- `GET /api/v2/auth/health` ✅
 
 ### [session-management.md](./session-management.md)
 
