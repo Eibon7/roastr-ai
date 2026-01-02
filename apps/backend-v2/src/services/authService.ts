@@ -66,6 +66,12 @@ export interface PasswordRecoveryParams {
   request_id?: string;
 }
 
+export interface VerifyEmailParams {
+  token_hash: string;
+  type: 'email';
+  request_id?: string;
+}
+
 export interface Session {
   access_token: string;
   refresh_token: string;
@@ -432,6 +438,41 @@ export class AuthService {
         throw authError;
       }
 
+      // ROA-373: Verificar que el email está confirmado
+      if (!data.user.email_confirmed_at) {
+        const duration = Date.now() - startTime;
+        const authError = new AuthError(
+          AUTH_ERROR_CODES.EMAIL_NOT_CONFIRMED,
+          'Please verify your email before logging in'
+        );
+
+        // Observabilidad: login bloqueado por email no verificado
+        logger.warn('login_blocked_email_unverified', {
+          email: truncateEmailForLog(email.toLowerCase()),
+          user_id: data.user.id
+        });
+
+        try {
+          trackEvent({
+            userId: data.user.id,
+            event: 'auth_login_blocked',
+            properties: {
+              reason: 'email_not_confirmed',
+              duration_ms: duration
+            },
+            context: {
+              flow: 'auth'
+            }
+          });
+        } catch {
+          logger.warn('analytics.track_failed', { event: 'auth_login_blocked' });
+        }
+
+        logLoginAttempt({ ...context, user_id: data.user.id }, false, authError);
+        trackAuthDuration('login', { ...context, user_id: data.user.id }, duration);
+        throw authError;
+      }
+
       // Success: log and track
       const duration = Date.now() - startTime;
       logLoginAttempt({ ...context, user_id: data.user.id }, true);
@@ -770,6 +811,105 @@ export class AuthService {
         trackAuthDuration('password_recovery', context, duration);
       }
 
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      throw mapSupabaseError(error);
+    }
+  }
+
+  /**
+   * Verifica email usando el token enviado por Supabase Auth
+   *
+   * ROA-373: Email verification v2
+   * - Token viene en el link de verificación
+   * - Supabase valida el token y marca el email como confirmado
+   * - Observabilidad completa del flujo
+   */
+  async verifyEmail(params: VerifyEmailParams): Promise<{ success: boolean; message: string }> {
+    const { token_hash, type, request_id } = params;
+    const startTime = Date.now();
+    const context = {
+      request_id,
+      flow: 'verify_email' as const
+    };
+
+    try {
+      // Validar token no vacío
+      if (!token_hash || token_hash.trim().length === 0) {
+        throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID);
+      }
+
+      // Verificar con Supabase Auth
+      const { data, error } = await supabase.auth.verifyOtp({
+        token_hash,
+        type
+      });
+
+      if (error) {
+        const authError = mapSupabaseError(error);
+        const duration = Date.now() - startTime;
+        
+        // Observabilidad: verificación falló
+        logger.warn('auth_email_verify_failed', {
+          request_id,
+          error_slug: authError.slug,
+          duration_ms: duration
+        });
+
+        try {
+          trackEvent({
+            event: 'auth_email_verify_failed',
+            properties: {
+              error_slug: authError.slug,
+              duration_ms: duration
+            },
+            context: {
+              flow: 'auth',
+              request_id
+            }
+          });
+        } catch {
+          logger.warn('analytics.track_failed', { event: 'auth_email_verify_failed' });
+        }
+
+        throw authError;
+      }
+
+      if (!data.user) {
+        throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Verification failed');
+      }
+
+      // Success: email verificado
+      const duration = Date.now() - startTime;
+      
+      logger.info('auth_email_verified', {
+        request_id,
+        user_id: data.user.id,
+        duration_ms: duration
+      });
+
+      try {
+        trackEvent({
+          userId: data.user.id,
+          event: 'auth_email_verified',
+          properties: {
+            duration_ms: duration
+          },
+          context: {
+            flow: 'auth',
+            request_id
+          }
+        });
+      } catch {
+        logger.warn('analytics.track_failed', { event: 'auth_email_verified' });
+      }
+
+      return {
+        success: true,
+        message: 'Email verified successfully'
+      };
+    } catch (error) {
       if (error instanceof AuthError) {
         throw error;
       }
