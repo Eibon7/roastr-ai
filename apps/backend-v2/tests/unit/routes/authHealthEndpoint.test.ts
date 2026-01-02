@@ -12,6 +12,15 @@ import request from 'supertest';
 import express from 'express';
 import authRouter from '../../../src/routes/auth';
 
+// Mock Supabase client
+vi.mock('../../../src/lib/supabaseClient', () => ({
+  supabase: {
+    auth: {
+      getUser: vi.fn()
+    }
+  }
+}));
+
 // Mock authService
 vi.mock('../../../src/services/authService', () => ({
   authService: {
@@ -31,11 +40,21 @@ vi.mock('../../../src/utils/logger', () => ({
   }
 }));
 
+// Mock authPolicyGate (required by auth routes)
+vi.mock('../../../src/auth/authPolicyGate', () => ({
+  checkAuthPolicy: vi.fn().mockResolvedValue({ allowed: true })
+}));
+
 describe('GET /auth/health', () => {
   let app: express.Application;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Set required env vars for Supabase client
+    process.env.SUPABASE_URL = 'https://test.supabase.co';
+    process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
+    
     app = express();
     app.use(express.json());
     app.use('/auth', authRouter);

@@ -67,9 +67,10 @@ describe('AuthObservabilityService', () => {
       const logCall = (logger.info as any).mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
 
-      // Email should be truncated (e.g., "t***@e***.com")
+      // Email should be truncated (e.g., "tes***@") - format per ROA-409
       expect(logEntry.email).not.toBe('test@example.com');
-      expect(logEntry.email).toMatch(/t\*+@e\*+\.com/);
+      expect(logEntry.email).toMatch(/^.{1,3}\*\*\*@$/);
+      expect(logEntry.email).toBe('tes***@');
     });
 
     it('should sanitize IP (prefix only)', () => {

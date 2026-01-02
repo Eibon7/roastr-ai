@@ -32,10 +32,10 @@ describe('OAuth Infra Routes', () => {
     vi.clearAllMocks();
     app = express();
     app.use(express.json());
-    app.use('/oauth', oauthRouter);
+    app.use('/api/v2/auth', oauthRouter); // Mount under /api/v2/auth like production
   });
 
-  describe('POST /oauth/:provider', () => {
+  describe('POST /api/v2/auth/oauth/:provider', () => {
     it('should block when feature flag disabled', async () => {
       const { isAuthEndpointEnabled } = await import('../../../src/lib/authFlags');
 
@@ -43,7 +43,7 @@ describe('OAuth Infra Routes', () => {
         new (await import('../../../src/utils/authErrorTaxonomy')).AuthError('AUTH_DISABLED' as any)
       );
 
-      const res = await request(app).post('/oauth/x');
+      const res = await request(app).post('/api/v2/auth/oauth/x');
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
@@ -55,7 +55,7 @@ describe('OAuth Infra Routes', () => {
 
       vi.mocked(isAuthEndpointEnabled).mockResolvedValueOnce(true);
 
-      const res = await request(app).post('/oauth/unsupported-provider');
+      const res = await request(app).post('/api/v2/auth/oauth/unsupported-provider');
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
@@ -67,7 +67,7 @@ describe('OAuth Infra Routes', () => {
 
       vi.mocked(isAuthEndpointEnabled).mockResolvedValueOnce(true);
 
-      const res = await request(app).post('/oauth/x');
+      const res = await request(app).post('/api/v2/auth/oauth/x');
 
       expect(res.status).toBe(501);
       expect(res.body.success).toBe(false);
@@ -80,7 +80,7 @@ describe('OAuth Infra Routes', () => {
 
       vi.mocked(isAuthEndpointEnabled).mockResolvedValueOnce(true);
 
-      const res = await request(app).post('/oauth/youtube');
+      const res = await request(app).post('/api/v2/auth/oauth/youtube');
 
       expect(res.status).toBe(501);
       expect(res.body.error.slug).toBe('NOT_IMPLEMENTED');
@@ -88,7 +88,7 @@ describe('OAuth Infra Routes', () => {
     });
   });
 
-  describe('GET /oauth/:provider/callback', () => {
+  describe('GET /api/v2/auth/oauth/:provider/callback', () => {
     it('should block when feature flag disabled', async () => {
       const { isAuthEndpointEnabled } = await import('../../../src/lib/authFlags');
 
@@ -96,7 +96,7 @@ describe('OAuth Infra Routes', () => {
         new (await import('../../../src/utils/authErrorTaxonomy')).AuthError('AUTH_DISABLED' as any)
       );
 
-      const res = await request(app).get('/oauth/x/callback');
+      const res = await request(app).get('/api/v2/auth/oauth/x/callback');
 
       expect(res.status).toBe(401);
       expect(res.body.error.slug).toBe('AUTH_DISABLED');
@@ -107,7 +107,7 @@ describe('OAuth Infra Routes', () => {
 
       vi.mocked(isAuthEndpointEnabled).mockResolvedValueOnce(true);
 
-      const res = await request(app).get('/oauth/unsupported/callback');
+      const res = await request(app).get('/api/v2/auth/oauth/unsupported/callback');
 
       expect(res.status).toBe(400);
       expect(res.body.error.slug).toBe('POLICY_INVALID_REQUEST');
@@ -118,7 +118,7 @@ describe('OAuth Infra Routes', () => {
 
       vi.mocked(isAuthEndpointEnabled).mockResolvedValueOnce(true);
 
-      const res = await request(app).get('/oauth/x/callback');
+      const res = await request(app).get('/api/v2/auth/oauth/x/callback');
 
       expect(res.status).toBe(501);
       expect(res.body.error.slug).toBe('NOT_IMPLEMENTED');
