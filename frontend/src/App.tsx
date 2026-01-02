@@ -22,6 +22,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import LoginPage from '@/pages/auth/login';
 import RegisterPage from '@/pages/auth/register';
 import RecoverPage from '@/pages/auth/recover';
+import ResetPasswordPage from '@/pages/auth/reset-password';
 import AdminDashboardPage from '@/pages/admin/dashboard';
 import AdminUsersPage from '@/pages/admin/users';
 import FeatureFlagsPage from '@/pages/admin/config/feature-flags';
@@ -54,6 +55,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/recover" element={<RecoverPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             {/* App routes (user routes) - Protected with AuthGuard */}
             <Route

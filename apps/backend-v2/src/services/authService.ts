@@ -945,6 +945,76 @@ export class AuthService {
   }
 
   /**
+   * Actualiza la contraseña del usuario usando token de recuperación
+   *
+   * El token viene del link de recuperación enviado por email.
+   * Supabase redirige con access_token y type=recovery en los query params.
+   *
+   * Para actualizar la contraseña con un token de recuperación, necesitamos:
+   * 1. Verificar que el token es válido y obtener el usuario
+   * 2. Usar admin.updateUserById para actualizar la contraseña
+   *
+   * @param accessToken - Token de recuperación del email
+   * @param newPassword - Nueva contraseña (mínimo 8 caracteres)
+   * @returns Promise resolviendo a mensaje de éxito
+   * @throws {AuthError} Si el token es inválido, expirado, o la contraseña no cumple requisitos
+   */
+  async updatePassword(accessToken: string, newPassword: string): Promise<{ message: string }> {
+    try {
+      // Validar password
+      if (!this.isValidPassword(newPassword)) {
+        throw new AuthError(
+          AUTH_ERROR_CODES.INVALID_REQUEST,
+          'Password must be at least 8 characters'
+        );
+      }
+
+      // Verificar que el token es válido y obtener usuario
+      const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
+
+      if (userError || !userData.user) {
+        // Si el error indica token expirado o inválido
+        const errorMessage = userError?.message?.toLowerCase() || '';
+        if (
+          errorMessage.includes('expired') ||
+          errorMessage.includes('invalid') ||
+          errorMessage.includes('jwt')
+        ) {
+          throw new AuthError(
+            AUTH_ERROR_CODES.TOKEN_INVALID,
+            'Reset token has expired. Please request a new password reset link.'
+          );
+        }
+        throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid or expired reset token');
+      }
+
+      // Actualizar contraseña usando Supabase Admin API
+      // Usamos admin.updateUserById porque tenemos service role key
+      const { error: updateError } = await supabase.auth.admin.updateUserById(userData.user.id, {
+        password: newPassword
+      });
+
+      if (updateError) {
+        throw mapSupabaseError(updateError);
+      }
+
+      logger.info('Password updated successfully', {
+        userId: userData.user.id,
+        email: truncateEmailForLog(userData.user.email || '')
+      });
+
+      return {
+        message: 'Password updated successfully. You can now login with your new password.'
+      };
+    } catch (error) {
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      throw mapSupabaseError(error);
+    }
+  }
+
+  /**
    * Valida formato de email
    */
   private isValidEmail(email: string): boolean {

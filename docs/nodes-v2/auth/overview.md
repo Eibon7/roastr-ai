@@ -141,6 +141,7 @@ Flujos completos de autenticación:
 
 - **Password Login:** Email + password con rate limiting
 - **Magic Link:** Passwordless login vía email
+- **Password Recovery:** Recuperación de contraseña vía email
 - **OAuth:** X (Twitter) y YouTube
 
 **Endpoints principales:**

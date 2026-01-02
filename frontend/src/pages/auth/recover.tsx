@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { AuthLayout } from '@/components/layout/auth-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Mail } from 'lucide-react';
+import { authApi } from '@/lib/api';
 
 /**
  * RecoverPage Component
@@ -40,17 +41,20 @@ export default function RecoverPage() {
     setLoading(true);
 
     try {
-      // TODO: Implement actual password recovery API call
-      // await authApi.recoverPassword(email);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+      await authApi.recoverPassword(email);
       setSuccess(true);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Error al solicitar recuperación de contraseña'
-      );
+    } catch (err: any) {
+      // Show generic error message for security (anti-enumeration)
+      // Backend always returns success even if email doesn't exist
+      if (err?.status === 403 || err?.slug === 'AUTH_EMAIL_DISABLED') {
+        setError('El servicio de recuperación de contraseña no está disponible temporalmente');
+      } else if (err?.status === 429) {
+        setError('Demasiados intentos. Por favor espera unos minutos e inténtalo de nuevo');
+      } else {
+        // For other errors, still show success message (anti-enumeration)
+        // This matches backend behavior
+        setSuccess(true);
+      }
     } finally {
       setLoading(false);
     }
