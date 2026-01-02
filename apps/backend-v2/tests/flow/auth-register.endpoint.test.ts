@@ -40,7 +40,8 @@ vi.mock('../../src/services/rateLimitService', () => ({
       allowed: true,
       remaining: 5,
       resetAt: Date.now() + 60000
-    })
+    }),
+    setObservability: vi.fn() // Mock setObservability method
   }
 }));
 
