@@ -849,7 +849,7 @@ export class AuthService {
       if (error) {
         const authError = mapSupabaseError(error);
         const duration = Date.now() - startTime;
-        
+
         // Observabilidad: verificación falló
         logger.warn('auth_email_verify_failed', {
           request_id,
@@ -882,7 +882,7 @@ export class AuthService {
 
       // Success: email verificado
       const duration = Date.now() - startTime;
-      
+
       logger.info('auth_email_verified', {
         request_id,
         user_id: data.user.id,

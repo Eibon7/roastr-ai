@@ -14,7 +14,14 @@
  * ROA-410: Integrado con auth observability para logging estructurado
  */
 
-export type AuthType = 'login' | 'magic_link' | 'oauth' | 'password_reset' | 'signup' | 'email_verification' | 'password_recovery';
+export type AuthType =
+  | 'login'
+  | 'magic_link'
+  | 'oauth'
+  | 'password_reset'
+  | 'signup'
+  | 'email_verification'
+  | 'password_recovery';
 
 interface RateLimitConfig {
   windowMs: number;
