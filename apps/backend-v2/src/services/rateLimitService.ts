@@ -14,7 +14,14 @@
  * ROA-410: Integrado con auth observability para logging estructurado
  */
 
-export type AuthType = 'login' | 'magic_link' | 'oauth' | 'password_reset' | 'signup';
+export type AuthType =
+  | 'login'
+  | 'magic_link'
+  | 'oauth'
+  | 'password_reset'
+  | 'signup'
+  | 'email_verification'
+  | 'password_recovery';
 
 interface RateLimitConfig {
   windowMs: number;
@@ -54,6 +61,23 @@ const RATE_LIMITS: Record<AuthType, RateLimitConfig> = {
   signup: {
     windowMs: 60 * 60 * 1000, // 1 hora
     maxAttempts: 5,
+    blockDurationMs: 60 * 60 * 1000 // 1 hora
+  },
+  // ROA-373: Email verification
+  // Justificación de 10/hour:
+  // - Tokens tienen protección adicional (TTL + single-use)
+  // - Permite casos legítimos excepcionales (email spam, token mal copiado, expiración)
+  // - Industria standard (Auth0 usa 10/hour)
+  // - Balance seguridad/UX sin evidencia de abuse
+  email_verification: {
+    windowMs: 60 * 60 * 1000, // 1 hora
+    maxAttempts: 10,
+    blockDurationMs: 60 * 60 * 1000 // 1 hora
+  },
+  // Password recovery (alias for backward compatibility)
+  password_recovery: {
+    windowMs: 60 * 60 * 1000, // 1 hora
+    maxAttempts: 3,
     blockDurationMs: 60 * 60 * 1000 // 1 hora
   }
 };
