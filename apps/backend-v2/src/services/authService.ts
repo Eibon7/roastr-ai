@@ -963,7 +963,10 @@ export class AuthService {
     try {
       // Validar password
       if (!this.isValidPassword(newPassword)) {
-        throw new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST, 'Password must be at least 8 characters');
+        throw new AuthError(
+          AUTH_ERROR_CODES.INVALID_REQUEST,
+          'Password must be at least 8 characters'
+        );
       }
 
       // Verificar que el token es válido y obtener usuario
@@ -972,8 +975,15 @@ export class AuthService {
       if (userError || !userData.user) {
         // Si el error indica token expirado o inválido
         const errorMessage = userError?.message?.toLowerCase() || '';
-        if (errorMessage.includes('expired') || errorMessage.includes('invalid') || errorMessage.includes('jwt')) {
-          throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Reset token has expired. Please request a new password reset link.');
+        if (
+          errorMessage.includes('expired') ||
+          errorMessage.includes('invalid') ||
+          errorMessage.includes('jwt')
+        ) {
+          throw new AuthError(
+            AUTH_ERROR_CODES.TOKEN_INVALID,
+            'Reset token has expired. Please request a new password reset link.'
+          );
         }
         throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid or expired reset token');
       }

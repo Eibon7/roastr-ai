@@ -541,10 +541,10 @@ router.post(
 /**
  * POST /api/v2/auth/update-password
  * Actualiza la contraseña usando token de recuperación
- * 
+ *
  * El token viene del link de recuperación enviado por email.
  * Supabase redirige con access_token y type=recovery en los query params.
- * 
+ *
  * Rate limited: 5 intentos en 1 hora
  */
 router.post(
@@ -553,7 +553,6 @@ router.post(
   async (req: Request, res: Response) => {
     const ip = getClientIp(req);
     const userAgent = (req.headers['user-agent'] as string) || null;
-    const request_id = getRequestId(req);
 
     try {
       const { access_token, password } = req.body;

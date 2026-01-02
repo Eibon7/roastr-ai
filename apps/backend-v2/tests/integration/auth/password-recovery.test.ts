@@ -186,12 +186,10 @@ describe('Password Recovery Integration', () => {
 
       const { default: app } = await import('../../../src/index');
 
-      const res = await request(app)
-        .post('/api/v2/auth/update-password')
-        .send({
-          access_token: mockAccessToken,
-          password: 'NewPassword123'
-        });
+      const res = await request(app).post('/api/v2/auth/update-password').send({
+        access_token: mockAccessToken,
+        password: 'NewPassword123'
+      });
 
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
@@ -207,12 +205,10 @@ describe('Password Recovery Integration', () => {
       mockGetUser.mockReset();
       const { default: app } = await import('../../../src/index');
 
-      const res = await request(app)
-        .post('/api/v2/auth/update-password')
-        .send({
-          access_token: mockAccessToken,
-          password: 'short'
-        });
+      const res = await request(app).post('/api/v2/auth/update-password').send({
+        access_token: mockAccessToken,
+        password: 'short'
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
@@ -223,11 +219,9 @@ describe('Password Recovery Integration', () => {
       mockGetUser.mockReset();
       const { default: app } = await import('../../../src/index');
 
-      const res = await request(app)
-        .post('/api/v2/auth/update-password')
-        .send({
-          password: 'NewPassword123'
-        });
+      const res = await request(app).post('/api/v2/auth/update-password').send({
+        password: 'NewPassword123'
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
@@ -243,12 +237,10 @@ describe('Password Recovery Integration', () => {
 
       const { default: app } = await import('../../../src/index');
 
-      const res = await request(app)
-        .post('/api/v2/auth/update-password')
-        .send({
-          access_token: 'invalid-token',
-          password: 'NewPassword123'
-        });
+      const res = await request(app).post('/api/v2/auth/update-password').send({
+        access_token: 'invalid-token',
+        password: 'NewPassword123'
+      });
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
@@ -264,12 +256,10 @@ describe('Password Recovery Integration', () => {
 
       const { default: app } = await import('../../../src/index');
 
-      const res = await request(app)
-        .post('/api/v2/auth/update-password')
-        .send({
-          access_token: 'expired-token',
-          password: 'NewPassword123'
-        });
+      const res = await request(app).post('/api/v2/auth/update-password').send({
+        access_token: 'expired-token',
+        password: 'NewPassword123'
+      });
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
@@ -277,4 +267,3 @@ describe('Password Recovery Integration', () => {
     });
   });
 });
-
