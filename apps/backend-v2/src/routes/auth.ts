@@ -539,6 +539,77 @@ router.post(
 );
 
 /**
+ * POST /api/v2/auth/update-password
+ * Actualiza la contraseña usando token de recuperación
+ * 
+ * El token viene del link de recuperación enviado por email.
+ * Supabase redirige con access_token y type=recovery en los query params.
+ * 
+ * Rate limited: 5 intentos en 1 hora
+ */
+router.post(
+  '/update-password',
+  rateLimitByType('password_recovery'),
+  async (req: Request, res: Response) => {
+    const ip = getClientIp(req);
+    const userAgent = (req.headers['user-agent'] as string) || null;
+    const request_id = getRequestId(req);
+
+    try {
+      const { access_token, password } = req.body;
+
+      if (!access_token || !password) {
+        return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+          log: { policy: 'validation:update_password' }
+        });
+      }
+
+      // Validar password (mínimo 8 caracteres)
+      if (typeof password !== 'string' || password.length < 8) {
+        return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+          log: { policy: 'validation:update_password' }
+        });
+      }
+
+      if (password.length > 128) {
+        return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+          log: { policy: 'validation:update_password' }
+        });
+      }
+
+      // ✅ A3 POLICY GATE: Check policies BEFORE auth logic
+      const policyResult = await checkAuthPolicy({
+        action: 'password_recovery',
+        ip,
+        email: null, // No email available at this stage
+        userAgent
+      });
+
+      if (!policyResult.allowed) {
+        logger.warn('AuthPolicyGate blocked update_password', {
+          policy: policyResult.policy,
+          reason: policyResult.reason
+        });
+
+        return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED), {
+          log: { policy: `auth_policy_gate:${policyResult.policy}` }
+        });
+      }
+
+      const result = await authService.updatePassword(access_token, password);
+
+      res.json({
+        success: true,
+        message: result.message
+      });
+      return;
+    } catch (error) {
+      return sendAuthError(req, res, error, { log: { policy: 'update_password' } });
+    }
+  }
+);
+
+/**
  * GET /api/v2/auth/me
  * Obtiene información del usuario actual
  */
