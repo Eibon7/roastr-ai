@@ -41,26 +41,32 @@ vi.mock('../../../src/services/rateLimitService', () => ({
       allowed: true,
       remaining: 3,
       resetAt: Date.now() + 3600000
-    })
+    }),
+    setObservability: vi.fn() // Mock setObservability method
   }
 }));
 
+// Mock authEmailService
+const mockAssertAuthEmailInfrastructureEnabled = vi.fn();
+const mockSendPasswordRecoveryEmailAfterPreflight = vi.fn();
+
+vi.mock('../../../src/services/authEmailService', () => ({
+  assertAuthEmailInfrastructureEnabled: mockAssertAuthEmailInfrastructureEnabled,
+  sendPasswordRecoveryEmailAfterPreflight: mockSendPasswordRecoveryEmailAfterPreflight
+}));
+
 // Mock Supabase client
-const mockResetPasswordForEmail = vi.fn();
 const mockGetUser = vi.fn();
-const mockUpdateUser = vi.fn();
+const mockListUsers = vi.fn();
+const mockUpdateUserById = vi.fn();
 
 vi.mock('../../../src/lib/supabaseClient', () => ({
   supabase: {
     auth: {
-      resetPasswordForEmail: mockResetPasswordForEmail,
       getUser: mockGetUser,
-      updateUser: mockUpdateUser,
       admin: {
-        listUsers: vi.fn().mockResolvedValue({
-          data: { users: [] },
-          error: null
-        })
+        listUsers: mockListUsers,
+        updateUserById: mockUpdateUserById
       }
     }
   }
@@ -78,10 +84,20 @@ describe('Password Recovery Integration', () => {
 
   describe('POST /api/v2/auth/password-recovery', () => {
     it('should send password recovery email successfully', async () => {
-      mockResetPasswordForEmail.mockResolvedValueOnce({
-        data: {},
+      mockAssertAuthEmailInfrastructureEnabled.mockResolvedValueOnce(undefined);
+      mockListUsers.mockResolvedValueOnce({
+        data: {
+          users: [
+            {
+              id: 'user-123',
+              email: 'user@example.com',
+              user_metadata: { role: 'user' }
+            }
+          ]
+        },
         error: null
       });
+      mockSendPasswordRecoveryEmailAfterPreflight.mockResolvedValueOnce(undefined);
 
       const { default: app } = await import('../../../src/index');
 
@@ -92,19 +108,20 @@ describe('Password Recovery Integration', () => {
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
         success: true,
-        message: expect.stringContaining('If this email exists')
+        message: expect.stringContaining('Password recovery link sent')
       });
-      expect(mockResetPasswordForEmail).toHaveBeenCalledWith(
+      expect(mockSendPasswordRecoveryEmailAfterPreflight).toHaveBeenCalledWith(
         'user@example.com',
         expect.objectContaining({
-          redirectTo: expect.stringContaining('/auth/reset-password')
+          request_id: expect.any(String)
         })
       );
     });
 
     it('should return generic message even if email does not exist (anti-enumeration)', async () => {
-      mockResetPasswordForEmail.mockResolvedValueOnce({
-        data: {},
+      mockAssertAuthEmailInfrastructureEnabled.mockResolvedValueOnce(undefined);
+      mockListUsers.mockResolvedValueOnce({
+        data: { users: [] },
         error: null
       });
 
@@ -132,13 +149,9 @@ describe('Password Recovery Integration', () => {
     });
 
     it('should fail-closed if email infrastructure is disabled', async () => {
-      const { loadSettings } = await import('../../../src/lib/loadSettings');
-      vi.mocked(loadSettings).mockResolvedValueOnce({
-        feature_flags: {
-          auth_enable_password_recovery: true,
-          auth_enable_emails: false // Email infra disabled
-        }
-      } as any);
+      mockAssertAuthEmailInfrastructureEnabled.mockRejectedValueOnce(
+        new AuthError(AUTH_ERROR_CODES.AUTH_EMAIL_DISABLED)
+      );
 
       const { default: app } = await import('../../../src/index');
 
@@ -160,15 +173,13 @@ describe('Password Recovery Integration', () => {
       email_confirmed_at: '2025-01-01T00:00:00Z'
     };
 
-    beforeEach(() => {
+    it('should update password successfully with valid token', async () => {
+      mockGetUser.mockReset();
       mockGetUser.mockResolvedValueOnce({
         data: { user: mockUser },
         error: null
       });
-    });
-
-    it('should update password successfully with valid token', async () => {
-      mockUpdateUser.mockResolvedValueOnce({
+      mockUpdateUserById.mockResolvedValueOnce({
         data: { user: mockUser },
         error: null
       });
@@ -187,13 +198,13 @@ describe('Password Recovery Integration', () => {
         success: true,
         message: expect.stringContaining('Password updated successfully')
       });
-      expect(mockUpdateUser).toHaveBeenCalledWith(
-        { password: 'NewPassword123' },
-        { accessToken: mockAccessToken }
-      );
+      expect(mockUpdateUserById).toHaveBeenCalledWith(mockUser.id, {
+        password: 'NewPassword123'
+      });
     });
 
     it('should return 400 if password is too short', async () => {
+      mockGetUser.mockReset();
       const { default: app } = await import('../../../src/index');
 
       const res = await request(app)
@@ -209,6 +220,7 @@ describe('Password Recovery Integration', () => {
     });
 
     it('should return 400 if access_token is missing', async () => {
+      mockGetUser.mockReset();
       const { default: app } = await import('../../../src/index');
 
       const res = await request(app)
