@@ -36,7 +36,6 @@ const mockAuthService = {
   logout: vi.fn(),
   refreshSession: vi.fn(),
   requestMagicLink: vi.fn(),
-  requestPasswordRecovery: vi.fn(),
   getCurrentUser: vi.fn()
 };
 
@@ -308,46 +307,5 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
     expect(res.status).toBe(401);
     expect(res.body.success).toBe(false);
     expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.INVALID_CREDENTIALS);
-  });
-
-  it('POST /api/v2/auth/password-recovery valida payload (400)', async () => {
-    const { default: app } = await import('../../src/index');
-    const res = await request(app).post('/api/v2/auth/password-recovery').send({});
-    expect(res.status).toBe(400);
-    expect(res.body.success).toBe(false);
-    expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.INVALID_REQUEST);
-    expect(res.body.request_id).toBeTypeOf('string');
-  });
-
-  it('POST /api/v2/auth/password-recovery responde 200 en éxito (anti-enumeration)', async () => {
-    mockAuthService.requestPasswordRecovery.mockResolvedValueOnce({
-      success: true,
-      message: 'If this email exists, a password recovery link has been sent'
-    });
-
-    const { default: app } = await import('../../src/index');
-    const res = await request(app).post('/api/v2/auth/password-recovery').send({
-      email: 'user@example.com'
-    });
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.message).toContain('If this email exists');
-    expect(mockAuthService.requestPasswordRecovery).toHaveBeenCalled();
-  });
-
-  it('POST /api/v2/auth/password-recovery mapea AuthError', async () => {
-    mockAuthService.requestPasswordRecovery.mockRejectedValueOnce(
-      new AuthError(AUTH_ERROR_CODES.AUTH_EMAIL_DISABLED)
-    );
-
-    const { default: app } = await import('../../src/index');
-    const res = await request(app).post('/api/v2/auth/password-recovery').send({
-      email: 'user@example.com'
-    });
-
-    expect(res.status).toBe(403);
-    expect(res.body.success).toBe(false);
-    expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.AUTH_EMAIL_DISABLED);
   });
 });

@@ -573,41 +573,6 @@ export const authApi = {
   async logout() {
     clearTokens();
     localStorage.removeItem('user');
-  },
-
-  /**
-   * Requests a password recovery email
-   *
-   * Sends a password reset link to the provided email address.
-   * Returns a generic success message regardless of whether the email exists
-   * (anti-enumeration security measure).
-   *
-   * @param email - User's email address
-   * @returns Promise resolving to success message
-   * @throws {ApiError} If request fails or email infrastructure is disabled
-   */
-  async recoverPassword(email: string) {
-    return apiClient.post<{ success: boolean; message: string }>('/v2/auth/password-recovery', {
-      email
-    });
-  },
-
-  /**
-   * Updates user password using reset token
-   *
-   * Updates the user's password using the access token from the password recovery email.
-   * The token is extracted from the URL query parameters when user clicks the recovery link.
-   *
-   * @param accessToken - Reset token from email link (access_token query param)
-   * @param newPassword - New password (minimum 8 characters)
-   * @returns Promise resolving to success message
-   * @throws {ApiError} If token is invalid, expired, or password validation fails
-   */
-  async updatePassword(accessToken: string, newPassword: string) {
-    return apiClient.post<{ success: boolean; message: string }>('/v2/auth/update-password', {
-      access_token: accessToken,
-      password: newPassword
-    });
   }
 };
 
