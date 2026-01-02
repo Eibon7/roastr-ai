@@ -50,11 +50,11 @@ describe('GET /auth/health', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Set required env vars for Supabase client
     process.env.SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
-    
+
     app = express();
     app.use(express.json());
     app.use('/auth', authRouter);
