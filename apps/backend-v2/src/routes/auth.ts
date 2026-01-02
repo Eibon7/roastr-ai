@@ -460,76 +460,83 @@ router.post(
  * ROA-373: Email verification v2
  * Rate limited: 10 intentos en 1 hora
  */
-router.post('/verify-email', rateLimitByType('email_verification'), async (req: Request, res: Response) => {
-  const ip = getClientIp(req);
-  const userAgent = (req.headers['user-agent'] as string) || null;
-  const request_id = getRequestId(req);
+router.post(
+  '/verify-email',
+  rateLimitByType('email_verification'),
+  async (req: Request, res: Response) => {
+    const ip = getClientIp(req);
+    const userAgent = (req.headers['user-agent'] as string) || null;
+    const request_id = getRequestId(req);
 
-  const { token_hash, type } = req.body || {};
+    const { token_hash, type } = req.body || {};
 
-  if (typeof token_hash !== 'string' || token_hash.trim().length === 0) {
-    return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID), {
-      log: { policy: 'validation:verify_email' }
-    });
-  }
-
-  if (type !== 'email') {
-    return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
-      log: { policy: 'validation:verify_email' }
-    });
-  }
-
-  try {
-    // ROA-406: Feature flag check (fail-closed, no env fallback) + ROA-410: observability
-    await isAuthEndpointEnabled('auth_enable_email_verification', 'auth_enable_email_verification').catch((err) => {
-      const context = createAuthContext(req, {
-        flow: 'verify_email',
-        request_id
-      });
-      logFeatureDisabled(context, 'auth_enable_email_verification', 'feature_disabled');
-      throw err;
-    });
-
-    // ✅ A3 POLICY GATE: Check policies BEFORE auth logic
-    const policyResult = await checkAuthPolicy({
-      action: 'verify_email',
-      ip,
-      userAgent
-    });
-
-    if (!policyResult.allowed) {
-      logger.warn('AuthPolicyGate blocked verify_email', {
-        policy: policyResult.policy,
-        reason: policyResult.reason
-      });
-
-      // Map policy result to AuthError
-      const errorCode =
-        policyResult.policy === 'rate_limit'
-          ? AUTH_ERROR_CODES.RATE_LIMITED
-          : policyResult.policy === 'feature_flag'
-            ? AUTH_ERROR_CODES.NOT_FOUND // Feature disabled = 404
-            : AUTH_ERROR_CODES.AUTH_DISABLED;
-
-      return sendAuthError(req, res, new AuthError(errorCode), {
-        log: { policy: `gate:${policyResult.policy}` },
-        retryAfterSeconds: policyResult.retryAfterSeconds
+    if (typeof token_hash !== 'string' || token_hash.trim().length === 0) {
+      return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID), {
+        log: { policy: 'validation:verify_email' }
       });
     }
 
-    // Policy gate passed - proceed with auth business logic
-    const result = await authService.verifyEmail({
-      token_hash,
-      type,
-      request_id
-    });
+    if (type !== 'email') {
+      return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+        log: { policy: 'validation:verify_email' }
+      });
+    }
 
-    res.json(result);
-    return;
-  } catch (error) {
-    return sendAuthError(req, res, error, { log: { policy: 'verify_email' } });
+    try {
+      // ROA-406: Feature flag check (fail-closed, no env fallback) + ROA-410: observability
+      await isAuthEndpointEnabled(
+        'auth_enable_email_verification',
+        'auth_enable_email_verification'
+      ).catch((err) => {
+        const context = createAuthContext(req, {
+          flow: 'verify_email',
+          request_id
+        });
+        logFeatureDisabled(context, 'auth_enable_email_verification', 'feature_disabled');
+        throw err;
+      });
+
+      // ✅ A3 POLICY GATE: Check policies BEFORE auth logic
+      const policyResult = await checkAuthPolicy({
+        action: 'verify_email',
+        ip,
+        userAgent
+      });
+
+      if (!policyResult.allowed) {
+        logger.warn('AuthPolicyGate blocked verify_email', {
+          policy: policyResult.policy,
+          reason: policyResult.reason
+        });
+
+        // Map policy result to AuthError
+        const errorCode =
+          policyResult.policy === 'rate_limit'
+            ? AUTH_ERROR_CODES.RATE_LIMITED
+            : policyResult.policy === 'feature_flag'
+              ? AUTH_ERROR_CODES.NOT_FOUND // Feature disabled = 404
+              : AUTH_ERROR_CODES.AUTH_DISABLED;
+
+        return sendAuthError(req, res, new AuthError(errorCode), {
+          log: { policy: `gate:${policyResult.policy}` },
+          retryAfterSeconds: policyResult.retryAfterSeconds
+        });
+      }
+
+      // Policy gate passed - proceed with auth business logic
+      const result = await authService.verifyEmail({
+        token_hash,
+        type,
+        request_id
+      });
+
+      res.json(result);
+      return;
+    } catch (error) {
+      return sendAuthError(req, res, error, { log: { policy: 'verify_email' } });
+    }
   }
-});
+);
 
 /**
  * GET /api/v2/auth/me
