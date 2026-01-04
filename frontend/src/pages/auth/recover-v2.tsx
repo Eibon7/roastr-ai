@@ -10,7 +10,7 @@
  * Scope: ONLY request password recovery (no reset, no token handling)
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,6 +24,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, Mail, AlertCircle, CheckCircle2 } from 'lucide-react';
 // @ts-expect-error - auth.js is not typed
 import { requestPasswordRecoveryV2 } from '@/lib/api/auth';
+
+// Feature flag hook
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
+
+// Analytics
+import { trackEvent } from '@/lib/analytics';
 
 // Form validation schema
 const recoverySchema = z.object({
