@@ -1,28 +1,34 @@
-## 🚨 B3: Corrección Crítica de Scope - Password Recovery Analytics
+## 📋 B3: Scope Definition & Planning - Password Recovery Analytics
 
 **Issue:** B3 (Password Recovery Analytics)  
-**Type:** Documentation / Scope Correction  
-**Priority:** Critical
+**Type:** Phase 0 - Planning & Documentation  
+**Priority:** P1
 
 ---
 
 ## 📋 Resumen
 
-Esta PR **corrige un error crítico de scope** en la implementación inicial de B3.
+Esta PR **NO implementa B3** - es una PR de planificación (Phase 0).
 
-**Problema detectado:**
-La implementación inicial creó un endpoint completo de analytics con métricas, agregaciones y exposición de datos. **Esto NO es B3.**
+**Qué incluye esta PR:**
+- ✅ Definición completa de scope (solo event instrumentation)
+- ✅ Contratos de payloads documentados
+- ✅ Restricciones de privacidad establecidas
+- ✅ Pseudocódigo de implementación
+- ✅ Criterios de aceptación claros
 
-**Corrección aplicada:**
-- ✅ Eliminados todos los archivos fuera de scope (6 archivos)
-- ✅ Revertido código con modificaciones incorrectas (2 archivos)
-- ✅ Creado plan correcto con scope limitado a **event instrumentation ONLY**
+**Qué NO incluye esta PR:**
+- ❌ Implementación de eventos (pendiente en follow-up PR)
+- ❌ Tests de emisión de eventos
+- ❌ Código de producción
+
+**Status:** Documentación lista. Implementación en próxima PR.
 
 ---
 
-## 🎯 Scope Correcto de B3
+## 🎯 Scope de B3 (Documentado en esta PR)
 
-### ✅ Lo que B3 SÍ hace:
+### ✅ Lo que B3 implementará (próxima PR):
 
 **Instrumentar 4 eventos de password recovery:**
 
@@ -34,13 +40,13 @@ La implementación inicial creó un endpoint completo de analytics con métricas
 - `password_recovery_token_used` - Al usar token válido
 - `password_recovery_failed` - Si falla uso de token
 
-**Payloads contractuales (EXACTOS):**
+**Payloads contractuales (definidos):**
 ```javascript
 // Sin email, user_id, IP, user-agent
 {
   "flow": "password_recovery",
   "provider": "supabase",
-  "reason": "token_invalid | token_expired | ...",
+  "reason": "token_invalid | token_expired | request_failed | ...",
   "retryable": true/false,
   "feature_flag_state": true/false,
   "token_status": "valid",
@@ -48,38 +54,50 @@ La implementación inicial creó un endpoint completo de analytics con métricas
 }
 ```
 
-### ❌ Lo que B3 NO hace:
+### ❌ Lo que B3 NO hará (límites de scope):
 
 - ❌ Endpoints de analytics
-- ❌ Cálculo de métricas
-- ❌ Agregaciones
-- ❌ Dashboards
-- ❌ Tablas nuevas
-- ❌ Exposición de datos
+- ❌ Cálculo de métricas o agregaciones
+- ❌ Dashboards o visualizaciones
+- ❌ Tablas nuevas en BD
+- ❌ Exposición de datos sensibles
 
 ---
 
-## 📊 Cambios en esta PR
+## 📊 Contenido de Esta PR
 
-### Archivos Añadidos (3)
+### Archivos Añadidos (4)
 
-1. ✅ `docs/plan/issue-B3.md` - Plan con scope correcto
-2. ✅ `docs/B3-scope-correction.md` - Resumen de corrección
-3. ✅ `docs/B3-FINAL-CORRECTION-SUMMARY.md` - Confirmación final
+1. ✅ `docs/plan/issue-B3.md` - **Plan de implementación completo**
+   - Definición de 4 eventos con payloads exactos
+   - Triggers y ubicaciones
+   - Pseudocódigo de implementación
+   - Acceptance criteria
 
-### Archivos Eliminados (6) - Fuera de Scope
+2. ✅ `docs/B3-scope-correction.md` - **Contexto de corrección**
+   - Qué estaba fuera de scope inicialmente
+   - Archivos que fueron revertidos (local, no en esta PR)
+   - Confirmación de scope limpio
 
-1. ❌ `tests/unit/routes/analytics.password-recovery.test.js`
-2. ❌ `tests/unit/services/authService.password-recovery-analytics.test.js`
-3. ❌ `tests/integration/analytics/password-recovery.test.js`
-4. ❌ `docs/api/password-recovery-analytics.md`
-5. ❌ `docs/implementation-summary-ROA-381.md`
-6. ❌ `docs/plan/issue-ROA-381.md`
+3. ✅ `docs/B3-FINAL-CORRECTION-SUMMARY.md` - **Resumen ejecutivo**
+   - Estado: 0/4 eventos implementados
+   - Próximos pasos claros
+   - Confirmación explícita de scope
 
-### Archivos Restaurados (2) - Revertidos
+4. ✅ `PR-B3-scope-correction.md` - **Descripción de PR** (este archivo)
 
-1. 🔄 `src/services/authService.js` - Sin modificaciones incorrectas
-2. 🔄 `src/routes/auth.js` - Sin modificaciones incorrectas
+**Total:** 751 líneas de documentación técnica
+
+### ⚠️ Aclaración Importante
+
+**Esta PR NO elimina ni revierte archivos en el repositorio.**
+
+Los archivos mencionados en la documentación (`authService.js`, `auth.js`, tests de analytics) fueron:
+- Creados localmente durante exploración inicial
+- Revertidos localmente con `git restore`
+- **Nunca commiteados ni pusheados**
+
+Esta PR solo añade documentación nueva. No hay deletions en el changeset.
 
 ---
 
@@ -115,23 +133,114 @@ La implementación inicial creó un endpoint completo de analytics con métricas
 
 ---
 
-## 🧪 Testing
+## 🧪 Testing (Definido para Próxima PR)
 
-**Esta PR NO requiere tests** porque:
-- Solo documenta el scope correcto
-- No incluye código de implementación
-- Elimina implementación incorrecta
+**Esta PR NO incluye tests** porque solo documenta el plan.
 
-**Tests vendrán en PR futura** cuando se implemente la instrumentación de eventos.
+**Tests requeridos en próxima PR (implementación):**
+
+### Test Coverage Esperado
+- **100% de puntos de emisión de eventos** cubiertos
+- Cada uno de los 4 eventos debe tener tests unitarios
+
+### Tests Mínimos por Evento
+
+```javascript
+describe('B3 - Password Recovery Events', () => {
+  describe('password_recovery_requested', () => {
+    it('should emit event with correct payload structure', () => {
+      // Verify all required fields present
+      // Verify no forbidden fields (email, IP, user_id)
+    });
+
+    it('should emit event BEFORE making API request', () => {
+      // Verify timing
+    });
+
+    it('should include correct provider and flow', () => {
+      // Verify: provider="supabase", flow="password_recovery"
+    });
+  });
+
+  describe('password_recovery_token_used', () => {
+    it('should emit when token is valid', () => {
+      // Verify emission on success path
+    });
+
+    it('should include token_status="valid"', () => {
+      // Verify correct status
+    });
+
+    it('should NOT include user_id or email', () => {
+      // Privacy check
+    });
+  });
+
+  describe('password_recovery_failed', () => {
+    it('should emit with correct reason enum', () => {
+      // Verify reason matches contract
+    });
+
+    it('should set retryable correctly', () => {
+      // token_expired → retryable=true
+      // token_invalid → retryable=false
+    });
+  });
+
+  // Privacy verification tests
+  describe('Privacy Compliance', () => {
+    it('should NEVER include email in any event', () => {
+      // Scan all emitted events
+    });
+
+    it('should NEVER include IP address in any event', () => {
+      // Scan all emitted events
+    });
+
+    it('should NEVER include user_id in any event', () => {
+      // Scan all emitted events
+    });
+  });
+});
+```
+
+### Pass Criteria
+- ✅ 100% coverage de event emission points
+- ✅ Todos los payloads cumplen contrato exacto
+- ✅ 0 datos sensibles en eventos
+- ✅ Reasons son enums válidos
+- ✅ Timing correcto (requested BEFORE request, etc.)
 
 ---
 
-## 📝 Próximos Pasos (Implementación Correcta)
+## 📝 Próximos Pasos (Follow-up PR)
 
-1. [ ] Instrumentar eventos en frontend (2 eventos)
-2. [ ] Instrumentar eventos en backend (2 eventos)
-3. [ ] Tests mínimos de emisión de eventos
-4. [ ] Verificar payloads cumplen contrato
+**PR futura con implementación real:**
+
+### Phase 1: Frontend Implementation
+1. [ ] Instrumentar `password_recovery_requested` en auth UI
+2. [ ] Instrumentar `password_recovery_failed` en auth UI
+3. [ ] Tests unitarios frontend (2 eventos)
+4. [ ] Verificar payloads NO incluyen datos sensibles
+
+### Phase 2: Backend Implementation
+5. [ ] Instrumentar `password_recovery_token_used` en `/api/auth/update-password`
+6. [ ] Instrumentar `password_recovery_failed` en `/api/auth/update-password`
+7. [ ] Tests unitarios backend (2 eventos)
+8. [ ] Verificar payloads cumplen contrato
+
+### Phase 3: Integration Testing
+9. [ ] Tests E2E del flujo completo
+10. [ ] Verificar 100% coverage de emission points
+11. [ ] Privacy audit (0 datos sensibles)
+12. [ ] Validar enums de `reason` son correctos
+
+### Phase 4: Documentation Update
+13. [ ] Actualizar `docs/plan/issue-B3.md` con implementación
+14. [ ] Añadir ejemplos reales (no pseudocódigo)
+15. [ ] Confirmar AC cumplidos
+
+**Estimado:** 1-2 PRs adicionales para completar B3
 
 ---
 
@@ -155,21 +264,59 @@ La implementación inicial creó un endpoint completo de analytics con métricas
 
 ---
 
-## 🎯 Impacto
+## 🎯 Estado de Implementación de B3
 
-### Antes (Incorrecto) ❌
-- Endpoint de analytics expuesto
-- 36 tests de métricas
-- ~850 líneas de código
-- Datos sensibles en payloads
-- Privacidad violada
+### ❌ NO Implementado en Esta PR
 
-### Después (Correcto) ✅
-- Solo documentación de plan
-- 0 tests (pending implementación)
-- 565 líneas de docs
-- Sin datos sensibles
-- Privacidad intacta
+**Esta es una PR de planificación (Phase 0).**
+
+| Acceptance Criteria | Status | Nota |
+|---------------------|--------|------|
+| Event instrumentation | ❌ Not implemented | Pendiente en follow-up PR |
+| Frontend events emitted | ❌ Not implemented | `password_recovery_requested`, `password_recovery_failed` |
+| Backend events emitted | ❌ Not implemented | `password_recovery_token_used`, `password_recovery_failed` |
+| Tests verifying emission | ❌ Not included | Definidos en plan, pending implementación |
+| Payload contracts defined | ✅ **Documented** | Completamente definidos en `docs/plan/issue-B3.md` |
+| Privacy constraints | ✅ **Documented** | Restricciones claramente establecidas |
+
+### ✅ Qué Entrega Esta PR
+
+| Deliverable | Lines | Status |
+|-------------|-------|--------|
+| Scope definition | 281 | ✅ Complete (`docs/plan/issue-B3.md`) |
+| Privacy rules | ~150 | ✅ Complete (NO email, IP, user_id) |
+| Payload contracts | ~100 | ✅ Complete (4 eventos definidos) |
+| Implementation examples | ~80 | ✅ Complete (pseudocódigo) |
+| Boundaries documented | ~50 | ✅ Complete (qué hace/no hace B3) |
+
+**Total:** 751 líneas de documentación técnica
+
+### 📊 Eventos Instrumentados
+
+**Status:** 0/4 eventos implementados
+
+| Evento | Capa | Status | Próxima PR |
+|--------|------|--------|------------|
+| `password_recovery_requested` | Frontend | ⏳ Pending | ✅ Definido |
+| `password_recovery_failed` | Frontend | ⏳ Pending | ✅ Definido |
+| `password_recovery_token_used` | Backend | ⏳ Pending | ✅ Definido |
+| `password_recovery_failed` | Backend | ⏳ Pending | ✅ Definido |
+
+---
+
+## 📋 Confirmación Explícita
+
+**Esta PR NO implementa B3.** Es una PR de planificación que:
+
+✅ Define scope completo  
+✅ Establece contratos de payloads  
+✅ Documenta restricciones de privacidad  
+✅ Provee pseudocódigo de implementación  
+❌ NO incluye código de producción  
+❌ NO incluye tests  
+❌ NO implementa emisión de eventos  
+
+**Implementación en próxima PR.**
 
 ---
 
