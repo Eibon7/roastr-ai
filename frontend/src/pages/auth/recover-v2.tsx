@@ -6,11 +6,12 @@
  * Uses shadcn/ui components with proper error handling and accessibility.
  *
  * Issue: ROA-380 - B2 Password Recovery Frontend UI (shadcn)
+ * Issue: B3 - Password Recovery Analytics (B3-compliant events)
  * Contract: POST /api/v2/auth/password-recovery
  * Scope: ONLY request password recovery (no reset, no token handling)
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,8 +29,11 @@ import { requestPasswordRecoveryV2 } from '@/lib/api/auth';
 // Feature flag hook
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 
-// Analytics
-import { trackEvent } from '@/lib/analytics';
+// B3: Import password recovery analytics events
+import {
+  trackPasswordRecoveryRequested,
+  trackPasswordRecoveryFailed
+} from '@/lib/password-recovery-events';
 
 // Form validation schema
 const recoverySchema = z.object({
@@ -50,6 +54,7 @@ type RecoveryFormData = z.infer<typeof recoverySchema>;
  * - Loading states with disabled inputs
  * - Accessibility (labels, aria-invalid, focus management)
  * - Success state with anti-enumeration message
+ * - B3: Password recovery analytics events (NO PII)
  * 
  * Scope: ONLY request password recovery. No reset, no token handling.
  */
@@ -70,28 +75,19 @@ export default function RecoverPageV2() {
     resolver: zodResolver(recoverySchema),
   });
 
-  // Analytics: Track form view on mount
-  useEffect(() => {
-    trackEvent('password_recovery_form_viewed', {
-      feature_flag_state: isFeatureEnabled,
-      page: '/recover',
-    });
-  }, [isFeatureEnabled]);
-
   /**
    * Handle form submission
    * POST to /api/v2/auth/password-recovery
    * Generic error handling only - no error_code interpretation
+   * B3: Tracks password_recovery_requested and password_recovery_failed events
    */
   const onSubmit = async (data: RecoveryFormData) => {
     setIsSubmitting(true);
     setHasError(false);
     setSuccess(false);
 
-    // Analytics: Track submit
-    trackEvent('password_recovery_submitted', {
-      feature_flag_state: isFeatureEnabled,
-    });
+    // B3: Track password recovery requested
+    trackPasswordRecoveryRequested(isFeatureEnabled);
 
     try {
       const response = await requestPasswordRecoveryV2(data.email);
@@ -100,30 +96,20 @@ export default function RecoverPageV2() {
       if (response.success) {
         setEmailSent(data.email);
         setSuccess(true);
-        
-        // Analytics: Track success
-        trackEvent('password_recovery_success_shown', {
-          feature_flag_state: isFeatureEnabled,
-        });
       } else {
         // Should not happen, but handle just in case
         setHasError(true);
         
-        // Analytics: Track error
-        trackEvent('password_recovery_error_shown', {
-          feature_flag_state: isFeatureEnabled,
-          error_type: 'response_not_success',
-        });
+        // B3: Track failure
+        trackPasswordRecoveryFailed(isFeatureEnabled, 'Response not success');
       }
     } catch (error) {
       // Generic error handling - no error_code interpretation
       setHasError(true);
       
-      // Analytics: Track error (no PII, no technical details)
-      trackEvent('password_recovery_error_shown', {
-        feature_flag_state: isFeatureEnabled,
-        error_type: 'network_or_exception',
-      });
+      // B3: Track failure (normalize error message)
+      const errorMessage = error instanceof Error ? error.message : 'Network or exception error';
+      trackPasswordRecoveryFailed(isFeatureEnabled, errorMessage);
     } finally {
       setIsSubmitting(false);
     }
