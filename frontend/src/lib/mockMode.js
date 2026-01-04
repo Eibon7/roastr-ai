@@ -7,7 +7,7 @@
  * TODO: Implement proper mock mode detection when needed.
  */
 
-export const isMockMode = () => {
+export const isMockModeEnabled = () => {
   return false; // Default: not in mock mode
 };
 
