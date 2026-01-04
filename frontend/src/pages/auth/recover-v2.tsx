@@ -1,11 +1,13 @@
 /**
- * Password Recovery Page Component v2
+ * Password Recovery Request Page Component v2
  *
- * Modern password recovery page aligned with backend v2 contract.
+ * Modern password recovery request page aligned with backend v2 contract.
+ * Users can request a password recovery email.
  * Uses shadcn/ui components with proper error handling and accessibility.
  *
  * Issue: ROA-380 - B2 Password Recovery Frontend UI (shadcn)
  * Contract: POST /api/v2/auth/password-recovery
+ * Scope: ONLY request password recovery (no reset, no token handling)
  */
 
 import { useState } from 'react';
@@ -34,45 +36,25 @@ const recoverySchema = z.object({
 type RecoveryFormData = z.infer<typeof recoverySchema>;
 
 /**
- * Error code to user message mapping
- * Only shows messages based on error_code from backend, never raw messages
- */
-const ERROR_MESSAGES: Record<string, string> = {
-  POLICY_INVALID_REQUEST: 'Por favor ingresa un email válido',
-  POLICY_RATE_LIMITED: 'Demasiados intentos. Por favor espera antes de intentar nuevamente',
-  AUTH_EMAIL_DISABLED: 'La recuperación de contraseña no está disponible temporalmente',
-  AUTH_DISABLED: 'La recuperación de contraseña no está disponible temporalmente',
-  AUTH_EMAIL_SEND_FAILED: 'Error al enviar el email. Por favor intenta más tarde',
-  AUTH_EMAIL_PROVIDER_ERROR: 'Error del proveedor de email. Por favor intenta más tarde',
-  AUTH_UNKNOWN: 'Algo ha fallado. Inténtalo más tarde',
-};
-
-/**
- * Get user-friendly error message from error_code
- * Exported for testing purposes
- */
-export function getErrorMessage(errorCode: string | undefined): string {
-  if (!errorCode) {
-    return ERROR_MESSAGES.AUTH_UNKNOWN;
-  }
-  return ERROR_MESSAGES[errorCode] || ERROR_MESSAGES.AUTH_UNKNOWN;
-}
-
-/**
  * RecoverPageV2 Component
  *
  * Features:
- * - Email input for password recovery with validation
- * - Contract-first error handling (error_code based)
+ * - Email input for password recovery request with validation
+ * - Simple error handling (generic error message only)
  * - Loading states with disabled inputs
  * - Accessibility (labels, aria-invalid, focus management)
  * - Success state with anti-enumeration message
+ * 
+ * Scope: ONLY request password recovery. No reset, no token handling.
  */
 export default function RecoverPageV2() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorCode, setErrorCode] = useState<string | undefined>(undefined);
+  const [hasError, setHasError] = useState(false);
   const [success, setSuccess] = useState(false);
   const [emailSent, setEmailSent] = useState('');
+
+  // Check feature flag
+  const isFeatureEnabled = useFeatureFlag('ENABLE_PASSWORD_RECOVERY_V2');
 
   const {
     register,
@@ -82,14 +64,28 @@ export default function RecoverPageV2() {
     resolver: zodResolver(recoverySchema),
   });
 
+  // Analytics: Track form view on mount
+  useEffect(() => {
+    trackEvent('password_recovery_form_viewed', {
+      feature_flag_state: isFeatureEnabled,
+      page: '/recover',
+    });
+  }, [isFeatureEnabled]);
+
   /**
    * Handle form submission
-   * POST to /api/v2/auth/password-recovery with error_code handling
+   * POST to /api/v2/auth/password-recovery
+   * Generic error handling only - no error_code interpretation
    */
   const onSubmit = async (data: RecoveryFormData) => {
     setIsSubmitting(true);
-    setErrorCode(undefined);
+    setHasError(false);
     setSuccess(false);
+
+    // Analytics: Track submit
+    trackEvent('password_recovery_submitted', {
+      feature_flag_state: isFeatureEnabled,
+    });
 
     try {
       const response = await requestPasswordRecoveryV2(data.email);
@@ -98,24 +94,63 @@ export default function RecoverPageV2() {
       if (response.success) {
         setEmailSent(data.email);
         setSuccess(true);
+        
+        // Analytics: Track success
+        trackEvent('password_recovery_success_shown', {
+          feature_flag_state: isFeatureEnabled,
+        });
       } else {
         // Should not happen, but handle just in case
-        throw new Error('Unexpected response format');
+        setHasError(true);
+        
+        // Analytics: Track error
+        trackEvent('password_recovery_error_shown', {
+          feature_flag_state: isFeatureEnabled,
+          error_type: 'response_not_success',
+        });
       }
-    } catch (error: any) {
-      // Extract error_code from backend response
-      // The API client may throw Error, but we need to extract error.slug from response data
-      // Try multiple error structures to be compatible with different error formats
-      const code = 
-        error?.error?.slug || 
-        error?.response_data?.error?.slug || 
-        error?.response?.data?.error?.slug ||
-        error?.error_code;
-      setErrorCode(code);
+    } catch (error) {
+      // Generic error handling - no error_code interpretation
+      setHasError(true);
+      
+      // Analytics: Track error (no PII, no technical details)
+      trackEvent('password_recovery_error_shown', {
+        feature_flag_state: isFeatureEnabled,
+        error_type: 'network_or_exception',
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Feature flag disabled
+  if (!isFeatureEnabled) {
+    return (
+      <AuthLayout
+        title="No Disponible"
+        description="Esta funcionalidad no está disponible en este momento"
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>Recuperación de Contraseña No Disponible</CardTitle>
+            <CardDescription>Esta funcionalidad está temporalmente deshabilitada</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                La recuperación de contraseña no está disponible en este momento.
+                Por favor, contacta al soporte si necesitas ayuda para acceder a tu cuenta.
+              </AlertDescription>
+            </Alert>
+            <Button asChild className="w-full">
+              <Link to="/login">Volver al inicio de sesión</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </AuthLayout>
+    );
+  }
 
   // Success state
   if (success) {
@@ -185,12 +220,12 @@ export default function RecoverPageV2() {
               )}
             </div>
 
-            {/* Backend Error Display */}
-            {errorCode && (
+            {/* Generic Error Display */}
+            {hasError && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription role="alert">
-                  {getErrorMessage(errorCode)}
+                  No hemos podido procesar la solicitud en este momento. Inténtalo más tarde.
                 </AlertDescription>
               </Alert>
             )}
@@ -230,4 +265,3 @@ export default function RecoverPageV2() {
     </AuthLayout>
   );
 }
-
