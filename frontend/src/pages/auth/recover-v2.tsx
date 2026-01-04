@@ -20,6 +20,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AuthLayout } from '@/components/layout/auth-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Mail, AlertCircle, CheckCircle2 } from 'lucide-react';
+// @ts-ignore - auth.js is not typed
 import { requestPasswordRecoveryV2 } from '@/lib/api/auth';
 // @ts-ignore - auth.js is not typed
 
