@@ -22,6 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, Mail, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { requestPasswordRecoveryV2 } from '@/lib/api/auth';
 
+// @ts-ignore - auth.js is not typed
 // Form validation schema
 const recoverySchema = z.object({
   email: z
@@ -77,7 +78,6 @@ export default function RecoverPageV2() {
     register,
     handleSubmit,
     formState: { errors },
-    getValues,
   } = useForm<RecoveryFormData>({
     resolver: zodResolver(recoverySchema),
   });
