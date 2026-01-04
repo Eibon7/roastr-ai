@@ -92,6 +92,16 @@ export const updatePassword = async (accessToken, password) => {
 };
 
 /**
+ * Request password recovery (v2)
+ * Contract: POST /api/v2/auth/password-recovery
+ * @param {string} email - User email
+ * @returns {Promise<Object>} Password recovery response with success and message
+ */
+export const requestPasswordRecoveryV2 = async (email) => {
+  return apiClient.post('/v2/auth/password-recovery', { email });
+};
+
+/**
  * Change email address
  * @param {string} newEmail - New email address
  * @returns {Promise<Object>} Change email response
@@ -134,6 +144,7 @@ export default {
   updateProfile,
   resetPassword,
   updatePassword,
+  requestPasswordRecoveryV2,
   changeEmail,
   exportData,
   deleteAccount,
