@@ -43,18 +43,14 @@ interface PasswordRecoveryTokenUsedProperties extends BasePasswordRecoveryBacken
  */
 interface PasswordRecoveryBackendFailedProperties extends BasePasswordRecoveryBackendEventProperties {
   /** Normalized error reason (NO raw error messages) */
-  reason: 
-    | 'token_invalid' 
-    | 'token_expired' 
-    | 'request_failed' 
-    | 'unknown_error';
+  reason: 'token_invalid' | 'token_expired' | 'request_failed' | 'unknown_error';
   /** Whether the error is retryable */
   retryable: boolean;
 }
 
 /**
  * Track password_recovery_token_used event
- * 
+ *
  * Se dispara: Cuando se usa un token válido de recuperación (updatePassword con token de recovery)
  * NO incluir user_id, email ni datos sensibles
  *
@@ -87,7 +83,7 @@ export function trackPasswordRecoveryTokenUsed(featureFlagState: boolean): void 
 
 /**
  * Track password_recovery_failed event (backend)
- * 
+ *
  * Se dispara: Error durante uso de token de recuperación
  * NO enviar mensajes de error crudos, solo códigos normalizados
  *
@@ -127,7 +123,7 @@ export function trackPasswordRecoveryBackendFailed(
 
 /**
  * Normaliza mensajes de error a reason codes estructurados
- * 
+ *
  * Reglas:
  * - NO enviar mensajes de error crudos (pueden contener PII)
  * - Usar solo códigos definidos en PasswordRecoveryBackendFailedProperties
@@ -142,26 +138,19 @@ function normalizeErrorToReason(errorMessage: string): {
   const message = errorMessage.toLowerCase();
 
   // Token inválido (no retryable)
-  if (
-    message.includes('invalid') || 
-    message.includes('jwt') || 
-    message.includes('malformed')
-  ) {
+  if (message.includes('invalid') || message.includes('jwt') || message.includes('malformed')) {
     return { reason: 'token_invalid', retryable: false };
   }
 
   // Token expirado (no retryable - necesita nuevo token)
-  if (
-    message.includes('expired') || 
-    message.includes('expir')
-  ) {
+  if (message.includes('expired') || message.includes('expir')) {
     return { reason: 'token_expired', retryable: false };
   }
 
   // Request failed (retryable)
   if (
-    message.includes('network') || 
-    message.includes('timeout') || 
+    message.includes('network') ||
+    message.includes('timeout') ||
     message.includes('connection') ||
     message.includes('failed') ||
     message.includes('unavailable')
@@ -172,4 +161,3 @@ function normalizeErrorToReason(errorMessage: string): {
   // Error desconocido (no retryable por defecto en backend)
   return { reason: 'unknown_error', retryable: false };
 }
-

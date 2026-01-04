@@ -843,7 +843,10 @@ export class AuthService {
       // Validar password
       if (!this.isValidPassword(newPassword)) {
         // B3: Track failed password update (validation error)
-        trackPasswordRecoveryBackendFailed(featureFlagState, 'Password must be at least 8 characters');
+        trackPasswordRecoveryBackendFailed(
+          featureFlagState,
+          'Password must be at least 8 characters'
+        );
 
         throw new AuthError(
           AUTH_ERROR_CODES.INVALID_REQUEST,
@@ -857,9 +860,12 @@ export class AuthService {
       if (userError || !userData.user) {
         // Si el error indica token expirado o inválido
         const errorMessage = userError?.message?.toLowerCase() || '';
-        
+
         // B3: Track failed password update (token error)
-        trackPasswordRecoveryBackendFailed(featureFlagState, userError?.message || 'Invalid or expired reset token');
+        trackPasswordRecoveryBackendFailed(
+          featureFlagState,
+          userError?.message || 'Invalid or expired reset token'
+        );
 
         if (
           errorMessage.includes('expired') ||
@@ -885,7 +891,10 @@ export class AuthService {
 
       if (updateError) {
         // B3: Track failed password update (update error)
-        trackPasswordRecoveryBackendFailed(featureFlagState, updateError.message || 'Password update failed');
+        trackPasswordRecoveryBackendFailed(
+          featureFlagState,
+          updateError.message || 'Password update failed'
+        );
 
         throw mapSupabaseError(updateError);
       }

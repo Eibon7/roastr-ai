@@ -273,4 +273,3 @@ describe('Password Recovery Backend Events (B3)', () => {
     });
   });
 });
-
