@@ -34,6 +34,10 @@ import {
   trackAuthDuration,
   logRateLimit
 } from '../utils/authObservability.js';
+import {
+  trackPasswordRecoveryTokenUsed,
+  trackPasswordRecoveryBackendFailed
+} from '../lib/password-recovery-events.js';
 
 export interface SignupParams {
   email: string;
@@ -825,9 +829,25 @@ export class AuthService {
    * @throws {AuthError} Si el token es inválido, expirado, o la contraseña no cumple requisitos
    */
   async updatePassword(accessToken: string, newPassword: string): Promise<{ message: string }> {
+    // B3: Get feature flag state for analytics
+    let featureFlagState = false;
+    try {
+      const settings = await loadSettings();
+      featureFlagState = settings?.feature_flags?.auth?.enable_password_recovery || false;
+    } catch {
+      // Fallback to false if settings can't be loaded
+      featureFlagState = false;
+    }
+
     try {
       // Validar password
       if (!this.isValidPassword(newPassword)) {
+        // B3: Track failed password update (validation error)
+        trackPasswordRecoveryBackendFailed(
+          featureFlagState,
+          'Password must be at least 8 characters'
+        );
+
         throw new AuthError(
           AUTH_ERROR_CODES.INVALID_REQUEST,
           'Password must be at least 8 characters'
@@ -840,6 +860,13 @@ export class AuthService {
       if (userError || !userData.user) {
         // Si el error indica token expirado o inválido
         const errorMessage = userError?.message?.toLowerCase() || '';
+
+        // B3: Track failed password update (token error)
+        trackPasswordRecoveryBackendFailed(
+          featureFlagState,
+          userError?.message || 'Invalid or expired reset token'
+        );
+
         if (
           errorMessage.includes('expired') ||
           errorMessage.includes('invalid') ||
@@ -853,6 +880,9 @@ export class AuthService {
         throw new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid or expired reset token');
       }
 
+      // B3: Track token usage (token is valid at this point)
+      trackPasswordRecoveryTokenUsed(featureFlagState);
+
       // Actualizar contraseña usando Supabase Admin API
       // Usamos admin.updateUserById porque tenemos service role key
       const { error: updateError } = await supabase.auth.admin.updateUserById(userData.user.id, {
@@ -860,6 +890,12 @@ export class AuthService {
       });
 
       if (updateError) {
+        // B3: Track failed password update (update error)
+        trackPasswordRecoveryBackendFailed(
+          featureFlagState,
+          updateError.message || 'Password update failed'
+        );
+
         throw mapSupabaseError(updateError);
       }
 
@@ -872,6 +908,12 @@ export class AuthService {
         message: 'Password updated successfully. You can now login with your new password.'
       };
     } catch (error) {
+      // B3: Track error if not already tracked
+      if (!(error instanceof AuthError && error.slug === AUTH_ERROR_CODES.TOKEN_INVALID)) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        trackPasswordRecoveryBackendFailed(featureFlagState, errorMessage);
+      }
+
       if (error instanceof AuthError) {
         throw error;
       }
