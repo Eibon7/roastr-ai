@@ -592,6 +592,7 @@ nodes:
     docs:
       - docs/nodes-v2/auth/overview.md
       - docs/nodes-v2/auth/login-flows.md
+      - docs/nodes-v2/auth/password-recovery.md
       - docs/nodes-v2/auth/session-management.md
       - docs/nodes-v2/auth/rate-limiting.md
       - docs/nodes-v2/auth/error-taxonomy.md
@@ -618,6 +619,7 @@ nodes:
     subnodes:
       - overview
       - login-flows
+      - password-recovery
       - session-management
       - rate-limiting
       - error-taxonomy
