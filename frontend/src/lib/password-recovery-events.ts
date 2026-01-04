@@ -34,29 +34,20 @@ interface BasePasswordRecoveryEventProperties {
  */
 interface PasswordRecoveryFailedProperties extends BasePasswordRecoveryEventProperties {
   /** Normalized error reason (NO raw error messages) */
-  reason: 
-    | 'request_failed' 
-    | 'feature_disabled' 
-    | 'rate_limited' 
-    | 'unknown_error';
+  reason: 'request_failed' | 'feature_disabled' | 'rate_limited' | 'unknown_error';
   /** Whether the error is retryable */
   retryable: boolean;
 }
 
 /**
  * Track password_recovery_requested event
- * 
+ *
  * Se dispara: Al solicitar password recovery (submit del formulario)
  * NO incluir email ni datos sensibles
  *
  * @param featureFlagState - Estado del feature flag ENABLE_PASSWORD_RECOVERY_V2
  */
 export function trackPasswordRecoveryRequested(featureFlagState: boolean): void {
-  // No-op in test environment
-  if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) {
-    return;
-  }
-
   try {
     const properties: BasePasswordRecoveryEventProperties = {
       flow: 'password_recovery',
@@ -67,28 +58,26 @@ export function trackPasswordRecoveryRequested(featureFlagState: boolean): void 
 
     amplitude.track('password_recovery_requested', properties);
   } catch (error) {
-    console.error('[Password Recovery Events] Failed to track password_recovery_requested:', error);
+    // Silently fail in test environment
+    if (import.meta.env.MODE !== 'test' && !import.meta.env.VITEST) {
+      console.error(
+        '[Password Recovery Events] Failed to track password_recovery_requested:',
+        error
+      );
+    }
   }
 }
 
 /**
  * Track password_recovery_failed event
- * 
+ *
  * Se dispara: Error durante solicitud de password recovery
  * NO enviar mensajes de error crudos, solo códigos normalizados
  *
  * @param featureFlagState - Estado del feature flag
  * @param errorMessage - Mensaje de error (será normalizado a reason)
  */
-export function trackPasswordRecoveryFailed(
-  featureFlagState: boolean,
-  errorMessage: string
-): void {
-  // No-op in test environment
-  if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) {
-    return;
-  }
-
+export function trackPasswordRecoveryFailed(featureFlagState: boolean, errorMessage: string): void {
   try {
     // Normalizar error message a reason code (NO enviar mensaje crudo)
     const { reason, retryable } = normalizeErrorToReason(errorMessage);
@@ -104,13 +93,16 @@ export function trackPasswordRecoveryFailed(
 
     amplitude.track('password_recovery_failed', properties);
   } catch (error) {
-    console.error('[Password Recovery Events] Failed to track password_recovery_failed:', error);
+    // Silently fail in test environment
+    if (import.meta.env.MODE !== 'test' && !import.meta.env.VITEST) {
+      console.error('[Password Recovery Events] Failed to track password_recovery_failed:', error);
+    }
   }
 }
 
 /**
  * Normaliza mensajes de error a reason codes estructurados
- * 
+ *
  * Reglas:
  * - NO enviar mensajes de error crudos (pueden contener PII)
  * - Usar solo códigos definidos en PasswordRecoveryFailedProperties
@@ -126,26 +118,29 @@ function normalizeErrorToReason(errorMessage: string): {
 
   // Feature deshabilitada (no retryable)
   if (
-    message.includes('disabled') || 
-    message.includes('not available') || 
-    message.includes('no disponible')
+    message.includes('disabled') ||
+    message.includes('not available') ||
+    message.includes('no disponible') ||
+    message.includes('no está disponible') ||
+    message.includes('funcionalidad')
   ) {
     return { reason: 'feature_disabled', retryable: false };
   }
 
   // Rate limited (retryable)
   if (
-    message.includes('rate') || 
-    message.includes('too many') || 
-    message.includes('throttled')
+    message.includes('rate') ||
+    message.includes('too many') ||
+    message.includes('throttled') ||
+    message.includes('limit')
   ) {
     return { reason: 'rate_limited', retryable: true };
   }
 
   // Request failed (retryable)
   if (
-    message.includes('network') || 
-    message.includes('timeout') || 
+    message.includes('network') ||
+    message.includes('timeout') ||
     message.includes('connection') ||
     message.includes('failed')
   ) {
@@ -155,4 +150,3 @@ function normalizeErrorToReason(errorMessage: string): {
   // Error desconocido (retryable por defecto)
   return { reason: 'unknown_error', retryable: true };
 }
-

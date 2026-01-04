@@ -34,15 +34,12 @@ describe('Password Recovery Frontend Events (B3)', () => {
       trackPasswordRecoveryRequested(true);
 
       // Assert
-      expect(amplitude.track).toHaveBeenCalledWith(
-        'password_recovery_requested',
-        {
-          flow: 'password_recovery',
-          feature_flag_state: true,
-          provider: 'supabase',
-          request_source: 'auth_ui'
-        }
-      );
+      expect(amplitude.track).toHaveBeenCalledWith('password_recovery_requested', {
+        flow: 'password_recovery',
+        feature_flag_state: true,
+        provider: 'supabase',
+        request_source: 'auth_ui'
+      });
     });
 
     it('should emit event with feature_flag_state=false when disabled', () => {
@@ -88,7 +85,7 @@ describe('Password Recovery Frontend Events (B3)', () => {
       expect(properties).not.toHaveProperty('ip_address');
     });
 
-    it('should skip emission in test environment', () => {
+    it('should emit event even in test environment (for testability)', () => {
       // Arrange
       (import.meta as any).env = { MODE: 'test', VITEST: true };
 
@@ -96,7 +93,7 @@ describe('Password Recovery Frontend Events (B3)', () => {
       trackPasswordRecoveryRequested(true);
 
       // Assert
-      expect(amplitude.track).not.toHaveBeenCalled();
+      expect(amplitude.track).toHaveBeenCalled();
     });
 
     it('should handle errors gracefully and not throw', () => {
@@ -212,7 +209,7 @@ describe('Password Recovery Frontend Events (B3)', () => {
       expect(properties).toHaveProperty('retryable');
     });
 
-    it('should skip emission in test environment', () => {
+    it('should emit event even in test environment (for testability)', () => {
       // Arrange
       (import.meta as any).env = { MODE: 'test', VITEST: true };
 
@@ -220,7 +217,7 @@ describe('Password Recovery Frontend Events (B3)', () => {
       trackPasswordRecoveryFailed(true, 'Error');
 
       // Assert
-      expect(amplitude.track).not.toHaveBeenCalled();
+      expect(amplitude.track).toHaveBeenCalled();
     });
 
     it('should handle errors gracefully and not throw', () => {
@@ -293,4 +290,3 @@ describe('Password Recovery Frontend Events (B3)', () => {
     });
   });
 });
-
