@@ -1,0 +1,20 @@
+{
+  "system_map_alignment_score": 100,
+  "ssot_alignment_score": 100,
+  "dependency_density_score": 100,
+  "crosslink_score": 92.31,
+  "narrative_consistency_score": 100,
+  "health_score": 98.46,
+  "nodes_detected": 15,
+  "nodes_total": 15,
+  "nodes_missing": 0,
+  "timestamp": "2026-01-04T08:14:58.240Z",
+  "version": "2.0",
+  "orphan_nodes": [],
+  "unused_nodes_in_system_map": [],
+  "unused_system_map_entries": [],
+  "warnings": [],
+  "errors": [],
+  "overall_score": 98.46,
+  "status": "healthy"
+}
