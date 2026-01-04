@@ -211,7 +211,9 @@ class ApiClient {
         '/auth/register',
         '/auth/magic-link',
         '/auth/signup/magic-link',
-        '/auth/reset-password'
+        '/auth/reset-password',
+        '/v2/auth/password-recovery',
+        '/v2/auth/update-password'
       ];
 
       if (!publicEndpoints.some((ep) => endpoint.includes(ep))) {
