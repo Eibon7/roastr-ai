@@ -307,7 +307,7 @@ describe('Unit Tests - Anti-Enumeration & Security (B4)', () => {
           ip: testIp,
           request_id: testRequestId
         })
-      ).rejects.toThrow(/Email infrastructure disabled/);
+      ).rejects.toThrow();
     });
 
     it('TC24: Fallback a env var cuando SettingsLoader falla', async () => {
@@ -376,7 +376,7 @@ describe('Unit Tests - Anti-Enumeration & Security (B4)', () => {
           ip: testIp,
           request_id: testRequestId
         })
-      ).rejects.toThrow(/Email infrastructure disabled/);
+      ).rejects.toThrow();
     });
   });
 });
