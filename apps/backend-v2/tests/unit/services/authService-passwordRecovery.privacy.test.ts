@@ -78,9 +78,7 @@ describe('Unit Tests - PII Protection & Analytics (B4)', () => {
       blockedUntil: null
     });
 
-    vi.spyOn(authEmailService, 'assertAuthEmailInfrastructureEnabled').mockResolvedValue(
-      undefined
-    );
+    vi.spyOn(authEmailService, 'assertAuthEmailInfrastructureEnabled').mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -125,10 +123,8 @@ describe('Unit Tests - PII Protection & Analytics (B4)', () => {
       ];
 
       // Check that email doesn't appear in plain text
-      const hasPlainEmail = loggerCalls.some((call) =>
-        JSON.stringify(call).includes(email)
-      );
-      
+      const hasPlainEmail = loggerCalls.some((call) => JSON.stringify(call).includes(email));
+
       // If email appears, it should ONLY be truncated/hashed
       // (Implementation note: truncateEmailForLog() should be used)
       expect(hasPlainEmail).toBe(false); // In production, logs should use truncateEmailForLog()
@@ -169,9 +165,7 @@ describe('Unit Tests - PII Protection & Analytics (B4)', () => {
         ...(logger.error as any).mock.calls
       ];
 
-      const hasPasswordInLogs = loggerCalls.some((call) =>
-        JSON.stringify(call).includes(password)
-      );
+      const hasPasswordInLogs = loggerCalls.some((call) => JSON.stringify(call).includes(password));
 
       expect(hasPasswordInLogs).toBe(false);
     });
@@ -211,9 +205,7 @@ describe('Unit Tests - PII Protection & Analytics (B4)', () => {
         ...(logger.error as any).mock.calls
       ];
 
-      const hasTokenInLogs = loggerCalls.some((call) =>
-        JSON.stringify(call).includes(accessToken)
-      );
+      const hasTokenInLogs = loggerCalls.some((call) => JSON.stringify(call).includes(accessToken));
 
       expect(hasTokenInLogs).toBe(false);
     });
@@ -250,10 +242,7 @@ describe('Unit Tests - PII Protection & Analytics (B4)', () => {
 
       // Assert - IP should only appear in rate limiting context, NOT user logs
       // (Implementation note: IP is used for rate limiting but not logged with user data)
-      const loggerCalls = [
-        ...(logger.info as any).mock.calls,
-        ...(logger.warn as any).mock.calls
-      ];
+      const loggerCalls = [...(logger.info as any).mock.calls, ...(logger.warn as any).mock.calls];
 
       // IP may appear in rate limiting logs (acceptable), but NOT in user-related logs
       // This test documents the contract requirement
@@ -304,7 +293,7 @@ describe('Unit Tests - PII Protection & Analytics (B4)', () => {
           expect(eventData).not.toContain('token');
         });
       }
-      
+
       // Test passes regardless of whether analytics was called
       expect(true).toBe(true);
     });

@@ -88,7 +88,7 @@ describe('Integration Tests - Password Recovery v2 (B4)', () => {
     it('TC1: Request exitoso con email válido', async () => {
       // Arrange
       const email = 'user@example.com';
-      
+
       // Mock Supabase user lookup (user exists)
       vi.spyOn(supabase.auth.admin, 'listUsers').mockResolvedValue({
         data: {
@@ -129,9 +129,7 @@ describe('Integration Tests - Password Recovery v2 (B4)', () => {
 
       // Assert
       expect(result.success).toBe(true);
-      expect(result.message).toBe(
-        'If this email exists, a password recovery link has been sent'
-      );
+      expect(result.message).toBe('If this email exists, a password recovery link has been sent');
       expect(authEmailService.sendPasswordRecoveryEmailAfterPreflight).toHaveBeenCalledWith(
         email,
         expect.objectContaining({ request_id: testRequestId })
@@ -163,10 +161,7 @@ describe('Integration Tests - Password Recovery v2 (B4)', () => {
       );
 
       // Mock email sending (should NOT be called)
-      const sendEmailSpy = vi.spyOn(
-        authEmailService,
-        'sendPasswordRecoveryEmailAfterPreflight'
-      );
+      const sendEmailSpy = vi.spyOn(authEmailService, 'sendPasswordRecoveryEmailAfterPreflight');
 
       // Act
       const result = await authService.requestPasswordRecovery({
@@ -177,9 +172,7 @@ describe('Integration Tests - Password Recovery v2 (B4)', () => {
 
       // Assert - CRITICAL: Same message as valid user (anti-enumeration)
       expect(result.success).toBe(true);
-      expect(result.message).toBe(
-        'If this email exists, a password recovery link has been sent'
-      );
+      expect(result.message).toBe('If this email exists, a password recovery link has been sent');
       // Email should NOT be sent
       expect(sendEmailSpy).not.toHaveBeenCalled();
     });
@@ -215,10 +208,7 @@ describe('Integration Tests - Password Recovery v2 (B4)', () => {
       );
 
       // Mock email sending (should NOT be called for admin)
-      const sendEmailSpy = vi.spyOn(
-        authEmailService,
-        'sendPasswordRecoveryEmailAfterPreflight'
-      );
+      const sendEmailSpy = vi.spyOn(authEmailService, 'sendPasswordRecoveryEmailAfterPreflight');
 
       // Act
       const result = await authService.requestPasswordRecovery({
@@ -229,9 +219,7 @@ describe('Integration Tests - Password Recovery v2 (B4)', () => {
 
       // Assert - CRITICAL: Same message as valid user (anti-enumeration)
       expect(result.success).toBe(true);
-      expect(result.message).toBe(
-        'If this email exists, a password recovery link has been sent'
-      );
+      expect(result.message).toBe('If this email exists, a password recovery link has been sent');
       // Email should NOT be sent for admin
       expect(sendEmailSpy).not.toHaveBeenCalled();
     });
@@ -249,10 +237,7 @@ describe('Integration Tests - Password Recovery v2 (B4)', () => {
       });
 
       // Mock feature flag disabled (fail-closed)
-      vi.spyOn(
-        authEmailService,
-        'assertAuthEmailInfrastructureEnabled'
-      ).mockRejectedValue(
+      vi.spyOn(authEmailService, 'assertAuthEmailInfrastructureEnabled').mockRejectedValue(
         new Error('[AUTH_EMAIL_DISABLED] Email infrastructure disabled')
       );
 
@@ -277,10 +262,7 @@ describe('Integration Tests - Password Recovery v2 (B4)', () => {
       });
 
       // Mock email infrastructure disabled
-      vi.spyOn(
-        authEmailService,
-        'assertAuthEmailInfrastructureEnabled'
-      ).mockRejectedValue(
+      vi.spyOn(authEmailService, 'assertAuthEmailInfrastructureEnabled').mockRejectedValue(
         new Error('[AUTH_EMAIL_DISABLED] Email infrastructure disabled')
       );
 
@@ -418,9 +400,7 @@ describe('Integration Tests - Password Recovery v2 (B4)', () => {
         });
         // If success, verify it's generic anti-enumeration response
         expect(result.success).toBe(true);
-        expect(result.message).toBe(
-          'If this email exists, a password recovery link has been sent'
-        );
+        expect(result.message).toBe('If this email exists, a password recovery link has been sent');
       } catch (error) {
         // If throws, that's also acceptable (fail-safe)
         expect(error).toBeDefined();
@@ -561,4 +541,3 @@ describe('Integration Tests - Password Recovery v2 (B4)', () => {
     });
   });
 });
-

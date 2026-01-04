@@ -76,9 +76,7 @@ describe('Unit Tests - Anti-Enumeration & Security (B4)', () => {
       blockedUntil: null
     });
 
-    vi.spyOn(authEmailService, 'assertAuthEmailInfrastructureEnabled').mockResolvedValue(
-      undefined
-    );
+    vi.spyOn(authEmailService, 'assertAuthEmailInfrastructureEnabled').mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -380,4 +378,3 @@ describe('Unit Tests - Anti-Enumeration & Security (B4)', () => {
     });
   });
 });
-
