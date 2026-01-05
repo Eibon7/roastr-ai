@@ -1,8 +1,8 @@
 # Auth - Password Recovery
 
 **Subnodo de:** `auth`  
-**Última actualización:** 2026-01-02  
-**Owner:** ROA-379 (B1)
+**Última actualización:** 2026-01-05  
+**Owner:** ROA-383 (B5 Password Recovery Documentation v2)
 
 ---
 
@@ -183,6 +183,53 @@ Content-Type: application/json
 
 ---
 
+## 🔄 Complete Password Recovery Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant API
+    participant SupabaseAuth
+    participant EmailService
+    participant EmailProvider
+
+    User->>Frontend: Click "Forgot password"
+    Frontend->>API: POST /api/v2/auth/password-recovery
+    API->>API: Check feature flag (auth_enable_password_recovery)
+    API->>API: Check rate limit (A4)
+    API->>API: Check abuse detection (A4)
+    API->>SupabaseAuth: admin.listUsers (buscar email)
+    
+    alt Email no existe
+        API-->>Frontend: { success: true, message: "If this email exists..." }
+        Frontend-->>User: Mostrar mensaje genérico
+    else Email existe (admin/superadmin)
+        API-->>Frontend: { success: true, message: "If this email exists..." }
+        Frontend-->>User: Mostrar mensaje genérico
+    else Email existe (usuario válido)
+        API->>SupabaseAuth: resetPasswordForEmail(email, redirectUrl)
+        SupabaseAuth->>EmailService: Enviar email de recovery
+        EmailService->>EmailProvider: Enviar email (Resend)
+        EmailProvider-->>User: Email con link de reset
+        API-->>Frontend: { success: true, message: "If this email exists..." }
+        Frontend-->>User: Mostrar mensaje genérico
+        
+        Note over User: Usuario hace clic en link
+        User->>Frontend: Redirect desde email (con access_token)
+        Frontend->>Frontend: Extraer access_token de URL
+        User->>Frontend: Ingresar nueva contraseña
+        Frontend->>API: POST /api/v2/auth/update-password
+        API->>API: Validar token (getUser)
+        API->>SupabaseAuth: admin.updateUserById (actualizar password)
+        SupabaseAuth-->>API: Password actualizado
+        API-->>Frontend: { success: true, message: "Password updated..." }
+        Frontend-->>User: Mostrar éxito, redirigir a login
+    end
+```
+
+---
+
 ## 🚨 Error Codes (Contractual)
 
 ### Validación (400)
@@ -229,22 +276,25 @@ Content-Type: application/json
 
 **Source:** `admin-controlled.yaml` o `admin_settings` table (Supabase)
 
-**Default:** `true` (password recovery habilitado por defecto)
+**Default:** `false` (fail-closed for security - SSOT v2, sección 3.2)
 
-**Fallback:** `process.env.AUTH_ENABLE_PASSWORD_RECOVERY` (si SettingsLoader falla)
+**Fallback:** No environment variable fallbacks (SSOT v2 enforcement)
 
 **Contract:**
 
 1. El endpoint **MUST** verificar `auth_enable_password_recovery` **ANTES** de cualquier validación
-2. Si `auth_enable_password_recovery === false` → **MUST** retornar `AUTH_EMAIL_DISABLED` (403)
-3. Si SettingsLoader falla y no hay env var → **MUST** bloquear (fail-closed)
-4. **MUST NOT** procesar password recovery si feature flag está deshabilitado
+2. Si `auth_enable_password_recovery === false` → **MUST** retornar `AUTH_DISABLED` (403)
+3. **MUST NOT** procesar password recovery si feature flag está deshabilitado
+4. **MUST** emitir evento de observabilidad: `auth_feature_blocked` con flag context
+5. **MUST** fail-closed (no simular éxito si infraestructura está deshabilitada)
 
 ### `auth_enable_emails`
 
 **Source:** `admin-controlled.yaml` o `admin_settings` table (Supabase)
 
-**Default:** `true` (emails habilitados por defecto)
+**Default:** `false` (fail-closed for security - SSOT v2, sección 3.2)
+
+**Fallback:** No environment variable fallbacks (SSOT v2 enforcement)
 
 **Contract:**
 
@@ -252,6 +302,7 @@ Content-Type: application/json
 2. Si `auth_enable_emails === false` → **MUST** retornar `AUTH_EMAIL_DISABLED` (403)
 3. **MUST NOT** enviar email si feature flag está deshabilitado
 4. **MUST** fallar (fail-closed) incluso si el email no existe (no simular éxito)
+5. **MUST** emitir evento de observabilidad: `auth_email_blocked` con flag context
 
 **Fail-Closed Contract:**
 
@@ -302,6 +353,30 @@ El endpoint `/update-password` **MUST** usar el mismo tipo de rate limiting que 
 **Tipo:** `password_recovery` (compartido)
 
 **Límites:** Mismos que `/password-recovery` (3 intentos / 1 hora)
+
+### Rate Limit Type Sharing (IMPORTANT)
+
+**Tipo compartido:** `password_recovery`
+
+Los endpoints `/password-recovery` y `/update-password` **MUST** compartir el mismo tipo de rate limiting:
+
+**Razón:** Prevenir abuse patterns donde atacantes alternan entre solicitar recovery y actualizar password.
+
+**Implicación:** 
+- Si un usuario excede el límite en `/password-recovery`, también estará bloqueado en `/update-password`
+- Los 3 intentos / 1 hora aplican al flujo completo, no por endpoint
+
+**Ejemplo:**
+```typescript
+// Usuario solicita recovery 3 veces (límite alcanzado)
+POST /api/v2/auth/password-recovery (attempt 1) ✅
+POST /api/v2/auth/password-recovery (attempt 2) ✅
+POST /api/v2/auth/password-recovery (attempt 3) ✅
+POST /api/v2/auth/password-recovery (attempt 4) ❌ 429 POLICY_RATE_LIMITED
+
+// Ahora también está bloqueado en update-password (mismo tipo)
+POST /api/v2/auth/update-password ❌ 429 POLICY_RATE_LIMITED
+```
 
 ---
 
@@ -499,6 +574,35 @@ logPasswordRecoveryRequest(context, success, error?);
 - `auth_password_updated` (success)
 - `auth_password_update_failed` (failure con error_slug)
 
+### Feature Blocking Events
+
+**Cuando feature flag está OFF:**
+
+**Evento:** `auth_feature_blocked`
+```typescript
+{
+  feature: 'password_recovery',
+  flag: 'auth_enable_password_recovery' | 'auth_enable_emails',
+  flag_value: false,
+  endpoint: '/api/v2/auth/password-recovery' | '/api/v2/auth/update-password',
+  timestamp: ISO8601,
+  // NO incluir PII (email)
+}
+```
+
+**Amplitude event:**
+- `auth_endpoint_blocked` (properties: endpoint, flag, reason)
+
+**Logging:**
+```typescript
+logger.warn('auth.feature_disabled', {
+  feature: 'password_recovery',
+  flag: 'auth_enable_password_recovery',
+  request_id: context.request_id
+  // NO incluir email ni datos sensibles
+});
+```
+
 ### Graceful Degradation Contract
 
 **Regla:** Si analytics falla, el flujo **MUST NOT** interrumpirse.
@@ -538,6 +642,7 @@ try {
 | **Email Sending** | Mensaje genérico de éxito | Provider usado (Resend), infraestructura de email, errores de envío |
 | **Analytics** | N/A (no visible) | Eventos trackeados, userId, duración, métricas |
 | **Feature Flags** | N/A (no visible directamente) | Estado de flags, configuración, fallbacks |
+| **Feature Blocking** | `AUTH_DISABLED` error | Evento `auth_feature_blocked`, flag name, policy context |
 
 **Principios:**
 
@@ -545,6 +650,7 @@ try {
 2. **Internal:** Todo lo demás (analytics, logging, side-effects) es invisible
 3. **Anti-enumeration:** El usuario **MUST NOT** poder determinar si un email existe o no
 4. **Security:** Detalles técnicos (IPs, tokens, errors internos) **MUST NOT** exponerse
+5. **Feature blocking transparency:** Usuario ve error genérico, internamente se logea el flag específico
 
 ---
 
@@ -619,11 +725,11 @@ SUPABASE_REDIRECT_URL=https://app.roastr.ai/auth/reset-password
 
 **Optional:**
 ```bash
-AUTH_ENABLE_PASSWORD_RECOVERY=true  # Fallback si SettingsLoader falla
-AUTH_ENABLE_EMALS=true  # Fallback si SettingsLoader falla
-RESEND_API_KEY=your-resend-key  # Para emails de recuperación
+AUTH_ENABLE_PASSWORD_RECOVERY=false  # Fallback si SettingsLoader falla (fail-closed)
+AUTH_ENABLE_EMAILS=false             # Fallback si SettingsLoader falla (fail-closed)
+RESEND_API_KEY=your-resend-key       # Para emails de recuperación
 AUTH_EMAIL_FROM=Roastr <noreply@roastr.ai>  # From address para emails
-NODE_ENV=production  # test | development | production
+NODE_ENV=production                  # test | development | production
 ```
 
 ### SSOT Configuration
@@ -632,8 +738,8 @@ NODE_ENV=production  # test | development | production
 
 ```yaml
 feature_flags:
-  auth_enable_password_recovery: true  # Default: true
-  auth_enable_emails: true             # Required para password recovery
+  auth_enable_password_recovery: false  # Default: false (fail-closed)
+  auth_enable_emails: false             # Default: false (fail-closed)
 ```
 
 **Database:** `admin_settings` table (overrides YAML)
@@ -868,55 +974,6 @@ echo $AUTH_ENABLE_PASSWORD_RECOVERY
 
 ---
 
-## 🔄 Integration Flow
-
-### Complete Password Recovery Flow
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Frontend
-    participant API
-    participant SupabaseAuth
-    participant EmailService
-    participant EmailProvider
-
-    User->>Frontend: Click "Forgot password"
-    Frontend->>API: POST /api/v2/auth/password-recovery
-    API->>API: Check feature flag (auth_enable_password_recovery)
-    API->>API: Check rate limit (A4)
-    API->>API: Check abuse detection (A4)
-    API->>SupabaseAuth: admin.listUsers (buscar email)
-    
-    alt Email no existe
-        API-->>Frontend: { success: true, message: "If this email exists..." }
-        Frontend-->>User: Mostrar mensaje genérico
-    else Email existe (admin/superadmin)
-        API-->>Frontend: { success: true, message: "If this email exists..." }
-        Frontend-->>User: Mostrar mensaje genérico
-    else Email existe (usuario válido)
-        API->>SupabaseAuth: resetPasswordForEmail(email, redirectUrl)
-        SupabaseAuth->>EmailService: Enviar email de recovery
-        EmailService->>EmailProvider: Enviar email (Resend)
-        EmailProvider-->>User: Email con link de reset
-        API-->>Frontend: { success: true, message: "If this email exists..." }
-        Frontend-->>User: Mostrar mensaje genérico
-        
-        Note over User: Usuario hace clic en link
-        User->>Frontend: Redirect desde email (con access_token)
-        Frontend->>Frontend: Extraer access_token de URL
-        User->>Frontend: Ingresar nueva contraseña
-        Frontend->>API: POST /api/v2/auth/update-password
-        API->>API: Validar token (getUser)
-        API->>SupabaseAuth: admin.updateUserById (actualizar password)
-        SupabaseAuth-->>API: Password actualizado
-        API-->>Frontend: { success: true, message: "Password updated..." }
-        Frontend-->>User: Mostrar éxito, redirigir a login
-    end
-```
-
----
-
-**Última actualización:** 2026-01-02  
-**Owner:** ROA-379 (B1 Password Recovery Backend v2)
+**Última actualización:** 2026-01-05  
+**Owner:** ROA-383 (B5 Password Recovery Documentation v2)
 
