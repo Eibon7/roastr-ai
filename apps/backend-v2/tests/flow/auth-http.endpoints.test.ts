@@ -324,7 +324,7 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
     it('valida email requerido (400)', async () => {
       const { default: app } = await import('../../src/index');
       const res = await request(app).post('/api/v2/auth/password-recovery').send({});
-      
+
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
       expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.INVALID_REQUEST);
