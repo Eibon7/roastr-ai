@@ -455,6 +455,107 @@ router.post(
 );
 
 /**
+ * POST /api/v2/auth/update-password
+ * Actualiza contraseña usando token de recuperación del email
+ * Rate limited: 3 intentos en 1 hora (compartido con /password-recovery)
+ *
+ * Request body:
+ * - access_token: string (REQUIRED) - Token de recuperación del email
+ * - password: string (REQUIRED) - Nueva contraseña (8-128 caracteres)
+ *
+ * Response (200 OK):
+ * - { success: true, message: "Password updated successfully..." }
+ *
+ * Errors:
+ * - 400 POLICY_INVALID_REQUEST - Validación de input falla
+ * - 401 TOKEN_INVALID - Token inválido o expirado
+ * - 403 AUTH_DISABLED - Feature flag OFF o policy gate bloqueó
+ * - 429 POLICY_RATE_LIMITED - Rate limit excedido
+ * - 500 AUTH_UNKNOWN - Error técnico
+ */
+router.post(
+  '/update-password',
+  rateLimitByType('password_recovery'),
+  async (req: Request, res: Response) => {
+    const ip = getClientIp(req);
+    const userAgent = (req.headers['user-agent'] as string) || null;
+    const request_id = getRequestId(req);
+
+    try {
+      // ROA-406: Feature flag check (fail-closed, no env fallback) + ROA-410: observability
+      await isAuthEndpointEnabled(
+        'auth_enable_password_recovery',
+        'auth_enable_password_recovery'
+      ).catch((err) => {
+        const context = createAuthContext(req, {
+          flow: 'update_password',
+          request_id
+        });
+        logFeatureDisabled(context, 'auth_enable_password_recovery', 'feature_disabled');
+        throw err;
+      });
+
+      const { access_token, password } = req.body;
+
+      // Validación de input: access_token
+      if (!access_token || typeof access_token !== 'string' || access_token.trim().length === 0) {
+        return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+          log: { policy: 'validation:update_password:access_token' }
+        });
+      }
+
+      // Validación de input: password
+      if (!password || typeof password !== 'string') {
+        return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+          log: { policy: 'validation:update_password:password_required' }
+        });
+      }
+
+      if (password.length < 8) {
+        return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+          log: { policy: 'validation:update_password:password_too_short' }
+        });
+      }
+
+      if (password.length > 128) {
+        return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST), {
+          log: { policy: 'validation:update_password:password_too_long' }
+        });
+      }
+
+      // ✅ A3 POLICY GATE: Check policies BEFORE auth logic
+      const policyResult = await checkAuthPolicy({
+        action: 'update_password',
+        ip,
+        userAgent
+      });
+
+      if (!policyResult.allowed) {
+        logger.warn('AuthPolicyGate blocked update_password', {
+          policy: policyResult.policy,
+          reason: policyResult.reason
+        });
+
+        return sendAuthError(req, res, new AuthError(AUTH_ERROR_CODES.AUTH_DISABLED), {
+          log: { policy: `auth_policy_gate:${policyResult.policy}` }
+        });
+      }
+
+      // Llamar servicio authService.updatePassword()
+      const result = await authService.updatePassword(access_token, password);
+
+      res.json({
+        success: true,
+        message: result.message
+      });
+      return;
+    } catch (error) {
+      return sendAuthError(req, res, error, { log: { policy: 'update_password' } });
+    }
+  }
+);
+
+/**
  * GET /api/v2/auth/me
  * Obtiene información del usuario actual
  */
