@@ -347,6 +347,28 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
       expect(res.body.message).toContain('If this email exists');
       expect(mockAuthService.requestPasswordRecovery).toHaveBeenCalled();
     });
+
+    it('devuelve 403 cuando feature flag está deshabilitado', async () => {
+      // Temporarily override loadSettings mock
+      const { loadSettings } = await import('../../src/lib/loadSettings');
+      vi.mocked(loadSettings).mockResolvedValueOnce({
+        feature_flags: {
+          auth_enable_login: true,
+          auth_enable_register: true,
+          auth_enable_magic_link: true,
+          auth_enable_password_recovery: false
+        }
+      });
+
+      const { default: app } = await import('../../src/index');
+      const res = await request(app).post('/api/v2/auth/password-recovery').send({
+        email: 'user@example.com'
+      });
+
+      expect(res.status).toBe(401); // AUTH_DISABLED tiene http_status 401
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.AUTH_DISABLED);
+    });
   });
 
   describe('POST /api/v2/auth/update-password', () => {
@@ -420,7 +442,7 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
 
     it('mapea TOKEN_INVALID cuando token es inválido (401)', async () => {
       mockAuthService.updatePassword.mockRejectedValueOnce(
-        new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID, 'Invalid or expired reset token')
+        new AuthError(AUTH_ERROR_CODES.TOKEN_INVALID)
       );
 
       const { default: app } = await import('../../src/index');
@@ -436,7 +458,7 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
 
     it('mapea AUTH_UNKNOWN en errores técnicos (500)', async () => {
       mockAuthService.updatePassword.mockRejectedValueOnce(
-        new AuthError(AUTH_ERROR_CODES.UNKNOWN, 'Internal authentication error')
+        new AuthError(AUTH_ERROR_CODES.UNKNOWN)
       );
 
       const { default: app } = await import('../../src/index');
@@ -448,6 +470,29 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
       expect(res.status).toBe(500);
       expect(res.body.success).toBe(false);
       expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.UNKNOWN);
+    });
+
+    it('devuelve 403 cuando feature flag está deshabilitado', async () => {
+      // Temporarily override loadSettings mock
+      const { loadSettings } = await import('../../src/lib/loadSettings');
+      vi.mocked(loadSettings).mockResolvedValueOnce({
+        feature_flags: {
+          auth_enable_login: true,
+          auth_enable_register: true,
+          auth_enable_magic_link: true,
+          auth_enable_password_recovery: false
+        }
+      });
+
+      const { default: app } = await import('../../src/index');
+      const res = await request(app).post('/api/v2/auth/update-password').send({
+        access_token: 'valid-token',
+        password: 'NewPassword123'
+      });
+
+      expect(res.status).toBe(401); // AUTH_DISABLED tiene http_status 401
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.slug).toBe(AUTH_ERROR_CODES.AUTH_DISABLED);
     });
   });
 });
