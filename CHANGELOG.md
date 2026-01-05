@@ -2,6 +2,57 @@
 
 ## [Unreleased]
 
+### 📚 ROA-383: B5 Password Recovery Documentation v2 - 2026-01-05
+
+#### Documentation Updates
+
+- **Updated `docs/nodes-v2/auth/password-recovery.md` to B5 standard**
+  - Corrected feature flag defaults: `auth_enable_password_recovery` and `auth_enable_emails` from `true` → `false` (fail-closed for security, SSOT v2 §3.2)
+  - Eliminated fallbacks to environment variables (SSOT v2 enforcement)
+  - Added obligation to emit `auth_feature_blocked` event when features are disabled
+
+- **Improved B5 Format**
+  - Moved Complete Password Recovery Flow diagram from end → after endpoint definitions (more prominent)
+  - Reorganized content for better readability and comprehension
+
+- **Clarified Rate Limiting Behavior**
+  - Added "Rate Limit Type Sharing (IMPORTANT)" subsection
+  - Documented why `/password-recovery` and `/update-password` share the same rate limit type
+  - Included practical code examples showing shared limit behavior
+
+- **Expanded Visibility Table**
+  - Added "Feature Blocking" row with visibility details
+  - Added principle: "Feature blocking transparency"
+  - Complete coverage of all system aspects
+
+- **Enhanced Observability**
+  - New "Feature Blocking Events" subsection
+  - Complete structure for `auth_feature_blocked` event
+  - Amplitude event: `auth_endpoint_blocked`
+  - Logging examples with PII protection
+
+- **Updated Configuration**
+  - Environment variables with correct defaults (`false`)
+  - YAML configuration aligned with SSOT v2
+  - "fail-closed" notation in all examples
+
+#### Validation Results
+
+- ✅ `validate-v2-doc-paths.js --ci`: 21/21 paths exist
+- ✅ `validate-ssot-health.js --ci`: Health Score 100/100
+- ✅ `check-system-map-drift.js --ci`: Symmetry check PASS
+- ✅ `validate-strong-concepts.js --ci`: No duplication detected
+
+#### Files Changed
+
+- `docs/nodes-v2/auth/password-recovery.md` (+664 lines, -65 lines)
+- `docs/plan/issue-ROA-383.md` (new)
+- `docs/agents/receipts/cursor-documentation-ROA-383.md` (new)
+
+**References:** ROA-379 (B1 - original doc), ROA-364 (B5 Login format), SSOT v2 §3.2, §12.4
+
+---
+
 ### 🔍 ROA-410: Auth Observability Base v2 - 2026-01-01
 
 #### Core Observability Service

@@ -189,7 +189,6 @@ POST /api/v2/auth/password-recovery (attempt 4) ❌ 429 POLICY_RATE_LIMITED
 // Ahora también está bloqueado en update-password
 POST /api/v2/auth/update-password ❌ 429 POLICY_RATE_LIMITED
 ```
-```
 
 ### Paso 4: Mejorar Visibility Table
 
@@ -243,7 +242,6 @@ logger.warn('auth.feature_disabled', {
   request_id: context.request_id
   // NO incluir email ni datos sensibles
 });
-```
 ```
 
 ### Paso 6: Validaciones
@@ -313,13 +311,13 @@ node scripts/guardian-gdd.js --full
 
 ### Archivos Modificados
 
-```
+```plaintext
 docs/nodes-v2/auth/password-recovery.md   # Correcciones y mejoras
 ```
 
 ### Archivos NO Modificados (Solo Referencias)
 
-```
+```plaintext
 docs/SSOT-V2.md                          # Referencia para feature flags
 docs/system-map-v2.yaml                   # Referencia para dependencias
 docs/nodes-v2/auth/overview.md            # Referencia para contexto
