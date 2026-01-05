@@ -25,6 +25,10 @@ import { checkAuthPolicy } from '../auth/authPolicyGate.js';
 import { isAuthEndpointEnabled } from '../lib/authFlags.js';
 import { truncateEmailForLog } from '../utils/pii.js';
 import { createAuthContext, logFeatureDisabled } from '../utils/authObservability.js';
+import {
+  emitFeatureFlagDecision,
+  emitAuthPolicyGateDecision
+} from '../lib/policyObservability.js';
 
 const router = Router();
 
@@ -76,14 +80,23 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
 
   try {
     // ROA-406: Feature flag check (fail-closed, no env fallback) + ROA-410: observability
-    await isAuthEndpointEnabled('auth_enable_register', 'auth_enable_register').catch((err) => {
-      const context = createAuthContext(req, {
-        flow: 'register',
-        email: truncateEmailForLog(String(normalizedEmail ?? ''))
+    await isAuthEndpointEnabled('auth_enable_register', 'auth_enable_register')
+      .then(() => {
+        // ROA-396: Policy decision observability
+        emitFeatureFlagDecision({ flow: 'register', allowed: true, request_id });
+      })
+      .catch((err) => {
+        const context = createAuthContext(req, {
+          flow: 'register',
+          email: truncateEmailForLog(String(normalizedEmail ?? ''))
+        });
+        logFeatureDisabled(context, 'auth_enable_register', 'feature_disabled');
+
+        // ROA-396: Policy decision observability
+        emitFeatureFlagDecision({ flow: 'register', allowed: false, request_id });
+
+        throw err;
       });
-      logFeatureDisabled(context, 'auth_enable_register', 'feature_disabled');
-      throw err;
-    });
 
     // ✅ A3 POLICY GATE: Check policies BEFORE auth logic
     const policyResult = await checkAuthPolicy({
@@ -100,6 +113,9 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
         reason: policyResult.reason
       });
 
+      // ROA-396: Policy decision observability
+      emitAuthPolicyGateDecision({ flow: 'register', allowed: false, request_id });
+
       // Map policy result to AuthError
       const errorCode =
         policyResult.policy === 'rate_limit'
@@ -113,6 +129,9 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
         retryAfterSeconds: policyResult.retryAfterSeconds
       });
     }
+
+    // ROA-396: Policy decision observability
+    emitAuthPolicyGateDecision({ flow: 'register', allowed: true, request_id });
 
     // Policy gate passed - proceed with auth business logic
     await authService.register({
