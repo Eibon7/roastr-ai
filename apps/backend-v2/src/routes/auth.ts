@@ -25,10 +25,7 @@ import { checkAuthPolicy } from '../auth/authPolicyGate.js';
 import { isAuthEndpointEnabled } from '../lib/authFlags.js';
 import { truncateEmailForLog } from '../utils/pii.js';
 import { createAuthContext, logFeatureDisabled } from '../utils/authObservability.js';
-import {
-  emitFeatureFlagDecision,
-  emitAuthPolicyGateDecision
-} from '../lib/policyObservability.js';
+import { emitFeatureFlagDecision, emitAuthPolicyGateDecision } from '../lib/policyObservability.js';
 
 const router = Router();
 

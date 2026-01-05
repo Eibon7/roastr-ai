@@ -27,11 +27,7 @@ export type PolicyFlow =
 /**
  * Tipos de policy que pueden decidir bloquear/permitir
  */
-export type PolicyType =
-  | 'feature_flag'
-  | 'account_status'
-  | 'rate_limit'
-  | 'auth_policy_gate';
+export type PolicyType = 'feature_flag' | 'account_status' | 'rate_limit' | 'auth_policy_gate';
 
 /**
  * Decisión de policy (permitir o bloquear)
@@ -173,4 +169,3 @@ export function emitAuthPolicyGateDecision(params: {
     request_id: params.request_id
   });
 }
-
