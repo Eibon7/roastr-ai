@@ -2,6 +2,65 @@
 
 ## [Unreleased]
 
+### 🔍 ROA-396: Policy Observability & Audit (V2) - 2026-01-06
+
+#### Added
+
+- **Policy Observability Infrastructure** para tracking de decisiones de policy en Auth v2
+  - Módulo `policyObservability.ts` con evento `policy_decision_made`
+  - Helpers: `emitFeatureFlagDecision`, `emitRateLimitDecision`, `emitAuthPolicyGateDecision`
+  - Emisión asíncrona (no bloquea response)
+  - Integración con Amplitude analytics
+  - Logs estructurados (info para allowed, warn para blocked)
+
+- **16 emission points** de policy observability en auth routes
+  - `/register`: Feature flag + auth policy gate (4 emission points)
+  - `/login`: Feature flag + auth policy gate (4 emission points)
+  - `/magic-link`: Feature flag + auth policy gate (4 emission points)
+  - `/password-recovery`: Feature flag + auth policy gate (4 emission points)
+
+- **Evento `policy_decision_made`** con payload estructurado
+  - `flow`: Tipo de flujo auth (login, register, etc.)
+  - `policy`: Tipo de policy (feature_flag, auth_policy_gate, rate_limit, account_status)
+  - `decision`: allowed o blocked
+  - `reason`: Slug estable (snake_case, sin mensajes humanos)
+  - `retryable`: Boolean indicando si es retryable
+  - `request_id`: ID único para correlación
+
+- **11 unit tests** para `policyObservability` module
+  - Validación de estructura de evento
+  - Validación de no-PII en payload
+  - Validación de reason slugs estables
+  - Error handling robusto
+
+#### Security
+
+- ✅ **PII Protection:** No emails completos, no passwords, no tokens en eventos
+- ✅ **Email truncation:** Aplicada en todos los logs
+- ✅ **Request ID correlation:** Tracking sin exponer PII
+- ✅ **Snake_case enforcement:** Todo el payload en snake_case
+
+#### Coverage
+
+- 40/40 tests passing (11 unit + 29 flow)
+- 100% cobertura del módulo `policyObservability`
+- 100% cobertura de integraciones en auth routes
+- 16/16 CI/CD checks passing
+
+#### What's Observed
+
+- Feature flags: `auth_enable_*` decisiones
+- Auth Policy Gate: Sistema A3 decisiones
+- Rate limiting: Preparado (estructura lista)
+- Account status: Preparado (estructura lista)
+
+#### What's NOT Observed (By Design)
+
+- ❌ Payloads (request/response bodies)
+- ❌ PII (emails completos, passwords, tokens)
+- ❌ Heurísticas internas (solo decisiones finales)
+- ❌ Timing/Performance metrics
+
 ### 🔐 ROA-337: Implementar endpoint POST /api/v2/auth/update-password - 2026-01-06
 
 #### Added
