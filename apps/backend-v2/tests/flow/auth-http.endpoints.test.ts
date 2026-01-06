@@ -457,9 +457,7 @@ describe('Backend v2 HTTP endpoints (auth)', () => {
     });
 
     it('mapea AUTH_UNKNOWN en errores técnicos (500)', async () => {
-      mockAuthService.updatePassword.mockRejectedValueOnce(
-        new AuthError(AUTH_ERROR_CODES.UNKNOWN)
-      );
+      mockAuthService.updatePassword.mockRejectedValueOnce(new AuthError(AUTH_ERROR_CODES.UNKNOWN));
 
       const { default: app } = await import('../../src/index');
       const res = await request(app).post('/api/v2/auth/update-password').send({
