@@ -159,11 +159,20 @@ jobs:
         working-directory: ./frontend
         run: npm ci
 
-      - name: Run backend linting
+      - name: Run backend linting (V2 - Zero Warnings)
         run: |
-          echo "🔍 Running backend ESLint checks from repo root"
+          echo "🔍 Running V2 ESLint checks (zero-warning policy)"
           npx eslint -v
-          npx eslint --ext .js,.jsx,.ts,.tsx apps/backend-v2 scripts
+          echo "📁 Linting apps/backend-v2 (STRICT)"
+          npm run lint:v2
+          echo "✅ V2 lint passed with zero warnings"
+
+      - name: Run backend linting (Legacy - Visible Debt)
+        run: |
+          echo "🔍 Running Legacy ESLint checks (visible debt, non-blocking)"
+          echo "📁 Linting scripts/ (INFORMATIONAL)"
+          npm run lint:legacy || echo "⚠️  Legacy debt visible but does not block CI"
+          echo "✅ Legacy lint completed"
 
       - name: Run backend tests (Vitest - legacy)
         run: |

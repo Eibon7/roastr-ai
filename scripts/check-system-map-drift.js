@@ -152,7 +152,7 @@ class SystemMapDriftChecker {
     }
   }
 
-  async checkNodesV2InSystemMap(nodesV2Files, systemMapNodeIds) {
+  async checkNodesV2InSystemMap() {
     this.log('Checking nodes-v2 files exist in system-map...', 'info');
 
     // Load system-map to check file references
@@ -162,7 +162,7 @@ class SystemMapDriftChecker {
     // Collect all file paths referenced in system-map
     const referencedFiles = new Set();
     const nodes = systemMap.nodes || {};
-    for (const [nodeId, nodeData] of Object.entries(nodes)) {
+    for (const [, nodeData] of Object.entries(nodes)) {
       const docs = nodeData?.docs || [];
       for (const doc of docs) {
         if (doc.includes('nodes-v2/')) {

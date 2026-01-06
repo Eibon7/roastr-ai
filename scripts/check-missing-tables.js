@@ -44,7 +44,7 @@ async function checkTable(tableName) {
       }
     }
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }

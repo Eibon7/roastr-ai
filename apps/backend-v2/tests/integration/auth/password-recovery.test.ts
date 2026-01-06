@@ -66,8 +66,6 @@ vi.mock('../../../src/utils/authObservability.js', () => ({
 import { AuthService } from '../../../src/services/authService.js';
 import { supabase } from '../../../src/lib/supabaseClient.js';
 import { rateLimitService } from '../../../src/services/rateLimitService.js';
-import { loadSettings } from '../../../src/lib/loadSettings.js';
-import { AUTH_ERROR_CODES } from '../../../src/utils/authErrorTaxonomy.js';
 import * as authEmailService from '../../../src/services/authEmailService.js';
 
 describe('Integration Tests - Password Recovery v2 (B4)', () => {
@@ -526,9 +524,6 @@ describe('Integration Tests - Password Recovery v2 (B4)', () => {
     it('TC18: Rate limit excedido en update-password → 429 RATE_LIMITED', async () => {
       // Note: Rate limiting para update-password usa el mismo tipo que password-recovery
       // Este test verifica que el rate limiting aplica también a update-password
-
-      const accessToken = 'valid_token';
-      const newPassword = 'NewSecurePassword123!';
 
       // Mock rate limit exceeded (si se implementa en authService.updatePassword)
       // Por ahora, este test documenta el requisito contractual

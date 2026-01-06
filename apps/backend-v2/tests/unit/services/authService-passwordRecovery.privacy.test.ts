@@ -242,7 +242,6 @@ describe('Unit Tests - PII Protection & Analytics (B4)', () => {
 
       // Assert - IP should only appear in rate limiting context, NOT user logs
       // (Implementation note: IP is used for rate limiting but not logged with user data)
-      const loggerCalls = [...(logger.info as any).mock.calls, ...(logger.warn as any).mock.calls];
 
       // IP may appear in rate limiting logs (acceptable), but NOT in user-related logs
       // This test documents the contract requirement
@@ -306,8 +305,6 @@ describe('Unit Tests - PII Protection & Analytics (B4)', () => {
         allowed: false,
         blockedUntil: Date.now() + 3600000
       });
-
-      const trackEventSpy = vi.spyOn(analytics, 'trackEvent');
 
       // Act & Assert - Should throw rate limit error
       await expect(

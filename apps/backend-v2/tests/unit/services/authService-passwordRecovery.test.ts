@@ -59,7 +59,6 @@ import { AuthService } from '../../../src/services/authService.js';
 import { supabase } from '../../../src/lib/supabaseClient.js';
 import { rateLimitService } from '../../../src/services/rateLimitService.js';
 import * as authEmailService from '../../../src/services/authEmailService.js';
-import { loadSettings } from '../../../src/lib/loadSettings.js';
 
 describe('Unit Tests - Anti-Enumeration & Security (B4)', () => {
   let authService: AuthService;

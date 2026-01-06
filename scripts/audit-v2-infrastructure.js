@@ -37,7 +37,7 @@ function log(message, color = 'reset') {
   console.log(`${colors[color]}${message}${colors.reset}`);
 }
 
-function checkFileExists(filePath, description) {
+function checkFileExists(filePath) {
   const fullPath = path.join(process.cwd(), filePath);
   if (fs.existsSync(fullPath)) {
     return { exists: true, path: fullPath };
@@ -88,7 +88,7 @@ function checkSSOT() {
       results.ssot.status = results.ssot.status === 'ok' ? 'warning' : results.ssot.status;
       results.ssot.issues.push('Legacy plan references found in code (free, basic, creator_plus)');
     }
-  } catch (e) {
+  } catch {
     // grep may fail if no matches, which is fine
   }
 }
@@ -118,7 +118,7 @@ function checkSupabase() {
             }
           }
         }
-      } catch (e) {
+      } catch {
         // Directory might not exist
       }
     }
