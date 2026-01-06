@@ -9,6 +9,7 @@ module.exports = [
       'frontend/**',
       'apps/frontend/**',
       'apps/frontend-v2/**',
+      'apps/backend-v2/coverage/**',
       'node_modules/**',
       '*.config.js',
       'coverage/**',
@@ -46,7 +47,11 @@ module.exports = [
     },
     rules: {
       // Disable strict rules that might break CI
-      'no-unused-vars': 'warn',
+      'no-unused-vars': ['warn', { 
+        'argsIgnorePattern': '^_',
+        'varsIgnorePattern': '^_',
+        'caughtErrorsIgnorePattern': '^_'
+      }],
       'no-console': 'off',
       'no-undef': 'off',
       

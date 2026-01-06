@@ -107,7 +107,7 @@ export async function isAuthEndpointEnabled(
           flow: 'auth'
         }
       });
-    } catch (error) {
+    } catch (_) {
       logger.warn('analytics.track_failed', { event: 'auth_feature_blocked' });
     }
 

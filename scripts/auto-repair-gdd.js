@@ -304,7 +304,7 @@ class AutoRepairEngine {
 
       await loadFilesRecursive(nodesDir);
       return files;
-    } catch (error) {
+    } catch (_) {
       return [];
     }
   }

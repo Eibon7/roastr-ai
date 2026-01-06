@@ -4,22 +4,21 @@
  * Middleware para verificar JWT tokens y roles de usuario.
  */
 
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { authService } from '../services/authService.js';
 import { AuthError, AUTH_ERROR_CODES } from '../utils/authErrorTaxonomy.js';
 import { sendAuthError } from '../utils/authErrorResponse.js';
 
-// Extender Express Request con usuario autenticado
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-        email: string;
-        role: 'user' | 'admin' | 'superadmin';
-        email_verified: boolean;
-      };
-    }
+// Type augmentation for Express Request
+declare module 'express-serve-static-core' {
+  // eslint-disable-next-line no-unused-vars
+  interface Request {
+    user?: {
+      id: string;
+      email: string;
+      role: 'user' | 'admin' | 'superadmin';
+      email_verified: boolean;
+    };
   }
 }
 
