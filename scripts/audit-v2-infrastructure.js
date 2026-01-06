@@ -88,7 +88,7 @@ function checkSSOT() {
       results.ssot.status = results.ssot.status === 'ok' ? 'warning' : results.ssot.status;
       results.ssot.issues.push('Legacy plan references found in code (free, basic, creator_plus)');
     }
-  } catch {
+  } catch (_) {
     // grep may fail if no matches, which is fine
   }
 }
@@ -118,7 +118,7 @@ function checkSupabase() {
             }
           }
         }
-      } catch {
+      } catch (_) {
         // Directory might not exist
       }
     }

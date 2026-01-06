@@ -128,14 +128,14 @@ npx eslint --ext .js,.jsx,.ts,.tsx apps/backend-v2 scripts 2>&1
 }]
 ```
 
-###Final Validation
+### Final Validation
 
 ```bash
 $ npm run lint:v2
 ✓ apps/backend-v2 (0 errors, 0 warnings)
 ```
 
-**✅ V2 BASELINE ESTABLISHED: ZERO WARNINGS**
+### ✅ V2 BASELINE ESTABLISHED: ZERO WARNINGS
 
 ---
 
@@ -168,7 +168,7 @@ $ npm run lint:v2
 Exit code: 0 ✅
 ```
 
-**✅ VALIDATION PASSED: CI correctly fails on V2 warnings**
+### ✅ VALIDATION PASSED: CI correctly fails on V2 warnings
 
 ### Enforcement Mechanism
 - `--max-warnings 0` flag in lint:v2 command
