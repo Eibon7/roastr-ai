@@ -5,10 +5,16 @@
  * @note KNOWN ISSUE: Supabase mock chain is not being applied correctly.
  * AccountStatusPolicy constructs supabaseServiceClient in its constructor,
  * which happens before vi.mock() can intercept it. This causes 8/10 tests
- * to fail with "Cannot read properties of undefined (reading 'status')".
+ * to fail with mock-related errors.
  * 
- * Tests that DO pass (2/10): Tests that don't require DB access
- * (accountId/platform missing from context).
+ * Tests status (as of commit 9af267af): 2/10 tests pass
+ * - 2 passing: Tests that don't require DB access (accountId/platform missing from context)
+ * - 8 failing: Tests requiring Supabase mock chain (mock timing issues)
+ * 
+ * Improvements made (commit 510b3fe+):
+ * - Mock chain setup improved with mockResolvedValueOnce pattern
+ * - PII guards added to metadata verification
+ * - Error reason corrected to 'account_status_unknown'
  * 
  * Production code logic is CORRECT. This is a test infrastructure issue.
  * TODO: Refactor AccountStatusPolicy to accept supabase client as constructor param
