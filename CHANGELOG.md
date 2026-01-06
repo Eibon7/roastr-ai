@@ -2,6 +2,33 @@
 
 ## [Unreleased]
 
+### 🔐 ROA-337: Implementar endpoint POST /api/v2/auth/update-password - 2026-01-06
+
+#### Added
+
+- **POST /api/v2/auth/update-password endpoint** para completar el flujo de password recovery
+  - Request: `{ access_token, password }` con validación 8-128 caracteres
+  - Response: 200 success, errores 400/401/403/429/500
+  - Middleware: `rateLimitByType('password_recovery')`, feature flag check, `checkAuthPolicy()`
+  - Security: PII-safe logging, no passwords/tokens en logs
+  - Integración con `authService.updatePassword()`
+
+- **9 nuevos tests HTTP flow** en `auth-http.endpoints.test.ts`
+  - Password update success con token válido
+  - `TOKEN_INVALID` para tokens expirados/inválidos
+  - `POLICY_INVALID_REQUEST` para constraints de password
+  - `AUTH_UNKNOWN` para errores técnicos
+  - Feature flag OFF (`auth_enable_password_recovery: false`) retorna `AUTH_DISABLED`
+
+- **Feature flag tests** para verificar comportamiento cuando password recovery está deshabilitado
+
+#### Coverage
+
+- 27/27 tests passing (18 existentes + 9 nuevos)
+- 100% cobertura del endpoint `/update-password`
+- Validación de seguridad: sin PII leaking, rate limiting verificado
+- Mock validations para `authService.updatePassword`, `rateLimitByType`
+
 ### 📚 ROA-383: B5 Password Recovery Documentation v2 - 2026-01-05
 
 #### Documentation Updates

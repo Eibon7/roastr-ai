@@ -42,7 +42,7 @@ function getRedirectUrlOrThrow(): string {
 
   try {
     // Basic validation (throws if invalid)
-    // eslint-disable-next-line no-new
+
     new URL(redirectUrl);
   } catch {
     throw new AuthError(AUTH_ERROR_CODES.AUTH_EMAIL_SEND_FAILED, { cause: 'invalid_redirect_url' });
