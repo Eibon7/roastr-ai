@@ -66,8 +66,13 @@ emitAuthPolicyGateDecision({ flow, allowed, request_id })
 
 **Archivo:** `apps/backend-v2/src/routes/auth.ts`
 
-**Integrado en:**
-- ✅ `/register` - Feature flag + auth policy gate
+**Integrado en (100%):**
+- ✅ `/register` - Feature flag + auth policy gate observability (4 emission points)
+- ✅ `/login` - Feature flag + auth policy gate observability (4 emission points)
+- ✅ `/magic-link` - Feature flag + auth policy gate observability (4 emission points)
+- ✅ `/password-recovery` - Feature flag + auth policy gate observability (4 emission points)
+
+**Total:** 16 emission points de policy observability
 
 **Patrón:**
 ```typescript

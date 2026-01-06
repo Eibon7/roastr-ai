@@ -25,10 +25,7 @@ import { checkAuthPolicy } from '../auth/authPolicyGate.js';
 import { isAuthEndpointEnabled } from '../lib/authFlags.js';
 import { truncateEmailForLog } from '../utils/pii.js';
 import { createAuthContext, logFeatureDisabled } from '../utils/authObservability.js';
-import {
-  emitFeatureFlagDecision,
-  emitAuthPolicyGateDecision
-} from '../lib/policyObservability.js';
+import { emitFeatureFlagDecision, emitAuthPolicyGateDecision } from '../lib/policyObservability.js';
 
 const router = Router();
 
@@ -450,10 +447,7 @@ router.post(
 
     try {
       // ROA-406: Feature flag check (fail-closed, no env fallback) + ROA-410: observability
-      await isAuthEndpointEnabled(
-        'auth_enable_password_recovery',
-        'auth_enable_password_recovery'
-      )
+      await isAuthEndpointEnabled('auth_enable_password_recovery', 'auth_enable_password_recovery')
         .then(() => {
           // ROA-396: Policy decision observability
           emitFeatureFlagDecision({ flow: 'password_recovery', allowed: true, request_id });
