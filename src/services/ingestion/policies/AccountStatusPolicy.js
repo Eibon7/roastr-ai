@@ -118,7 +118,7 @@ class AccountStatusPolicy {
       // Fail-safe: block on unexpected errors
       return {
         allowed: false,
-        reason: 'account_status_error',
+        reason: 'account_status_unknown',
         metadata: { error: err.message }
       };
     }

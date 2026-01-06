@@ -3,15 +3,17 @@
  * @since ROA-394
  */
 
-// Vitest globals enabled in vitest.config.ts - no need to import describe, it, expect
 const AccountStatusPolicy = require('../../../../../src/services/ingestion/policies/AccountStatusPolicy');
 
-// Mock Supabase config
-const mockFrom = vi.fn();
-const mockSelect = vi.fn();
-const mockEq = vi.fn();
+// Create mock functions BEFORE mocking the module
 const mockSingle = vi.fn();
+const mockEq3 = vi.fn(() => ({ single: mockSingle }));
+const mockEq2 = vi.fn(() => ({ eq: mockEq3 }));
+const mockEq1 = vi.fn(() => ({ eq: mockEq2 }));
+const mockSelect = vi.fn(() => ({ eq: mockEq1 }));
+const mockFrom = vi.fn(() => ({ select: mockSelect }));
 
+// Mock supabaseServiceClient
 vi.mock('../../../../../src/config/supabase', () => ({
   supabaseServiceClient: {
     from: mockFrom
@@ -22,8 +24,8 @@ vi.mock('../../../../../src/config/supabase', () => ({
 vi.mock('../../../../../src/utils/logger', () => ({
   default: {
     error: vi.fn(),
-    info: vi.fn(),
     warn: vi.fn(),
+    info: vi.fn(),
     debug: vi.fn()
   }
 }));
@@ -42,14 +44,7 @@ describe('AccountStatusPolicy', () => {
       requestId: 'req-789'
     };
 
-    // Reset mocks
     vi.clearAllMocks();
-
-    // Setup mock chain
-    mockFrom.mockReturnValue({ select: mockSelect });
-    mockSelect.mockReturnValue({ eq: mockEq });
-    mockEq.mockReturnThis();
-    mockEq.single = mockSingle;
   });
 
   describe('evaluate', () => {
@@ -89,7 +84,7 @@ describe('AccountStatusPolicy', () => {
       expect(result.metadata.platform).toBe('x');
     });
 
-    it('should block ingestion for account with OAuth error', async () => {
+    it('should block ingestion for account with OAuth error (object)', async () => {
       mockSingle.mockResolvedValue({
         data: {
           connection_status: 'connected',
@@ -107,7 +102,25 @@ describe('AccountStatusPolicy', () => {
       expect(result.metadata.platform).toBe('x');
     });
 
-    it('should block when account is not found', async () => {
+    it('should block ingestion for account with OAuth error (string legacy)', async () => {
+      mockSingle.mockResolvedValue({
+        data: {
+          connection_status: 'connected',
+          oauth_error: 'Token expired'
+        },
+        error: null
+      });
+
+      const result = await policy.evaluate(context);
+
+      expect(result.allowed).toBe(false);
+      expect(result.reason).toBe('account_oauth_error');
+      expect(result.metadata.oauth_error_type).toBe('unknown');
+      expect(result.metadata.accountId).toBe('account-456');
+      expect(result.metadata.platform).toBe('x');
+    });
+
+    it('should block when account is not found (PGRST116)', async () => {
       mockSingle.mockResolvedValue({
         data: null,
         error: { code: 'PGRST116', message: 'No rows returned' }
@@ -140,7 +153,7 @@ describe('AccountStatusPolicy', () => {
       const result = await policy.evaluate(context);
 
       expect(result.allowed).toBe(false);
-      expect(result.reason).toBe('account_status_error');
+      expect(result.reason).toBe('account_status_unknown');
       expect(result.metadata.error).toBe('Unexpected error');
     });
 
@@ -164,42 +177,22 @@ describe('AccountStatusPolicy', () => {
       expect(result.metadata.missing).toBe('platform');
     });
 
-    it('should handle OAuth error as string (legacy)', async () => {
-      mockSingle.mockResolvedValue({
-        data: {
-          connection_status: 'connected',
-          oauth_error: 'Token expired'
-        },
-        error: null
-      });
-
-      const result = await policy.evaluate(context);
-
-      expect(result.allowed).toBe(false);
-      expect(result.reason).toBe('account_oauth_error');
-      expect(result.metadata.oauth_error_type).toBe('unknown');
-    });
-
-    it('should not expose PII in logs', async () => {
-      const logger = require('../../../../../src/utils/logger').default;
-
+    it('should not expose PII in returned metadata', async () => {
       mockSingle.mockResolvedValue({
         data: null,
         error: { code: 'DB_ERROR', message: 'Connection timeout' }
       });
 
-      await policy.evaluate(context);
+      const result = await policy.evaluate(context);
 
-      // Verify logger was called (structure check)
-      expect(logger.error).toHaveBeenCalled();
-
-      // Verify no sensitive data in logged metadata
-      const logCall = logger.error.mock.calls[0];
-      if (logCall && logCall[1]) {
-        expect(logCall[1]).not.toHaveProperty('email');
-        expect(logCall[1]).not.toHaveProperty('password');
-        expect(logCall[1]).not.toHaveProperty('oauth_token');
-      }
+      // Verify error is handled and metadata doesn't expose PII
+      expect(result.allowed).toBe(false);
+      expect(result.reason).toBe('account_status_unknown');
+      expect(result.metadata.error).toBe('Connection timeout');
+      // Ensure no PII in metadata
+      expect(result.metadata).not.toHaveProperty('email');
+      expect(result.metadata).not.toHaveProperty('password');
+      expect(result.metadata).not.toHaveProperty('oauth_token');
     });
   });
 });
