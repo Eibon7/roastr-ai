@@ -1,3 +1,92 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="0" failures="0" errors="0" time="0">
+<testsuites name="vitest tests" tests="10" failures="8" errors="0" time="0.083326167">
+    <testsuite name="tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js" timestamp="2026-01-06T23:11:14.465Z" hostname="MacBook-Pro-de-Emilio-2.local" tests="10" failures="8" errors="0" skipped="0" time="0.083326167">
+        <testcase classname="tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js" name="AccountStatusPolicy &gt; evaluate &gt; should allow ingestion for connected account with valid OAuth" time="0.007735709">
+            <failure message="expected false to be true // Object.is equality" type="AssertionError">
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js:71:30
+            </failure>
+        </testcase>
+        <testcase classname="tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js" name="AccountStatusPolicy &gt; evaluate &gt; should block ingestion for disconnected account" time="0.002135125">
+            <failure message="expected &apos;account_status_unknown&apos; to be &apos;account_disconnected&apos; // Object.is equality" type="AssertionError">
+AssertionError: expected &apos;account_status_unknown&apos; to be &apos;account_disconnected&apos; // Object.is equality
+
+Expected: &quot;account_disconnected&quot;
+Received: &quot;account_status_unknown&quot;
+
+ ❯ tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js:90:29
+            </failure>
+        </testcase>
+        <testcase classname="tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js" name="AccountStatusPolicy &gt; evaluate &gt; should block ingestion for account with OAuth error (object)" time="0.001219125">
+            <failure message="expected &apos;account_status_unknown&apos; to be &apos;account_oauth_error&apos; // Object.is equality" type="AssertionError">
+AssertionError: expected &apos;account_status_unknown&apos; to be &apos;account_oauth_error&apos; // Object.is equality
+
+Expected: &quot;account_oauth_error&quot;
+Received: &quot;account_status_unknown&quot;
+
+ ❯ tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js:108:29
+            </failure>
+        </testcase>
+        <testcase classname="tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js" name="AccountStatusPolicy &gt; evaluate &gt; should block ingestion for account with OAuth error (string legacy)" time="0.002414667">
+            <failure message="expected &apos;account_status_unknown&apos; to be &apos;account_oauth_error&apos; // Object.is equality" type="AssertionError">
+AssertionError: expected &apos;account_status_unknown&apos; to be &apos;account_oauth_error&apos; // Object.is equality
+
+Expected: &quot;account_oauth_error&quot;
+Received: &quot;account_status_unknown&quot;
+
+ ❯ tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js:126:29
+            </failure>
+        </testcase>
+        <testcase classname="tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js" name="AccountStatusPolicy &gt; evaluate &gt; should block when account is not found (PGRST116)" time="0.001195667">
+            <failure message="expected &apos;account_status_unknown&apos; to be &apos;account_not_found&apos; // Object.is equality" type="AssertionError">
+AssertionError: expected &apos;account_status_unknown&apos; to be &apos;account_not_found&apos; // Object.is equality
+
+Expected: &quot;account_not_found&quot;
+Received: &quot;account_status_unknown&quot;
+
+ ❯ tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js:141:29
+            </failure>
+        </testcase>
+        <testcase classname="tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js" name="AccountStatusPolicy &gt; evaluate &gt; should block when account cannot be fetched (DB error)" time="0.001384875">
+            <failure message="expected &apos;TypeError: Cannot read properties of …&apos; to be &apos;Connection timeout&apos; // Object.is equality" type="AssertionError">
+AssertionError: expected &apos;TypeError: Cannot read properties of …&apos; to be &apos;Connection timeout&apos; // Object.is equality
+
+Expected: &quot;Connection timeout&quot;
+Received: &quot;TypeError: Cannot read properties of undefined (reading &apos;status&apos;)&quot;
+
+ ❯ tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js:156:37
+            </failure>
+        </testcase>
+        <testcase classname="tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js" name="AccountStatusPolicy &gt; evaluate &gt; should block on unexpected errors (fail-safe)" time="0.001036209">
+            <failure message="expected &apos;TypeError: Cannot read properties of …&apos; to be &apos;Unexpected error&apos; // Object.is equality" type="AssertionError">
+AssertionError: expected &apos;TypeError: Cannot read properties of …&apos; to be &apos;Unexpected error&apos; // Object.is equality
+
+Expected: &quot;Unexpected error&quot;
+Received: &quot;TypeError: Cannot read properties of undefined (reading &apos;status&apos;)&quot;
+
+ ❯ tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js:166:37
+            </failure>
+        </testcase>
+        <testcase classname="tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js" name="AccountStatusPolicy &gt; evaluate &gt; should block when accountId is missing from context" time="0.000244792">
+        </testcase>
+        <testcase classname="tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js" name="AccountStatusPolicy &gt; evaluate &gt; should block when platform is missing from context" time="0.000280916">
+        </testcase>
+        <testcase classname="tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js" name="AccountStatusPolicy &gt; evaluate &gt; should not expose PII in returned metadata" time="0.00093175">
+            <failure message="expected &apos;TypeError: Cannot read properties of …&apos; to be &apos;Connection timeout&apos; // Object.is equality" type="AssertionError">
+AssertionError: expected &apos;TypeError: Cannot read properties of …&apos; to be &apos;Connection timeout&apos; // Object.is equality
+
+Expected: &quot;Connection timeout&quot;
+Received: &quot;TypeError: Cannot read properties of undefined (reading &apos;status&apos;)&quot;
+
+ ❯ tests/unit/services/ingestion/policies/AccountStatusPolicy.test.js:200:37
+            </failure>
+        </testcase>
+    </testsuite>
 </testsuites>

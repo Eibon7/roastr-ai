@@ -7,6 +7,7 @@ const { describe, it, expect, beforeEach, vi } = require('vitest');
 
 // Mock all policies
 vi.mock('../../../../src/services/ingestion/policies/UserStatusPolicy');
+vi.mock('../../../../src/services/ingestion/policies/AccountStatusPolicy');
 vi.mock('../../../../src/services/ingestion/policies/SubscriptionPolicy');
 vi.mock('../../../../src/services/ingestion/policies/TrialPolicy');
 vi.mock('../../../../src/services/ingestion/policies/CreditPolicy');
@@ -26,6 +27,7 @@ describe('IngestionEligibilityGate', () => {
 
     // Setup mock policies
     const UserStatusPolicy = require('../../../../src/services/ingestion/policies/UserStatusPolicy');
+    const AccountStatusPolicy = require('../../../../src/services/ingestion/policies/AccountStatusPolicy');
     const SubscriptionPolicy = require('../../../../src/services/ingestion/policies/SubscriptionPolicy');
     const TrialPolicy = require('../../../../src/services/ingestion/policies/TrialPolicy');
     const CreditPolicy = require('../../../../src/services/ingestion/policies/CreditPolicy');
@@ -34,6 +36,7 @@ describe('IngestionEligibilityGate', () => {
 
     mockPolicies = {
       UserStatusPolicy: new UserStatusPolicy(),
+      AccountStatusPolicy: new AccountStatusPolicy(),
       SubscriptionPolicy: new SubscriptionPolicy(),
       TrialPolicy: new TrialPolicy(),
       CreditPolicy: new CreditPolicy(),
@@ -43,6 +46,7 @@ describe('IngestionEligibilityGate', () => {
 
     // Set policy names
     mockPolicies.UserStatusPolicy.name = 'UserStatusPolicy';
+    mockPolicies.AccountStatusPolicy.name = 'AccountStatusPolicy';
     mockPolicies.SubscriptionPolicy.name = 'SubscriptionPolicy';
     mockPolicies.TrialPolicy.name = 'TrialPolicy';
     mockPolicies.CreditPolicy.name = 'CreditPolicy';
@@ -237,6 +241,52 @@ describe('IngestionEligibilityGate', () => {
       // Verify custom requestId was passed to policies
       const firstPolicyCall = mockPolicies.UserStatusPolicy.evaluate.mock.calls[0];
       expect(firstPolicyCall[0].requestId).toBe(customRequestId);
+    });
+
+    it('should block ingestion when AccountStatusPolicy blocks (account disconnected)', async () => {
+      // UserStatusPolicy allows
+      mockPolicies.UserStatusPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
+
+      // AccountStatusPolicy blocks
+      mockPolicies.AccountStatusPolicy.evaluate = vi.fn().mockResolvedValue({
+        allowed: false,
+        reason: 'account_disconnected',
+        metadata: { connection_status: 'disconnected', accountId: 'account-456', platform: 'x' }
+      });
+
+      // Other policies should not be called (fail-fast)
+      mockPolicies.SubscriptionPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
+      mockPolicies.TrialPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
+      mockPolicies.CreditPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
+      mockPolicies.FeatureFlagPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
+      mockPolicies.RateLimitPolicy.evaluate = vi
+        .fn()
+        .mockResolvedValue({ allowed: true, metadata: {} });
+
+      const result = await gate.evaluate(input);
+
+      expect(result.allowed).toBe(false);
+      expect(result.blocked_by.policy).toBe('AccountStatusPolicy');
+      expect(result.blocked_by.reason).toBe('account_disconnected');
+
+      // Verify evaluation stopped at AccountStatusPolicy (fail-fast)
+      expect(mockPolicies.UserStatusPolicy.evaluate).toHaveBeenCalledOnce();
+      expect(mockPolicies.AccountStatusPolicy.evaluate).toHaveBeenCalledOnce();
+      expect(mockPolicies.SubscriptionPolicy.evaluate).not.toHaveBeenCalled();
+      expect(mockPolicies.TrialPolicy.evaluate).not.toHaveBeenCalled();
+      expect(mockPolicies.CreditPolicy.evaluate).not.toHaveBeenCalled();
+      expect(mockPolicies.FeatureFlagPolicy.evaluate).not.toHaveBeenCalled();
+      expect(mockPolicies.RateLimitPolicy.evaluate).not.toHaveBeenCalled();
     });
 
     it('should not have side effects (no fetch, persist, enqueue)', async () => {
