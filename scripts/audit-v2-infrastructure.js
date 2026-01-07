@@ -37,7 +37,7 @@ function log(message, color = 'reset') {
   console.log(`${colors[color]}${message}${colors.reset}`);
 }
 
-function checkFileExists(filePath) {
+function checkFileExists(filePath, description) {
   const fullPath = path.join(process.cwd(), filePath);
   if (fs.existsSync(fullPath)) {
     return { exists: true, path: fullPath };

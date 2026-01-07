@@ -176,18 +176,17 @@ describe('Supabase Lazy Initialization (ROA-521)', () => {
       delete process.env.SUPABASE_SERVICE_KEY;
       delete process.env.SUPABASE_ANON_KEY;
 
-      // Just requiring the module should NOT throw or fail
-      let supabase;
-      expect(async () => {
-        supabase = await import('../../../src/config/supabase.js');
-      }).not.toThrow();
+      // Requiring the module without credentials should NOT throw
+      const supabase = await import('../../../src/config/supabase.js');
+      expect(supabase).toBeDefined();
 
       // NOW set env vars (simulates test setup happening AFTER require)
       process.env.SUPABASE_URL = 'http://localhost:54321';
       process.env.SUPABASE_SERVICE_KEY = 'mock-service-key';
       process.env.SUPABASE_ANON_KEY = 'mock-anon-key';
 
-      // Access should work with the new env vars
+      // Reset modules to get fresh instance with new env vars
+      vi.resetModules();
       const supabaseReload = await import('../../../src/config/supabase.js');
       const { supabaseServiceClient } = supabaseReload;
       expect(supabaseServiceClient).toBeDefined();

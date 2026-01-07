@@ -313,7 +313,7 @@ const checkConnection = async () => {
   }
 
   try {
-    const { data, error} = await getSupabaseServiceClient().from('users').select('id').limit(1);
+    const { data, error } = await getSupabaseServiceClient().from('users').select('id').limit(1);
 
     if (error) {
       throw new Error(`Database connection failed: ${error.message}`);
