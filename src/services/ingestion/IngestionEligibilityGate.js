@@ -16,6 +16,7 @@
  */
 
 const UserStatusPolicy = require('./policies/UserStatusPolicy');
+const AccountStatusPolicy = require('./policies/AccountStatusPolicy');
 const SubscriptionPolicy = require('./policies/SubscriptionPolicy');
 const TrialPolicy = require('./policies/TrialPolicy');
 const CreditPolicy = require('./policies/CreditPolicy');
@@ -34,12 +35,13 @@ class IngestionEligibilityGate {
   constructor() {
     // Initialize policies in evaluation order (optimized for fail-fast)
     this.policies = [
-      new UserStatusPolicy(),      // 1. Most critical - immediate fail
-      new SubscriptionPolicy(),    // 2. Account state
-      new TrialPolicy(),           // 3. Trial state
-      new CreditPolicy(),          // 4. Usage limits
-      new FeatureFlagPolicy(),     // 5. Global configuration
-      new RateLimitPolicy()        // 6. Infrastructure limits
+      new UserStatusPolicy(),      // 1. User must be active
+      new AccountStatusPolicy(),   // 2. Connected account must be valid
+      new SubscriptionPolicy(),    // 3. Account state
+      new TrialPolicy(),           // 4. Trial state
+      new CreditPolicy(),          // 5. Usage limits
+      new FeatureFlagPolicy(),     // 6. Global configuration
+      new RateLimitPolicy()        // 7. Infrastructure limits
     ];
   }
 
@@ -48,11 +50,12 @@ class IngestionEligibilityGate {
    *
    * Evaluation order is deterministic and optimized for fail-fast:
    * 1. UserStatusPolicy - Check if user is active (most critical)
-   * 2. SubscriptionPolicy - Check subscription state
-   * 3. TrialPolicy - Check trial validity
-   * 4. CreditPolicy - Check remaining credits
-   * 5. FeatureFlagPolicy - Check feature flags
-   * 6. RateLimitPolicy - Check rate limits
+   * 2. AccountStatusPolicy - Check if connected account is valid
+   * 3. SubscriptionPolicy - Check subscription state
+   * 4. TrialPolicy - Check trial validity
+   * 5. CreditPolicy - Check remaining credits
+   * 6. FeatureFlagPolicy - Check feature flags
+   * 7. RateLimitPolicy - Check rate limits
    *
    * The first policy that returns `allowed: false` stops the evaluation
    * and determines the final result.

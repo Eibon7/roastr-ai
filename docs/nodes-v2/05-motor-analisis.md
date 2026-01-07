@@ -67,11 +67,12 @@ IG1 es una capa de elegibilidad que determina si el usuario está autorizado a i
 IG1 evalúa las siguientes policies en orden determinista (fail-fast):
 
 1. **UserStatusPolicy** - Usuario activo (no suspendido ni eliminado)
-2. **SubscriptionPolicy** - Suscripción activa
-3. **TrialPolicy** - Trial válido (si aplica)
-4. **CreditPolicy** - Créditos de análisis disponibles
-5. **FeatureFlagPolicy** - Feature flag `ingestion_enabled` activado
-6. **RateLimitPolicy** - Límites de rate no excedidos
+2. **AccountStatusPolicy** - Cuenta conectada válida y con OAuth activo
+3. **SubscriptionPolicy** - Suscripción activa
+4. **TrialPolicy** - Trial válido (si aplica)
+5. **CreditPolicy** - Créditos de análisis disponibles
+6. **FeatureFlagPolicy** - Feature flag `ingestion_enabled` activado
+7. **RateLimitPolicy** - Límites de rate no excedidos
 
 La primera policy que devuelva `allowed: false` detiene la evaluación y bloquea la ingestion.
 
@@ -97,6 +98,10 @@ type IngestionEligibilityResult = {
 | `subscription_inactive` | SubscriptionPolicy | No | Suscripción pausada o cancelada |
 | `user_suspended` | UserStatusPolicy | No | Usuario suspendido por admin |
 | `user_deleted` | UserStatusPolicy | No | Usuario eliminado |
+| `account_disconnected` | AccountStatusPolicy | No | Cuenta conectada desconectada |
+| `account_oauth_error` | AccountStatusPolicy | No | Cuenta con error de OAuth |
+| `account_not_found` | AccountStatusPolicy | No | Cuenta no existe en DB |
+| `account_status_unknown` | AccountStatusPolicy | No | Error al verificar estado de cuenta |
 | `feature_disabled` | FeatureFlagPolicy | Sí | Feature flag de ingestion desactivado |
 | `rate_limit_exceeded` | RateLimitPolicy | Sí | Rate limit global/usuario/cuenta excedido |
 
