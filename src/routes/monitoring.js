@@ -228,7 +228,7 @@ router.get('/metrics/prometheus', async (req, res) => {
     // System metrics (from metricsService)
     lines.push('# HELP nodejs_uptime_seconds Node.js process uptime in seconds');
     lines.push('# TYPE nodejs_uptime_seconds gauge');
-    lines.push(`nodejs_uptime_seconds ${systemMetrics.uptime || process.uptime()}`);
+    lines.push(`nodejs_uptime_seconds ${systemMetrics?.uptime || process.uptime()}`);
     lines.push('');
 
     lines.push('# HELP nodejs_memory_heap_used_bytes Node.js heap memory used in bytes');

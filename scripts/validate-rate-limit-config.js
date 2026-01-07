@@ -98,7 +98,7 @@ async function validateAuthRateLimitConfig(config) {
     }
 
     // Validate ranges
-    if (authConfig.maxAttempts && authConfig.maxAttempts < 1) {
+    if (typeof authConfig.maxAttempts !== 'undefined' && authConfig.maxAttempts < 1) {
       logResult('error', `maxAttempts must be >= 1 in ${authType} config`, { 
         authType, 
         maxAttempts: authConfig.maxAttempts 
