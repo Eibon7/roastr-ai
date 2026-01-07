@@ -1,20 +1,20 @@
 {
-  "generated_at": "2025-12-28T20:48:56.685Z",
+  "generated_at": "2026-01-07T21:01:36.530Z",
   "status": "HEALTHY",
-  "overall_score": 100,
+  "overall_score": 95.7,
   "total_nodes": 15,
   "healthy_count": 15,
   "degraded_count": 0,
   "critical_count": 0,
   "nodes": {
     "roasting-engine": {
-      "score": 100,
+      "score": 95,
       "status": "healthy",
       "breakdown": {
         "docsIntegrity": 100,
         "dependencyIntegrity": 100,
         "symmetryIntegrity": 100,
-        "updateFreshness": 100
+        "updateFreshness": 50
       },
       "issues": []
     },
@@ -30,101 +30,101 @@
       "issues": []
     },
     "shield-engine": {
-      "score": 100,
+      "score": 95,
       "status": "healthy",
       "breakdown": {
         "docsIntegrity": 100,
         "dependencyIntegrity": 100,
         "symmetryIntegrity": 100,
-        "updateFreshness": 100
+        "updateFreshness": 50
       },
       "issues": []
     },
     "integraciones-redes-sociales": {
-      "score": 100,
+      "score": 95,
       "status": "healthy",
       "breakdown": {
         "docsIntegrity": 100,
         "dependencyIntegrity": 100,
         "symmetryIntegrity": 100,
-        "updateFreshness": 100
+        "updateFreshness": 50
       },
       "issues": []
     },
     "billing-integration": {
-      "score": 100,
+      "score": 95,
       "status": "healthy",
       "breakdown": {
         "docsIntegrity": 100,
         "dependencyIntegrity": 100,
         "symmetryIntegrity": 100,
-        "updateFreshness": 100
+        "updateFreshness": 50
       },
       "issues": []
     },
     "infraestructura": {
-      "score": 100,
+      "score": 95,
       "status": "healthy",
       "breakdown": {
         "docsIntegrity": 100,
         "dependencyIntegrity": 100,
         "symmetryIntegrity": 100,
-        "updateFreshness": 100
+        "updateFreshness": 50
       },
       "issues": []
     },
     "observabilidad": {
-      "score": 100,
+      "score": 95,
       "status": "healthy",
       "breakdown": {
         "docsIntegrity": 100,
         "dependencyIntegrity": 100,
         "symmetryIntegrity": 100,
-        "updateFreshness": 100
+        "updateFreshness": 50
       },
       "issues": []
     },
     "frontend-user-app": {
-      "score": 100,
+      "score": 95,
       "status": "healthy",
       "breakdown": {
         "docsIntegrity": 100,
         "dependencyIntegrity": 100,
         "symmetryIntegrity": 100,
-        "updateFreshness": 100
+        "updateFreshness": 50
       },
       "issues": []
     },
     "frontend-admin": {
-      "score": 100,
+      "score": 95,
       "status": "healthy",
       "breakdown": {
         "docsIntegrity": 100,
         "dependencyIntegrity": 100,
         "symmetryIntegrity": 100,
-        "updateFreshness": 100
+        "updateFreshness": 50
       },
       "issues": []
     },
     "ssot-integration": {
-      "score": 100,
+      "score": 95,
       "status": "healthy",
       "breakdown": {
         "docsIntegrity": 100,
         "dependencyIntegrity": 100,
         "symmetryIntegrity": 100,
-        "updateFreshness": 100
+        "updateFreshness": 50
       },
       "issues": []
     },
     "workers": {
-      "score": 100,
+      "score": 95,
       "status": "healthy",
       "breakdown": {
         "docsIntegrity": 100,
         "dependencyIntegrity": 100,
         "symmetryIntegrity": 100,
-        "updateFreshness": 100
+        "updateFreshness": 50
       },
       "issues": []
     },
@@ -140,35 +140,35 @@
       "issues": []
     },
     "settings-loader-and-feature-flags": {
-      "score": 100,
+      "score": 95,
       "status": "healthy",
       "breakdown": {
         "docsIntegrity": 100,
         "dependencyIntegrity": 100,
         "symmetryIntegrity": 100,
-        "updateFreshness": 100
+        "updateFreshness": 50
       },
       "issues": []
     },
     "gdpr-and-legal": {
-      "score": 100,
+      "score": 95,
       "status": "healthy",
       "breakdown": {
         "docsIntegrity": 100,
         "dependencyIntegrity": 100,
         "symmetryIntegrity": 100,
-        "updateFreshness": 100
+        "updateFreshness": 50
       },
       "issues": []
     },
     "testing-v2": {
-      "score": 100,
+      "score": 95,
       "status": "healthy",
       "breakdown": {
         "docsIntegrity": 100,
         "dependencyIntegrity": 100,
         "symmetryIntegrity": 100,
-        "updateFreshness": 100
+        "updateFreshness": 50
       },
       "issues": []
     }

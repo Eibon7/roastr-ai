@@ -24,6 +24,86 @@ function validateEnvironment() {
   }
 }
 
+// Validate rate limiting configuration at startup (ROA-526)
+async function validateRateLimitConfig() {
+  // Skip validation during tests
+  if (process.env.NODE_ENV === 'test') {
+    return { valid: true, warnings: [], errors: [] };
+  }
+
+  logger.info('🔍 Validating rate limiting configuration (ROA-526)...');
+
+  try {
+    const settingsLoader = require('./services/settingsLoaderV2');
+    const { 
+      getRateLimitConfig, 
+      getProgressiveBlockDurations,
+      getAbuseDetectionConfig 
+    } = require('./middleware/authRateLimiterV2');
+
+    // Load configurations
+    const [authRateLimitConfig, progressiveBlockDurations, abuseDetectionConfig] = await Promise.all([
+      getRateLimitConfig(),
+      getProgressiveBlockDurations(),
+      getAbuseDetectionConfig()
+    ]);
+
+    const warnings = [];
+    const errors = [];
+
+    // Validate auth rate limit config
+    if (!authRateLimitConfig || typeof authRateLimitConfig !== 'object') {
+      errors.push('Auth rate limit configuration is missing or invalid');
+    } else {
+      const requiredAuthTypes = ['password', 'magic_link', 'oauth', 'password_reset'];
+      for (const authType of requiredAuthTypes) {
+        if (!authRateLimitConfig[authType]) {
+          warnings.push(`Missing configuration for auth type: ${authType} (will use fallback)`);
+        }
+      }
+      logger.info(`✅ Auth rate limit config validated (${Object.keys(authRateLimitConfig).length} auth types)`);
+    }
+
+    // Validate progressive block durations
+    if (!Array.isArray(progressiveBlockDurations)) {
+      warnings.push('Progressive block durations not found in SSOT (will use fallback)');
+    } else {
+      logger.info(`✅ Progressive block durations validated (${progressiveBlockDurations.length} levels)`);
+    }
+
+    // Validate abuse detection config
+    if (!abuseDetectionConfig || typeof abuseDetectionConfig !== 'object') {
+      warnings.push('Abuse detection thresholds not found in SSOT (will use fallback)');
+    } else {
+      logger.info(`✅ Abuse detection config validated (${Object.keys(abuseDetectionConfig).length} thresholds)`);
+    }
+
+    // Log warnings and errors
+    if (warnings.length > 0) {
+      logger.warn('⚠️  Rate limiting configuration warnings:', warnings);
+    }
+
+    if (errors.length > 0) {
+      logger.error('❌ Rate limiting configuration errors:', errors);
+      logger.error('💡 Run: node scripts/validate-rate-limit-config.js for detailed diagnostics');
+      // Don't exit - use fallback configuration
+      logger.warn('⚠️  Using fallback rate limiting configuration');
+    } else if (warnings.length === 0) {
+      logger.info('✅ Rate limiting configuration validated successfully');
+    } else {
+      logger.warn('⚠️  Rate limiting configuration validated with warnings (using fallbacks where needed)');
+    }
+
+    return { valid: errors.length === 0, warnings, errors };
+
+  } catch (error) {
+    logger.error('❌ Failed to validate rate limiting configuration:', error.message);
+    logger.error('💡 Run: node scripts/validate-rate-limit-config.js for detailed diagnostics');
+    logger.warn('⚠️  Using fallback rate limiting configuration');
+    return { valid: false, warnings: [], errors: [error.message] };
+  }
+}
+
 // Run environment validation
 validateEnvironment();
 
@@ -38,6 +118,7 @@ const {
   requestLogger,
   errorHandler
 } = require('./middleware/security');
+const { correlationTrackingMiddleware } = require('./middleware/correlationTracking'); // ROA-526: Correlation tracking
 const { flags } = require('./config/flags');
 
 const RoastGeneratorReal = require('./services/roastGeneratorReal');
@@ -99,6 +180,10 @@ if (process.env.NODE_ENV === 'production') {
 // Apply security middleware
 app.use(helmetConfig);
 app.use(corsConfig);
+
+// Apply correlation tracking middleware (ROA-526)
+// This should be early in the middleware chain to capture all requests
+app.use(correlationTrackingMiddleware);
 
 // Skip request logger and validateInput for health check
 app.use((req, res, next) => {
@@ -936,6 +1021,15 @@ if (require.main === module) {
     } catch (error) {
       logger.warn('⚠️ Failed to start Model Availability Worker:', error.message);
     }
+  }
+
+  // Validate rate limiting configuration at startup (ROA-526)
+  // Non-blocking validation - uses fallback if SSOT unavailable
+  if (process.env.NODE_ENV !== 'test') {
+    validateRateLimitConfig().catch(error => {
+      logger.error('❌ Rate limiting configuration validation failed:', error.message);
+      logger.warn('⚠️  Continuing with fallback rate limiting configuration');
+    });
   }
 
   server = app.listen(port, () => {

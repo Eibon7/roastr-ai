@@ -1,15 +1,81 @@
 {
-  "timestamp": "2025-12-28T20:48:56.509Z",
+  "timestamp": "2026-01-07T21:01:30.777Z",
   "mode": "full",
   "gdd_version": "v2",
   "nodes_validated": 15,
   "orphans": [],
   "drift": {},
-  "outdated": [],
+  "outdated": [
+    {
+      "node": "roasting-engine",
+      "last_updated": "2025-12-05T18:31:11.771Z",
+      "days_ago": 33
+    },
+    {
+      "node": "shield-engine",
+      "last_updated": "2025-12-05T00:00:00.000Z",
+      "days_ago": 33
+    },
+    {
+      "node": "integraciones-redes-sociales",
+      "last_updated": "2025-12-05T18:31:11.772Z",
+      "days_ago": 33
+    },
+    {
+      "node": "billing-integration",
+      "last_updated": "2025-12-05T18:31:11.772Z",
+      "days_ago": 33
+    },
+    {
+      "node": "infraestructura",
+      "last_updated": "2025-12-05T18:31:11.772Z",
+      "days_ago": 33
+    },
+    {
+      "node": "observabilidad",
+      "last_updated": "2025-12-05T18:31:11.772Z",
+      "days_ago": 33
+    },
+    {
+      "node": "frontend-user-app",
+      "last_updated": "2025-12-05T18:31:11.772Z",
+      "days_ago": 33
+    },
+    {
+      "node": "frontend-admin",
+      "last_updated": "2025-12-05T00:00:00.000Z",
+      "days_ago": 33
+    },
+    {
+      "node": "ssot-integration",
+      "last_updated": "2025-12-05T00:00:00.000Z",
+      "days_ago": 33
+    },
+    {
+      "node": "workers",
+      "last_updated": "2025-12-05T00:00:00.000Z",
+      "days_ago": 33
+    },
+    {
+      "node": "settings-loader-and-feature-flags",
+      "last_updated": "2025-12-05T18:31:11.772Z",
+      "days_ago": 33
+    },
+    {
+      "node": "gdpr-and-legal",
+      "last_updated": "2025-12-05T18:31:11.772Z",
+      "days_ago": 33
+    },
+    {
+      "node": "testing-v2",
+      "last_updated": "2025-12-05T18:31:11.772Z",
+      "days_ago": 33
+    }
+  ],
   "cycles": [],
   "missing_refs": [],
   "broken_links": [],
   "coverage_integrity": [],
   "legacy_warnings": [],
-  "status": "healthy"
+  "status": "warning"
 }

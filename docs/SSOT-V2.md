@@ -615,53 +615,76 @@ Lista de redes planificadas:
 - **Resend**: email transaccional v2.
 - **SendGrid / Stripe / otras**: solo v1 (legacy), no usarse en nuevos flujos.
 
-### 12.4 Rate Limiting de Autenticación (ROA-359)
+### 12.4 Rate Limiting de Autenticación (ROA-359, ROA-526)
 
-**Configuración oficial de rate limits para endpoints de autenticación:**
+**⚠️ CONTRATO EXPLÍCITO SSOT v2**
 
-```ts
-type AuthRateLimitConfig = {
-  password: {
-    windowMs: 900000;      // 15 minutos
-    maxAttempts: 5;
-    blockDurationMs: 900000; // 15 minutos
-  };
-  magic_link: {
-    windowMs: 3600000;     // 1 hora
-    maxAttempts: 3;
-    blockDurationMs: 3600000; // 1 hora
-  };
-  oauth: {
-    windowMs: 900000;      // 15 minutos
-    maxAttempts: 10;
-    blockDurationMs: 900000; // 15 minutos
-  };
-  password_reset: {
-    windowMs: 3600000;     // 1 hora
-    maxAttempts: 3;
-    blockDurationMs: 3600000; // 1 hora
-  };
-};
+Esta configuración es consumida por `authRateLimiterV2.js` vía `settingsLoaderV2.getValue('rate_limit.auth')`.
+
+**Estructura completa (definición contractual):**
+
+```yaml
+rate_limit:
+  auth:
+    # Configuración por tipo de autenticación
+    password:
+      windowMs: 900000          # 15 minutos
+      maxAttempts: 5
+      blockDurationMs: 900000   # 15 minutos
+    
+    magic_link:
+      windowMs: 3600000         # 1 hora
+      maxAttempts: 3
+      blockDurationMs: 3600000  # 1 hora
+    
+    oauth:
+      windowMs: 900000          # 15 minutos
+      maxAttempts: 10
+      blockDurationMs: 900000   # 15 minutos
+    
+    password_reset:
+      windowMs: 3600000         # 1 hora
+      maxAttempts: 3
+      blockDurationMs: 3600000  # 1 hora
+    
+    # Bloqueo progresivo (escalación por reincidencia)
+    block_durations:
+      - 900000      # 15 minutos (1ra infracción)
+      - 3600000     # 1 hora (2da infracción)
+      - 86400000    # 24 horas (3ra infracción)
+      - null        # Permanente (4ta+ infracción, requiere intervención manual)
 ```
 
-**Bloqueo progresivo (escalación):**
+**Abuse Detection:**
 
-```ts
-type ProgressiveBlockDurations = [
-  900000,      // 15 minutos (1ra infracción)
-  3600000,     // 1 hora (2da infracción)
-  86400000,    // 24 horas (3ra infracción)
-  null         // Permanente (4ta+ infracción, requiere intervención manual)
-];
-```
+- Los thresholds de detección de abuso se definen en `abuse_detection.thresholds` (ver §12.6.5)
+- El auth rate limiter usa esos thresholds automáticamente
+- No hay configuración específica en `rate_limit.auth` para abuse detection
 
-**Almacenamiento:**
-- **Producción**: Redis/Upstash (preferido)
-- **Fallback**: Memoria (solo desarrollo/testing)
-- **Keys**: `auth:ratelimit:ip:${authType}:${ip}` y `auth:ratelimit:email:${authType}:${emailHash}`
+**Feature Flag:**
 
-**Feature Flags:**
-- `ENABLE_AUTH_RATE_LIMIT_V2`: Habilita rate limiting v2 (reemplaza v1)
+- `enable_rate_limit_auth` (admin): Habilita rate limiting v2 para autenticación
+- Default: `true` (fail-closed para seguridad)
+- Ver: Sección 12.6.3 para detalles completos de rate limiting
+
+**Storage:**
+
+- **Redis / Upstash:** Store primario para contadores y bloqueos
+- **Memory fallback:** Si Redis no disponible (desarrollo local)
+- **TTL:** Automático según `windowMs` de cada scope
+
+**Códigos de fallo contables:**
+
+Solo estos códigos HTTP/de aplicación se cuentan como intentos fallidos:
+- `INVALID_CREDENTIALS`
+- `INVALID_TOKEN`
+- `UNAUTHORIZED`
+- `AUTH_FAILED`
+- `WRONG_EMAIL_OR_PASSWORD`
+
+**Errores 5xx o infraestructura NO se cuentan** (no penalizan al usuario).
+
+---
 - `ENABLE_RATE_LIMIT`: Habilita rate limiting general (requerido para v2)
 
 ### 12.4.1 Auth Error Taxonomy (V2) — ROA-405
@@ -1177,45 +1200,6 @@ node scripts/compute-health-v2-official.js --update-ssot
 - **Nodos detectados:** 15 de 15
 - **Nodos faltantes:** 0
 - **Última actualización:** 2026-01-07T13:21:44.453Z
-
-### 15.3 Reglas de Actualización
-
-1. **Ningún script puede modificar estos valores automáticamente**
-2. **Solo se actualizan mediante:** `node scripts/compute-health-v2-official.js --update-ssot`
-3. **El SSOT es la única fuente de verdad** - Los scripts de lectura (calculate-gdd-health-v2.js) deben leer desde aquí
-4. **Si hay discrepancia** entre archivos → gana el SSOT
-
----
-
-
-
-Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
-
-**IMPORTANTE:**  
-Los valores deben ser **dinámicos pero correctos**.  
-NO se permiten valores hardcoded.  
-Únicamente se actualizan cuando un proceso de auditoría v2 lo ordena manualmente mediante:
-
-```bash
-node scripts/compute-health-v2-official.js --update-ssot
-```
-
-### 15.1 Métricas Oficiales
-
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 100% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 100% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **100/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
-
-### 15.2 Detalles de Cálculo
-
-- **Nodos detectados:** 15 de 15
-- **Nodos faltantes:** 0
-- **Última actualización:** 2025-12-15T12:51:51.802Z
 
 ### 15.3 Reglas de Actualización
 

@@ -9,6 +9,45 @@
 #
 # Última actualización: 2025-01-27
 
+# Rate Limiting Configuration (ROA-526, §12.4 SSOT v2)
+rate_limit:
+  auth:
+    # Configuración por tipo de autenticación
+    password:
+      windowMs: 900000          # 15 minutos
+      maxAttempts: 5
+      blockDurationMs: 900000   # 15 minutos
+    
+    magic_link:
+      windowMs: 3600000         # 1 hora
+      maxAttempts: 3
+      blockDurationMs: 3600000  # 1 hora
+    
+    oauth:
+      windowMs: 900000          # 15 minutos
+      maxAttempts: 10
+      blockDurationMs: 900000   # 15 minutos
+    
+    password_reset:
+      windowMs: 3600000         # 1 hora
+      maxAttempts: 3
+      blockDurationMs: 3600000  # 1 hora
+    
+    # Bloqueo progresivo (escalación por reincidencia)
+    block_durations:
+      - 900000      # 15 minutos (1ra infracción)
+      - 3600000     # 1 hora (2da infracción)
+      - 86400000    # 24 horas (3ra infracción)
+      - null        # Permanente (4ta+ infracción, requiere intervención manual)
+
+# Abuse Detection Configuration (§12.6.5 SSOT v2)
+abuse_detection:
+  thresholds:
+    multi_ip: 3         # Umbral: mismo usuario desde N+ IPs
+    multi_email: 5      # Umbral: N+ emails desde misma IP
+    burst: 10           # Umbral: N+ intentos en < 1 minuto
+    slow_attack: 20     # Umbral: N+ intentos en ventana completa
+
 # Authentication Configuration
 auth:
   login:

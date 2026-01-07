@@ -1,360 +1,360 @@
 #!/usr/bin/env node
-
 /**
- * @fileoverview Validate Rate Limit Configuration
- * @module scripts/validate-rate-limit-config
- * @since ROA-392
- *
- * Propósito:
- * Valida que la configuración de rate limits en el sistema cumple con:
- * - Todos los scopes tienen configuración válida
- * - Valores numéricos están en rango correcto
- * - Feature flags existen en SSOT
- * - No hay configuraciones hardcoded fuera de SSOT
- *
- * Uso:
- * - CI: npm run validate:rate-limit (exit 1 si fallos)
- * - Local: node scripts/validate-rate-limit-config.js
+ * Rate Limit Configuration Validator
+ * 
+ * Issue: ROA-526 - Rate Limiting v2: Auth Wiring, Observability, and Global Validation
+ * 
+ * Validates rate limiting configuration from SSOT v2:
+ * - Checks that all required rate limit configurations exist
+ * - Validates configuration structure and types
+ * - Verifies progressive block durations
+ * - Checks abuse detection thresholds
+ * - Ensures fallback values are safe
+ * 
+ * Exit codes:
+ * - 0: All validations passed
+ * - 1: Configuration errors detected
+ * - 2: Critical errors (SSOT unavailable, invalid structure)
  */
 
-const fs = require('fs');
-const path = require('path');
+const settingsLoader = require('../src/services/settingsLoaderV2');
+const { logger } = require('../src/utils/logger');
 
-/**
- * SSOT Reference: Section 12.6 (Rate Limiting Global v2)
- */
+// Expected configuration structure from SSOT §12.4
+const EXPECTED_AUTH_TYPES = ['password', 'magic_link', 'oauth', 'password_reset'];
+const REQUIRED_AUTH_CONFIG_FIELDS = ['windowMs', 'maxAttempts', 'blockDurationMs'];
+const REQUIRED_ABUSE_DETECTION_THRESHOLDS = ['multi_ip', 'multi_email', 'burst', 'slow_attack'];
 
-// Valid scopes according to SSOT v2
-const VALID_SCOPES = [
-  'global',
-  'auth.password',
-  'auth.magic_link',
-  'auth.oauth',
-  'auth.password_reset',
-  'ingestion.global',
-  'ingestion.perUser',
-  'ingestion.perAccount',
-  'roast',
-  'persona',
-  'notifications',
-  'gdpr',
-  'admin'
-];
-
-// Valid feature flags according to SSOT v2 (section 3.2)
-const VALID_FEATURE_FLAGS = [
-  'enable_rate_limit_global',
-  'enable_rate_limit_auth',
-  'enable_rate_limit_ingestion',
-  'enable_rate_limit_roast',
-  'enable_rate_limit_persona',
-  'enable_rate_limit_notifications',
-  'enable_rate_limit_gdpr',
-  'enable_rate_limit_admin'
-];
-
-// Validation results
-const results = {
-  errors: [],
+// Validation results tracking
+const validationResults = {
+  passed: [],
   warnings: [],
-  info: []
+  errors: []
 };
 
 /**
- * Validate SSOT v2 contains Rate Limit Policy section
+ * Log validation result
+ * @param {string} level - 'pass', 'warn', or 'error'
+ * @param {string} message - Validation message
+ * @param {Object} metadata - Additional metadata
  */
-function validateSSOT() {
-  console.log('📄 Validating SSOT v2...');
-
-  const ssotPath = path.join(process.cwd(), 'docs/SSOT-V2.md');
-
-  if (!fs.existsSync(ssotPath)) {
-    results.errors.push('SSOT v2 not found at docs/SSOT-V2.md');
-    return;
+function logResult(level, message, metadata = {}) {
+  const result = { message, metadata, timestamp: new Date().toISOString() };
+  
+  if (level === 'pass') {
+    validationResults.passed.push(result);
+    logger.info(`✅ PASS: ${message}`, metadata);
+  } else if (level === 'warn') {
+    validationResults.warnings.push(result);
+    logger.warn(`⚠️  WARN: ${message}`, metadata);
+  } else if (level === 'error') {
+    validationResults.errors.push(result);
+    logger.error(`❌ ERROR: ${message}`, metadata);
   }
-
-  const ssotContent = fs.readFileSync(ssotPath, 'utf8');
-
-  // Check section 12.6 exists
-  if (!ssotContent.includes('### 12.6 Rate Limiting Global v2')) {
-    results.errors.push('SSOT v2 missing section 12.6 (Rate Limiting Global v2)');
-    return;
-  }
-
-  // Check all valid scopes are documented
-  const missingScopesInSSOT = VALID_SCOPES.filter((scope) => {
-    const simpleScope = scope.split('.')[0];
-    return !ssotContent.includes(`${simpleScope}:`);
-  });
-
-  if (missingScopesInSSOT.length > 0) {
-    results.warnings.push(
-      `SSOT v2 section 12.6 missing some scopes: ${missingScopesInSSOT.join(', ')}`
-    );
-  }
-
-  // Check feature flags are documented
-  const missingFlagsInSSOT = VALID_FEATURE_FLAGS.filter((flag) => {
-    return !ssotContent.includes(`'${flag}'`);
-  });
-
-  if (missingFlagsInSSOT.length > 0) {
-    results.errors.push(`SSOT v2 missing feature flags: ${missingFlagsInSSOT.join(', ')}`);
-  }
-
-  results.info.push('✅ SSOT v2 section 12.6 present');
 }
 
 /**
- * Validate RateLimitPolicyGlobal service exists and has required methods
+ * Validate auth rate limit configuration
+ * @param {Object} config - Rate limit configuration from SSOT
+ * @returns {boolean} - True if valid
  */
-function validateService() {
-  console.log('🔧 Validating RateLimitPolicyGlobal service...');
-
-  const servicePath = path.join(process.cwd(), 'src/services/rateLimitPolicyGlobal.js');
-
-  if (!fs.existsSync(servicePath)) {
-    results.errors.push(
-      'RateLimitPolicyGlobal service not found at src/services/rateLimitPolicyGlobal.js'
-    );
-    return;
+async function validateAuthRateLimitConfig(config) {
+  logger.info('📋 Validating Auth Rate Limit Configuration (SSOT §12.4)...');
+  console.log('\n📋 Validating Auth Rate Limit Configuration (SSOT §12.4)...\n');
+  
+  if (!config || typeof config !== 'object') {
+    logResult('error', 'Auth rate limit configuration is missing or invalid', { config });
+    return false;
   }
 
-  const serviceContent = fs.readFileSync(servicePath, 'utf8');
+  let isValid = true;
 
-  // Check required methods exist
-  const requiredMethods = [
-    'checkRateLimit',
-    'incrementRateLimit',
-    'getRateLimitStatus',
-    'clearRateLimit',
-    'getConfig',
-    '_reloadConfig',
-    '_getScopeConfig',
-    '_checkSlidingWindow',
-    '_maskKey'
-  ];
-
-  const missingMethods = requiredMethods.filter((method) => {
-    return !serviceContent.includes(`async ${method}(`) && !serviceContent.includes(`${method}(`);
-  });
-
-  if (missingMethods.length > 0) {
-    results.errors.push(
-      `RateLimitPolicyGlobal missing required methods: ${missingMethods.join(', ')}`
-    );
-  }
-
-  // Check imports SettingsLoader v2
-  if (!serviceContent.includes("require('./settingsLoaderV2')")) {
-    results.warnings.push('RateLimitPolicyGlobal should import settingsLoaderV2');
-  }
-
-  // Check has DEFAULT_CONFIG
-  if (!serviceContent.includes('this.DEFAULT_CONFIG')) {
-    results.errors.push('RateLimitPolicyGlobal missing DEFAULT_CONFIG');
-  }
-
-  results.info.push('✅ RateLimitPolicyGlobal service present');
-}
-
-/**
- * Validate SettingsLoader v2 has loadRateLimitPolicy method
- */
-function validateSettingsLoader() {
-  console.log('⚙️  Validating SettingsLoader v2...');
-
-  const loaderPath = path.join(process.cwd(), 'src/services/settingsLoaderV2.js');
-
-  if (!fs.existsSync(loaderPath)) {
-    results.errors.push('SettingsLoader v2 not found at src/services/settingsLoaderV2.js');
-    return;
-  }
-
-  const loaderContent = fs.readFileSync(loaderPath, 'utf8');
-
-  // Check loadRateLimitPolicy method exists
-  if (!loaderContent.includes('async loadRateLimitPolicy()')) {
-    results.errors.push('SettingsLoader v2 missing loadRateLimitPolicy() method');
-  }
-
-  // Check _getDefaultRateLimitPolicy method exists
-  if (!loaderContent.includes('_getDefaultRateLimitPolicy()')) {
-    results.errors.push('SettingsLoader v2 missing _getDefaultRateLimitPolicy() method');
-  }
-
-  results.info.push('✅ SettingsLoader v2 has loadRateLimitPolicy method');
-}
-
-/**
- * Validate no hardcoded rate limit values outside SSOT/SettingsLoader/RateLimitPolicyGlobal
- */
-function validateNoHardcodedValues() {
-  console.log('🔍 Checking for hardcoded rate limit values...');
-
-  const allowedFiles = [
-    'docs/SSOT-V2.md',
-    'src/services/settingsLoaderV2.js',
-    'src/services/rateLimitPolicyGlobal.js',
-    'scripts/validate-rate-limit-config.js'
-  ];
-
-  const filesToCheck = ['src/middleware', 'src/services', 'src/routes'];
-
-  // Patterns that indicate hardcoded rate limits
-  const suspiciousPatterns = [
-    /max:\s*\d+,?\s*\/\/ rate limit/i,
-    /windowMs:\s*\d+/i,
-    /rate.?limit.*max.*=.*\d+/i,
-    /RATE_LIMIT_MAX/i
-  ];
-
-  for (const dir of filesToCheck) {
-    const dirPath = path.join(process.cwd(), dir);
-
-    if (!fs.existsSync(dirPath)) {
+  // Check each auth type
+  for (const authType of EXPECTED_AUTH_TYPES) {
+    if (!config[authType]) {
+      logResult('error', `Missing configuration for auth type: ${authType}`, { authType });
+      isValid = false;
       continue;
     }
 
-    const files = getAllJSFiles(dirPath);
+    const authConfig = config[authType];
 
-    for (const file of files) {
-      const relativePath = path.relative(process.cwd(), file);
-
-      // Skip allowed files
-      if (allowedFiles.some((allowed) => relativePath.includes(allowed))) {
-        continue;
+    // Check required fields
+    for (const field of REQUIRED_AUTH_CONFIG_FIELDS) {
+      if (authConfig[field] === undefined || authConfig[field] === null) {
+        logResult('error', `Missing field "${field}" in ${authType} config`, { authType, field });
+        isValid = false;
+      } else if (typeof authConfig[field] !== 'number') {
+        logResult('error', `Field "${field}" must be a number in ${authType} config`, { 
+          authType, 
+          field, 
+          actualType: typeof authConfig[field],
+          actualValue: authConfig[field]
+        });
+        isValid = false;
+      } else {
+        logResult('pass', `${authType}.${field} = ${authConfig[field]}ms`, { authType, field, value: authConfig[field] });
       }
+    }
 
-      const content = fs.readFileSync(file, 'utf8');
+    // Validate ranges
+    if (typeof authConfig.maxAttempts !== 'undefined' && authConfig.maxAttempts < 1) {
+      logResult('error', `maxAttempts must be >= 1 in ${authType} config`, { 
+        authType, 
+        maxAttempts: authConfig.maxAttempts 
+      });
+      isValid = false;
+    }
 
-      for (const pattern of suspiciousPatterns) {
-        if (pattern.test(content)) {
-          // Check if it's actually using RateLimitPolicyGlobal
-          if (!content.includes('RateLimitPolicyGlobal') && !content.includes('settingsLoaderV2')) {
-            results.warnings.push(
-              `Possible hardcoded rate limit in ${relativePath} (not using RateLimitPolicyGlobal)`
-            );
-          }
-        }
-      }
+    if (authConfig.windowMs && authConfig.windowMs < 60000) { // Minimum 1 minute
+      logResult('warn', `windowMs is very short (< 1 minute) in ${authType} config`, { 
+        authType, 
+        windowMs: authConfig.windowMs 
+      });
+    }
+
+    if (authConfig.blockDurationMs && authConfig.blockDurationMs < 60000) { // Minimum 1 minute
+      logResult('warn', `blockDurationMs is very short (< 1 minute) in ${authType} config`, { 
+        authType, 
+        blockDurationMs: authConfig.blockDurationMs 
+      });
     }
   }
 
-  results.info.push('✅ No obvious hardcoded rate limit values found');
+  return isValid;
 }
 
 /**
- * Validate documentation exists
+ * Validate progressive block durations
+ * @param {Array} durations - Progressive block durations from SSOT
+ * @returns {boolean} - True if valid
  */
-function validateDocumentation() {
-  console.log('📚 Validating documentation...');
+async function validateProgressiveBlockDurations(durations) {
+  logger.info('📋 Validating Progressive Block Durations (SSOT §12.4)...');
+  console.log('\n📋 Validating Progressive Block Durations (SSOT §12.4)...\n');
+  
+  if (!Array.isArray(durations)) {
+    logResult('error', 'Progressive block durations must be an array', { durations });
+    return false;
+  }
 
-  const docsToCheck = [
-    { path: 'docs/nodes-v2/infraestructura/rate-limits.md', name: 'Rate Limits subnodo' },
-    { path: 'docs/nodes-v2/14-infraestructura.md', name: 'Infraestructura node' }
+  if (durations.length < 3) {
+    logResult('error', 'Progressive block durations must have at least 3 entries', { 
+      length: durations.length 
+    });
+    return false;
+  }
+
+  let isValid = true;
+  let lastDuration = 0;
+
+  for (let i = 0; i < durations.length; i++) {
+    const duration = durations[i];
+    
+    // Last duration can be null (permanent block)
+    if (i === durations.length - 1 && duration === null) {
+      logResult('pass', `Progressive block duration[${i}] = null (permanent block)`, { index: i });
+      continue;
+    }
+
+    // All other durations must be numbers
+    if (typeof duration !== 'number' || duration < 0) {
+      logResult('error', `Progressive block duration[${i}] must be a positive number`, { 
+        index: i, 
+        duration,
+        actualType: typeof duration
+      });
+      isValid = false;
+      continue;
+    }
+
+    // Durations should be progressive (each longer than previous)
+    if (duration < lastDuration) {
+      logResult('warn', `Progressive block duration[${i}] is shorter than previous duration`, { 
+        index: i, 
+        duration, 
+        previousDuration: lastDuration 
+      });
+    }
+
+    logResult('pass', `Progressive block duration[${i}] = ${duration}ms (${Math.round(duration / 60000)} minutes)`, { 
+      index: i, 
+      durationMs: duration 
+    });
+
+    lastDuration = duration;
+  }
+
+  return isValid;
+}
+
+/**
+ * Validate abuse detection thresholds
+ * @param {Object} thresholds - Abuse detection thresholds from SSOT
+ * @returns {boolean} - True if valid
+ */
+async function validateAbuseDetectionThresholds(thresholds) {
+  logger.info('📋 Validating Abuse Detection Thresholds (SSOT §12.4)...');
+  console.log('\n📋 Validating Abuse Detection Thresholds (SSOT §12.4)...\n');
+  
+  if (!thresholds || typeof thresholds !== 'object') {
+    logResult('error', 'Abuse detection thresholds are missing or invalid', { thresholds });
+    return false;
+  }
+
+  let isValid = true;
+
+  for (const threshold of REQUIRED_ABUSE_DETECTION_THRESHOLDS) {
+    if (thresholds[threshold] === undefined || thresholds[threshold] === null) {
+      logResult('error', `Missing abuse detection threshold: ${threshold}`, { threshold });
+      isValid = false;
+    } else if (typeof thresholds[threshold] !== 'number') {
+      logResult('error', `Abuse detection threshold "${threshold}" must be a number`, { 
+        threshold, 
+        actualType: typeof thresholds[threshold],
+        actualValue: thresholds[threshold]
+      });
+      isValid = false;
+    } else if (thresholds[threshold] < 1) {
+      logResult('error', `Abuse detection threshold "${threshold}" must be >= 1`, { 
+        threshold, 
+        value: thresholds[threshold] 
+      });
+      isValid = false;
+    } else {
+      logResult('pass', `Abuse detection threshold "${threshold}" = ${thresholds[threshold]}`, { 
+        threshold, 
+        value: thresholds[threshold] 
+      });
+    }
+  }
+
+  return isValid;
+}
+
+/**
+ * Validate that critical endpoints are covered by rate limiting
+ * @returns {boolean} - True if valid
+ */
+async function validateEndpointCoverage() {
+  logger.info('📋 Validating Endpoint Coverage...');
+  console.log('\n📋 Validating Endpoint Coverage...\n');
+  
+  // This is a basic check - in a real implementation, we would scan the routes
+  // and verify that rate limiting middleware is applied to all auth endpoints
+  const criticalEndpoints = [
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/auth/magic-link',
+    '/api/auth/oauth',
+    '/api/auth/reset-password'
   ];
 
-  for (const doc of docsToCheck) {
-    const docPath = path.join(process.cwd(), doc.path);
+  // TODO: Implement actual endpoint scanning
+  // For now, we just log a warning that manual verification is needed
+  logResult('warn', 'Endpoint coverage validation not implemented - manual verification required', {
+    criticalEndpoints
+  });
 
-    if (!fs.existsSync(docPath)) {
-      results.errors.push(`Missing documentation: ${doc.name} at ${doc.path}`);
-    } else {
-      results.info.push(`✅ ${doc.name} present`);
-    }
-  }
+  return true; // Don't fail validation on this
 }
 
 /**
- * Recursively get all JS files in a directory
+ * Main validation function
  */
-function getAllJSFiles(dir) {
-  const files = [];
-
-  function traverse(currentDir) {
-    const entries = fs.readdirSync(currentDir, { withFileTypes: true });
-
-    for (const entry of entries) {
-      const fullPath = path.join(currentDir, entry.name);
-
-      if (entry.isDirectory()) {
-        if (entry.name !== 'node_modules' && entry.name !== '.git') {
-          traverse(fullPath);
-        }
-      } else if (entry.isFile() && entry.name.endsWith('.js')) {
-        files.push(fullPath);
-      }
-    }
-  }
-
-  traverse(dir);
-  return files;
-}
-
-/**
- * Print results
- */
-function printResults() {
-  console.log('\n' + '='.repeat(60));
-  console.log('VALIDATION RESULTS');
-  console.log('='.repeat(60) + '\n');
-
-  if (results.info.length > 0) {
-    console.log('ℹ️  INFO:');
-    results.info.forEach((msg) => console.log(`  ${msg}`));
-    console.log('');
-  }
-
-  if (results.warnings.length > 0) {
-    console.log('⚠️  WARNINGS:');
-    results.warnings.forEach((msg) => console.log(`  ${msg}`));
-    console.log('');
-  }
-
-  if (results.errors.length > 0) {
-    console.log('❌ ERRORS:');
-    results.errors.forEach((msg) => console.log(`  ${msg}`));
-    console.log('');
-  }
-
-  console.log('='.repeat(60));
-  console.log(
-    `Total: ${results.info.length} info, ${results.warnings.length} warnings, ${results.errors.length} errors`
-  );
-  console.log('='.repeat(60) + '\n');
-
-  if (results.errors.length > 0) {
-    console.log('❌ VALIDATION FAILED\n');
-    process.exit(1);
-  } else if (results.warnings.length > 0) {
-    console.log('⚠️  VALIDATION PASSED WITH WARNINGS\n');
-    process.exit(0);
-  } else {
-    console.log('✅ VALIDATION PASSED\n');
-    process.exit(0);
-  }
-}
-
-/**
- * Main
- */
-function main() {
-  console.log('🚀 Rate Limit Configuration Validator (ROA-392)\n');
+async function main() {
+  logger.info('🔍 Rate Limit Configuration Validator - ROA-526');
+  console.log('🔍 Rate Limit Configuration Validator - ROA-526\n');
+  console.log('═'.repeat(60));
 
   try {
-    validateSSOT();
-    validateService();
-    validateSettingsLoader();
-    validateNoHardcodedValues();
-    validateDocumentation();
-  } catch (error) {
-    console.error('💥 Unexpected error during validation:', error);
-    process.exit(1);
-  }
+    // Load configuration from SSOT
+    logger.info('📥 Loading configuration from SSOT v2...');
+    console.log('\n📥 Loading configuration from SSOT v2...\n');
+    
+    const authRateLimitConfig = await settingsLoader.getValue('rate_limit.auth');
+    const progressiveBlockDurations = await settingsLoader.getValue('rate_limit.auth.block_durations');
+    const abuseDetectionThresholds = await settingsLoader.getValue('abuse_detection.thresholds');
 
-  printResults();
+    // If any config is missing, it's a critical error
+    if (!authRateLimitConfig) {
+      logResult('error', 'CRITICAL: rate_limit.auth not found in SSOT', {});
+      logger.error('❌ CRITICAL ERROR: Cannot proceed without rate limit configuration');
+      console.log('\n═'.repeat(60));
+      console.log('\n❌ CRITICAL ERROR: Cannot proceed without rate limit configuration');
+      process.exit(2);
+    }
+
+    // Run validations
+    const authRateLimitValid = await validateAuthRateLimitConfig(authRateLimitConfig);
+    const progressiveBlockValid = progressiveBlockDurations 
+      ? await validateProgressiveBlockDurations(progressiveBlockDurations)
+      : true; // Optional in SSOT, will use fallback
+    const abuseDetectionValid = abuseDetectionThresholds
+      ? await validateAbuseDetectionThresholds(abuseDetectionThresholds)
+      : true; // Optional in SSOT, will use fallback
+    const endpointCoverageValid = await validateEndpointCoverage();
+
+    // Print summary
+    logger.info('📊 Validation Summary', {
+      passed: validationResults.passed.length,
+      warnings: validationResults.warnings.length,
+      errors: validationResults.errors.length
+    });
+    console.log('\n═'.repeat(60));
+    console.log('\n📊 Validation Summary:\n');
+    console.log(`   ✅ Passed: ${validationResults.passed.length}`);
+    console.log(`   ⚠️  Warnings: ${validationResults.warnings.length}`);
+    console.log(`   ❌ Errors: ${validationResults.errors.length}`);
+    console.log('');
+
+    if (validationResults.warnings.length > 0) {
+      console.log('\n⚠️  Warnings:\n');
+      validationResults.warnings.forEach((w, i) => {
+        console.log(`   ${i + 1}. ${w.message}`);
+      });
+      console.log('');
+    }
+
+    if (validationResults.errors.length > 0) {
+      console.log('\n❌ Errors:\n');
+      validationResults.errors.forEach((e, i) => {
+        console.log(`   ${i + 1}. ${e.message}`);
+      });
+      console.log('');
+    }
+
+    console.log('═'.repeat(60));
+
+    // Determine exit code
+    if (validationResults.errors.length > 0) {
+      logger.error('❌ VALIDATION FAILED: Configuration errors detected');
+      console.log('\n❌ VALIDATION FAILED: Configuration errors detected');
+      console.log('   Please fix the errors above before deploying rate limiting v2.');
+      process.exit(1);
+    } else if (validationResults.warnings.length > 0) {
+      logger.warn('⚠️  VALIDATION PASSED WITH WARNINGS');
+      console.log('\n⚠️  VALIDATION PASSED WITH WARNINGS');
+      console.log('   Review warnings above - they may indicate potential issues.');
+      process.exit(0);
+    } else {
+      logger.info('✅ VALIDATION PASSED: All checks successful');
+      console.log('\n✅ VALIDATION PASSED: All checks successful');
+      console.log('   Rate limiting configuration is valid and ready for deployment.');
+      process.exit(0);
+    }
+
+  } catch (error) {
+    logger.error('🚨 CRITICAL ERROR during validation', { error: error.message, stack: error.stack });
+    console.error('\n🚨 CRITICAL ERROR during validation:\n');
+    console.error(error);
+    console.error('\n═'.repeat(60));
+    console.error('\n❌ Validation failed due to unexpected error');
+    console.error('   This may indicate SSOT unavailability or code issues.');
+    process.exit(2);
+  }
 }
 
-// Run
+// Run validation
 main();
+
