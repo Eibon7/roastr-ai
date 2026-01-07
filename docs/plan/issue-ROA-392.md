@@ -336,29 +336,31 @@ class RateLimitPolicyGlobal {
 
 ### Paso 8: Tests
 
-**Unit Tests:**
-- ✅ `RateLimitPolicyGlobal` - carga configuración
-- ✅ `RateLimitPolicyGlobal` - sliding window algorithm
-- ✅ `RateLimitPolicyGlobal` - fail-safe en Redis error
-- ✅ `RateLimitPolicyGlobal` - feature flags por scope
-- ✅ `RateLimitPolicyGlobal` - progressive block durations
-- ✅ `RateLimitPolicyGlobal` - hot-reload configuración
+**Nota:** Tests planificados para Phase 3 (no incluidos en Phase 1).
 
-**Integration Tests:**
-- ✅ Auth rate limiting con RateLimitPolicyGlobal
-- ✅ Ingestion rate limiting con RateLimitPolicyGlobal
-- ✅ Redis sliding window correctamente
-- ✅ Cache invalidation tras cambio SSOT
+**Unit Tests (Phase 3 - Pending):**
+- [ ] `RateLimitPolicyGlobal` - carga configuración
+- [ ] `RateLimitPolicyGlobal` - sliding window algorithm
+- [ ] `RateLimitPolicyGlobal` - fail-safe en Redis error
+- [ ] `RateLimitPolicyGlobal` - feature flags por scope
+- [ ] `RateLimitPolicyGlobal` - progressive block durations
+- [ ] `RateLimitPolicyGlobal` - hot-reload configuración
 
-**E2E Tests:**
-- ✅ Admin edita rate limit → sistema responde
-- ✅ Feature flag deshabilitado → rate limiting OFF
-- ✅ Rate limit excedido → retry_after correcto
+**Integration Tests (Phase 3 - Pending):**
+- [ ] Auth rate limiting con RateLimitPolicyGlobal
+- [ ] Ingestion rate limiting con RateLimitPolicyGlobal
+- [ ] Redis sliding window correctamente
+- [ ] Cache invalidation tras cambio SSOT
 
-**Archivos afectados:**
-- `tests/unit/services/rateLimitPolicyGlobal.test.js` (nuevo)
-- `tests/integration/rateLimitPolicyGlobal.integration.test.js` (nuevo)
-- `tests/e2e/rateLimitPolicyGlobal.e2e.test.js` (nuevo)
+**E2E Tests (Phase 3 - Pending):**
+- [ ] Admin edita rate limit → sistema responde
+- [ ] Feature flag deshabilitado → rate limiting OFF
+- [ ] Rate limit excedido → retry_after correcto
+
+**Archivos afectados (Phase 3):**
+- `tests/unit/services/rateLimitPolicyGlobal.test.js` (pendiente)
+- `tests/integration/rateLimitPolicyGlobal.integration.test.js` (pendiente)
+- `tests/e2e/rateLimitPolicyGlobal.e2e.test.js` (pendiente)
 
 ### Paso 9: CI/CD
 

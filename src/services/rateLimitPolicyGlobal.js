@@ -255,8 +255,13 @@ class RateLimitPolicyGlobal {
     try {
       const redisKey = `ratelimit:${scope}:${key}`;
       const now = Date.now();
+      
+      // Use timestamp with random suffix to avoid collisions for concurrent requests
+      // in the same millisecond (ROA-392 - CodeRabbit fix)
+      const randomSuffix = Math.random().toString(36).substring(2, 8);
+      const uniqueMember = `${now}-${randomSuffix}`;
 
-      await redis.zadd(redisKey, now, `${now}`);
+      await redis.zadd(redisKey, now, uniqueMember);
       
       const config = await this._getConfig();
       const scopeConfig = this._getScopeConfig(scope, config);
