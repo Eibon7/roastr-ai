@@ -110,7 +110,10 @@ describe('RateLimitPolicyGlobal - Phase 1 Smoke Tests', () => {
  * 1. Module loads without errors
  * 2. Required methods exist
  * 3. Basic structure is correct
- * 4. Fail-safe behavior works (blocks on errors)
+ * 4. Security features (key masking) are present
  * 5. Project rule "commit sin tests → prohibido" is satisfied
+ * 
+ * Behavioral tests (fail-safe, sliding window, etc.) are NOT asserted here.
+ * Those require mocks and are tracked for Phase 3 (≥90% coverage target).
  */
 

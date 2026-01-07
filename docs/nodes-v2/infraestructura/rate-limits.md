@@ -51,8 +51,8 @@ Middleware/Policies (consumers)
 | `ingestion.global` | Ingestion global | 1,000 | 1 hora |
 | `ingestion.perUser` | Ingestion por usuario | 100 | 1 hora |
 | `ingestion.perAccount` | Ingestion por cuenta | 50 | 1 hora |
-| **roast scope** | Generación de roasts | 10 | 1 min |
-| **persona scope** | Updates de persona | 3 | 1 hora |
+| `roast` | Generación de roasts | 10 | 1 min |
+| `persona` | Updates de persona | 3 | 1 hora |
 | `notifications` | Envío de notificaciones | 10 | 1 min |
 | `gdpr` | Requests GDPR (export, delete) | 5 | 1 hora |
 | `admin` | Admin panel API | 100 | 1 min |
