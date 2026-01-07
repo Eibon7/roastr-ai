@@ -232,6 +232,16 @@ type FeatureFlagKey =
   | 'auth_enable_password_recovery'
   | 'auth_enable_oauth'
 
+  // Rate Limiting v2 (ROA-392)
+  | 'enable_rate_limit_global'
+  | 'enable_rate_limit_auth'
+  | 'enable_rate_limit_ingestion'
+  | 'enable_rate_limit_roast'
+  | 'enable_rate_limit_persona'
+  | 'enable_rate_limit_notifications'
+  | 'enable_rate_limit_gdpr'
+  | 'enable_rate_limit_admin'
+
   // UX / UI
   | 'show_two_roast_variants'
   | 'show_transparency_disclaimer'
@@ -724,35 +734,200 @@ type AuthError = {
 - `provider` (`supabase`)
 - `feature_flag_state` (obj / snapshot de flags relevantes)
 
-### 12.6 Ingestion Rate Limits (ROA-388)
+### 12.6 Rate Limiting Global v2 (ROA-392)
 
-**Configuración oficial de rate limits para ingestion de comentarios:**
+**Propósito:** Sistema unificado de rate limiting para todos los endpoints y servicios de Roastr v2.
+
+#### 12.6.1 Estructura de Configuración
 
 ```ts
-type IngestionRateLimitConfig = {
-  global: {
-    max: 1000;           // Max ingestions per hour globally
-    windowMs: 3600000;   // 1 hour window
+type RateLimitScope = 
+  | 'auth'
+  | 'ingestion' 
+  | 'roast'
+  | 'persona'
+  | 'notifications'
+  | 'gdpr'
+  | 'admin'
+  | 'global';
+
+type RateLimitConfig = {
+  max: number;              // Max requests in window
+  windowMs: number;         // Window in milliseconds
+  blockDurationMs?: number; // Optional progressive block duration
+  enabled: boolean;         // Default true
+};
+
+type RateLimitPolicyConfig = {
+  global: RateLimitConfig;  // Global rate limit (all requests)
+  auth: {
+    password: RateLimitConfig;
+    magic_link: RateLimitConfig;
+    oauth: RateLimitConfig;
+    password_reset: RateLimitConfig;
   };
-  perUser: {
-    max: 100;            // Max ingestions per hour per user
-    windowMs: 3600000;   // 1 hour window
+  ingestion: {
+    global: RateLimitConfig;
+    perUser: RateLimitConfig;
+    perAccount: RateLimitConfig;
   };
-  perAccount: {
-    max: 50;             // Max ingestions per hour per account
-    windowMs: 3600000;   // 1 hour window
-  };
+  roast: RateLimitConfig;
+  persona: RateLimitConfig;
+  notifications: RateLimitConfig;
+  gdpr: RateLimitConfig;
+  admin: RateLimitConfig;
+  progressiveBlockDurations: number[]; // [15min, 1h, 24h, null]
 };
 ```
 
+#### 12.6.2 Valores por Defecto (SSOT)
+
+```ts
+const DEFAULT_RATE_LIMIT_POLICY: RateLimitPolicyConfig = {
+  global: {
+    max: 10000,
+    windowMs: 3600000, // 1 hour
+    enabled: true
+  },
+  auth: {
+    password: {
+      max: 5,
+      windowMs: 900000, // 15 min
+      blockDurationMs: 900000,
+      enabled: true
+    },
+    magic_link: {
+      max: 3,
+      windowMs: 3600000, // 1 hour
+      blockDurationMs: 3600000,
+      enabled: true
+    },
+    oauth: {
+      max: 10,
+      windowMs: 900000, // 15 min
+      blockDurationMs: 900000,
+      enabled: true
+    },
+    password_reset: {
+      max: 3,
+      windowMs: 3600000, // 1 hour
+      blockDurationMs: 3600000,
+      enabled: true
+    }
+  },
+  ingestion: {
+    global: {
+      max: 1000,
+      windowMs: 3600000, // 1 hour
+      enabled: true
+    },
+    perUser: {
+      max: 100,
+      windowMs: 3600000, // 1 hour
+      enabled: true
+    },
+    perAccount: {
+      max: 50,
+      windowMs: 3600000, // 1 hour
+      enabled: true
+    }
+  },
+  roast: {
+    max: 10,
+    windowMs: 60000, // 1 min
+    enabled: true
+  },
+  persona: {
+    max: 3,
+    windowMs: 3600000, // 1 hour
+    enabled: true
+  },
+  notifications: {
+    max: 10,
+    windowMs: 60000, // 1 min
+    enabled: true
+  },
+  gdpr: {
+    max: 5,
+    windowMs: 3600000, // 1 hour
+    enabled: true
+  },
+  admin: {
+    max: 100,
+    windowMs: 60000, // 1 min
+    enabled: true
+  },
+  progressiveBlockDurations: [
+    900000,   // 15 min (1st infraction)
+    3600000,  // 1 hour (2nd infraction)
+    86400000, // 24 hours (3rd infraction)
+    null      // Permanent (4th+ infraction, requires manual intervention)
+  ]
+};
+```
+
+#### 12.6.3 Feature Flags
+
+```ts
+type RateLimitFeatureFlags = 
+  | 'enable_rate_limit_global'
+  | 'enable_rate_limit_auth'
+  | 'enable_rate_limit_ingestion'
+  | 'enable_rate_limit_roast'
+  | 'enable_rate_limit_persona'
+  | 'enable_rate_limit_notifications'
+  | 'enable_rate_limit_gdpr'
+  | 'enable_rate_limit_admin';
+```
+
+**Defaults:** Todos en `true` (fail-closed para seguridad).
+
+#### 12.6.4 Algoritmo y Almacenamiento
+
 **Algoritmo:**
-- Sliding window con Redis
+- Sliding window con Redis (sorted sets con timestamps)
 - Fail-safe: Bloquea en errores de Redis (no permite bypass)
-- Keys: `ingestion:global`, `ingestion:user:{userId}`, `ingestion:account:{accountId}:{platform}`
+- Progressive blocking: Escalación de duración de bloqueo según infracciones
 
 **Almacenamiento:**
-- Redis/Upstash (sorted sets con timestamps)
-- TTL automático según windowMs
+- **Producción**: Redis/Upstash (preferido)
+- **Fallback**: Memoria (solo desarrollo/testing)
+- **Keys**: 
+  - Global: `ratelimit:global`
+  - Auth: `ratelimit:auth:{authType}:ip:{ip}`, `ratelimit:auth:{authType}:email:{emailHash}`
+  - Ingestion: `ratelimit:ingestion:global`, `ratelimit:ingestion:user:{userId}`, `ratelimit:ingestion:account:{accountId}:{platform}`
+  - Roast: `ratelimit:roast:user:{userId}`
+  - Persona: `ratelimit:persona:user:{userId}`
+  - Notifications: `ratelimit:notifications:user:{userId}`
+  - GDPR: `ratelimit:gdpr:user:{userId}`
+  - Admin: `ratelimit:admin:user:{userId}`
+
+**TTL:** Automático según `windowMs` de cada scope.
+
+#### 12.6.5 Hot Reload
+
+La configuración se carga dinámicamente desde SettingsLoader v2 (cache de 1 minuto). Los cambios en `admin_settings` se reflejan automáticamente sin reiniciar el servicio.
+
+**Endpoints admin:**
+- `GET /api/v2/admin/settings/rate-limit` - Obtener configuración actual
+- `PATCH /api/v2/admin/settings/rate-limit` - Actualizar configuración por scope
+
+#### 12.6.6 Reglas Críticas
+
+1. **NUNCA** bypass rate limiting en errores de Redis (fail-safe = block)
+2. **SIEMPRE** cargar configuración desde SSOT (no hardcodear)
+3. **SIEMPRE** respetar feature flags por scope
+4. **SIEMPRE** usar sliding window (no fixed window)
+5. **SIEMPRE** aplicar progressive blocking para abuse patterns
+6. **NUNCA** exponer detalles internos de rate limiting en respuestas API
+
+#### 12.6.7 Legacy Sections (Deprecated)
+
+Las siguientes secciones están deprecated a favor de 12.6:
+- ~~12.4 Rate Limiting de Autenticación (ROA-359)~~ → Usar 12.6 auth
+- ~~12.6 Ingestion Rate Limits (ROA-388)~~ → Usar 12.6 ingestion
+
+**⚠️ IMPORTANTE:** El código legacy puede seguir referenciando estas secciones hasta completar la migración. Una vez migrado, eliminar referencias a secciones deprecated.
 
 ### 12.5 Abuse Detection Thresholds (ROA-359)
 
@@ -974,6 +1149,45 @@ Si Cursor / cualquier agente propone algo que contradice esto, la respuesta corr
 - Proponer actualización del SSOT o corrección del código según corresponda.
 
 ## 15. GDD Health Score (Single Source of Truth)
+
+Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
+
+**IMPORTANTE:**  
+Los valores deben ser **dinámicos pero correctos**.  
+NO se permiten valores hardcoded.  
+Únicamente se actualizan cuando un proceso de auditoría v2 lo ordena manualmente mediante:
+
+```bash
+node scripts/compute-health-v2-official.js --update-ssot
+```
+
+### 15.1 Métricas Oficiales
+
+| Métrica | Valor | Descripción |
+|---------|-------|-------------|
+| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
+| **SSOT Alignment** | 100% | % de nodos que usan valores del SSOT correctamente |
+| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
+| **Crosslink Score** | 92.31% | % de dependencias esperadas que están correctamente referenciadas |
+| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
+| **Health Score Final** | **98.46/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+
+### 15.2 Detalles de Cálculo
+
+- **Nodos detectados:** 15 de 15
+- **Nodos faltantes:** 0
+- **Última actualización:** 2026-01-07T13:21:44.453Z
+
+### 15.3 Reglas de Actualización
+
+1. **Ningún script puede modificar estos valores automáticamente**
+2. **Solo se actualizan mediante:** `node scripts/compute-health-v2-official.js --update-ssot`
+3. **El SSOT es la única fuente de verdad** - Los scripts de lectura (calculate-gdd-health-v2.js) deben leer desde aquí
+4. **Si hay discrepancia** entre archivos → gana el SSOT
+
+---
+
+
 
 Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
 

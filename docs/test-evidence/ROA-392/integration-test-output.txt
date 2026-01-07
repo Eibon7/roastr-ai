@@ -1,0 +1,20 @@
+
+> roastr-ai@1.0.0 test
+> NODE_OPTIONS='--max-old-space-size=4096' vitest run tests/integration/services/rateLimitPolicyGlobal.integration.test.js
+
+
+ RUN  v4.0.15 /Users/emiliopostigo/roastr-ai-worktrees/ROA-392
+
+ ✓ tests/integration/services/rateLimitPolicyGlobal.integration.test.js > RateLimitPolicyGlobal - Phase 1 Smoke Tests > should load RateLimitPolicyGlobal module without errors 81ms
+ ✓ tests/integration/services/rateLimitPolicyGlobal.integration.test.js > RateLimitPolicyGlobal - Phase 1 Smoke Tests > should instantiate RateLimitPolicyGlobal 0ms
+ ✓ tests/integration/services/rateLimitPolicyGlobal.integration.test.js > RateLimitPolicyGlobal - Phase 1 Smoke Tests > should have required public methods 0ms
+ ✓ tests/integration/services/rateLimitPolicyGlobal.integration.test.js > RateLimitPolicyGlobal - Phase 1 Smoke Tests > should have private helper methods 2ms
+ ✓ tests/integration/services/rateLimitPolicyGlobal.integration.test.js > RateLimitPolicyGlobal - Phase 1 Smoke Tests > should validate getConfig returns expected structure 16ms
+ ✓ tests/integration/services/rateLimitPolicyGlobal.integration.test.js > RateLimitPolicyGlobal - Phase 1 Smoke Tests > should have _maskKey method for security 1ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  16:36:09
+   Duration  329ms (transform 25ms, setup 19ms, import 6ms, tests 212ms, environment 0ms)
+
+JUNIT report written to /Users/emiliopostigo/roastr-ai-worktrees/ROA-392/junit.xml

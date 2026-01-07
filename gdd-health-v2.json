@@ -2,17 +2,40 @@
   "system_map_alignment_score": 100,
   "ssot_alignment_score": 100,
   "dependency_density_score": 100,
-  "crosslink_score": 100,
+  "crosslink_score": 92.31,
   "narrative_consistency_score": 100,
-  "health_score": 100,
+  "health_score": 98.46,
   "nodes_detected": 15,
   "nodes_total": 15,
   "nodes_missing": 0,
-  "timestamp": "2025-12-09T21:18:24.955Z",
+  "timestamp": "2026-01-07T13:21:44.453Z",
   "version": "2.0",
   "orphan_nodes": [],
   "unused_nodes_in_system_map": [],
   "unused_system_map_entries": [],
   "warnings": [],
-  "errors": []
+  "errors": [],
+  "overall_score": 98.46,
+  "status": "healthy",
+  "notes": {
+    "phase_1_temporary_regression": {
+      "health_score": {
+        "previous": 100,
+        "current": 98.46,
+        "cause": "ROA-392 Phase 1: New rate-limits node with partial crosslinks",
+        "recovery_plan": "Will return to 100 in Phase 2 (auth wiring) and Phase 3 (full integration)"
+      },
+      "crosslink_score": {
+        "previous": 100,
+        "current": 92.31,
+        "cause": "Not all consuming domains linked yet (auth, ingestion flows not wired)",
+        "recovery_plan": "Phase 2: Auth wiring (+5%), Phase 3: Global tests & validation (+2.69%)"
+      },
+      "expected": true,
+      "temporary": true,
+      "phase_1_complete": "2026-01-07",
+      "phase_2_target": "TBD",
+      "phase_3_target": "TBD"
+    }
+  }
 }

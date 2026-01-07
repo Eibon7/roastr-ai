@@ -208,6 +208,126 @@ class SettingsLoaderV2 {
   }
 
   /**
+   * Load Rate Limit Policy configuration (ROA-392)
+   * 
+   * Loads rate limit configuration from merged config (admin_settings + admin-controlled.yaml)
+   * with fallback to SSOT defaults if not found.
+   * 
+   * SSOT Reference: Section 12.6 (Rate Limiting Global v2)
+   * 
+   * @returns {Promise<Object>} Rate limit policy configuration
+   */
+  async loadRateLimitPolicy() {
+    try {
+      const config = await this.getMergedConfig();
+      
+      // Check if rate_limit_policy exists in merged config
+      if (config.rate_limit_policy) {
+        logger.info('SettingsLoaderV2: Rate limit policy loaded from admin_settings/admin-controlled');
+        return config.rate_limit_policy;
+      }
+
+      // Fallback to SSOT defaults (section 12.6.2)
+      logger.info('SettingsLoaderV2: Rate limit policy not found in config, using SSOT defaults');
+      return this._getDefaultRateLimitPolicy();
+
+    } catch (error) {
+      logger.error('SettingsLoaderV2: Error loading rate limit policy, using SSOT defaults', { error });
+      return this._getDefaultRateLimitPolicy();
+    }
+  }
+
+  /**
+   * Get default rate limit policy from SSOT v2 (section 12.6.2)
+   * 
+   * @private
+   * @returns {Object} Default rate limit policy configuration
+   */
+  _getDefaultRateLimitPolicy() {
+    return {
+      global: {
+        max: 10000,
+        windowMs: 3600000, // 1 hour
+        enabled: true
+      },
+      auth: {
+        password: {
+          max: 5,
+          windowMs: 900000, // 15 min
+          blockDurationMs: 900000,
+          enabled: true
+        },
+        magic_link: {
+          max: 3,
+          windowMs: 3600000, // 1 hour
+          blockDurationMs: 3600000,
+          enabled: true
+        },
+        oauth: {
+          max: 10,
+          windowMs: 900000, // 15 min
+          blockDurationMs: 900000,
+          enabled: true
+        },
+        password_reset: {
+          max: 3,
+          windowMs: 3600000, // 1 hour
+          blockDurationMs: 3600000,
+          enabled: true
+        }
+      },
+      ingestion: {
+        global: {
+          max: 1000,
+          windowMs: 3600000, // 1 hour
+          enabled: true
+        },
+        perUser: {
+          max: 100,
+          windowMs: 3600000, // 1 hour
+          enabled: true
+        },
+        perAccount: {
+          max: 50,
+          windowMs: 3600000, // 1 hour
+          enabled: true
+        }
+      },
+      roast: {
+        max: 10,
+        windowMs: 60000, // 1 min
+        enabled: true
+      },
+      persona: {
+        max: 3,
+        windowMs: 3600000, // 1 hour
+        enabled: true
+      },
+      notifications: {
+        max: 10,
+        windowMs: 60000, // 1 min
+        enabled: true
+      },
+      gdpr: {
+        max: 5,
+        windowMs: 3600000, // 1 hour
+        enabled: true
+      },
+      admin: {
+        max: 100,
+        windowMs: 60000, // 1 min
+        enabled: true
+      },
+      progressiveBlockDurations: [
+        900000,   // 15 min (1st infraction)
+        3600000,  // 1 hour (2nd infraction)
+        86400000, // 24 hours (3rd infraction)
+        null      // Permanent (4th+ infraction)
+      ]
+    };
+  }
+
+  /**
    * Invalidate cache (force reload on next request)
    * Resets all three subcaches with their independent timestamps
    */

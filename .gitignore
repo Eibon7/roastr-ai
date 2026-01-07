@@ -87,3 +87,4 @@ roastr-ai-worktrees/
 # Backup files from migration scripts
 *.backup-*
 *.backup
+.issue_lock
