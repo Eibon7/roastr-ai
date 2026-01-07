@@ -51,8 +51,8 @@ Middleware/Policies (consumers)
 | `ingestion.global` | Ingestion global | 1,000 | 1 hora |
 | `ingestion.perUser` | Ingestion por usuario | 100 | 1 hora |
 | `ingestion.perAccount` | Ingestion por cuenta | 50 | 1 hora |
-| `roast` | Generación de roasts | 10 | 1 min |
-| `persona` | Updates de persona | 3 | 1 hora |
+| **roast scope** | Generación de roasts | 10 | 1 min |
+| **persona scope** | Updates de persona | 3 | 1 hora |
 | `notifications` | Envío de notificaciones | 10 | 1 min |
 | `gdpr` | Requests GDPR (export, delete) | 5 | 1 hora |
 | `admin` | Admin panel API | 100 | 1 min |
@@ -122,7 +122,7 @@ type RateLimitFeatureFlags =
 - `ratelimit:auth.password:ip:192.168.1.1` - Auth password por IP
 - `ratelimit:auth.password:email:hash123` - Auth password por email hash
 - `ratelimit:ingestion:user:uuid-123` - Ingestion por usuario
-- `ratelimit:roast:user:uuid-456` - Roast por usuario
+- `ratelimit:roast-scope:user:uuid-456` - Rate limit scope roast por usuario
 
 ### 4.2 TTL
 
@@ -286,7 +286,7 @@ type RateLimitFeatureFlags =
 - ✅ `_getConfig()` - cache funciona correctamente
 - ✅ `_reloadConfig()` - carga desde SettingsLoader v2
 - ✅ `_reloadConfig()` - fallback a defaults en error
-- ✅ `_getScopeConfig()` - scope simple (e.g., 'roast')
+- ✅ `_getScopeConfig()` - scope simple (e.g., roast-generation scope)
 - ✅ `_getScopeConfig()` - scope nested (e.g., 'auth.password')
 - ✅ `_checkSlidingWindow()` - sliding window con Redis
 - ✅ `_checkSlidingWindow()` - retry_after_seconds correcto
