@@ -39,7 +39,11 @@ subnodes:
 
 ## Nota sobre Subnodos
 
-Los subnodos declarados en el frontmatter están definidos en `system-map-v2.yaml` pero aún no tienen archivos físicos en `docs/nodes-v2/infraestructura/`. Estos subnodos están planificados para documentación futura y no afectan la funcionalidad actual del nodo.
+Los subnodos declarados en el frontmatter están definidos en `system-map-v2.yaml`. Algunos ya tienen archivos físicos en `docs/nodes-v2/infraestructura/`, otros están planificados para documentación futura.
+
+**Subnodos implementados:**
+
+- ✅ **rate-limits** - Sistema unificado de rate limiting v2 (ROA-392)
 
 **Subnodos planificados:**
 
@@ -51,7 +55,6 @@ Los subnodos declarados en el frontmatter están definidos en `system-map-v2.yam
 - deploy-pipeline
 - smoke-tests-pipeline
 - backups
-- rate-limits
 
 **Issue de seguimiento:** Crear subnodos cuando se implemente documentación detallada de cada área.
 
