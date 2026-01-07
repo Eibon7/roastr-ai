@@ -1,6 +1,6 @@
 # Plan de Implementación: ROA-392 - Rate Limit Policy Global v2
 
-**Fecha:** 2026-01-07  
+**Fecha:** 2025-01-07  
 **Issue:** ROA-392  
 **Título:** Rate Limit Policy Global v2  
 **Prioridad:** P1  
@@ -563,7 +563,7 @@ npm run test:coverage
 
 ---
 
-**Plan generado:** 2026-01-07  
+**Plan generado:** 2025-01-07  
 **Worktree:** /Users/emiliopostigo/roastr-ai-worktrees/ROA-392  
 **Rama:** feature/ROA-392-auto
 
