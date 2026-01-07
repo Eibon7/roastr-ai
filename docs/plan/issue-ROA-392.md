@@ -75,7 +75,7 @@ Actualmente existen múltiples implementaciones dispersas de rate limiting:
 
 ### Paso 1: Actualizar SSOT v2 (docs/SSOT-V2.md)
 
-**Acción:** Añadir sección `## 8.1 Rate Limiting Global v2 (ROA-392)`
+**Acción:** Añadir sección `## 12.6 Rate Limiting Global v2 (ROA-392)`
 
 **Contenido:**
 
@@ -220,7 +220,7 @@ type RateLimitFeatureFlags =
 ```
 
 **Archivos afectados:**
-- `docs/SSOT-V2.md` (nueva sección 8.1)
+- `docs/SSOT-V2.md` (nueva sección 12.6)
 
 ### Paso 2: Crear RateLimitPolicyGlobal v2
 
@@ -399,7 +399,7 @@ class RateLimitPolicyGlobal {
 - `scripts/validate-rate-limit-config.js`
 
 ### Modificados:
-- `docs/SSOT-V2.md` (nueva sección 8.1)
+- `docs/SSOT-V2.md` (nueva sección 12.6)
 - `docs/nodes-v2/14-infraestructura.md` (actualizar sección rate-limits)
 - `src/services/settingsLoaderV2.js` (nuevo método loadRateLimitPolicy)
 - `src/middleware/authRateLimiterV2.js` (refactor)
