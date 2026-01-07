@@ -5,13 +5,6 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-// Check if we're in mock mode - if variables are missing, create mock clients
-const isSupabaseConfigured = supabaseUrl && supabaseServiceKey && supabaseAnonKey;
-
-if (!isSupabaseConfigured) {
-  logger.warn('🔄 Supabase environment variables not set - running in mock mode');
-}
-
 // Create mock client for when Supabase is not configured
 const createMockClient = () => ({
   auth: {
@@ -179,24 +172,58 @@ const createMockClient = () => ({
   }
 });
 
-// Service client for admin operations (bypasses RLS)
-const supabaseServiceClient = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    })
-  : createMockClient();
+/**
+ * Issue #ROA-521: Lazy initialization to fix constructor timing issues
+ * 
+ * Previous issue: Clients were created at require-time, BEFORE test setup could
+ * configure process.env.MOCK_MODE. This caused CI failures because:
+ * 1. tests/setupIntegration.js runs to configure mocks
+ * 2. src/config/supabase.js gets required
+ * 3. Race condition: clients created before mock env vars are set
+ * 4. Real clients fail with missing credentials in CI
+ * 
+ * Solution: Lazy initialization with getters ensures clients are created
+ * AFTER test setup completes, respecting mock mode configuration.
+ */
 
-// Anonymous client for auth operations
-const supabaseAnonClient = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : createMockClient();
+// Cached clients (lazy initialized)
+let _supabaseServiceClient = null;
+let _supabaseAnonClient = null;
+
+// Lazy initialization for service client (bypasses RLS)
+const getSupabaseServiceClient = () => {
+  if (!_supabaseServiceClient) {
+    // Re-check configuration at initialization time (not require-time)
+    const configured = supabaseUrl && supabaseServiceKey && supabaseAnonKey;
+    _supabaseServiceClient = configured
+      ? createClient(supabaseUrl, supabaseServiceKey, {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        })
+      : createMockClient();
+  }
+  return _supabaseServiceClient;
+};
+
+// Lazy initialization for anonymous client (auth operations)
+const getSupabaseAnonClient = () => {
+  if (!_supabaseAnonClient) {
+    // Re-check configuration at initialization time (not require-time)
+    const configured = supabaseUrl && supabaseServiceKey && supabaseAnonKey;
+    _supabaseAnonClient = configured
+      ? createClient(supabaseUrl, supabaseAnonKey)
+      : createMockClient();
+  }
+  return _supabaseAnonClient;
+};
 
 // Function to create authenticated client for specific user
 const createUserClient = (accessToken) => {
-  if (!isSupabaseConfigured) {
+  // Check configuration at call time (not require-time)
+  const configured = supabaseUrl && supabaseServiceKey && supabaseAnonKey;
+  if (!configured) {
     return createMockClient();
   }
   return createClient(supabaseUrl, supabaseAnonKey, {
@@ -210,9 +237,12 @@ const createUserClient = (accessToken) => {
 
 // Helper to get user from JWT
 const getUserFromToken = async (token) => {
+  // Check configuration at call time (not require-time)
+  const configured = supabaseUrl && supabaseServiceKey && supabaseAnonKey;
+  
   // In mock mode or testing, return a valid mock user for any token
   if (
-    !isSupabaseConfigured ||
+    !configured ||
     process.env.NODE_ENV === 'test' ||
     process.env.ENABLE_MOCK_MODE === 'true'
   ) {
@@ -260,7 +290,7 @@ const getUserFromToken = async (token) => {
     const {
       data: { user },
       error
-    } = await supabaseAnonClient.auth.getUser(token);
+    } = await getSupabaseAnonClient().auth.getUser(token);
 
     if (error) {
       logger.warn('Failed to get user from token:', error.message);
@@ -276,12 +306,14 @@ const getUserFromToken = async (token) => {
 
 // Health check function
 const checkConnection = async () => {
-  if (!isSupabaseConfigured) {
+  // Check configuration at call time (not require-time)
+  const configured = supabaseUrl && supabaseServiceKey && supabaseAnonKey;
+  if (!configured) {
     return { connected: false, error: 'Mock mode - Supabase not configured' };
   }
 
   try {
-    const { data, error } = await supabaseServiceClient.from('users').select('id').limit(1);
+    const { data, error} = await getSupabaseServiceClient().from('users').select('id').limit(1);
 
     if (error) {
       throw new Error(`Database connection failed: ${error.message}`);
@@ -295,8 +327,13 @@ const checkConnection = async () => {
 };
 
 module.exports = {
-  supabaseServiceClient,
-  supabaseAnonClient,
+  // Export getters for lazy initialization (Issue #ROA-521)
+  get supabaseServiceClient() {
+    return getSupabaseServiceClient();
+  },
+  get supabaseAnonClient() {
+    return getSupabaseAnonClient();
+  },
   createUserClient,
   getUserFromToken,
   checkConnection
