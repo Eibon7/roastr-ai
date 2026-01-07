@@ -26,7 +26,7 @@
  */
 
 const redis = require('../lib/redis');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 const settingsLoaderV2 = require('./settingsLoaderV2');
 
 /**
