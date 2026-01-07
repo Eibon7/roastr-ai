@@ -13,6 +13,7 @@
   "dependencies": {
     "@amplitude/analytics-node": "^1.5.27",
     "@supabase/supabase-js": "^2.39.0",
+    "@upstash/redis": "^1.34.3",
     "express": "^4.18.2",
     "yaml": "^2.3.4"
   },
