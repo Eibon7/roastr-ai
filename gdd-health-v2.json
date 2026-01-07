@@ -16,5 +16,26 @@
   "warnings": [],
   "errors": [],
   "overall_score": 98.46,
-  "status": "healthy"
+  "status": "healthy",
+  "notes": {
+    "phase_1_temporary_regression": {
+      "health_score": {
+        "previous": 100,
+        "current": 98.46,
+        "cause": "ROA-392 Phase 1: New rate-limits node with partial crosslinks",
+        "recovery_plan": "Will return to 100 in Phase 2 (auth wiring) and Phase 3 (full integration)"
+      },
+      "crosslink_score": {
+        "previous": 100,
+        "current": 92.31,
+        "cause": "Not all consuming domains linked yet (auth, ingestion flows not wired)",
+        "recovery_plan": "Phase 2: Auth wiring (+5%), Phase 3: Global tests & validation (+2.69%)"
+      },
+      "expected": true,
+      "temporary": true,
+      "phase_1_complete": "2026-01-07",
+      "phase_2_target": "TBD",
+      "phase_3_target": "TBD"
+    }
+  }
 }

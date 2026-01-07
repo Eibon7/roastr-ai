@@ -2,7 +2,7 @@
 
 **Issue:** [ROA-392](https://linear.app/roastrai/issue/ROA-392/rate-limit-policy-global-v2)  
 **Phase:** 1 (Core Infrastructure)  
-**Date:** 2025-01-07  
+**Date:** 2026-01-07  
 **Tested by:** AI Agent (Cursor)
 
 ---
@@ -183,12 +183,14 @@ beforeEach(async () => {
 
 **Phase 1 (Current):**
 - Integration tests: 6 tests, 100% passing ✅
-- Structural coverage: ~40% (API surface)
+- **Structural coverage:** ~40% (API surface, method presence, config structure)
+- **Behavioral coverage:** 0% (no runtime behavior tested, e.g., sliding window logic, Redis interaction, fail-safe)
 
 **Phase 3 (Target):**
 - Unit tests: ~28 tests (estimated)
 - Branch coverage: ≥90%
 - Line coverage: ≥90%
+- **Behavioral coverage:** 100% (all logic paths tested with mocks)
 - Mutation testing: TBD
 
 ---
@@ -250,6 +252,6 @@ This approach balances **quality** (comprehensive testing strategy) with **pragm
 ---
 
 **Signed off:** AI Agent (Cursor)  
-**Date:** 2025-01-07  
+**Date:** 2026-01-07  
 **Status:** ✅ APPROVED FOR MERGE (with Phase 3 follow-up)
 

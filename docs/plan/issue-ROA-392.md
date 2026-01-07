@@ -1,6 +1,6 @@
 # Plan de Implementación: ROA-392 - Rate Limit Policy Global v2
 
-**Fecha:** 2025-01-07  
+**Fecha:** 2026-01-07  
 **Issue:** ROA-392  
 **Título:** Rate Limit Policy Global v2  
 **Prioridad:** P1  
@@ -42,6 +42,8 @@ Actualmente existen múltiples implementaciones dispersas de rate limiting:
 
 ## Objetivos (ROA-392)
 
+### Phase 1: Core Infrastructure (THIS PR)
+
 1. **Crear RateLimitPolicyGlobal v2**:
    - Política centralizada que carga configuración desde SSOT
    - Soporta múltiples scopes (auth, ingestion, roast, persona, notifications, gdpr, admin)
@@ -50,24 +52,36 @@ Actualmente existen múltiples implementaciones dispersas de rate limiting:
    - Feature flags para habilitar/deshabilitar por scope
 
 2. **Actualizar SSOT v2**:
-   - Consolidar todas las configuraciones de rate limits en una sección unificada
+   - Consolidar todas las configuraciones de rate limits en sección 12.6 unificada
    - Definir estructura `RateLimitPolicyConfig`
    - Añadir feature flags para control granular
+
+3. **Documentación**:
+   - Actualizar nodo `14-infraestructura.md`
+   - Crear subnodo `rate-limits.md`
+   - Test evidence con plan Phase 3
+
+4. **Smoke Tests**:
+   - Integration tests para estructura y API compliance
+   - NO tests de comportamiento exhaustivos (Phase 3)
+
+### Phase 2: Migrations (FUTURE PR)
 
 3. **Migrar implementaciones existentes**:
    - Auth Rate Limiting → usar RateLimitPolicyGlobal
    - Ingestion Rate Limiting → usar RateLimitPolicyGlobal
    - Otros rate limiters → consolidar o deprecar
+   - Analytics events (rate_limit_blocked, etc.)
+   - Prometheus metrics
 
-4. **Documentación**:
-   - Actualizar nodo `14-infraestructura.md`
-   - Crear subnodo `rate-limits.md`
-   - Actualizar SSOT v2 con configuración global
+### Phase 3: Advanced Features & Full Tests (FUTURE PR)
 
-5. **Tests**:
-   - Unit tests para RateLimitPolicyGlobal
-   - Integration tests con Redis
+5. **Tests completos**:
+   - Unit tests con mocks para RateLimitPolicyGlobal (≥90% coverage)
+   - Integration tests con Redis bajo carga
    - E2E tests para verificar feature flags
+   - Performance benchmarks
+   - Progressive blocking implementation
 
 ---
 
@@ -459,6 +473,47 @@ npm run test:coverage
 
 ---
 
+## Known Limitations — Phase 1
+
+**Phase 1 delivers core infrastructure ONLY.** The following are intentionally deferred to maintain focused scope:
+
+### ✅ Phase 1 INCLUDES:
+- ✅ **RateLimitPolicyGlobal service** - Core logic, Redis integration, fail-safe behavior
+- ✅ **SSOT v2 configuration** - Section 12.6 with all defaults and feature flags
+- ✅ **SettingsLoaderV2 integration** - Config loading with 1-minute cache
+- ✅ **Redis client wrapper** - Production (Upstash) + mock modes
+- ✅ **Structured logging** - Key masking, context, no PII
+- ✅ **CI validation script** - Enforce SSOT compliance
+- ✅ **Documentation** - GDD node, plan, test evidence
+- ✅ **Smoke tests** - 6 integration tests (structure validation, API compliance)
+
+### ❌ Phase 1 DOES NOT INCLUDE:
+- ❌ **Analytics events** - `rate_limit_blocked`, `rate_limit_progressive_block` (Phase 2)
+- ❌ **Auth wiring** - Integration with auth flows (Phase 2)
+- ❌ **Ingestion wiring** - Integration with ingestion flows (Phase 2)
+- ❌ **Legacy migrations** - Consolidation of old rate limiters (Phase 2)
+- ❌ **Prometheus metrics** - Monitoring integration (Phase 2)
+- ❌ **Admin panel** - UI for rate limit management (Phase 2)
+- ❌ **Progressive blocking** - Escalating durations (Phase 3)
+- ❌ **Full unit tests** - Mocked dependencies, ≥90% coverage (Phase 3)
+- ❌ **Performance benchmarks** - Load testing, stress testing (Phase 3)
+
+### 📊 Expected Metrics (Phase 1):
+- **Health Score:** 98.46/100 (temporary drop from 100, recovers in Phase 2/3)
+  - **Cause:** New `rate-limits` node with partial crosslinks
+  - **Resolution:** Crosslinks complete when auth/ingestion wired (Phase 2)
+- **Crosslink Score:** 92.31% (temporary drop from 100%)
+  - **Cause:** Not all consuming domains linked yet
+  - **Resolution:** Auth wiring (Phase 2), global tests (Phase 3)
+- **Test Coverage:** Structural only (smoke tests, no behavior tests)
+  - **Resolution:** Full unit tests with mocks (Phase 3)
+
+### 🎯 Phase 2 & 3 Tracking:
+- **Phase 2:** See "Migrations" section in Definition of Done
+- **Phase 3:** See "Advanced Features & Full Tests" section in Definition of Done
+
+---
+
 ## Definition of Done (Phase 1)
 
 ### Phase 1: Core Infrastructure ✅ COMPLETE
@@ -508,7 +563,7 @@ npm run test:coverage
 
 ---
 
-**Plan generado:** 2025-01-07  
+**Plan generado:** 2026-01-07  
 **Worktree:** /Users/emiliopostigo/roastr-ai-worktrees/ROA-392  
 **Rama:** feature/ROA-392-auto
 

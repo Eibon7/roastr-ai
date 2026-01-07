@@ -6,7 +6,7 @@
 **Node ID:** infraestructura/rate-limits  
 **Version:** 2.0  
 **Status:** ✅ Active (ROA-392)  
-**Last Updated:** 2025-01-07  
+**Last Updated:** 2026-01-07  
 **Owner:** Backend Dev
 
 ---
@@ -464,6 +464,6 @@ type RateLimitFeatureFlags =
 
 ---
 
-**Last Updated:** 2025-01-07  
+**Last Updated:** 2026-01-07  
 **Status:** ✅ Active (ROA-392 in progress)
 
