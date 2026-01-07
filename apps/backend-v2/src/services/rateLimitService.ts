@@ -1,7 +1,7 @@
 /**
  * Rate Limiting Service v2
  *
- * Implementación de rate limiting según SSOT v2 - Sección 7.4
+ * Implementación de rate limiting según SSOT v2 - Sección 12.4
  *
  * Configuración por tipo de autenticación:
  * - login: 5 intentos en 15 min → bloqueo 15 min
@@ -11,8 +11,16 @@
  *
  * Bloqueo progresivo: 15min → 1h → 24h → permanente
  *
+ * Storage:
+ * - Producción: Redis/Upstash (ROA-523)
+ * - Fallback/Dev: In-memory Map
+ *
  * ROA-410: Integrado con auth observability para logging estructurado
+ * ROA-523: Migración a Redis/Upstash persistente
  */
+
+import { getRedisClient, isRedisClientAvailable } from '../lib/redisClient.js';
+import { logger } from '../utils/logger.js';
 
 export type AuthType = 'login' | 'magic_link' | 'oauth' | 'password_reset' | 'signup';
 
@@ -68,12 +76,25 @@ const PROGRESSIVE_BLOCK_DURATIONS = [
 
 export class RateLimitService {
   private store: Map<string, RateLimitEntry>;
+  private useRedis: boolean;
   private observability?: {
     logRateLimit: (_context: any, _reason: string) => void;
   };
 
   constructor() {
     this.store = new Map();
+    this.useRedis = isRedisClientAvailable();
+
+    if (!this.useRedis) {
+      logger.warn('rate_limit_fallback_memory', {
+        reason: 'Redis not available, using in-memory storage',
+        warning: 'Rate limiting will not persist across server restarts'
+      });
+    } else {
+      logger.info('rate_limit_using_redis', {
+        storage: 'redis/upstash'
+      });
+    }
   }
 
   /**
@@ -88,7 +109,7 @@ export class RateLimitService {
    * Genera key de rate limit
    */
   private getKey(authType: AuthType, identifier: string): string {
-    return `ratelimit:${authType}:${identifier}`;
+    return `auth:ratelimit:ip:${authType}:${identifier}`;
   }
 
   /**
@@ -102,10 +123,106 @@ export class RateLimitService {
   }
 
   /**
+   * Get rate limit entry from Redis
+   */
+  private async getFromRedis(key: string): Promise<RateLimitEntry | null> {
+    const redis = getRedisClient();
+    if (!redis) {
+      return null;
+    }
+
+    try {
+      const data = await redis.get(key);
+      if (!data) {
+        return null;
+      }
+
+      return data as RateLimitEntry;
+    } catch (error: any) {
+      logger.error('redis_get_failed', {
+        key,
+        error: error.message,
+        fallback: 'memory'
+      });
+      this.useRedis = false; // Fallback to memory on error
+      return null;
+    }
+  }
+
+  /**
+   * Set rate limit entry in Redis with TTL
+   */
+  private async setInRedis(key: string, entry: RateLimitEntry, ttlMs: number): Promise<void> {
+    const redis = getRedisClient();
+    if (!redis) {
+      return;
+    }
+
+    try {
+      const ttlSeconds = Math.ceil(ttlMs / 1000);
+      await redis.set(key, entry, { ex: ttlSeconds });
+    } catch (error: any) {
+      logger.error('redis_set_failed', {
+        key,
+        error: error.message,
+        fallback: 'memory'
+      });
+      this.useRedis = false; // Fallback to memory on error
+    }
+  }
+
+  /**
+   * Delete rate limit entry from Redis
+   */
+  private async deleteFromRedis(key: string): Promise<void> {
+    const redis = getRedisClient();
+    if (!redis) {
+      return;
+    }
+
+    try {
+      await redis.del(key);
+    } catch (error: any) {
+      logger.error('redis_del_failed', {
+        key,
+        error: error.message
+      });
+    }
+  }
+
+  /**
    * Verifica si un identificador está bloqueado
    */
-  isBlocked(authType: AuthType, identifier: string): boolean {
+  async isBlocked(authType: AuthType, identifier: string): Promise<boolean> {
     const key = this.getKey(authType, identifier);
+
+    // Try Redis first
+    if (this.useRedis) {
+      const entry = await this.getFromRedis(key);
+      if (!entry) {
+        return false;
+      }
+
+      // Si hay bloqueo permanente
+      if (entry.blockedUntil === null) {
+        return true;
+      }
+
+      // Si hay bloqueo temporal y aún no expiró
+      if (entry.blockedUntil && Date.now() < entry.blockedUntil) {
+        return true;
+      }
+
+      // Si el bloqueo expiró, limpiar
+      if (entry.blockedUntil && Date.now() >= entry.blockedUntil) {
+        await this.deleteFromRedis(key);
+        return false;
+      }
+
+      return false;
+    }
+
+    // Fallback to memory
     const entry = this.store.get(key);
 
     if (!entry) {
@@ -134,8 +251,31 @@ export class RateLimitService {
   /**
    * Obtiene tiempo restante de bloqueo (en ms)
    */
-  getBlockRemaining(authType: AuthType, identifier: string): number | null {
+  async getBlockRemaining(authType: AuthType, identifier: string): Promise<number | null> {
     const key = this.getKey(authType, identifier);
+
+    // Try Redis first
+    if (this.useRedis) {
+      const entry = await this.getFromRedis(key);
+      if (!entry) {
+        return null;
+      }
+
+      // Bloqueo permanente
+      if (entry.blockedUntil === null) {
+        return Infinity;
+      }
+
+      // Si no hay bloqueo temporal
+      if (!entry.blockedUntil) {
+        return null;
+      }
+
+      const remaining = entry.blockedUntil - Date.now();
+      return remaining > 0 ? remaining : null;
+    }
+
+    // Fallback to memory
     const entry = this.store.get(key);
 
     if (!entry) {
@@ -159,21 +299,21 @@ export class RateLimitService {
   /**
    * Registra un intento de autenticación
    */
-  recordAttempt(
+  async recordAttempt(
     authType: AuthType,
     identifier: string
-  ): {
+  ): Promise<{
     allowed: boolean;
     remaining?: number;
     blockedUntil?: number | null;
-  } {
+  }> {
     const config = RATE_LIMITS[authType];
     const key = this.getKey(authType, identifier);
     const now = Date.now();
 
     // Verificar si está bloqueado
-    if (this.isBlocked(authType, identifier)) {
-      const remaining = this.getBlockRemaining(authType, identifier);
+    if (await this.isBlocked(authType, identifier)) {
+      const remaining = await this.getBlockRemaining(authType, identifier);
       const blockedUntil = remaining === Infinity ? null : now + (remaining || 0);
 
       // ROA-410: Log rate limit event
@@ -194,10 +334,16 @@ export class RateLimitService {
     }
 
     // Obtener o crear entrada
-    let entry = this.store.get(key);
+    let entry: RateLimitEntry;
 
-    if (!entry) {
-      entry = {
+    if (this.useRedis) {
+      entry = (await this.getFromRedis(key)) || {
+        attempts: 0,
+        firstAttempt: now,
+        blockCount: 0
+      };
+    } else {
+      entry = this.store.get(key) || {
         attempts: 0,
         firstAttempt: now,
         blockCount: 0
@@ -224,7 +370,14 @@ export class RateLimitService {
       entry.blockCount++;
       entry.attempts = 0;
 
-      this.store.set(key, entry);
+      // Store with TTL (Redis) or in memory
+      if (this.useRedis) {
+        // TTL: blockDuration or 30 days for permanent (for cleanup)
+        const ttl = blockDuration === null ? 30 * 24 * 60 * 60 * 1000 : blockDuration;
+        await this.setInRedis(key, entry, ttl);
+      } else {
+        this.store.set(key, entry);
+      }
 
       // ROA-410: Log rate limit exceeded
       if (this.observability) {
@@ -243,7 +396,12 @@ export class RateLimitService {
       };
     }
 
-    this.store.set(key, entry);
+    // Store updated entry
+    if (this.useRedis) {
+      await this.setInRedis(key, entry, config.windowMs);
+    } else {
+      this.store.set(key, entry);
+    }
 
     return {
       allowed: true,
@@ -254,15 +412,26 @@ export class RateLimitService {
   /**
    * Resetea el rate limit para un identificador (uso en tests o admin)
    */
-  reset(authType: AuthType, identifier: string): void {
+  async reset(authType: AuthType, identifier: string): Promise<void> {
     const key = this.getKey(authType, identifier);
-    this.store.delete(key);
+
+    if (this.useRedis) {
+      await this.deleteFromRedis(key);
+    } else {
+      this.store.delete(key);
+    }
   }
 
   /**
    * Limpia entradas expiradas (para evitar memory leaks)
+   * Nota: Redis maneja TTL automáticamente, este método solo limpia memoria
    */
   cleanup(): void {
+    if (this.useRedis) {
+      // Redis handles TTL automatically, no cleanup needed
+      return;
+    }
+
     const now = Date.now();
     for (const [key, entry] of this.store.entries()) {
       // Eliminar si no está bloqueado y la ventana expiró

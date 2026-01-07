@@ -7,6 +7,7 @@
 
 import express from 'express';
 import { initializeAmplitude } from './lib/analytics.js';
+import { initializeRedis } from './lib/redisClient.js';
 import authRoutes from './routes/auth.js';
 import oauthRoutes from './routes/oauth.js';
 import { attachRequestId } from './middleware/requestId.js';
@@ -16,6 +17,9 @@ import { logRateLimit } from './utils/authObservability.js';
 
 // Initialize Amplitude Analytics
 initializeAmplitude();
+
+// ROA-523: Initialize Redis/Upstash for rate limiting
+initializeRedis();
 
 // ROA-410: Connect rate limit service with observability
 rateLimitService.setObservability({

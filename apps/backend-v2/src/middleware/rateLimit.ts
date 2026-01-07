@@ -14,12 +14,12 @@ import { sendAuthError } from '../utils/authErrorResponse.js';
  * Middleware de rate limiting por tipo de autenticación
  */
 export function rateLimitByType(authType: AuthType) {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     // Obtener IP del cliente
     const ip = getClientIp(req);
 
-    // Verificar rate limit
-    const result = rateLimitService.recordAttempt(authType, ip);
+    // Verificar rate limit (ahora async)
+    const result = await rateLimitService.recordAttempt(authType, ip);
 
     if (!result.allowed) {
       const blockedUntil = result.blockedUntil;
