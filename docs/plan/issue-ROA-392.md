@@ -459,14 +459,43 @@ npm run test:coverage
 
 ---
 
-## Definition of Done
+## Definition of Done (Phase 1)
 
-- [ ] RateLimitPolicyGlobal v2 implementado y cargando desde SSOT
-- [ ] SSOT v2 actualizado con configuración global unificada
+### Phase 1: Core Infrastructure ✅ COMPLETE
+
+- [x] RateLimitPolicyGlobal v2 implementado y cargando desde SSOT
+- [x] SSOT v2 actualizado con configuración global unificada (sección 12.6)
+- [x] SettingsLoader v2 cargando configuración de rate limits
+- [x] Nodo `infraestructura/rate-limits.md` creado con documentación completa
+- [x] Nodo `14-infraestructura.md` actualizado con referencia a subnodo
+- [x] Script de validación CI (`validate-rate-limit-config.js`) implementado
+- [x] Tests de integración (6 tests, 100% passing)
+- [x] Test evidence documentado con estrategia Phase 3
+- [x] Redis client wrapper (`src/lib/redis.js`) creado
+- [x] Feature flags añadidos al SSOT (8 scopes)
+- [x] Fail-safe behavior implementado (block on errors)
+- [x] Key masking para seguridad (emails, IPs)
+- [x] Sliding window algorithm con Redis sorted sets
+- [x] Cache de configuración con TTL de 1 minuto
+- [x] Structured logging implementado
+
+### Phase 2: Migrations 🔄 DEFERRED
+
 - [ ] Auth rate limiting migrado a RateLimitPolicyGlobal
 - [ ] Ingestion rate limiting migrado a RateLimitPolicyGlobal
 - [ ] Otros rate limiters evaluados (migrados o deprecated)
-- [ ] SettingsLoader v2 cargando configuración de rate limits
+- [ ] Analytics events implementados (rate_limit_blocked, etc.)
+- [ ] Prometheus metrics implementados
+- [ ] Admin panel integrado con rate limit management
+
+### Phase 3: Advanced Features & Full Tests 🔄 DEFERRED
+
+- [ ] Progressive blocking implementado (escalación de duración)
+- [ ] Unit tests con mocks completos (≥90% coverage)
+- [ ] Performance benchmarks con Redis bajo carga
+- [ ] Stress testing con tráfico concurrente
+- [ ] Observability dashboard (Grafana)
+- [ ] Alertas configuradas (PagerDuty/Slack)
 - [ ] Documentación actualizada (nodos GDD, subnodo rate-limits)
 - [ ] Tests >= 90% coverage
 - [ ] CI validando configuración de rate limits

@@ -250,6 +250,13 @@ type RateLimitFeatureFlags =
 - `result` - `allowed` o `blocked`
 - `metadata` - Contexto adicional
 
+**Analytics Events (Phase 2):**
+- 🔄 `rate_limit_blocked` - Emitido cuando request es bloqueado
+- 🔄 `rate_limit_progressive_block` - Emitido cuando escalación ocurre
+- 🔄 `rate_limit_cleared` - Emitido cuando admin limpia rate limit
+
+> **Note:** Analytics events deferred to Phase 2 (when integrating with existing auth/ingestion flows)
+
 ### 8.2 Métricas
 
 **Prometheus metrics:**
