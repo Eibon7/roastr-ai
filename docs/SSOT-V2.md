@@ -615,53 +615,76 @@ Lista de redes planificadas:
 - **Resend**: email transaccional v2.
 - **SendGrid / Stripe / otras**: solo v1 (legacy), no usarse en nuevos flujos.
 
-### 12.4 Rate Limiting de Autenticación (ROA-359)
+### 12.4 Rate Limiting de Autenticación (ROA-359, ROA-526)
 
-**Configuración oficial de rate limits para endpoints de autenticación:**
+**⚠️ CONTRATO EXPLÍCITO SSOT v2**
 
-```ts
-type AuthRateLimitConfig = {
-  password: {
-    windowMs: 900000;      // 15 minutos
-    maxAttempts: 5;
-    blockDurationMs: 900000; // 15 minutos
-  };
-  magic_link: {
-    windowMs: 3600000;     // 1 hora
-    maxAttempts: 3;
-    blockDurationMs: 3600000; // 1 hora
-  };
-  oauth: {
-    windowMs: 900000;      // 15 minutos
-    maxAttempts: 10;
-    blockDurationMs: 900000; // 15 minutos
-  };
-  password_reset: {
-    windowMs: 3600000;     // 1 hora
-    maxAttempts: 3;
-    blockDurationMs: 3600000; // 1 hora
-  };
-};
+Esta configuración es consumida por `authRateLimiterV2.js` vía `settingsLoaderV2.getValue('rate_limit.auth')`.
+
+**Estructura completa (definición contractual):**
+
+```yaml
+rate_limit:
+  auth:
+    # Configuración por tipo de autenticación
+    password:
+      windowMs: 900000          # 15 minutos
+      maxAttempts: 5
+      blockDurationMs: 900000   # 15 minutos
+    
+    magic_link:
+      windowMs: 3600000         # 1 hora
+      maxAttempts: 3
+      blockDurationMs: 3600000  # 1 hora
+    
+    oauth:
+      windowMs: 900000          # 15 minutos
+      maxAttempts: 10
+      blockDurationMs: 900000   # 15 minutos
+    
+    password_reset:
+      windowMs: 3600000         # 1 hora
+      maxAttempts: 3
+      blockDurationMs: 3600000  # 1 hora
+    
+    # Bloqueo progresivo (escalación por reincidencia)
+    block_durations:
+      - 900000      # 15 minutos (1ra infracción)
+      - 3600000     # 1 hora (2da infracción)
+      - 86400000    # 24 horas (3ra infracción)
+      - null        # Permanente (4ta+ infracción, requiere intervención manual)
 ```
 
-**Bloqueo progresivo (escalación):**
+**Abuse Detection:**
 
-```ts
-type ProgressiveBlockDurations = [
-  900000,      // 15 minutos (1ra infracción)
-  3600000,     // 1 hora (2da infracción)
-  86400000,    // 24 horas (3ra infracción)
-  null         // Permanente (4ta+ infracción, requiere intervención manual)
-];
-```
+- Los thresholds de detección de abuso se definen en `abuse_detection.thresholds` (ver §12.6.5)
+- El auth rate limiter usa esos thresholds automáticamente
+- No hay configuración específica en `rate_limit.auth` para abuse detection
 
-**Almacenamiento:**
-- **Producción**: Redis/Upstash (preferido)
-- **Fallback**: Memoria (solo desarrollo/testing)
-- **Keys**: `auth:ratelimit:ip:${authType}:${ip}` y `auth:ratelimit:email:${authType}:${emailHash}`
+**Feature Flag:**
 
-**Feature Flags:**
-- `ENABLE_AUTH_RATE_LIMIT_V2`: Habilita rate limiting v2 (reemplaza v1)
+- `enable_rate_limit_auth` (admin): Habilita rate limiting v2 para autenticación
+- Default: `true` (fail-closed para seguridad)
+- Ver: Sección 12.6.3 para detalles completos de rate limiting
+
+**Storage:**
+
+- **Redis / Upstash:** Store primario para contadores y bloqueos
+- **Memory fallback:** Si Redis no disponible (desarrollo local)
+- **TTL:** Automático según `windowMs` de cada scope
+
+**Códigos de fallo contables:**
+
+Solo estos códigos HTTP/de aplicación se cuentan como intentos fallidos:
+- `INVALID_CREDENTIALS`
+- `INVALID_TOKEN`
+- `UNAUTHORIZED`
+- `AUTH_FAILED`
+- `WRONG_EMAIL_OR_PASSWORD`
+
+**Errores 5xx o infraestructura NO se cuentan** (no penalizan al usuario).
+
+---
 - `ENABLE_RATE_LIMIT`: Habilita rate limiting general (requerido para v2)
 
 ### 12.4.1 Auth Error Taxonomy (V2) — ROA-405

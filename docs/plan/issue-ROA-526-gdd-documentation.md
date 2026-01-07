@@ -83,7 +83,7 @@ node scripts/validate-rate-limit-config.js
 **SSOT References:**
 - `rate_limit.auth` (§12.4)
 - `rate_limit.auth.block_durations` (§12.4)
-- `abuse_detection.thresholds` (§12.4)
+- `abuse_detection.thresholds` (§12.6.5)
 
 **Services:**
 - Redis/Upstash (storage)
@@ -336,7 +336,7 @@ scrape_configs:
 
 #### 3. Abuse Detection Thresholds
 
-**SSOT Section:** §12.4 - `abuse_detection.thresholds`
+**SSOT Section:** §12.6.5 - `abuse_detection.thresholds`
 
 **Validaciones:**
 - Todos los thresholds requeridos presentes: `multi_ip`, `multi_email`, `burst`, `slow_attack`
