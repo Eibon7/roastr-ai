@@ -1,8 +1,8 @@
 # 📊 GDD Node Health Report (v2)
 
-**Generated:** 2025-12-28T20:48:56.685Z
+**Generated:** 2026-01-07T21:01:36.530Z
 **Overall Status:** 🟢 HEALTHY
-**Overall Health:** 100/100
+**Overall Health:** 95.7/100
 
 ---
 
@@ -19,18 +19,18 @@
 
 | Node | Score | Status | Last Updated | Issues |
 |------|-------|--------|--------------|--------|
-| roasting-engine | 🟢 100 | healthy | 2025-12-05T18:31:11.771Z | 0 |
+| roasting-engine | 🟢 95 | healthy | 2025-12-05T18:31:11.771Z | 0 |
+| shield-engine | 🟢 95 | healthy | 2025-12-05T00:00:00.000Z | 0 |
+| integraciones-redes-sociales | 🟢 95 | healthy | 2025-12-05T18:31:11.772Z | 0 |
+| billing-integration | 🟢 95 | healthy | 2025-12-05T18:31:11.772Z | 0 |
+| infraestructura | 🟢 95 | healthy | 2025-12-05T18:31:11.772Z | 0 |
+| observabilidad | 🟢 95 | healthy | 2025-12-05T18:31:11.772Z | 0 |
+| frontend-user-app | 🟢 95 | healthy | 2025-12-05T18:31:11.772Z | 0 |
+| frontend-admin | 🟢 95 | healthy | 2025-12-05T00:00:00.000Z | 0 |
+| ssot-integration | 🟢 95 | healthy | 2025-12-05T00:00:00.000Z | 0 |
+| workers | 🟢 95 | healthy | 2025-12-05T00:00:00.000Z | 0 |
+| settings-loader-and-feature-flags | 🟢 95 | healthy | 2025-12-05T18:31:11.772Z | 0 |
+| gdpr-and-legal | 🟢 95 | healthy | 2025-12-05T18:31:11.772Z | 0 |
+| testing-v2 | 🟢 95 | healthy | 2025-12-05T18:31:11.772Z | 0 |
 | analysis-engine | 🟢 100 | healthy | 2025-12-26T00:00:00.000Z | 0 |
-| shield-engine | 🟢 100 | healthy | 2025-12-05T00:00:00.000Z | 0 |
-| integraciones-redes-sociales | 🟢 100 | healthy | 2025-12-05T18:31:11.772Z | 0 |
-| billing-integration | 🟢 100 | healthy | 2025-12-05T18:31:11.772Z | 0 |
-| infraestructura | 🟢 100 | healthy | 2025-12-05T18:31:11.772Z | 0 |
-| observabilidad | 🟢 100 | healthy | 2025-12-05T18:31:11.772Z | 0 |
-| frontend-user-app | 🟢 100 | healthy | 2025-12-05T18:31:11.772Z | 0 |
-| frontend-admin | 🟢 100 | healthy | 2025-12-05T00:00:00.000Z | 0 |
-| ssot-integration | 🟢 100 | healthy | 2025-12-05T00:00:00.000Z | 0 |
-| workers | 🟢 100 | healthy | 2025-12-05T00:00:00.000Z | 0 |
 | auth | 🟢 100 | healthy | 2025-12-26T00:00:00.000Z | 0 |
-| settings-loader-and-feature-flags | 🟢 100 | healthy | 2025-12-05T18:31:11.772Z | 0 |
-| gdpr-and-legal | 🟢 100 | healthy | 2025-12-05T18:31:11.772Z | 0 |
-| testing-v2 | 🟢 100 | healthy | 2025-12-05T18:31:11.772Z | 0 |
