@@ -7,7 +7,9 @@
 
 ---
 
-## ✅ Completado (50%)
+## ✅ Completado (36% - Task-Based)
+
+**Nota:** El porcentaje se calcula basado en tareas completadas (5/14 tareas = 36%). Este cálculo difiere del enfoque por fases, donde 2 de 4 fases completadas = 50%.
 
 ### FASE 0: Setup y Análisis
 - ✅ Worktree aislado creado

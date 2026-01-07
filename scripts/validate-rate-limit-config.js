@@ -43,13 +43,13 @@ function logResult(level, message, metadata = {}) {
   
   if (level === 'pass') {
     validationResults.passed.push(result);
-    console.log(`✅ PASS: ${message}`);
+    logger.info(`✅ PASS: ${message}`, metadata);
   } else if (level === 'warn') {
     validationResults.warnings.push(result);
-    console.warn(`⚠️  WARN: ${message}`);
+    logger.warn(`⚠️  WARN: ${message}`, metadata);
   } else if (level === 'error') {
     validationResults.errors.push(result);
-    console.error(`❌ ERROR: ${message}`);
+    logger.error(`❌ ERROR: ${message}`, metadata);
   }
 }
 
@@ -59,6 +59,7 @@ function logResult(level, message, metadata = {}) {
  * @returns {boolean} - True if valid
  */
 async function validateAuthRateLimitConfig(config) {
+  logger.info('📋 Validating Auth Rate Limit Configuration (SSOT §12.4)...');
   console.log('\n📋 Validating Auth Rate Limit Configuration (SSOT §12.4)...\n');
   
   if (!config || typeof config !== 'object') {
@@ -129,6 +130,7 @@ async function validateAuthRateLimitConfig(config) {
  * @returns {boolean} - True if valid
  */
 async function validateProgressiveBlockDurations(durations) {
+  logger.info('📋 Validating Progressive Block Durations (SSOT §12.4)...');
   console.log('\n📋 Validating Progressive Block Durations (SSOT §12.4)...\n');
   
   if (!Array.isArray(durations)) {
@@ -192,6 +194,7 @@ async function validateProgressiveBlockDurations(durations) {
  * @returns {boolean} - True if valid
  */
 async function validateAbuseDetectionThresholds(thresholds) {
+  logger.info('📋 Validating Abuse Detection Thresholds (SSOT §12.4)...');
   console.log('\n📋 Validating Abuse Detection Thresholds (SSOT §12.4)...\n');
   
   if (!thresholds || typeof thresholds !== 'object') {
@@ -234,6 +237,7 @@ async function validateAbuseDetectionThresholds(thresholds) {
  * @returns {boolean} - True if valid
  */
 async function validateEndpointCoverage() {
+  logger.info('📋 Validating Endpoint Coverage...');
   console.log('\n📋 Validating Endpoint Coverage...\n');
   
   // This is a basic check - in a real implementation, we would scan the routes
@@ -259,11 +263,13 @@ async function validateEndpointCoverage() {
  * Main validation function
  */
 async function main() {
+  logger.info('🔍 Rate Limit Configuration Validator - ROA-526');
   console.log('🔍 Rate Limit Configuration Validator - ROA-526\n');
   console.log('═'.repeat(60));
 
   try {
     // Load configuration from SSOT
+    logger.info('📥 Loading configuration from SSOT v2...');
     console.log('\n📥 Loading configuration from SSOT v2...\n');
     
     const authRateLimitConfig = await settingsLoader.getValue('rate_limit.auth');
@@ -273,6 +279,7 @@ async function main() {
     // If any config is missing, it's a critical error
     if (!authRateLimitConfig) {
       logResult('error', 'CRITICAL: rate_limit.auth not found in SSOT', {});
+      logger.error('❌ CRITICAL ERROR: Cannot proceed without rate limit configuration');
       console.log('\n═'.repeat(60));
       console.log('\n❌ CRITICAL ERROR: Cannot proceed without rate limit configuration');
       process.exit(2);
@@ -289,6 +296,11 @@ async function main() {
     const endpointCoverageValid = await validateEndpointCoverage();
 
     // Print summary
+    logger.info('📊 Validation Summary', {
+      passed: validationResults.passed.length,
+      warnings: validationResults.warnings.length,
+      errors: validationResults.errors.length
+    });
     console.log('\n═'.repeat(60));
     console.log('\n📊 Validation Summary:\n');
     console.log(`   ✅ Passed: ${validationResults.passed.length}`);
@@ -316,20 +328,24 @@ async function main() {
 
     // Determine exit code
     if (validationResults.errors.length > 0) {
+      logger.error('❌ VALIDATION FAILED: Configuration errors detected');
       console.log('\n❌ VALIDATION FAILED: Configuration errors detected');
       console.log('   Please fix the errors above before deploying rate limiting v2.');
       process.exit(1);
     } else if (validationResults.warnings.length > 0) {
+      logger.warn('⚠️  VALIDATION PASSED WITH WARNINGS');
       console.log('\n⚠️  VALIDATION PASSED WITH WARNINGS');
       console.log('   Review warnings above - they may indicate potential issues.');
       process.exit(0);
     } else {
+      logger.info('✅ VALIDATION PASSED: All checks successful');
       console.log('\n✅ VALIDATION PASSED: All checks successful');
       console.log('   Rate limiting configuration is valid and ready for deployment.');
       process.exit(0);
     }
 
   } catch (error) {
+    logger.error('🚨 CRITICAL ERROR during validation', { error: error.message, stack: error.stack });
     console.error('\n🚨 CRITICAL ERROR during validation:\n');
     console.error(error);
     console.error('\n═'.repeat(60));

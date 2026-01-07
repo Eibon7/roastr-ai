@@ -156,7 +156,7 @@ logger.info('Event', { requestId: req.id, userId: req.userId });
 - ✅ Métricas de rate limiting + system metrics
 
 **Métricas Exportadas:**
-```
+```text
 # Rate Limiter
 auth_rate_limit_hits_total (counter)
 auth_blocks_active (gauge)

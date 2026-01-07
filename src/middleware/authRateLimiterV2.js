@@ -1214,6 +1214,15 @@ function getMetrics() {
   return metrics.getMetrics();
 }
 
+/**
+ * Get singleton store instance
+ * ROA-526: Accessor to avoid repeated initialization in health checks
+ * @returns {RateLimitStoreV2} The singleton store instance
+ */
+function getStore() {
+  return store;
+}
+
 module.exports = {
   authRateLimiterV2,
   authRateLimiterV2Pre,
@@ -1224,6 +1233,7 @@ module.exports = {
   getAbuseDetectionConfig: getAbuseDetectionConfigCached,
   invalidateConfigCache,
   getMetrics,
+  getStore,
   FALLBACK_RATE_LIMIT_CONFIG,
   FALLBACK_PROGRESSIVE_BLOCK_DURATIONS,
   FALLBACK_ABUSE_DETECTION_THRESHOLDS,

@@ -12,7 +12,7 @@ const { requireAdmin } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const SafeUtils = require('../utils/safeUtils');
 const metricsService = require('../services/metricsService');
-const { getMetrics: getRateLimitMetrics } = require('../middleware/authRateLimiterV2');
+const { getMetrics: getRateLimitMetrics, getStore } = require('../middleware/authRateLimiterV2');
 const settingsLoader = require('../services/settingsLoaderV2');
 
 // Apply admin middleware to all routes
@@ -105,8 +105,8 @@ router.get('/health/rate-limiter', async (req, res) => {
 
     // Check 2: Redis Connectivity (via rate limiter store)
     try {
-      const { RateLimitStoreV2 } = require('../middleware/authRateLimiterV2');
-      const store = new RateLimitStoreV2();
+      // Check Redis connectivity via singleton store
+      const store = getStore();
       
       if (store.isReady()) {
         healthChecks.redis_connectivity.status = 'healthy';
@@ -225,28 +225,25 @@ router.get('/metrics/prometheus', async (req, res) => {
     lines.push(`auth_abuse_events_total ${rateLimitMetrics.auth_abuse_events_total || 0}`);
     lines.push('');
 
-    // System metrics
-    const uptime = process.uptime();
-    const memoryUsage = process.memoryUsage();
-
+    // System metrics (from metricsService)
     lines.push('# HELP nodejs_uptime_seconds Node.js process uptime in seconds');
     lines.push('# TYPE nodejs_uptime_seconds gauge');
-    lines.push(`nodejs_uptime_seconds ${uptime}`);
+    lines.push(`nodejs_uptime_seconds ${systemMetrics.uptime || process.uptime()}`);
     lines.push('');
 
     lines.push('# HELP nodejs_memory_heap_used_bytes Node.js heap memory used in bytes');
     lines.push('# TYPE nodejs_memory_heap_used_bytes gauge');
-    lines.push(`nodejs_memory_heap_used_bytes ${memoryUsage.heapUsed}`);
+    lines.push(`nodejs_memory_heap_used_bytes ${systemMetrics.memoryUsage?.heapUsed || process.memoryUsage().heapUsed}`);
     lines.push('');
 
     lines.push('# HELP nodejs_memory_heap_total_bytes Node.js total heap memory in bytes');
     lines.push('# TYPE nodejs_memory_heap_total_bytes gauge');
-    lines.push(`nodejs_memory_heap_total_bytes ${memoryUsage.heapTotal}`);
+    lines.push(`nodejs_memory_heap_total_bytes ${systemMetrics.memoryUsage?.heapTotal || process.memoryUsage().heapTotal}`);
     lines.push('');
 
     lines.push('# HELP nodejs_memory_rss_bytes Node.js RSS memory in bytes');
     lines.push('# TYPE nodejs_memory_rss_bytes gauge');
-    lines.push(`nodejs_memory_rss_bytes ${memoryUsage.rss}`);
+    lines.push(`nodejs_memory_rss_bytes ${systemMetrics.memoryUsage?.rss || process.memoryUsage().rss}`);
     lines.push('');
 
     logger.info('Prometheus metrics exported', {
