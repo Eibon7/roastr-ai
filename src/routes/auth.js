@@ -603,6 +603,44 @@ router.get('/google', async (req, res) => {
 });
 
 /**
+ * GET /api/auth/health
+ * Health check endpoint for auth service
+ * ROA-524: Session Refresh and Health Check Completion
+ * 
+ * @public No authentication required
+ * @returns {Object} health - Auth service health status with feature flags
+ */
+router.get('/health', (req, res) => {
+  try {
+    // ROA-524: Report auth-specific service status
+    const authHealth = {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      features: {
+        sessionRefresh: flags.isEnabled('ENABLE_SESSION_REFRESH') ? 'enabled' : 'disabled',
+        magicLink: flags.isEnabled('ENABLE_MAGIC_LINK') ? 'enabled' : 'disabled',
+        passwordHistory: flags.isEnabled('ENABLE_PASSWORD_HISTORY') ? 'enabled' : 'disabled',
+        rateLimit: flags.isEnabled('ENABLE_RATE_LIMIT') ? 'enabled' : 'disabled',
+        csrfProtection: flags.isEnabled('ENABLE_CSRF_PROTECTION') ? 'enabled' : 'disabled'
+      },
+      services: {
+        supabase: flags.isEnabled('ENABLE_SUPABASE') ? 'available' : 'mock',
+        email: flags.isEnabled('ENABLE_EMAIL_NOTIFICATIONS') ? 'available' : 'unavailable'
+      }
+    };
+
+    res.status(200).json(authHealth);
+  } catch (error) {
+    logger.error('Auth health check error:', error);
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: 'Health check failed'
+    });
+  }
+});
+
+/**
  * POST /api/auth/google (legacy endpoint for frontend requests)
  * Handle Google OAuth login
  */
