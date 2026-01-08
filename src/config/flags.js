@@ -63,6 +63,8 @@ class FeatureFlags {
       ENABLE_CSRF_PROTECTION: this.parseFlag(process.env.ENABLE_CSRF_PROTECTION, true), // Default enabled - Issue #261
       ENABLE_RESPONSE_CACHE: this.parseFlag(process.env.ENABLE_RESPONSE_CACHE, true), // Default enabled - Issue #261
       DEBUG_CACHE: this.parseFlag(process.env.DEBUG_CACHE), // Default disabled
+      ENABLE_SESSION_REFRESH: this.parseFlag(process.env.ENABLE_SESSION_REFRESH, true), // Default enabled - ROA-524
+      DEBUG_SESSION: this.parseFlag(process.env.DEBUG_SESSION), // Default disabled - ROA-524
 
       // Style Profile Feature (basic style analysis)
       ENABLE_STYLE_PROFILE: this.parseFlag(process.env.ENABLE_STYLE_PROFILE, true), // Default enabled
@@ -289,7 +291,8 @@ class FeatureFlags {
         originalTone: this.flags.ENABLE_ORIGINAL_TONE ? 'enabled' : 'disabled',
         roastVersionsMultiple: this.flags.ROAST_VERSIONS_MULTIPLE ? 'enabled' : 'disabled',
         roastEngine: this.flags.ENABLE_ROAST_ENGINE ? 'enabled' : 'disabled',
-        shieldUI: this.flags.ENABLE_SHIELD_UI ? 'enabled' : 'disabled'
+        shieldUI: this.flags.ENABLE_SHIELD_UI ? 'enabled' : 'disabled',
+        sessionRefresh: this.flags.ENABLE_SESSION_REFRESH ? 'enabled' : 'disabled'
       }
     };
   }

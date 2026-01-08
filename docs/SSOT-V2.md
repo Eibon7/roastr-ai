@@ -231,6 +231,7 @@ type FeatureFlagKey =
   | 'auth_enable_magic_link'
   | 'auth_enable_password_recovery'
   | 'auth_enable_oauth'
+  | 'auth_enable_session_refresh'  // ROA-524: Session Refresh with GDPR-compliant logging
 
   // Rate Limiting v2 (ROA-392)
   | 'enable_rate_limit_global'
@@ -308,6 +309,9 @@ type FeatureFlagKey =
   - Supported providers: `x`, `youtube`, `google` (infrastructure only, post-MVP)
   - Returns 501 NOT_IMPLEMENTED for actual provider authentication (post-MVP stub)
   - No environment variable fallbacks (SSOT v2 enforcement)
+
+- `auth_enable_session_refresh` (admin):
+  - Controls automatic session refresh when tokens are near expiry (5 min before expiration). Default: `true` (fail-open for user experience - enabled by default). When disabled, session refresh middleware returns 403 with code SESSION_REFRESH_DISABLED. Purpose: Seamless token renewal without user intervention. Behavior: Automatic refresh triggered when JWT exp - now < 300 seconds. Emits analytics events `session_refresh_initiated`, `session_refresh_success`, `session_refresh_failed`. GDPR: Logs only correlation_id, timestamps, service names (NO personal data). Observability: Correlation tracking for end-to-end session lifecycle tracing. No environment variable fallbacks (SSOT v2 enforcement).
 
 **Integration**: Checked via `isAuthEndpointEnabled()` before AuthPolicyGate in auth routes.
 

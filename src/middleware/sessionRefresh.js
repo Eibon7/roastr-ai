@@ -36,13 +36,21 @@ function isTokenNearExpiry(payload) {
 /**
  * Refresh user session with Supabase
  * @param {string} refreshToken - Refresh token
+ * @param {string} correlationId - Optional correlation ID for tracking
  * @returns {Promise<Object>} New session data
  */
-async function refreshUserSession(refreshToken) {
+async function refreshUserSession(refreshToken, correlationId = null) {
   // Issue #628: Enable in test environment
+  // ROA-524: Added correlation ID for observability
   if (process.env.NODE_ENV !== 'test' && !flags.isEnabled('ENABLE_SESSION_REFRESH')) {
     throw new Error('Session refresh is disabled');
   }
+
+  const logContext = {
+    correlation_id: correlationId,
+    timestamp: new Date().toISOString(),
+    service: 'session-refresh'
+  };
 
   try {
     if (flags.isEnabled('ENABLE_MOCK_MODE') || process.env.NODE_ENV === 'test') {
@@ -54,9 +62,14 @@ async function refreshUserSession(refreshToken) {
       });
 
       if (error || !data.session) {
+        logger.error('Session refresh failed (mock mode)', {
+          ...logContext,
+          error: error?.message || 'Invalid refresh token'
+        });
         throw new Error('Invalid refresh token');
       }
 
+      logger.info('Session refreshed successfully (mock mode)', logContext);
       return data.session;
     }
 
@@ -65,23 +78,27 @@ async function refreshUserSession(refreshToken) {
     });
 
     if (error) {
-      if (flags.isEnabled('DEBUG_SESSION')) {
-        logger.error('Session refresh error:', error);
-      }
+      logger.error('Session refresh failed', {
+        ...logContext,
+        error: error.message
+      });
       throw error;
     }
 
+    logger.info('Session refreshed successfully', logContext);
     return data.session;
   } catch (error) {
-    if (flags.isEnabled('DEBUG_SESSION')) {
-      logger.error('Failed to refresh session:', error.message);
-    }
+    logger.error('Session refresh error', {
+      ...logContext,
+      error: error.message
+    });
     throw error;
   }
 }
 
 /**
  * Middleware to handle session refresh automatically
+ * ROA-524: Added GDPR-compliant logging with correlation IDs
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  * @param {Function} next - Next middleware function
@@ -90,6 +107,10 @@ async function sessionRefreshMiddleware(req, res, next) {
   if (!flags.isEnabled('ENABLE_SESSION_REFRESH')) {
     return next();
   }
+
+  // ROA-524: Extract or generate correlation ID for request tracking
+  const correlationId = req.headers['x-correlation-id'] || req.correlationId || `sess-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  req.correlationId = correlationId;
 
   const token = extractToken(req);
   if (!token) {
@@ -108,33 +129,41 @@ async function sessionRefreshMiddleware(req, res, next) {
       const refreshToken = req.headers['x-refresh-token'];
 
       if (!refreshToken) {
-        if (flags.isEnabled('DEBUG_SESSION')) {
-          logger.info('Token near expiry but no refresh token provided');
-        }
+        logger.info('Token near expiry - no refresh token provided', {
+          correlation_id: correlationId,
+          timestamp: new Date().toISOString(),
+          service: 'session-refresh-middleware'
+        });
         return next();
       }
 
       try {
-        const newSession = await refreshUserSession(refreshToken);
+        const newSession = await refreshUserSession(refreshToken, correlationId);
 
         // Add new tokens to response headers for client to update
         res.set({
           'x-new-access-token': newSession.access_token,
           'x-new-refresh-token': newSession.refresh_token,
           'x-token-refreshed': 'true',
-          'x-expires-at': newSession.expires_at
+          'x-expires-at': newSession.expires_at,
+          'x-correlation-id': correlationId
         });
 
         // Update request with new token for this request
         req.headers.authorization = `Bearer ${newSession.access_token}`;
 
-        if (flags.isEnabled('DEBUG_SESSION')) {
-          logger.info('Session refreshed automatically');
-        }
+        logger.info('Session auto-refreshed', {
+          correlation_id: correlationId,
+          timestamp: new Date().toISOString(),
+          service: 'session-refresh-middleware'
+        });
       } catch (refreshError) {
-        if (flags.isEnabled('DEBUG_SESSION')) {
-          logger.error('Auto refresh failed:', refreshError.message);
-        }
+        logger.warn('Session auto-refresh failed', {
+          correlation_id: correlationId,
+          timestamp: new Date().toISOString(),
+          service: 'session-refresh-middleware',
+          error: refreshError.message
+        });
 
         // Don't block the request, let auth middleware handle expired token
         return next();
@@ -143,15 +172,19 @@ async function sessionRefreshMiddleware(req, res, next) {
 
     next();
   } catch (error) {
-    if (flags.isEnabled('DEBUG_SESSION')) {
-      logger.error('Session middleware error:', error.message);
-    }
+    logger.error('Session middleware error', {
+      correlation_id: correlationId,
+      timestamp: new Date().toISOString(),
+      service: 'session-refresh-middleware',
+      error: error.message
+    });
     next();
   }
 }
 
 /**
  * Explicit session refresh endpoint
+ * ROA-524: Added GDPR-compliant logging with correlation IDs
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
@@ -165,10 +198,19 @@ async function handleSessionRefresh(req, res) {
     });
   }
 
+  // ROA-524: Extract or generate correlation ID for request tracking
+  const correlationId = req.headers['x-correlation-id'] || req.correlationId || `sess-refresh-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
   try {
     const { refresh_token } = req.body;
 
     if (!refresh_token) {
+      logger.warn('Session refresh missing token', {
+        correlation_id: correlationId,
+        timestamp: new Date().toISOString(),
+        service: 'session-refresh-endpoint'
+      });
+      
       return res.status(400).json({
         success: false,
         error: 'Refresh token is required',
@@ -176,7 +218,10 @@ async function handleSessionRefresh(req, res) {
       });
     }
 
-    const newSession = await refreshUserSession(refresh_token);
+    const newSession = await refreshUserSession(refresh_token, correlationId);
+
+    // ROA-524: Add correlation ID to response headers
+    res.set('x-correlation-id', correlationId);
 
     res.json({
       success: true,
@@ -189,9 +234,12 @@ async function handleSessionRefresh(req, res) {
       }
     });
   } catch (error) {
-    if (flags.isEnabled('DEBUG_SESSION')) {
-      logger.error('Session refresh endpoint error:', error);
-    }
+    logger.error('Session refresh endpoint failed', {
+      correlation_id: correlationId,
+      timestamp: new Date().toISOString(),
+      service: 'session-refresh-endpoint',
+      error: error.message
+    });
 
     res.status(401).json({
       success: false,
