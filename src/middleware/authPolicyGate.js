@@ -85,7 +85,7 @@ function authPolicyGate(options) {
       const policy = new RateLimitPolicyGlobal();
       
       // Construir key para rate limiting
-      const ip = req.ip || req.connection.remoteAddress || 'unknown';
+      const ip = req.ip || req.socket?.remoteAddress || 'unknown';
       const email = req.body?.email;
       
       // Input contract al policy (sección 12.6 SSOT)

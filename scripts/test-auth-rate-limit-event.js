@@ -8,12 +8,13 @@
  */
 
 const { logger } = require('../src/utils/logger');
+const { AUTH_ACTIONS } = require('../src/constants/authActions');
 
 // Simulate auth_rate_limited event
 const testEvent = {
   event: 'auth_rate_limited',
   flow: 'auth',
-  auth_action: 'auth_login',
+  auth_action: AUTH_ACTIONS.LOGIN,
   retryable: true,
   policy: 'rate_limit',
   scope: 'auth',
