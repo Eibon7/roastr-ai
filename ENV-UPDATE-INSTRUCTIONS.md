@@ -2,28 +2,22 @@
 
 ## Required Manual Update to `.env.example`
 
-After merging this PR, add the following lines to `.env.example` file:
+After merging this PR, **NO environment variables need to be added** to `.env.example` file.
 
-```bash
-# ============================================================================
-# Session Refresh Feature (ROA-524)
-# ============================================================================
-# Enable automatic session refresh when tokens are near expiry (5 min before)
-# Default: true (enabled)
-ENABLE_SESSION_REFRESH=true
+## Why?
 
-# Enable detailed session refresh debug logs (development only)
-# Default: false (disabled in production)
-DEBUG_SESSION=false
-```
+ROA-524 uses SSOT-V2 feature flags instead of environment variables:
 
-## Location
+- `auth_enable_session_refresh` - Defined in `docs/SSOT-V2.md` (FeatureFlagKey union)
+- Default: `true` (enabled)
+- Admin-controlled via feature_flags table in database
+- **NO environment variable fallbacks** (SSOT v2 enforcement)
 
-Add after the existing Auth Features section in `.env.example`
+## SSOT Reference
 
-## Why Manual?
-
-`.env.example` is gitignored, so this change must be made directly in the main repository after PR merge.
+See `docs/SSOT-V2.md` section 3.2 (FeatureFlagKey) for:
+- `auth_enable_session_refresh` definition
+- Full semantics (purpose, default, behavior, analytics, GDPR)
 
 ---
 
