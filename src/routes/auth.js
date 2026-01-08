@@ -4,14 +4,12 @@ const emailService = require('../services/emailService');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { handleSessionRefresh } = require('../middleware/sessionRefresh');
-const {
-  loginRateLimiter,
-  getRateLimitMetrics,
-  resetRateLimit
-} = require('../middleware/rateLimiter');
+// ROA-523: Legacy rate limiters removed (migrated to authPolicyGate per-endpoint)
+// const { loginRateLimiter, getRateLimitMetrics, resetRateLimit } = require('../middleware/rateLimiter');
 const { passwordChangeRateLimiter } = require('../middleware/passwordChangeRateLimiter');
-// ROA-359: Auth Rate Limiting v2
-const { authRateLimiterV2 } = require('../middleware/authRateLimiterV2');
+// ROA-523: Auth Policy Gate (unified rate limiting)
+const { authPolicyGate } = require('../middleware/authPolicyGate');
+const { AUTH_ACTIONS, AUTH_TYPES } = require('../constants/authActions');
 const { flags } = require('../config/flags');
 const { validatePassword } = require('../utils/passwordValidator');
 const passwordValidationService = require('../services/passwordValidationService');
@@ -25,19 +23,17 @@ const { registerSchema, loginSchema, formatZodError } = require('../validators/z
 
 const router = express.Router();
 
-// ROA-359: Apply rate limiting v2 if enabled, otherwise use v1
-if (flags.isEnabled('ENABLE_AUTH_RATE_LIMIT_V2')) {
-  router.use(authRateLimiterV2);
-} else {
-  // Apply legacy rate limiting to authentication endpoints
-  router.use(loginRateLimiter);
-}
+// ROA-523: Legacy rate limiters removed - now using authPolicyGate per-endpoint
+// (No global middleware - rate limiting applied at Auth Policy Gate per action)
 
 /**
  * POST /api/auth/register
  * Register new user with email and password
+ * ROA-523: Rate limiting evaluated at Auth Policy Gate before business logic
  */
-router.post('/register', async (req, res) => {
+router.post('/register',
+  authPolicyGate({ action: AUTH_ACTIONS.REGISTER, authType: AUTH_TYPES.PASSWORD }),
+  async (req, res) => {
   try {
     // Issue #947: Zod validation for register endpoint
     const validation = registerSchema.safeParse(req.body);
@@ -99,8 +95,11 @@ router.post('/register', async (req, res) => {
  * POST /api/auth/signup (legacy endpoint - same as register)
  * Register new user with email and password
  * Issue #947: Migrated to Zod validation
+ * ROA-523: Rate limiting evaluated at Auth Policy Gate before business logic
  */
-router.post('/signup', async (req, res) => {
+router.post('/signup',
+  authPolicyGate({ action: AUTH_ACTIONS.REGISTER, authType: AUTH_TYPES.PASSWORD }),
+  async (req, res) => {
   try {
     // Issue #947: Zod validation for signup endpoint (same as register)
     const validation = registerSchema.safeParse(req.body);
@@ -162,8 +161,11 @@ router.post('/signup', async (req, res) => {
 /**
  * POST /api/auth/signup/magic-link
  * Register new user with magic link
+ * ROA-523: Rate limiting evaluated at Auth Policy Gate before business logic
  */
-router.post('/signup/magic-link', async (req, res) => {
+router.post('/signup/magic-link',
+  authPolicyGate({ action: AUTH_ACTIONS.REGISTER, authType: AUTH_TYPES.MAGIC_LINK }),
+  async (req, res) => {
   try {
     const { email, name } = req.body;
 
@@ -192,8 +194,11 @@ router.post('/signup/magic-link', async (req, res) => {
 /**
  * POST /api/auth/login
  * Login with email and password
+ * ROA-523: Rate limiting evaluated at Auth Policy Gate before business logic
  */
-router.post('/login', async (req, res) => {
+router.post('/login',
+  authPolicyGate({ action: AUTH_ACTIONS.LOGIN, authType: AUTH_TYPES.PASSWORD }),
+  async (req, res) => {
   try {
     // Issue #947: Zod validation for login endpoint
     const validation = loginSchema.safeParse(req.body);
@@ -246,8 +251,11 @@ router.post('/login', async (req, res) => {
 /**
  * POST /api/auth/magic-link
  * Send magic link for passwordless login
+ * ROA-523: Rate limiting evaluated at Auth Policy Gate before business logic
  */
-router.post('/magic-link', async (req, res) => {
+router.post('/magic-link',
+  authPolicyGate({ action: AUTH_ACTIONS.MAGIC_LINK, authType: AUTH_TYPES.MAGIC_LINK }),
+  async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -281,8 +289,11 @@ router.post('/magic-link', async (req, res) => {
 /**
  * POST /api/auth/login/magic-link (legacy endpoint)
  * Login with magic link
+ * ROA-523: Rate limiting evaluated at Auth Policy Gate before business logic
  */
-router.post('/login/magic-link', async (req, res) => {
+router.post('/login/magic-link',
+  authPolicyGate({ action: AUTH_ACTIONS.MAGIC_LINK, authType: AUTH_TYPES.MAGIC_LINK }),
+  async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -384,8 +395,11 @@ router.put('/profile', authenticateToken, async (req, res) => {
 /**
  * POST /api/auth/reset-password
  * Send password reset email
+ * ROA-523: Rate limiting evaluated at Auth Policy Gate before business logic
  */
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password',
+  authPolicyGate({ action: AUTH_ACTIONS.PASSWORD_RECOVERY, authType: AUTH_TYPES.PASSWORD_RESET }),
+  async (req, res) => {
   try {
     const { email } = req.body;
 

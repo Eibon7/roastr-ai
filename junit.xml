@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="6" failures="0" errors="0" time="0.211590583">
-    <testsuite name="tests/integration/services/rateLimitPolicyGlobal.integration.test.js" timestamp="2026-01-07T15:36:10.160Z" hostname="MacBook-Pro-de-Emilio-2.local" tests="6" failures="0" errors="0" skipped="0" time="0.211590583">
-        <testcase classname="tests/integration/services/rateLimitPolicyGlobal.integration.test.js" name="RateLimitPolicyGlobal - Phase 1 Smoke Tests &gt; should load RateLimitPolicyGlobal module without errors" time="0.081036417">
-        </testcase>
-        <testcase classname="tests/integration/services/rateLimitPolicyGlobal.integration.test.js" name="RateLimitPolicyGlobal - Phase 1 Smoke Tests &gt; should instantiate RateLimitPolicyGlobal" time="0.000387792">
-        </testcase>
-        <testcase classname="tests/integration/services/rateLimitPolicyGlobal.integration.test.js" name="RateLimitPolicyGlobal - Phase 1 Smoke Tests &gt; should have required public methods" time="0.000262709">
-        </testcase>
-        <testcase classname="tests/integration/services/rateLimitPolicyGlobal.integration.test.js" name="RateLimitPolicyGlobal - Phase 1 Smoke Tests &gt; should have private helper methods" time="0.001742709">
-        </testcase>
-        <testcase classname="tests/integration/services/rateLimitPolicyGlobal.integration.test.js" name="RateLimitPolicyGlobal - Phase 1 Smoke Tests &gt; should validate getConfig returns expected structure" time="0.015837916">
-        </testcase>
-        <testcase classname="tests/integration/services/rateLimitPolicyGlobal.integration.test.js" name="RateLimitPolicyGlobal - Phase 1 Smoke Tests &gt; should have _maskKey method for security" time="0.000762209">
+<testsuites name="vitest tests" tests="1" failures="1" errors="0" time="0">
+    <testsuite name="tests/unit/middleware/authPolicyGate.test.js" timestamp="2026-01-08T12:23:44.469Z" hostname="MacBook-Pro-de-Emilio-2.local" tests="1" failures="1" errors="0" skipped="0" time="0">
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="tests/unit/middleware/authPolicyGate.test.js" time="0">
+            <failure message="Vitest cannot be imported in a CommonJS module using require(). Please use &quot;import&quot; instead.
+
+If you are using &quot;import&quot; in your source code, then it&apos;s possible it was bundled into require() automatically by your bundler. In that case, do not bundle CommonJS output since it will never work with Vitest, or use dynamic import() which is available in all CommonJS modules." type="Error">
+Error: Vitest cannot be imported in a CommonJS module using require(). Please use &quot;import&quot; instead.
+
+If you are using &quot;import&quot; in your source code, then it&apos;s possible it was bundled into require() automatically by your bundler. In that case, do not bundle CommonJS output since it will never work with Vitest, or use dynamic import() which is available in all CommonJS modules.
+ ❯ Object.&lt;anonymous&gt; node_modules/vitest/index.cjs:1:7
+ ❯ tests/unit/middleware/authPolicyGate.test.js:6:50
+            </failure>
         </testcase>
     </testsuite>
 </testsuites>
