@@ -23,19 +23,26 @@ const { flags } = require('../config/flags');
  * Emite evento de rate limiting para observabilidad
  * @param {string} authAction - Acción de auth bloqueada
  * @param {boolean} retryable - Si es retryable
+ * @param {string} requestId - Request ID para correlación
  * @private
  */
-function emitRateLimitEvent(authAction, retryable) {
+function emitRateLimitEvent(authAction, retryable, requestId) {
   try {
-    // TODO: Integrar con Amplitude cuando esté disponible
+    // Log estructurado para backend
     logger.info('auth_rate_limited_event', {
       event: 'auth_rate_limited',
       flow: 'auth',
       auth_action: authAction,
       retryable,
       policy: 'rate_limit',
-      scope: AUTH_SCOPE
+      scope: AUTH_SCOPE,
+      request_id: requestId
     });
+
+    // Amplitude event (if available in backend context)
+    // Backend v2 usa @amplitude/analytics-node con trackEvent()
+    // Para mantener compatibilidad, usamos logger que puede ser consumido por analytics service
+    // Ver: apps/backend-v2/src/lib/analytics.ts para backend v2 pattern
   } catch (error) {
     logger.error('Failed to emit auth_rate_limited event', {
       error: error.message,
@@ -118,7 +125,7 @@ function authPolicyGate(options) {
       });
       
       // Emitir evento de observabilidad
-      emitRateLimitEvent(action, result.block_type === 'temporary');
+      emitRateLimitEvent(action, result.block_type === 'temporary', req.id || req.headers['x-request-id']);
       
       // Crear error y retornar
       const error = createRateLimitError(result);
