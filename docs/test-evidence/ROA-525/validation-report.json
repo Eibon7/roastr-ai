@@ -1,0 +1,106 @@
+{
+  "timestamp": "2026-01-08T17:50:02.932Z",
+  "summary": {
+    "filesTotal": 480,
+    "filesPassing": 2,
+    "filesFailing": 387,
+    "filesSkipped": 1,
+    "testsTotal": 3028,
+    "testsPassing": 1,
+    "testsFailing": 500,
+    "testsSkipped": 7
+  },
+  "categorizedFailures": {
+    "Jest/Vitest Migration": {
+      "count": 0,
+      "files": [],
+      "severity": "P0",
+      "description": "Tests usando Jest syntax en Vitest",
+      "fix": "Migrar de jest.mock() a vi.mock()"
+    },
+    "JSX in .js files": {
+      "count": 0,
+      "files": [],
+      "severity": "P1",
+      "description": "Archivos .js con sintaxis JSX",
+      "fix": "Renombrar archivos .js a .jsx o configurar parser"
+    },
+    "Database/Supabase": {
+      "count": 0,
+      "files": [],
+      "severity": "P0",
+      "description": "Tests que requieren infraestructura de DB",
+      "fix": "Configurar DB test o mock Supabase client"
+    },
+    "Property Access on undefined": {
+      "count": 0,
+      "files": [],
+      "severity": "P1",
+      "description": "Errores de acceso a propiedades undefined",
+      "fix": "Revisar mocks y setup de tests"
+    },
+    "Playwright/E2E": {
+      "count": 7,
+      "files": [
+        "tests/e2e/auth-complete-flow.test.js",
+        "tests/e2e/auto-approval-flow.test.js",
+        "tests/e2e/brand-safety-defensive-roast.e2e.test.js",
+        "tests/e2e/brand-safety-shield-flow.e2e.test.js",
+        "tests/e2e/manual-flow.test.js",
+        "tests/e2e/spec14-integral-test-suite.test.js",
+        "tests/e2e/demo-flow.test.js"
+      ],
+      "severity": "P1",
+      "description": "Tests E2E fallando",
+      "fix": "Verificar Playwright config y browser setup"
+    },
+    "RLS Tests": {
+      "count": 12,
+      "files": [
+        "tests/rls/admin.test.js",
+        "tests/rls/multi-tenant-direct.test.js",
+        "tests/rls/roast.test.js",
+        "tests/rls/shield-complete.test.js",
+        "tests/rls/shield.test.js",
+        "tests/rls/usage.test.js"
+      ],
+      "severity": "P1",
+      "description": "Tests de Row Level Security fallando",
+      "fix": "Revisar políticas RLS en Supabase test DB"
+    }
+  },
+  "failedFiles": [],
+  "recommendations": [
+    {
+      "priority": "P1",
+      "category": "RLS Tests",
+      "description": "Tests de Row Level Security fallando",
+      "affectedFiles": 6,
+      "fix": "Revisar políticas RLS en Supabase test DB",
+      "files": [
+        "tests/rls/admin.test.js",
+        "tests/rls/multi-tenant-direct.test.js",
+        "tests/rls/roast.test.js",
+        "tests/rls/shield-complete.test.js",
+        "tests/rls/shield.test.js",
+        "tests/rls/usage.test.js"
+      ]
+    },
+    {
+      "priority": "P1",
+      "category": "Playwright/E2E",
+      "description": "Tests E2E fallando",
+      "affectedFiles": 7,
+      "fix": "Verificar Playwright config y browser setup",
+      "files": [
+        "tests/e2e/auth-complete-flow.test.js",
+        "tests/e2e/auto-approval-flow.test.js",
+        "tests/e2e/brand-safety-defensive-roast.e2e.test.js",
+        "tests/e2e/brand-safety-shield-flow.e2e.test.js",
+        "tests/e2e/manual-flow.test.js",
+        "tests/e2e/spec14-integral-test-suite.test.js",
+        "tests/e2e/demo-flow.test.js"
+      ]
+    }
+  ]
+}
