@@ -91,13 +91,13 @@ function authPolicyGate(options) {
       // Input contract al policy (sección 12.6 SSOT)
       const policyInput = {
         scope: AUTH_SCOPE,
-        action: authType, // auth_type como scope interno (password, magic_link, password_reset)
+        action: action, // AUTH_ACTIONS (auth_login, auth_register, etc.)
         key: {
           ip,
           ...(email && { email })
         },
         metadata: {
-          auth_type: authType
+          auth_type: authType // AUTH_TYPES (password, magic_link, etc.)
         }
       };
       
