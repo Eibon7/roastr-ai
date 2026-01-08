@@ -84,6 +84,9 @@ function authPolicyGate(options) {
     try {
       const policy = new RateLimitPolicyGlobal();
       
+      // Extraer request ID para correlación (DRY)
+      const requestId = req.id || req.headers['x-request-id'];
+      
       // Construir key para rate limiting
       const ip = req.ip || req.socket?.remoteAddress || 'unknown';
       const email = req.body?.email;
@@ -121,11 +124,11 @@ function authPolicyGate(options) {
         block_type: result.block_type,
         retry_after_seconds: result.retry_after_seconds,
         ip,
-        request_id: req.id || req.headers['x-request-id']
+        request_id: requestId
       });
       
       // Emitir evento de observabilidad
-      emitRateLimitEvent(action, result.block_type === 'temporary', req.id || req.headers['x-request-id']);
+      emitRateLimitEvent(action, result.block_type === 'temporary', requestId);
       
       // Crear error y retornar
       const error = createRateLimitError(result);
