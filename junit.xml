@@ -1,17 +1,41 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="6" failures="0" errors="0" time="0.211590583">
-    <testsuite name="tests/integration/services/rateLimitPolicyGlobal.integration.test.js" timestamp="2026-01-07T15:36:10.160Z" hostname="MacBook-Pro-de-Emilio-2.local" tests="6" failures="0" errors="0" skipped="0" time="0.211590583">
-        <testcase classname="tests/integration/services/rateLimitPolicyGlobal.integration.test.js" name="RateLimitPolicyGlobal - Phase 1 Smoke Tests &gt; should load RateLimitPolicyGlobal module without errors" time="0.081036417">
+<testsuites name="vitest tests" tests="18" failures="0" errors="0" time="0.061020541">
+    <testsuite name="tests/unit/middleware/authPolicyGate.test.js" timestamp="2026-01-08T14:35:51.121Z" hostname="MacBook-Pro-de-Emilio-2.local" tests="18" failures="0" errors="0" skipped="0" time="0.061020541">
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; Module exports &gt; exports authPolicyGate function" time="0.000718042">
         </testcase>
-        <testcase classname="tests/integration/services/rateLimitPolicyGlobal.integration.test.js" name="RateLimitPolicyGlobal - Phase 1 Smoke Tests &gt; should instantiate RateLimitPolicyGlobal" time="0.000387792">
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; Module exports &gt; exports AUTH_ACTIONS constants" time="0.000147625">
         </testcase>
-        <testcase classname="tests/integration/services/rateLimitPolicyGlobal.integration.test.js" name="RateLimitPolicyGlobal - Phase 1 Smoke Tests &gt; should have required public methods" time="0.000262709">
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; Module exports &gt; exports AUTH_TYPES constants" time="0.000205208">
         </testcase>
-        <testcase classname="tests/integration/services/rateLimitPolicyGlobal.integration.test.js" name="RateLimitPolicyGlobal - Phase 1 Smoke Tests &gt; should have private helper methods" time="0.001742709">
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; Module exports &gt; exports AUTH_ERROR_CODES constants" time="0.000268958">
         </testcase>
-        <testcase classname="tests/integration/services/rateLimitPolicyGlobal.integration.test.js" name="RateLimitPolicyGlobal - Phase 1 Smoke Tests &gt; should validate getConfig returns expected structure" time="0.015837916">
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; authPolicyGate middleware factory &gt; creates middleware function" time="0.00014375">
         </testcase>
-        <testcase classname="tests/integration/services/rateLimitPolicyGlobal.integration.test.js" name="RateLimitPolicyGlobal - Phase 1 Smoke Tests &gt; should have _maskKey method for security" time="0.000762209">
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; authPolicyGate middleware factory &gt; validates action parameter" time="0.000393083">
+        </testcase>
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; authPolicyGate middleware factory &gt; validates authType parameter" time="0.000145833">
+        </testcase>
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; authPolicyGate middleware factory &gt; creates middleware for all supported Auth actions" time="0.000163708">
+        </testcase>
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; AuthError v2 taxonomy &gt; creates AuthError with code and message" time="0.000423167">
+        </testcase>
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; AuthError v2 taxonomy &gt; converts to JSON format" time="0.000336083">
+        </testcase>
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; AuthError v2 taxonomy &gt; creates rate limit error for temporary block" time="0.000102833">
+        </testcase>
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; AuthError v2 taxonomy &gt; creates rate limit error for permanent block" time="0.000091417">
+        </testcase>
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; Contract documentation &gt; documents input contract to RateLimitPolicyGlobal" time="0.000063959">
+        </testcase>
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; Contract documentation &gt; documents output contract from RateLimitPolicyGlobal" time="0.000092083">
+        </testcase>
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; Contract documentation &gt; documents error translation rules" time="0.000067125">
+        </testcase>
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; Pipeline documentation &gt; documents expected pipeline flow" time="0.000317209">
+        </testcase>
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; Pipeline documentation &gt; documents fail-open behavior" time="0.000047042">
+        </testcase>
+        <testcase classname="tests/unit/middleware/authPolicyGate.test.js" name="authPolicyGate - ROA-523 Wiring Tests &gt; Pipeline documentation &gt; documents feature flag bypass" time="0.000056958">
         </testcase>
     </testsuite>
 </testsuites>
