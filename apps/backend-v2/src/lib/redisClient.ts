@@ -81,13 +81,19 @@ export async function pingRedis(): Promise<boolean> {
 
   try {
     await redisClient.ping();
+    // On successful ping, ensure flag is true (recovery path)
+    if (!isRedisAvailable) {
+      isRedisAvailable = true;
+      logger.info('redis_recovered', {
+        message: 'Redis connection recovered'
+      });
+    }
     return true;
   } catch (error: any) {
     logger.error('redis_ping_failed', {
       error: error.message
     });
-    isRedisAvailable = false;
+    // Do NOT permanently disable - let callers retry on each operation
     return false;
   }
 }
-
