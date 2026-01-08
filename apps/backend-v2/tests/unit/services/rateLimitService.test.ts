@@ -5,14 +5,24 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { RateLimitService, AuthType } from '../../../src/services/rateLimitService.js';
 
-// Mock Redis client
+// Mock Redis client BEFORE importing service
 vi.mock('../../../src/lib/redisClient.js', () => ({
   getRedisClient: () => null, // Force fallback to memory for tests
   isRedisClientAvailable: () => false,
   initializeRedis: () => false
 }));
+
+// Mock logger to avoid console noise in tests
+vi.mock('../../../src/utils/logger.js', () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
+  }
+}));
+
+import { RateLimitService, AuthType } from '../../../src/services/rateLimitService.js';
 
 describe('RateLimitService v2', () => {
   let service: RateLimitService;
