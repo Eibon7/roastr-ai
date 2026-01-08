@@ -144,11 +144,47 @@ REDIS_URL=redis://localhost:6379
 ### Fallback Automático
 
 Si Redis no está disponible:
-1. ⚠️  Log warning: `rate_limit_fallback_memory`
+1. ⚠️  Log warning: `rate_limit_backend_selected` (backend: memory)
 2. ✅ Sistema continúa funcionando con storage in-memory
 3. ⚠️  Rate limiting NO persiste entre restarts
 
 **⚠️ IMPORTANTE:** En producción, asegurar que Redis/Upstash está configurado correctamente.
+
+---
+
+## 🔄 Redis (Upstash) Lifecycle en Development vs Staging
+
+### Expected Behavior por Entorno
+
+**Development / CI:**
+- ✅ Fallback a memoria es **EXPECTED**
+- ✅ Upstash puede marcar DB como inactive sin tráfico regular
+- ✅ No es necesario mantener conexión Redis activa
+- ✅ Tests funcionan con fallback in-memory
+
+**Staging / Production:**
+- ✅ Redis (Upstash) se valida con tráfico real
+- ✅ Rate limiting persiste entre restarts de servidor
+- ✅ Multi-instance safe (varios pods/workers comparten estado)
+
+### ⚠️ Nota sobre Upstash Free Tier
+
+Upstash puede marcar databases como "inactive" después de períodos sin tráfico. Esto es **normal y esperado** en entornos de desarrollo/CI.
+
+**Esto NO es un bug:**
+- El fallback automático a memoria garantiza que el sistema funcione
+- La primera request real en staging/prod "despertará" la DB
+- No se requiere mantener tráfico artificial para validación
+
+**Logging Claro:**
+```json
+{
+  "level": "info",
+  "event": "rate_limit_backend_selected",
+  "rate_limit_backend": "memory",
+  "expected_in": ["development", "CI"]
+}
+```
 
 ---
 

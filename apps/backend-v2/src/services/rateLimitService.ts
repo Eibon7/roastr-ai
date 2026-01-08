@@ -85,14 +85,19 @@ export class RateLimitService {
     this.store = new Map();
     this.useRedis = isRedisClientAvailable();
 
+    // Log backend selection explicitly at boot (ROA-523)
     if (!this.useRedis) {
-      logger.warn('rate_limit_fallback_memory', {
-        reason: 'Redis not available, using in-memory storage',
-        warning: 'Rate limiting will not persist across server restarts'
+      logger.info('rate_limit_backend_selected', {
+        rate_limit_backend: 'memory',
+        reason: 'Redis not available or not configured',
+        note: 'Rate limiting will not persist across server restarts',
+        expected_in: ['development', 'CI']
       });
     } else {
-      logger.info('rate_limit_using_redis', {
-        storage: 'redis/upstash'
+      logger.info('rate_limit_backend_selected', {
+        rate_limit_backend: 'redis',
+        provider: 'upstash',
+        note: 'Rate limiting persists across restarts'
       });
     }
   }
