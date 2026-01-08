@@ -4,8 +4,9 @@ const emailService = require('../services/emailService');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { handleSessionRefresh } = require('../middleware/sessionRefresh');
-// ROA-523: Legacy rate limiters removed (migrated to authPolicyGate per-endpoint)
-// const { loginRateLimiter, getRateLimitMetrics, resetRateLimit } = require('../middleware/rateLimiter');
+// ROA-523: Legacy rate limiters removed from Auth endpoints (migrated to authPolicyGate per-endpoint)
+// Keep utility functions for admin/monitoring endpoints
+const { getRateLimitMetrics, resetRateLimit } = require('../middleware/rateLimiter');
 const { passwordChangeRateLimiter } = require('../middleware/passwordChangeRateLimiter');
 // ROA-523: Auth Policy Gate (unified rate limiting)
 const { authPolicyGate } = require('../middleware/authPolicyGate');
