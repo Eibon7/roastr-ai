@@ -1,0 +1,118 @@
+name: Auth CI v2
+
+# Este workflow ejecuta SOLO tests de Auth v2
+# Exit 0: Auth v2 OK → staging puede continuar
+# Exit 1: Auth v2 se rompió → NO staging
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      # Auth v2 source files
+      - 'apps/backend-v2/src/services/authService.ts'
+      - 'apps/backend-v2/src/services/authEmailService.ts'
+      - 'apps/backend-v2/src/services/authObservabilityService.ts'
+      - 'apps/backend-v2/src/middleware/authMiddleware.ts'
+      - 'apps/backend-v2/src/routes/auth.ts'
+      - 'apps/backend-v2/src/routes/oauth.ts'
+      - 'apps/backend-v2/src/auth/**'
+      - 'apps/backend-v2/src/lib/authFlags.ts'
+      - 'apps/backend-v2/src/utils/authErrorTaxonomy.ts'
+      - 'apps/backend-v2/src/utils/authObservability.ts'
+      # Auth v2 test files
+      - 'apps/backend-v2/tests/flow/auth-*.test.ts'
+      - 'apps/backend-v2/tests/integration/auth/**'
+      - 'apps/backend-v2/tests/unit/services/authService*.test.ts'
+      - 'apps/backend-v2/tests/unit/services/authEmailService.test.ts'
+      - 'apps/backend-v2/tests/unit/services/authObservabilityService.test.ts'
+      - 'apps/backend-v2/tests/unit/auth/**'
+      - 'apps/backend-v2/tests/unit/lib/authFlags.test.ts'
+      - 'apps/backend-v2/tests/unit/utils/authErrorTaxonomy.test.ts'
+      - 'apps/backend-v2/tests/unit/utils/authObservability.test.ts'
+      - 'apps/backend-v2/tests/unit/middleware/authMiddleware.test.ts'
+      - 'apps/backend-v2/tests/unit/routes/authHealthEndpoint.test.ts'
+      - 'apps/backend-v2/tests/unit/routes/oauthInfra.test.ts'
+      # Config
+      - 'apps/backend-v2/vitest.ci.auth.config.ts'
+      - '.github/workflows/auth-ci-v2.yml'
+
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  auth-tests:
+    name: Auth v2 Tests
+    runs-on: ubuntu-latest
+    
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run Auth CI Tests
+        run: npm run test:ci:auth
+        env:
+          NODE_ENV: test
+          # Mock configurations (NO real services)
+          SUPABASE_URL: https://mock.supabase.co
+          SUPABASE_ANON_KEY: mock-anon-key-auth-ci
+          SUPABASE_SERVICE_ROLE_KEY: mock-service-key-auth-ci
+          # Auth feature flags (ON for testing)
+          AUTH_ENABLED: true
+          AUTH_RATE_LIMIT_ENABLED: true
+          # Mock SMTP (NO real emails)
+          SMTP_HOST: mock-smtp
+          SMTP_PORT: 587
+          SMTP_USER: mock@example.com
+          SMTP_PASS: mock-password
+      
+      - name: Generate Coverage Report
+        if: success() || failure()
+        run: npm run test:ci:auth:coverage
+        continue-on-error: true # Warning, not blocker yet
+      
+      - name: Upload Coverage to Codecov
+        if: success() || failure()
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./apps/backend-v2/coverage/coverage-final.json
+          flags: auth-v2
+          name: auth-v2-coverage
+          fail_ci_if_error: false # Warning only
+        continue-on-error: true
+      
+      - name: Upload Test Results
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: auth-test-results
+          path: |
+            apps/backend-v2/coverage/
+            junit.xml
+          retention-days: 7
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Auth v2 CI Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Tests executed for Auth v2 only" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Scope:** Flow, Integration, Unit tests" >> $GITHUB_STEP_SUMMARY
+          echo "**Config:** apps/backend-v2/vitest.ci.auth.config.ts" >> $GITHUB_STEP_SUMMARY
+          echo "**Coverage threshold:** ≥85%" >> $GITHUB_STEP_SUMMARY
+

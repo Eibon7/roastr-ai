@@ -64,6 +64,8 @@
     "test:mock": "ENABLE_MOCK_MODE=true vitest run",
     "test:coverage": "vitest run --coverage",
     "test:unit": "vitest run tests/unit",
+    "test:ci:auth": "cd apps/backend-v2 && vitest run --config vitest.ci.auth.config.ts",
+    "test:ci:auth:coverage": "cd apps/backend-v2 && vitest run --coverage --config vitest.ci.auth.config.ts",
     "test:jest": "NODE_OPTIONS='--max-old-space-size=4096' jest --verbose",
     "test:jest:ci": "jest --config=jest.ci.config.cjs --runInBand --ci",
     "test:spec14": "node scripts/run-spec14-tests.js",
