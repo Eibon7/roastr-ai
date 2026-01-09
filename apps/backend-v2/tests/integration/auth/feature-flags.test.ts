@@ -12,11 +12,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { isAuthEndpointEnabled } from '../../src/lib/authFlags';
+import { isAuthEndpointEnabled } from '../../../src/lib/authFlags';
 
 // Mock loadSettings
 const mockLoadSettings = vi.fn();
-vi.mock('../../src/lib/loadSettings', () => ({
+vi.mock('../../../src/lib/loadSettings', () => ({
   loadSettings: () => mockLoadSettings()
 }));
 
@@ -79,13 +79,13 @@ describe('Auth Feature Flags Integration', () => {
 
   describe('Feature Flags Coverage', () => {
     const authEndpoints = [
+      { name: 'emails', flag: 'auth_enable_emails', setting: 'auth.emails.enabled' },
       { name: 'login', flag: 'auth_enable_login', setting: 'auth.login.enabled' },
       { name: 'register', flag: 'auth_enable_register', setting: 'auth.register.enabled' },
-      { name: 'logout', flag: 'auth_enable_logout', setting: 'auth.logout.enabled' },
-      { name: 'refresh', flag: 'auth_enable_refresh', setting: 'auth.refresh.enabled' },
       { name: 'magic-link', flag: 'auth_enable_magic_link', setting: 'auth.magic_link.enabled' },
       { name: 'password-recovery', flag: 'auth_enable_password_recovery', setting: 'auth.password_recovery.enabled' },
-      { name: 'update-password', flag: 'auth_enable_update_password', setting: 'auth.update_password.enabled' }
+      { name: 'oauth', flag: 'auth_enable_oauth', setting: 'auth.oauth.enabled' },
+      { name: 'session-refresh', flag: 'auth_enable_session_refresh', setting: 'auth.session_refresh.enabled' }
     ];
 
     authEndpoints.forEach(({ name, flag, setting }) => {
