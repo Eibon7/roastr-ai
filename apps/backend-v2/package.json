@@ -7,6 +7,8 @@
   "scripts": {
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:ci:auth": "vitest run --config vitest.ci.auth.config.ts",
+    "test:ci:auth:coverage": "vitest run --config vitest.ci.auth.config.ts --coverage",
     "build": "tsc",
     "dev": "tsx watch src/index.ts"
   },
