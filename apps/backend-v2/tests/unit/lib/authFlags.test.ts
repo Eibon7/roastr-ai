@@ -56,7 +56,9 @@ describe('AuthFlags Loader (ROA-406)', () => {
         auth_enable_login: false,
         auth_enable_register: false,
         auth_enable_magic_link: false,
-        auth_enable_password_recovery: false
+        auth_enable_password_recovery: false,
+        auth_enable_oauth: false,
+        auth_enable_session_refresh: false
       });
     });
 
@@ -70,7 +72,9 @@ describe('AuthFlags Loader (ROA-406)', () => {
         auth_enable_login: false,
         auth_enable_register: false,
         auth_enable_magic_link: false,
-        auth_enable_password_recovery: false
+        auth_enable_password_recovery: false,
+        auth_enable_oauth: false,
+        auth_enable_session_refresh: false
       });
       expect(logger.error).toHaveBeenCalledOnce();
     });
@@ -93,7 +97,9 @@ describe('AuthFlags Loader (ROA-406)', () => {
         auth_enable_login: true,
         auth_enable_register: false,
         auth_enable_magic_link: true,
-        auth_enable_password_recovery: false
+        auth_enable_password_recovery: false,
+        auth_enable_oauth: false,
+        auth_enable_session_refresh: false
       });
     });
 
