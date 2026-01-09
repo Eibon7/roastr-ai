@@ -13,7 +13,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { isAuthEndpointEnabled } from '../../../src/lib/authFlags';
-import { loadSettings } from '../../../src/lib/loadSettings';
 
 // Mock loadSettings
 const mockLoadSettings = vi.fn();
