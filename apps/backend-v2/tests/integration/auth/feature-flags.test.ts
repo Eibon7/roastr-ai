@@ -83,9 +83,17 @@ describe('Auth Feature Flags Integration', () => {
       { name: 'login', flag: 'auth_enable_login', setting: 'auth.login.enabled' },
       { name: 'register', flag: 'auth_enable_register', setting: 'auth.register.enabled' },
       { name: 'magic-link', flag: 'auth_enable_magic_link', setting: 'auth.magic_link.enabled' },
-      { name: 'password-recovery', flag: 'auth_enable_password_recovery', setting: 'auth.password_recovery.enabled' },
+      {
+        name: 'password-recovery',
+        flag: 'auth_enable_password_recovery',
+        setting: 'auth.password_recovery.enabled'
+      },
       { name: 'oauth', flag: 'auth_enable_oauth', setting: 'auth.oauth.enabled' },
-      { name: 'session-refresh', flag: 'auth_enable_session_refresh', setting: 'auth.session_refresh.enabled' }
+      {
+        name: 'session-refresh',
+        flag: 'auth_enable_session_refresh',
+        setting: 'auth.session_refresh.enabled'
+      }
     ];
 
     authEndpoints.forEach(({ name, flag, setting }) => {
@@ -93,7 +101,7 @@ describe('Auth Feature Flags Integration', () => {
         const settingParts = setting.split('.');
         const mockSettings: any = {};
         let current = mockSettings;
-        
+
         for (let i = 0; i < settingParts.length - 1; i++) {
           current[settingParts[i]] = {};
           current = current[settingParts[i]];
@@ -102,16 +110,14 @@ describe('Auth Feature Flags Integration', () => {
 
         mockLoadSettings.mockResolvedValue(mockSettings);
 
-        await expect(
-          isAuthEndpointEnabled(flag, flag)
-        ).resolves.not.toThrow();
+        await expect(isAuthEndpointEnabled(flag, flag)).resolves.not.toThrow();
       });
 
       it(`given: ${name} flag OFF, when: check, then: AUTH_DISABLED`, async () => {
         const settingParts = setting.split('.');
         const mockSettings: any = {};
         let current = mockSettings;
-        
+
         for (let i = 0; i < settingParts.length - 1; i++) {
           current[settingParts[i]] = {};
           current = current[settingParts[i]];
@@ -196,7 +202,7 @@ describe('Auth Feature Flags Integration', () => {
         expect(error).toHaveProperty('message');
         expect(error).toHaveProperty('retryable');
         expect(error).toHaveProperty('http_status');
-        
+
         expect(error.slug).toBe('AUTH_DISABLED');
         expect(typeof error.message).toBe('string');
         expect(error.retryable).toBe(false);
@@ -212,11 +218,11 @@ describe('Auth Feature Flags Integration', () => {
 
       mockLoadSettings.mockResolvedValue({
         auth: {
-          login: { enabled: true },        // SSOT default: ON
-          register: { enabled: true },     // SSOT default: ON
-          logout: { enabled: true },       // SSOT default: ON
-          refresh: { enabled: true },      // SSOT default: ON
-          magic_link: { enabled: false },  // SSOT default: OFF (not implemented yet)
+          login: { enabled: true }, // SSOT default: ON
+          register: { enabled: true }, // SSOT default: ON
+          logout: { enabled: true }, // SSOT default: ON
+          refresh: { enabled: true }, // SSOT default: ON
+          magic_link: { enabled: false }, // SSOT default: OFF (not implemented yet)
           password_recovery: { enabled: true }
         }
       });
@@ -240,7 +246,7 @@ describe('Auth Feature Flags Integration', () => {
   describe('Performance', () => {
     it('given: loadSettings lento, when: check, then: completa en <200ms', async () => {
       mockLoadSettings.mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 50)); // 50ms delay
+        await new Promise((resolve) => setTimeout(resolve, 50)); // 50ms delay
         return {
           auth: {
             login: { enabled: true }
@@ -256,4 +262,3 @@ describe('Auth Feature Flags Integration', () => {
     });
   });
 });
-

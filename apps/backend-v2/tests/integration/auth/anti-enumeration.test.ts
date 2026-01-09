@@ -2,7 +2,7 @@
  * Auth Anti-Enumeration Integration Tests - Auth v2
  *
  * Tests de integración para verificar que anti-enumeration funciona correctamente.
- * 
+ *
  * Anti-enumeration: El sistema NO debe revelar si un email existe o no en la base de datos.
  * Esto previene ataques de enumeración de usuarios.
  *
@@ -324,10 +324,10 @@ describe('Auth Anti-Enumeration Integration', () => {
   describe('🔒 SECURITY - Enumeration Attack Scenarios', () => {
     it('given: attacker tries to enumerate users, when: register multiple emails, then: cannot determine existing users', async () => {
       const emails = [
-        'user1@example.com',  // Existing
-        'user2@example.com',  // New
-        'user3@example.com',  // Existing
-        'user4@example.com'   // New
+        'user1@example.com', // Existing
+        'user2@example.com', // New
+        'user3@example.com', // Existing
+        'user4@example.com' // New
       ];
 
       const results = [];
@@ -359,16 +359,16 @@ describe('Auth Anti-Enumeration Integration', () => {
       }
 
       // All should complete without throwing (anti-enumeration)
-      const allSuccess = results.every(r => r.success || !r.error);
+      const allSuccess = results.every((r) => r.success || !r.error);
       expect(allSuccess).toBe(true);
     });
 
     it('given: attacker tries password recovery enumeration, when: test multiple emails, then: cannot determine existing users', async () => {
       const emails = [
-        'valid1@example.com',    // Existing
-        'invalid1@example.com',  // Not existing
-        'valid2@example.com',    // Existing
-        'invalid2@example.com'   // Not existing
+        'valid1@example.com', // Existing
+        'invalid1@example.com', // Not existing
+        'valid2@example.com', // Existing
+        'invalid2@example.com' // Not existing
       ];
 
       const results = [];
@@ -399,7 +399,7 @@ describe('Auth Anti-Enumeration Integration', () => {
       }
 
       // All should complete without throwing (anti-enumeration)
-      const allSuccess = results.every(r => r.success || !r.error);
+      const allSuccess = results.every((r) => r.success || !r.error);
       expect(allSuccess).toBe(true);
     });
   });

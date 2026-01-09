@@ -3,14 +3,14 @@ import path from 'path';
 
 /**
  * Vitest Configuration for Auth v2 CI
- * 
+ *
  * Este config ejecuta SOLO tests de Auth v2 en CI.
- * 
+ *
  * Scope:
  * - Tests de flow (login, register, http endpoints)
  * - Tests de integration (password recovery, feature flags, rate limit, anti-enumeration)
  * - Tests unit (authService, authPolicyGate, authFlags, authMiddleware, etc.)
- * 
+ *
  * Excluye:
  * - Workers
  * - Roast
@@ -21,7 +21,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    
+
     // SOLO tests de Auth v2
     include: [
       'tests/flow/auth-*.test.ts',
@@ -36,35 +36,35 @@ export default defineConfig({
       'tests/unit/middleware/authMiddleware.test.ts',
       'tests/unit/routes/authHealthEndpoint.test.ts'
     ],
-    
+
     // Excluir explícitamente
     exclude: [
       'node_modules/**',
       'coverage/**',
       'dist/**',
       'build/**',
-      
+
       // Workers (ROA-525)
       'tests/**/worker*.test.ts',
       'tests/**/Worker*.test.ts',
-      
+
       // Roast (fuera de scope Auth)
       'tests/**/roast*.test.ts',
-      
+
       // E2E (requieren staging)
       'tests/e2e/**',
-      
+
       // Legacy tests (root tests/)
       'tests/**/*.test.js',
-      
+
       // OAuth (fuera de Auth v2 core)
       'tests/**/oauth*.test.ts'
     ],
-    
+
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'json-summary'],
-      
+
       // Solo Auth v2 src files
       include: [
         'src/services/authService.ts',
@@ -74,7 +74,7 @@ export default defineConfig({
         'src/middleware/authMiddleware.ts',
         'src/routes/auth.ts'
       ],
-      
+
       exclude: [
         'node_modules/**',
         'tests/**',
@@ -83,7 +83,7 @@ export default defineConfig({
         'dist/**',
         'build/**'
       ],
-      
+
       // Thresholds para Auth v2
       thresholds: {
         lines: 85,
@@ -92,10 +92,10 @@ export default defineConfig({
         statements: 85
       }
     },
-    
+
     testTimeout: 10000,
     reporters: ['verbose'],
-    
+
     // Worker configuration (memory optimization)
     pool: 'threads',
     poolOptions: {
@@ -105,18 +105,17 @@ export default defineConfig({
         minThreads: 1
       }
     },
-    
+
     // Isolate tests
     isolate: true,
     clearMocks: true,
     restoreMocks: true,
     mockReset: true
   },
-  
+
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
     }
   }
 });
-

@@ -225,7 +225,7 @@ describe('Auth Rate Limit Integration', () => {
       });
 
       const start = Date.now();
-      
+
       await authService.login({
         email: 'test@example.com',
         password: 'password123',

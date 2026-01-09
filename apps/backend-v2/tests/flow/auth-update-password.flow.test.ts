@@ -150,7 +150,7 @@ describe('Update Password - Contract Tests', () => {
       });
 
       const start = Date.now();
-      
+
       await authService.updatePassword({
         userId: 'user_123',
         password: 'newPassword123'

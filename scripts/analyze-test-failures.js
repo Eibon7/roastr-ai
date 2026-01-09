@@ -288,3 +288,4 @@ console.log('✅ Análisis completado\n');
 // Exit con código según estado
 process.exit(results.summary.failed > 0 ? 1 : 0);
 
+
