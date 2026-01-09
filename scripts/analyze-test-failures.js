@@ -206,12 +206,12 @@ const planContent = `# ROA-525: Global Tests and Validation - Plan de Acción
 ### Métricas Globales
 
 - **Archivos de test:** ${results.summary.total}
-  - ✅ Pasando: ${results.summary.passed} (${((results.summary.passed / results.summary.total) * 100).toFixed(2)}%)
+  - ✅ Pasando: ${results.summary.passed} (${results.summary.total > 0 ? ((results.summary.passed / results.summary.total) * 100).toFixed(2) : '0.00'}%)
   - ❌ Fallando: ${results.summary.failed} (${results.summary.failureRate})
   - ⏭️ Skipped: ${results.summary.skipped}
 
 - **Tests individuales:** ${results.summary.testsTotal}
-  - ✅ Pasando: ${results.summary.testsPassed} (${((results.summary.testsPassed / results.summary.testsTotal) * 100).toFixed(2)}%)
+  - ✅ Pasando: ${results.summary.testsPassed} (${results.summary.testsTotal > 0 ? ((results.summary.testsPassed / results.summary.testsTotal) * 100).toFixed(2) : '0.00'}%)
   - ❌ Fallando: ${results.summary.testsFailed} (${results.summary.testFailureRate})
   - ⏭️ Skipped: ${results.summary.testsSkipped}
 

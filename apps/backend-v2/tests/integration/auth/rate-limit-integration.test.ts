@@ -75,6 +75,7 @@ describe('Auth Rate Limit Integration', () => {
         authService.login({
           email: 'test@example.com',
           password: 'password123',
+          ip: '127.0.0.1',
           request_id: 'req_123'
         })
       ).resolves.toBeDefined();
@@ -113,6 +114,7 @@ describe('Auth Rate Limit Integration', () => {
         authService.login({
           email: 'test@example.com',
           password: 'password123',
+          ip: '127.0.0.1',
           request_id: 'req_123'
         })
       ).rejects.toThrow();
@@ -163,6 +165,7 @@ describe('Auth Rate Limit Integration', () => {
           authService.login({
             email: 'test@example.com',
             password: 'password123',
+            ip: '127.0.0.1',
             request_id: `req_${i}`
           })
         ).resolves.toBeDefined();
@@ -173,6 +176,7 @@ describe('Auth Rate Limit Integration', () => {
         authService.login({
           email: 'test@example.com',
           password: 'password123',
+          ip: '127.0.0.1',
           request_id: 'req_4'
         })
       ).rejects.toThrow();
@@ -190,6 +194,7 @@ describe('Auth Rate Limit Integration', () => {
         authService.login({
           email: 'test@example.com',
           password: 'password123',
+          ip: '127.0.0.1',
           request_id: 'req_123'
         })
       ).rejects.toThrow();
@@ -206,6 +211,7 @@ describe('Auth Rate Limit Integration', () => {
         authService.login({
           email: 'test@example.com',
           password: 'password123',
+          ip: '127.0.0.1',
           request_id: 'req_123'
         })
       ).rejects.toThrow();
@@ -229,6 +235,7 @@ describe('Auth Rate Limit Integration', () => {
       await authService.login({
         email: 'test@example.com',
         password: 'password123',
+        ip: '127.0.0.1',
         request_id: 'req_123'
       });
 

@@ -51,7 +51,7 @@
       "domains": [],
       "severity": "SAFE",
       "lines_added": 0,
-      "lines_removed": 0
+      "lines_removed": 10
     }
   ],
   "approval_required": false,

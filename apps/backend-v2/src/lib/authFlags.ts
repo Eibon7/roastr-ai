@@ -23,6 +23,8 @@ export interface AuthFlags {
   auth_enable_register: boolean;
   auth_enable_magic_link: boolean;
   auth_enable_password_recovery: boolean;
+  auth_enable_oauth: boolean;
+  auth_enable_session_refresh: boolean;
 }
 
 /**
@@ -34,7 +36,9 @@ const DEFAULT_AUTH_FLAGS: AuthFlags = {
   auth_enable_login: false,
   auth_enable_register: false,
   auth_enable_magic_link: false,
-  auth_enable_password_recovery: false
+  auth_enable_password_recovery: false,
+  auth_enable_oauth: false,
+  auth_enable_session_refresh: false
 };
 
 /**
@@ -63,7 +67,12 @@ export async function loadAuthFlags(): Promise<AuthFlags> {
         DEFAULT_AUTH_FLAGS.auth_enable_magic_link,
       auth_enable_password_recovery:
         settings?.feature_flags?.auth_enable_password_recovery ??
-        DEFAULT_AUTH_FLAGS.auth_enable_password_recovery
+        DEFAULT_AUTH_FLAGS.auth_enable_password_recovery,
+      auth_enable_oauth:
+        settings?.feature_flags?.auth_enable_oauth ?? DEFAULT_AUTH_FLAGS.auth_enable_oauth,
+      auth_enable_session_refresh:
+        settings?.feature_flags?.auth_enable_session_refresh ??
+        DEFAULT_AUTH_FLAGS.auth_enable_session_refresh
     };
   } catch (error) {
     logger.error('Failed to load auth feature flags from settings, using fail-closed defaults', {

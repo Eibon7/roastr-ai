@@ -137,14 +137,14 @@ console.log('══════════════════════�
 console.log('📈 RESUMEN GLOBAL\n');
 console.log(`  Archivos de Test:`);
 console.log(`    Total: ${results.summary.filesTotal}`);
-console.log(`    ✅ Pasando: ${results.summary.filesPassing} (${((results.summary.filesPassing / results.summary.filesTotal) * 100).toFixed(1)}%)`);
-console.log(`    ❌ Fallando: ${results.summary.filesFailing} (${((results.summary.filesFailing / results.summary.filesTotal) * 100).toFixed(1)}%)`);
+console.log(`    ✅ Pasando: ${results.summary.filesPassing} (${results.summary.filesTotal > 0 ? ((results.summary.filesPassing / results.summary.filesTotal) * 100).toFixed(1) : '0.0'}%)`);
+console.log(`    ❌ Fallando: ${results.summary.filesFailing} (${results.summary.filesTotal > 0 ? ((results.summary.filesFailing / results.summary.filesTotal) * 100).toFixed(1) : '0.0'}%)`);
 console.log(`    ⏭️  Skipped: ${results.summary.filesSkipped}\n`);
 
 console.log(`  Tests Individuales:`);
 console.log(`    Total: ${results.summary.testsTotal}`);
-console.log(`    ✅ Pasando: ${results.summary.testsPassing} (${((results.summary.testsPassing / results.summary.testsTotal) * 100).toFixed(1)}%)`);
-console.log(`    ❌ Fallando: ${results.summary.testsFailing} (${((results.summary.testsFailing / results.summary.testsTotal) * 100).toFixed(1)}%)`);
+console.log(`    ✅ Pasando: ${results.summary.testsPassing} (${results.summary.testsTotal > 0 ? ((results.summary.testsPassing / results.summary.testsTotal) * 100).toFixed(1) : '0.0'}%)`);
+console.log(`    ❌ Fallando: ${results.summary.testsFailing} (${results.summary.testsTotal > 0 ? ((results.summary.testsFailing / results.summary.testsTotal) * 100).toFixed(1) : '0.0'}%)`);
 console.log(`    ⏭️  Skipped: ${results.summary.testsSkipped}\n`);
 
 console.log('═══════════════════════════════════════════════════════\n');

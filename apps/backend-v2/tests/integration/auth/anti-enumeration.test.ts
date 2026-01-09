@@ -195,6 +195,7 @@ describe('Auth Anti-Enumeration Integration', () => {
         await authService.login({
           email: 'nonexistent@example.com',
           password: 'password123',
+          ip: '127.0.0.1',
           request_id: 'req_123'
         });
         throw new Error('Should have thrown');
@@ -220,6 +221,7 @@ describe('Auth Anti-Enumeration Integration', () => {
         await authService.login({
           email: 'nonexistent@example.com',
           password: 'password123',
+          ip: '127.0.0.1',
           request_id: 'req_1'
         });
       } catch (error) {
@@ -240,6 +242,7 @@ describe('Auth Anti-Enumeration Integration', () => {
         await authService.login({
           email: 'existing@example.com',
           password: 'wrongpassword',
+          ip: '127.0.0.1',
           request_id: 'req_2'
         });
       } catch (error) {
