@@ -3,7 +3,7 @@
 **Agent:** Test Engineer
 **Issue:** ROA-525 - Global Tests and Validation
 **Fecha:** 2026-01-08
-**Worktree:** `/Users/emiliopostigo/roastr-ai-worktrees/ROA-525`
+**Worktree:** `./ROA-525`
 **Rama:** `feature/ROA-525-auto`
 
 ---

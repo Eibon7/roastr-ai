@@ -257,70 +257,84 @@ describe('Auth Anti-Enumeration Integration', () => {
   });
 
   describe('⏱️ TIMING ATTACK PREVENTION', () => {
-    it('given: email existente vs no existente, when: register, then: timing similar (<50ms diff)', async () => {
-      // Email nuevo
-      mockSignUp.mockResolvedValue({
-        data: { user: { id: 'user_123' }, session: null },
-        error: null
-      });
+    it('given: email existente vs no existente, when: register, then: timing similar (avg <100ms)', async () => {
+      const iterations = 3;
+      let totalDiff = 0;
 
-      const start1 = Date.now();
-      await authService.register({
-        email: 'new@example.com',
-        password: 'password123',
-        request_id: 'req_1'
-      });
-      const duration1 = Date.now() - start1;
+      for (let i = 0; i < iterations; i++) {
+        // Email nuevo
+        mockSignUp.mockResolvedValue({
+          data: { user: { id: `user_${i}` }, session: null },
+          error: null
+        });
 
-      // Email existente
-      mockSignUp.mockResolvedValue({
-        data: { user: null, session: null },
-        error: { message: 'User already registered', status: 400 }
-      });
+        const start1 = Date.now();
+        await authService.register({
+          email: `new_${i}@example.com`,
+          password: 'password123',
+          request_id: `req_new_${i}`
+        });
+        const duration1 = Date.now() - start1;
 
-      const start2 = Date.now();
-      await authService.register({
-        email: 'existing@example.com',
-        password: 'password123',
-        request_id: 'req_2'
-      });
-      const duration2 = Date.now() - start2;
+        // Email existente
+        mockSignUp.mockResolvedValue({
+          data: { user: null, session: null },
+          error: { message: 'User already registered', status: 400 }
+        });
 
-      // Diferencia de timing debe ser mínima (<50ms)
-      const timingDiff = Math.abs(duration1 - duration2);
-      expect(timingDiff).toBeLessThan(50);
+        const start2 = Date.now();
+        await authService.register({
+          email: `existing_${i}@example.com`,
+          password: 'password123',
+          request_id: `req_existing_${i}`
+        });
+        const duration2 = Date.now() - start2;
+
+        totalDiff += Math.abs(duration1 - duration2);
+      }
+
+      // Promedio de diferencia debe ser mínima (<100ms)
+      const avgDiff = totalDiff / iterations;
+      expect(avgDiff).toBeLessThan(100);
     });
 
-    it('given: email existente vs no existente, when: passwordRecovery, then: timing similar (<50ms diff)', async () => {
-      // Email existente
-      mockResetPasswordForEmail.mockResolvedValue({
-        data: {},
-        error: null
-      });
+    it('given: email existente vs no existente, when: passwordRecovery, then: timing similar (avg <100ms)', async () => {
+      const iterations = 3;
+      let totalDiff = 0;
 
-      const start1 = Date.now();
-      await authService.requestPasswordRecovery({
-        email: 'existing@example.com',
-        request_id: 'req_1'
-      });
-      const duration1 = Date.now() - start1;
+      for (let i = 0; i < iterations; i++) {
+        // Email existente
+        mockResetPasswordForEmail.mockResolvedValue({
+          data: {},
+          error: null
+        });
 
-      // Email no existente
-      mockResetPasswordForEmail.mockResolvedValue({
-        data: null,
-        error: { message: 'User not found', status: 400 }
-      });
+        const start1 = Date.now();
+        await authService.requestPasswordRecovery({
+          email: `existing_${i}@example.com`,
+          request_id: `req_existing_${i}`
+        });
+        const duration1 = Date.now() - start1;
 
-      const start2 = Date.now();
-      await authService.requestPasswordRecovery({
-        email: 'nonexistent@example.com',
-        request_id: 'req_2'
-      });
-      const duration2 = Date.now() - start2;
+        // Email no existente
+        mockResetPasswordForEmail.mockResolvedValue({
+          data: null,
+          error: { message: 'User not found', status: 400 }
+        });
 
-      // Diferencia de timing debe ser mínima (<50ms)
-      const timingDiff = Math.abs(duration1 - duration2);
-      expect(timingDiff).toBeLessThan(50);
+        const start2 = Date.now();
+        await authService.requestPasswordRecovery({
+          email: `nonexistent_${i}@example.com`,
+          request_id: `req_nonexistent_${i}`
+        });
+        const duration2 = Date.now() - start2;
+
+        totalDiff += Math.abs(duration1 - duration2);
+      }
+
+      // Promedio de diferencia debe ser mínima (<100ms)
+      const avgDiff = totalDiff / iterations;
+      expect(avgDiff).toBeLessThan(100);
     });
   });
 

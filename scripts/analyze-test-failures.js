@@ -10,6 +10,10 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+// Helper: safe percentage calculation
+const percent = (value, total, decimals = 2) => 
+  total > 0 ? ((value / total) * 100).toFixed(decimals) : '0.00';
+
 console.log('🔍 ROA-525: Global Tests and Validation Analysis\n');
 
 // Ejecutar tests y capturar output
@@ -19,7 +23,8 @@ try {
   testOutput = execSync('npm test', {
     cwd: path.join(__dirname, '..'),
     encoding: 'utf-8',
-    maxBuffer: 50 * 1024 * 1024 // 50MB buffer
+    maxBuffer: 50 * 1024 * 1024, // 50MB buffer
+    timeout: 120000 // 2 minutes timeout
   });
 } catch (error) {
   testOutput = error.stdout || '';
@@ -206,12 +211,12 @@ const planContent = `# ROA-525: Global Tests and Validation - Plan de Acción
 ### Métricas Globales
 
 - **Archivos de test:** ${results.summary.total}
-  - ✅ Pasando: ${results.summary.passed} (${results.summary.total > 0 ? ((results.summary.passed / results.summary.total) * 100).toFixed(2) : '0.00'}%)
+  - ✅ Pasando: ${results.summary.passed} (${percent(results.summary.passed, results.summary.total)}%)
   - ❌ Fallando: ${results.summary.failed} (${results.summary.failureRate})
   - ⏭️ Skipped: ${results.summary.skipped}
 
 - **Tests individuales:** ${results.summary.testsTotal}
-  - ✅ Pasando: ${results.summary.testsPassed} (${results.summary.testsTotal > 0 ? ((results.summary.testsPassed / results.summary.testsTotal) * 100).toFixed(2) : '0.00'}%)
+  - ✅ Pasando: ${results.summary.testsPassed} (${percent(results.summary.testsPassed, results.summary.testsTotal)}%)
   - ❌ Fallando: ${results.summary.testsFailed} (${results.summary.testFailureRate})
   - ⏭️ Skipped: ${results.summary.testsSkipped}
 

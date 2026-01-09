@@ -23,35 +23,40 @@
       "domains": [],
       "severity": "SAFE",
       "lines_added": 0,
-      "lines_removed": 0
+      "lines_removed": 0,
+      "test_scenario": "Documentation update - no-op change"
     },
     {
       "file": "docs/plan/issue-525.md",
       "domains": [],
       "severity": "SAFE",
       "lines_added": 0,
-      "lines_removed": 0
+      "lines_removed": 0,
+      "test_scenario": "Plan document - safe domain"
     },
     {
       "file": "junit.xml",
       "domains": [],
       "severity": "SAFE",
       "lines_added": 0,
-      "lines_removed": 0
+      "lines_removed": 0,
+      "test_scenario": "Test results artifact - safe"
     },
     {
       "file": "tests/fixtures/guardian/audit-log.md",
       "domains": [],
       "severity": "SAFE",
       "lines_added": 0,
-      "lines_removed": 0
+      "lines_removed": 0,
+      "test_scenario": "Test fixture - safe domain"
     },
     {
       "file": "tests/fixtures/guardian/malformed-config.yaml",
       "domains": [],
       "severity": "SAFE",
       "lines_added": 0,
-      "lines_removed": 10
+      "lines_removed": 10,
+      "test_scenario": "Deleted test fixture - safe removal"
     }
   ],
   "approval_required": false,

@@ -13,6 +13,10 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+// Helper: safe percentage calculation
+const safePercent = (value, total, decimals = 1) => 
+  total > 0 ? ((value / total) * 100).toFixed(decimals) : '0.0';
+
 console.log('🔍 ROA-525: Global Tests Validation\n');
 console.log('═══════════════════════════════════════════════════════\n');
 
@@ -137,14 +141,14 @@ console.log('══════════════════════�
 console.log('📈 RESUMEN GLOBAL\n');
 console.log(`  Archivos de Test:`);
 console.log(`    Total: ${results.summary.filesTotal}`);
-console.log(`    ✅ Pasando: ${results.summary.filesPassing} (${results.summary.filesTotal > 0 ? ((results.summary.filesPassing / results.summary.filesTotal) * 100).toFixed(1) : '0.0'}%)`);
-console.log(`    ❌ Fallando: ${results.summary.filesFailing} (${results.summary.filesTotal > 0 ? ((results.summary.filesFailing / results.summary.filesTotal) * 100).toFixed(1) : '0.0'}%)`);
+console.log(`    ✅ Pasando: ${results.summary.filesPassing} (${safePercent(results.summary.filesPassing, results.summary.filesTotal)}%)`);
+console.log(`    ❌ Fallando: ${results.summary.filesFailing} (${safePercent(results.summary.filesFailing, results.summary.filesTotal)}%)`);
 console.log(`    ⏭️  Skipped: ${results.summary.filesSkipped}\n`);
 
 console.log(`  Tests Individuales:`);
 console.log(`    Total: ${results.summary.testsTotal}`);
-console.log(`    ✅ Pasando: ${results.summary.testsPassing} (${results.summary.testsTotal > 0 ? ((results.summary.testsPassing / results.summary.testsTotal) * 100).toFixed(1) : '0.0'}%)`);
-console.log(`    ❌ Fallando: ${results.summary.testsFailing} (${results.summary.testsTotal > 0 ? ((results.summary.testsFailing / results.summary.testsTotal) * 100).toFixed(1) : '0.0'}%)`);
+console.log(`    ✅ Pasando: ${results.summary.testsPassing} (${safePercent(results.summary.testsPassing, results.summary.testsTotal)}%)`);
+console.log(`    ❌ Fallando: ${results.summary.testsFailing} (${safePercent(results.summary.testsFailing, results.summary.testsTotal)}%)`);
 console.log(`    ⏭️  Skipped: ${results.summary.testsSkipped}\n`);
 
 console.log('═══════════════════════════════════════════════════════\n');
