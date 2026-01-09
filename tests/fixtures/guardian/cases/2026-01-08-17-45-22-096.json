@@ -1,0 +1,65 @@
+{
+  "case_id": "2026-01-08-17-45-22-096",
+  "timestamp": "2026-01-08T17:45:22.096Z",
+  "actor": "emiliopostigo",
+  "domains": [],
+  "files_changed": [
+    "docs/guardian/audit-log.md",
+    "docs/plan/issue-525.md",
+    "junit.xml",
+    "tests/fixtures/guardian/audit-log.md",
+    "tests/fixtures/guardian/malformed-config.yaml"
+  ],
+  "severity": "SAFE",
+  "action": "APPROVED",
+  "violations": {
+    "critical": 0,
+    "sensitive": 0,
+    "safe": 5
+  },
+  "details": [
+    {
+      "file": "docs/guardian/audit-log.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0,
+      "test_scenario": "Documentation update - no-op change"
+    },
+    {
+      "file": "docs/plan/issue-525.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0,
+      "test_scenario": "Plan document - safe domain"
+    },
+    {
+      "file": "junit.xml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0,
+      "test_scenario": "Test results artifact - safe"
+    },
+    {
+      "file": "tests/fixtures/guardian/audit-log.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0,
+      "test_scenario": "Test fixture - safe domain"
+    },
+    {
+      "file": "tests/fixtures/guardian/malformed-config.yaml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 10,
+      "test_scenario": "Deleted test fixture - safe removal"
+    }
+  ],
+  "approval_required": false,
+  "approved_by": null,
+  "notes": "Auto-approved"
+}

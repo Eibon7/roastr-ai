@@ -1,0 +1,106 @@
+{
+  "case_id": "2026-01-08-18-26-47-443",
+  "timestamp": "2026-01-08T18:26:47.443Z",
+  "actor": "emiliopostigo",
+  "domains": [
+    "test_domain"
+  ],
+  "files_changed": [
+    "scripts/analyze-test-failures.js",
+    "scripts/validate-global-tests.js",
+    "docs/agents/receipts/ROA-525-test-engineer.md",
+    "docs/guardian/audit-log.md",
+    "docs/plan/ROA-525-FINAL-PLAN.md",
+    "docs/plan/issue-525.md",
+    "junit.xml",
+    "tests/fixtures/guardian/audit-log.md",
+    "tests/fixtures/guardian/malformed-config.yaml",
+    "tests/fixtures/guardian/product-guard-cli-test.yaml"
+  ],
+  "severity": "SENSITIVE",
+  "action": "REVIEW",
+  "violations": {
+    "critical": 0,
+    "sensitive": 2,
+    "safe": 8
+  },
+  "details": [
+    {
+      "file": "scripts/analyze-test-failures.js",
+      "domains": [
+        "test_domain"
+      ],
+      "severity": "SENSITIVE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "scripts/validate-global-tests.js",
+      "domains": [
+        "test_domain"
+      ],
+      "severity": "SENSITIVE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/agents/receipts/ROA-525-test-engineer.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/guardian/audit-log.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/ROA-525-FINAL-PLAN.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/issue-525.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "junit.xml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "tests/fixtures/guardian/audit-log.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "tests/fixtures/guardian/malformed-config.yaml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "tests/fixtures/guardian/product-guard-cli-test.yaml",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    }
+  ],
+  "approval_required": true,
+  "approved_by": null,
+  "notes": "Requires Tech Lead review"
+}

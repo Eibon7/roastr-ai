@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-01-08T17:45:21.091Z",
+  "summary": {
+    "failed": 388,
+    "passed": 91,
+    "skipped": 1,
+    "total": 480,
+    "failureRate": "80.83%",
+    "testsFailed": 502,
+    "testsPassed": 2429,
+    "testsSkipped": 97,
+    "testsTotal": 3028,
+    "testFailureRate": "16.58%"
+  },
+  "failureCategories": {
+    "accessibility": [],
+    "e2e": [],
+    "rls": [],
+    "smoke": [],
+    "visual": [],
+    "unit": [],
+    "integration": []
+  },
+  "errorPatterns": {
+    "Cannot read properties of undefined": 33,
+    "TypeError": 4,
+    "Connection timeout": 2,
+    "Timeout": 3
+  },
+  "recommendations": [
+    {
+      "priority": "P0",
+      "category": "Infrastructure",
+      "issue": "Database/Supabase connection issues",
+      "action": "Verificar configuración de DATABASE_URL y SUPABASE_* vars",
+      "affectedTests": 0
+    },
+    {
+      "priority": "P0",
+      "category": "Integration",
+      "issue": "0 integration tests failing",
+      "action": "Revisar setup de tests de integración y dependencias externas",
+      "affectedTests": 0
+    },
+    {
+      "priority": "P1",
+      "category": "E2E",
+      "issue": "0 E2E tests failing",
+      "action": "Verificar Playwright setup y browser context",
+      "affectedTests": 0
+    },
+    {
+      "priority": "P1",
+      "category": "RLS",
+      "issue": "0 RLS tests failing",
+      "action": "Revisar políticas RLS en Supabase y setup de DB test",
+      "affectedTests": 0
+    },
+    {
+      "priority": "P2",
+      "category": "Code Quality",
+      "issue": "Tests usando done() callback deprecated",
+      "action": "Migrar a promises en tests afectados",
+      "affectedTests": 0
+    },
+    {
+      "priority": "P2",
+      "category": "Unit Tests",
+      "issue": "0 unit tests failing",
+      "action": "Revisar mocks y dependencias de unit tests",
+      "affectedTests": 0
+    }
+  ]
+}

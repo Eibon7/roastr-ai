@@ -1,0 +1,92 @@
+{
+  "case_id": "2026-01-08-18-07-22-825",
+  "timestamp": "2026-01-08T18:07:22.825Z",
+  "actor": "emiliopostigo",
+  "domains": [
+    "test_domain"
+  ],
+  "files_changed": [
+    "docs/agents/receipts/ROA-525-test-engineer.md",
+    "docs/plan/ROA-525-FINAL-PLAN.md",
+    "docs/test-evidence/ROA-525-test-analysis.json",
+    "docs/test-evidence/ROA-525/validation-report.json",
+    "docs/test-evidence/ROA-525/validation-report.md",
+    "scripts/analyze-test-failures.js",
+    "scripts/validate-global-tests.js"
+  ],
+  "severity": "SENSITIVE",
+  "action": "REVIEW",
+  "violations": {
+    "critical": 0,
+    "sensitive": 7,
+    "safe": 0
+  },
+  "details": [
+    {
+      "file": "docs/agents/receipts/ROA-525-test-engineer.md",
+      "domains": [
+        "test_domain"
+      ],
+      "severity": "SENSITIVE",
+      "lines_added": 183,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/plan/ROA-525-FINAL-PLAN.md",
+      "domains": [
+        "test_domain"
+      ],
+      "severity": "SENSITIVE",
+      "lines_added": 313,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/test-evidence/ROA-525-test-analysis.json",
+      "domains": [
+        "test_domain"
+      ],
+      "severity": "SENSITIVE",
+      "lines_added": 74,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/test-evidence/ROA-525/validation-report.json",
+      "domains": [
+        "test_domain"
+      ],
+      "severity": "SENSITIVE",
+      "lines_added": 106,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/test-evidence/ROA-525/validation-report.md",
+      "domains": [
+        "test_domain"
+      ],
+      "severity": "SENSITIVE",
+      "lines_added": 115,
+      "lines_removed": 0
+    },
+    {
+      "file": "scripts/analyze-test-failures.js",
+      "domains": [
+        "test_domain"
+      ],
+      "severity": "SENSITIVE",
+      "lines_added": 290,
+      "lines_removed": 0
+    },
+    {
+      "file": "scripts/validate-global-tests.js",
+      "domains": [
+        "test_domain"
+      ],
+      "severity": "SENSITIVE",
+      "lines_added": 306,
+      "lines_removed": 0
+    }
+  ],
+  "approval_required": true,
+  "approved_by": null,
+  "notes": "Requires Tech Lead review"
+}
