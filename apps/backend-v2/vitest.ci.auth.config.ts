@@ -34,7 +34,8 @@ export default defineConfig({
       'tests/unit/utils/authErrorTaxonomy.test.ts',
       'tests/unit/utils/authObservability.test.ts',
       'tests/unit/middleware/authMiddleware.test.ts',
-      'tests/unit/routes/authHealthEndpoint.test.ts'
+      'tests/unit/routes/authHealthEndpoint.test.ts',
+      'tests/unit/routes/oauthInfra.test.ts'
     ],
 
     // Excluir explícitamente
@@ -57,8 +58,10 @@ export default defineConfig({
       // Legacy tests (root tests/)
       'tests/**/*.test.js',
 
-      // OAuth (fuera de Auth v2 core)
-      'tests/**/oauth*.test.ts'
+      // OAuth providers (fuera de Auth v2 core, pero oauthInfra.test.ts sí incluido)
+      'tests/**/oauth-google*.test.ts',
+      'tests/**/oauth-github*.test.ts',
+      'tests/**/oauth-provider*.test.ts'
     ],
 
     coverage: {

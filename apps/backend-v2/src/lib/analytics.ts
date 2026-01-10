@@ -183,6 +183,28 @@ export function isAmplitudeInitialized(): boolean {
 }
 
 /**
+ * Get the Amplitude module (for advanced usage like policy observability)
+ *
+ * Returns the entire @amplitude/analytics-node module when initialized.
+ * Use this to access methods like track() directly for custom event tracking.
+ *
+ * @returns The Amplitude module or null if not initialized
+ * @example
+ * ```typescript
+ * const amplitude = getAmplitudeClient();
+ * if (amplitude) {
+ *   amplitude.track({
+ *     event_type: 'custom_event',
+ *     event_properties: { ... }
+ *   });
+ * }
+ * ```
+ */
+export function getAmplitudeClient(): typeof amplitude | null {
+  return isInitialized ? amplitude : null;
+}
+
+/**
  * Flush all pending events
  *
  * Useful before application shutdown to ensure all events are sent.
