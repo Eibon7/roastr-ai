@@ -240,7 +240,7 @@ describe('POST /api/v2/auth/register', () => {
     // ⚠️ BLOCKED: Mock de Analytics requiere ajuste
     // See: docs/CI-AUTH-V2-DEBUG.md#analytics-mock-issue
     // Issue: TBD - Fix Analytics Mock en Flow Tests
-    
+
     it('FLOW: registro exitoso trackea "auth_register_success" y "auth_register_endpoint_success"', async () => {
       const { loadSettings } = await import('../../src/lib/loadSettings');
       vi.mocked(loadSettings).mockResolvedValue({
