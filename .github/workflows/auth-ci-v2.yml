@@ -63,6 +63,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Install backend-v2 dependencies
+        run: cd apps/backend-v2 && npm ci
+      
       - name: Run Auth CI Tests
         run: npm run test:ci:auth
         env:

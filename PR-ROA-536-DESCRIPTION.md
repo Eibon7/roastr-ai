@@ -180,7 +180,7 @@ npm run test:ci:auth
 npm run test:ci:auth:coverage
 ```
 
-**Expectativa actual:** 190/215 tests passing, 21 failing (mock issues documentados)
+**Expectativa actual:** 210/264 tests passing, 54 skipped, 0 failing (post minimal fixes)
 
 ---
 
@@ -248,7 +248,7 @@ Una vez mergeado, el workflow `auth-ci-v2.yml` se ejecutará automáticamente en
 - Push a `main`/`develop`
 - PRs con cambios en Auth v2
 
-**Expectativa:** CI mostrará 190 passing, 21 failing (documentado). Issue #1 arreglará mocks.
+**Expectativa:** CI mostrará 210 passing, 54 skipped, 0 failing (post minimal fixes). Issue #1 arreglará mocks y unskippeará tests.
 
 ---
 
