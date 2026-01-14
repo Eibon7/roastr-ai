@@ -42,10 +42,11 @@ git status
 Estas variables **DEBEN** estar configuradas para que staging funcione:
 
 ```bash
-# Supabase (Base de datos)
+# Supabase (Base de datos y auth)
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_KEY=your-service-key
+SUPABASE_REDIRECT_URL=https://staging.roastr.ai/auth/callback
 
 # Redis (Cola de trabajos)
 UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
@@ -190,7 +191,9 @@ Scripts que se implementarán:
 
 **Solución**: Verifica que `.env.staging` tiene valores para:
 - `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_KEY`
+- `SUPABASE_REDIRECT_URL`
 
 ### Error: "Redis connection failed"
 
@@ -217,8 +220,9 @@ Scripts que se implementarán:
 
 ## 🔗 Ver también
 
-- `docs/ENVIRONMENT_VARIABLES.md` - Documentación completa de variables
-- `docs/DEPLOYMENT.md` - Guía de despliegue
-- `docs/TESTING.md` - Testing en diferentes entornos
 - `.env.example` - Template para desarrollo local
+- `docs/TESTING-GUIDE.md` - Guía completa de testing
+- `docs/POLAR-TESTING-LOCAL.md` - Testing de Polar en local
+- `docs/REDIS-SETUP-GUIDE.md` - Configuración de Redis/Upstash
+- `docs/SUPABASE-JWT-SETUP.md` - Configuración de Supabase
 

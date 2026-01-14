@@ -34,6 +34,10 @@ if [ -f "$TARGET_FILE" ]; then
   fi
   echo "🔄 Creando backup del archivo existente..."
   cp "$TARGET_FILE" "$TARGET_FILE.backup.$(date +%Y%m%d_%H%M%S)"
+  
+  # Mantener solo los últimos 5 backups para evitar acumulación
+  echo "🧹 Limpiando backups antiguos (manteniendo últimos 5)..."
+  ls -t "$TARGET_FILE.backup."* 2>/dev/null | tail -n +6 | xargs -r rm -f
 fi
 
 # Copiar template a .env.staging
