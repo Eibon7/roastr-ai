@@ -153,15 +153,34 @@ ENABLE_SHIELD_UI=false
 
 ## 📊 Validación
 
-### Script de validación (futuro)
+### Scripts Actuales
 
 ```bash
-# Validar que todas las variables críticas están presentes
-npm run validate:env:staging
+# Verificar que .env existe (crea desde .env.example si falta)
+npm run verify:env
 
-# Verificar que no hay valores de producción en staging
-npm run verify:env:staging
+# Verificar configuración de variables
+npm run verify:env:config
 ```
+
+### Scripts de Staging (TODO)
+
+**⚠️ Pendiente de implementación:**
+
+Los siguientes scripts específicos para staging están planificados pero aún no implementados:
+
+```bash
+# TODO(ROA-529): Implementar validación específica de staging
+# npm run validate:env:staging
+
+# TODO(ROA-529): Implementar verificación de valores de producción
+# npm run verify:env:staging
+```
+
+**Tracking**: Crear issue de seguimiento para implementar estos scripts que:
+- Validen variables críticas de Polar, Resend, Supabase
+- Detecten valores de producción accidentalmente en staging
+- Verifiquen estructura correcta del `.env.staging`
 
 ## 🐛 Troubleshooting
 
