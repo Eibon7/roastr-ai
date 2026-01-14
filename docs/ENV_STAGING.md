@@ -177,10 +177,12 @@ Los siguientes scripts específicos para staging están planificados pero aún n
 # npm run verify:env:staging
 ```
 
-**Tracking**: Crear issue de seguimiento para implementar estos scripts que:
-- Validen variables críticas de Polar, Resend, Supabase
-- Detecten valores de producción accidentalmente en staging
-- Verifiquen estructura correcta del `.env.staging`
+**Tracking**: Implementación pendiente en ROA-529
+
+Scripts que se implementarán:
+- Validar variables críticas de Polar, Resend, Supabase
+- Detectar valores de producción accidentalmente en staging
+- Verificar estructura correcta del `.env.staging`
 
 ## 🐛 Troubleshooting
 
