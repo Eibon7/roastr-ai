@@ -10,7 +10,10 @@ vi.mock('../lib/perspectiveClient', () => ({
 // Cleanup after each test
 afterEach(() => {
   cleanup();
+  // In vitest 4.0.17+, restoreAllMocks() only restores spies (vi.spyOn),
+  // not mocks created with vi.fn(). We explicitly clear mocks here.
   vi.restoreAllMocks();
+  vi.clearAllMocks();
 });
 
 // Mock window.matchMedia
