@@ -255,7 +255,7 @@
     "playwright": "^1.57.0",
     "prettier": "^3.4.2",
     "supabase-test": "^0.2.4",
-    "supertest": "^7.1.4",
+    "supertest": "^7.2.2",
     "vitest": "^4.0.14"
   }
 }
