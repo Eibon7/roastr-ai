@@ -106,7 +106,7 @@ node scripts/ci/detect-legacy-v1.js --ci
 **Total:** 28 tests ✅ TODOS PASANDO
 
 **Resultado:**
-```
+```text
 ✓ 28 tests passed
 Duration: 354ms
 ```
@@ -262,7 +262,7 @@ Duration: 354ms
 
 ## 🔗 Referencias
 
-- **Issue:** https://linear.app/roastrai/issue/ROA-538
+- **Issue:** <https://linear.app/roastrai/issue/ROA-538>
 - **Cursor Rule:** `.cursor/rules/v2-only-strict.mdc`
 - **Validador Loop:** `scripts/loop/validators/v2-only.js`
 - **Detector CI:** `scripts/ci/detect-legacy-v1.js`

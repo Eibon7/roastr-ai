@@ -155,7 +155,8 @@ function detectLegacyImports(files) {
     if (!content) continue;
 
     // Buscar imports desde src/ (V1 backend)
-    const srcImports = content.match(/(?:import|require)\s*\(?['"]\.\.\/.*?\/src\//g);
+    // Solo matchea cuando src/ viene directamente después de ./ o ../
+    const srcImports = content.match(/(?:import|require)\s*\(?['"](?:\.\.?\/)+src\//g);
     if (srcImports) {
       violations.push({
         type: 'LEGACY_IMPORT',
@@ -167,7 +168,7 @@ function detectLegacyImports(files) {
     }
 
     // Buscar imports desde frontend/ (V1 frontend)
-    const frontendImports = content.match(/(?:import|require)\s*\(?['"]\.\.\/.*?\/frontend\//g);
+    const frontendImports = content.match(/(?:import|require)\s*\(?['"](?:\.\.?\/)+frontend\//g);
     if (frontendImports) {
       violations.push({
         type: 'LEGACY_IMPORT',

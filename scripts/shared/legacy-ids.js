@@ -14,6 +14,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const logger = require('../../src/utils/logger');
 
 // Cache para evitar cargar múltiples veces
 let cachedDefinitions = null;
@@ -36,23 +37,35 @@ function loadLegacyDefinitions() {
       // Cargar yaml (sin dependencia de js-yaml, parseo básico)
       const content = fs.readFileSync(systemMapPath, 'utf-8');
       
-      // Parsear workers legacy (líneas que empiezan con "  - name:" bajo "legacy: workers:")
-      const workersMatch = content.match(/legacy:\s*\n\s*workers:\s*\n((?:\s*-\s*name:\s*.+\n)+)/);
-      const workers = workersMatch
-        ? workersMatch[1].match(/name:\s*(\w+)/g)?.map(m => m.replace('name:', '').trim()) || []
-        : [];
+      // Parsear bloque legacy completo con todas las secciones
+      // Captura: legacy:\n  workers:\n    - name: ...\n  services:\n    - name: ...\n  platforms:\n    - name: ...
+      const legacyBlockMatch = content.match(/legacy:\s*\n((?:\s+(?:workers|services|platforms):\s*\n(?:\s+-\s+name:\s*.+\n)*)+)/);
+      
+      let workers = [];
+      let services = [];
+      let platforms = [];
 
-      // Parsear services legacy
-      const servicesMatch = content.match(/services:\s*\n((?:\s*-\s*name:\s*.+\n)+)/);
-      const services = servicesMatch
-        ? servicesMatch[1].match(/name:\s*(\w+)/g)?.map(m => m.replace('name:', '').trim()) || []
-        : [];
+      if (legacyBlockMatch) {
+        const legacyBlock = legacyBlockMatch[0];
 
-      // Parsear platforms legacy
-      const platformsMatch = content.match(/platforms:\s*\n((?:\s*-\s*name:\s*.+\n)+)/);
-      const platforms = platformsMatch
-        ? platformsMatch[1].match(/name:\s*(\w+)/g)?.map(m => m.replace('name:', '').trim()) || []
-        : [];
+        // Parsear workers dentro del bloque legacy
+        const workersMatch = legacyBlock.match(/workers:\s*\n((?:\s+-\s+name:\s*.+\n)+)/);
+        if (workersMatch) {
+          workers = workersMatch[1].match(/name:\s*([\w-]+)/g)?.map(m => m.replace('name:', '').trim()) || [];
+        }
+
+        // Parsear services dentro del bloque legacy
+        const servicesMatch = legacyBlock.match(/services:\s*\n((?:\s+-\s+name:\s*.+\n)+)/);
+        if (servicesMatch) {
+          services = servicesMatch[1].match(/name:\s*([\w-]+)/g)?.map(m => m.replace('name:', '').trim()) || [];
+        }
+
+        // Parsear platforms dentro del bloque legacy
+        const platformsMatch = legacyBlock.match(/platforms:\s*\n((?:\s+-\s+name:\s*.+\n)+)/);
+        if (platformsMatch) {
+          platforms = platformsMatch[1].match(/name:\s*([\w-]+)/g)?.map(m => m.replace('name:', '').trim()) || [];
+        }
+      }
 
       cachedDefinitions = {
         LEGACY_IDS: [
@@ -73,7 +86,7 @@ function loadLegacyDefinitions() {
       return cachedDefinitions;
     } catch (error) {
       // Si falla el parseo, usar fallback
-      console.warn(`⚠️  Error parseando system-map-v2.yaml: ${error.message}. Usando definiciones fallback.`);
+      logger.warn(`⚠️  Error parseando system-map-v2.yaml: ${error.message}. Usando definiciones fallback.`);
     }
   }
 
@@ -140,6 +153,21 @@ function getLegacyPlatforms() {
 }
 
 /**
+ * Obtiene todos los mappings en un solo objeto
+ */
+function getAllMappings() {
+  const defs = loadLegacyDefinitions();
+  return {
+    ids: defs.LEGACY_IDS,
+    planIds: defs.LEGACY_PLAN_IDS,
+    billingProviders: defs.LEGACY_BILLING_PROVIDERS,
+    workers: defs.LEGACY_WORKERS,
+    services: defs.LEGACY_SERVICES,
+    platforms: defs.LEGACY_PLATFORMS,
+  };
+}
+
+/**
  * Resetea cache (útil para tests)
  */
 function resetCache() {
@@ -154,5 +182,8 @@ module.exports = {
   getLegacyWorkers,
   getLegacyServices,
   getLegacyPlatforms,
+  getAllMappings,
   resetCache,
+  // Exportar también el array LEGACY_IDS directamente para compatibilidad
+  LEGACY_IDS: getLegacyIDs,
 };
