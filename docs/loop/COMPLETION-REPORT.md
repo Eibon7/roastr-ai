@@ -89,11 +89,14 @@ El Loop Autónomo Supervisado v1 está **completamente funcional** y listo para 
 **Tests creados:**
 - `tests/loop/decision-engine.test.js` (✅ 21 tests, 100% passing)
 - `tests/loop/prd-parser.test.js` (✅ 17 tests, 100% passing)
+- `tests/loop/execute-task.test.js` (✅ 13 tests, 100% passing)
+- `tests/loop/escalation.test.js` (✅ 13 tests, 100% passing)
 - `tests/loop/rollback.test.js` (✅ 11 tests, 100% passing)
 - `tests/loop/git-utils.test.js` (✅ 7 tests, 100% passing)
-- `tests/loop/escalation.test.js` (✅ 13 tests, 100% passing)
 
-**Total: 69 tests, 100% passing**
+**Total: 82 tests, 100% passing**
+
+**Cobertura: 6/6 módulos (100% core modules covered)**
 
 ---
 
@@ -128,10 +131,11 @@ El Loop Autónomo Supervisado v1 está **completamente funcional** y listo para 
 |------------|-------|--------|
 | decision-engine | 21 | ✅ 100% passing |
 | prd-parser | 17 | ✅ 100% passing |
+| execute-task | 13 | ✅ 100% passing |
+| escalation | 13 | ✅ 100% passing |
 | rollback | 11 | ✅ 100% passing |
 | git-utils | 7 | ✅ 100% passing |
-| escalation | 13 | ✅ 100% passing |
-| **TOTAL** | **69 tests** | **✅ All passing** |
+| **TOTAL** | **82 tests** | **✅ All passing** |
 
 ### Documentación
 
@@ -253,7 +257,7 @@ node scripts/loop/execute-task.js \
 ## 🎯 Logros Principales
 
 1. ✅ **Loop v1 100% funcional** - Todas las fases core completadas
-2. ✅ **69 tests pasando** - Cobertura completa de todos los módulos
+2. ✅ **82 tests pasando** - Cobertura completa de todos los módulos (6/6)
 3. ✅ **Integración V2-only perfecta** - Gates funcionando
 4. ✅ **Rollback automático robusto** - Tested manualmente
 5. ✅ **Progress tracking completo** - JSON + JSONL
