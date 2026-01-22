@@ -2,7 +2,7 @@
 
 ## ✅ Estado: COMPLETADO (100%)
 
-**Fecha:** 2025-01-22  
+**Fecha:** 2026-01-22  
 **Issue:** ROA-538  
 **Prioridad:** P1  
 **Labels:** `area:infrastructure`, `v2-only`, `prerequisite`
@@ -204,29 +204,35 @@ Duration: 354ms
 
 ## 🚀 Próximos Pasos
 
-### 1. Integración Completa (Pendiente)
+### 1. Integración Completa ✅ COMPLETADO
 
-- [ ] Crear `scripts/loop/pre-task.js` con integración de `v2-only.js`
-- [ ] Crear `scripts/loop/post-task.js` con integración de `v2-only.js`
-- [ ] Añadir a workflow del Loop Autónomo
+- [x] Crear `scripts/loop/pre-task.js` con integración de `v2-only.js` ✅
+- [x] Crear `scripts/loop/post-task.js` con integración de `v2-only.js` ✅
+- [x] Añadir a workflow del Loop Autónomo ✅
 
-### 2. CI Workflow (Pendiente)
+**Nota:** AC4 completado en commit `a072e223`. Pre/post-task gates funcionan correctamente.
+
+### 2. CI Workflow (Futuro - Fuera de Scope ROA-538)
 
 - [ ] Crear `.github/workflows/v2-only-enforcement.yml`
 - [ ] Integrar `detect-legacy-v1.js --full` en CI
 - [ ] Bloquear merge si violaciones críticas
 
-### 3. Validación End-to-End (Recomendado)
+**Nota:** Planeado para issue futura (seguimiento del Loop Autónomo completo).
 
-- [ ] Probar validador con modificación real de archivo legacy
-- [ ] Probar validador con import de módulo legacy
-- [ ] Verificar mensajes de error son claros
-- [ ] Validar que no genera falsos positivos
+### 3. Validación End-to-End ✅ COMPLETADO
+
+- [x] Probar validador con modificación real de archivo legacy ✅
+- [x] Probar validador con import de módulo legacy ✅
+- [x] Verificar mensajes de error son claros ✅
+- [x] Validar que no genera falsos positivos ✅
+
+**Evidencia:** 37/37 tests passing, incluyendo tests con archivos temporales reales.
 
 ### 4. Documentación Adicional (Opcional)
 
-- [ ] Crear guía de troubleshooting
-- [ ] Añadir ejemplos de uso en `docs/`
+- [x] Crear guía de troubleshooting ✅
+- [x] Añadir ejemplos de uso en `docs/` ✅
 - [ ] Crear video/demo del blindaje
 
 ---
