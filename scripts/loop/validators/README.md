@@ -235,7 +235,7 @@ npm run test:coverage tests/validators/v2-only.test.js
 
 ### Ejemplo: Modificación de Archivo Legacy
 
-```
+```text
 🚨 BLOCK - Modificación de Archivo Legacy Detectada
 
 Archivo: docs/legacy/v1/roast-flow.md
@@ -252,7 +252,7 @@ Equivalente V2: docs/nodes-v2/06-motor-roasting.md
 
 ### Ejemplo: Import Legacy
 
-```
+```text
 🚨 BLOCK - Import desde Módulo Legacy Detectado
 
 Archivo: scripts/loop/task-processor.js

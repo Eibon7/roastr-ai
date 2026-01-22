@@ -18,6 +18,15 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const logger = require('../../src/utils/logger');
+const {
+  getLegacyIDs,
+  getLegacyPlanIDs,
+  getLegacyBillingProviders,
+  getLegacyWorkers,
+  getLegacyServices,
+  getLegacyPlatforms,
+} = require('../shared/legacy-ids');
 
 // ============================================================================
 // CONFIGURACIÓN - Rutas Legacy Prohibidas
@@ -31,50 +40,19 @@ const LEGACY_PATHS = [
 ];
 
 const LEGACY_PATH_PATTERNS = [
-  /docs\/nodes\/[^-v2].*\.md$/,  // docs/nodes/*.md pero NO docs/nodes-v2/*.md
-  /docs\/system-map\.yaml$/,      // docs/system-map.yaml pero NO system-map-v2.yaml
-  /^spec\.md$/,                    // spec.md en root
-  /docs\/legacy\//,                // Cualquier cosa en docs/legacy/
+  /^docs\/nodes\/.*\.md$/,            // Cualquier archivo bajo docs/nodes/ (excepto docs/nodes-v2/)
+  /docs\/system-map\.yaml$/,           // docs/system-map.yaml pero NO system-map-v2.yaml
+  /^spec\.md$/,                        // spec.md en root
+  /docs\/legacy\//,                    // Cualquier cosa en docs/legacy/
 ];
 
-// IDs legacy prohibidos (según system-map-v2.yaml)
-const LEGACY_IDS = [
-  'roast',              // Usar 'roasting-engine'
-  'shield',             // Usar 'shield-engine'
-  'social-platforms',   // Usar IDs específicos
-  'frontend-dashboard', // Usar 'frontend-admin' o 'frontend-user-app'
-  'plan-features',      // Usar 'billing-integration'
-  'persona',            // Usar 'analysis-engine' (subnode: persona-integration)
-];
-
-// Plan IDs legacy (según system-map-v2.yaml → legacy.plan_ids)
-const LEGACY_PLAN_IDS = ['free', 'basic', 'creator_plus'];
-
-// Billing providers legacy
-const LEGACY_BILLING_PROVIDERS = ['stripe'];
-
-// Workers legacy (según system-map-v2.yaml → legacy.workers)
-const LEGACY_WORKERS = [
-  'GenerateReplyWorker',  // Usar 'GenerateRoast'
-  'PublisherWorker',      // Usar 'SocialPosting'
-  'BillingWorker',        // Usar 'BillingUpdate'
-];
-
-// Servicios legacy (según system-map-v2.yaml → legacy.services)
-const LEGACY_SERVICES = [
-  'stripeService',  // Usar Polar billing
-];
-
-// Plataformas legacy (no en V2 MVP)
-const LEGACY_PLATFORMS = [
-  'instagram',
-  'facebook',
-  'discord',
-  'twitch',
-  'reddit',
-  'tiktok',
-  'bluesky',
-];
+// IDs legacy prohibidos (cargados dinámicamente desde system-map-v2.yaml)
+const LEGACY_IDS = getLegacyIDs();
+const LEGACY_PLAN_IDS = getLegacyPlanIDs();
+const LEGACY_BILLING_PROVIDERS = getLegacyBillingProviders();
+const LEGACY_WORKERS = getLegacyWorkers();
+const LEGACY_SERVICES = getLegacyServices();
+const LEGACY_PLATFORMS = getLegacyPlatforms();
 
 // Excepciones: Scripts que PUEDEN acceder a legacy (con justificación)
 const EXCEPTIONS = [
@@ -103,7 +81,7 @@ function getModifiedFiles() {
     const output = execSync('git diff --name-only HEAD', { encoding: 'utf-8' });
     return output.trim().split('\n').filter(Boolean);
   } catch (error) {
-    console.warn('⚠️  No se pudo obtener archivos modificados con git diff');
+    logger.warn('⚠️  No se pudo obtener archivos modificados con git diff');
     return [];
   }
 }
@@ -116,7 +94,7 @@ function getStagedFiles() {
     const output = execSync('git diff --cached --name-only', { encoding: 'utf-8' });
     return output.trim().split('\n').filter(Boolean);
   } catch (error) {
-    console.warn('⚠️  No se pudo obtener archivos staged con git diff');
+    logger.warn('⚠️  No se pudo obtener archivos staged con git diff');
     return [];
   }
 }

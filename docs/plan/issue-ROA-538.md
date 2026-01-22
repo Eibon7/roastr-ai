@@ -12,7 +12,15 @@
 
 **¿Qué es esto?**
 
-Implementación de blindajes técnicos para garantizar que cualquier sistema nuevo (incluido el Loop Autónomo Supervisado) solo opere sobre artefactos Roastr V2, bloqueando cualquier acceso (lectura o escritura) a artefactos legacy (Roastr V1).
+Implementación de blindajes técnicos para garantizar que cualquier sistema nuevo (incluido el Loop Autónomo Supervisado) solo opere sobre artefactos Roastr V2, bloqueando modificación e import de artefactos legacy (Roastr V1).
+
+**Alcance de detección:**
+- ✅ Modificación de archivos legacy (git diff)
+- ✅ Imports desde rutas legacy (`src/`, `frontend/`, `docs/legacy/`)
+- ✅ Referencias a IDs legacy en código (`roast`, `shield`, `free`, `basic`)
+- ✅ Uso de workers/services legacy (`GenerateReplyWorker`, `stripeService`)
+
+**Lectura pasiva:** Permitida (inspección sin modificar)
 
 **¿Qué problema resuelve?**
 

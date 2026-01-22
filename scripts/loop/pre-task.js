@@ -58,10 +58,12 @@ function runPreTaskValidation() {
     // Ejecutar validador v2-only
     console.log('🔍 Ejecutando validación V2-only (pre-task)...\n');
     
-    execSync(`node ${VALIDATOR_PATH} --pre-task`, {
+    const output = execSync(`node ${VALIDATOR_PATH} --pre-task`, {
       encoding: 'utf-8',
-      stdio: 'inherit',
     });
+    
+    // Mostrar output
+    console.log(output);
 
     // Si llegamos aquí, exit code = 0 (PASS)
     result.status = 'CONTINUE';
@@ -70,17 +72,22 @@ function runPreTaskValidation() {
     result.message = '✅ Pre-task validation PASSED - No violaciones V2-only detectadas';
 
   } catch (error) {
+    // Mostrar output capturado
+    if (error.stdout) console.log(error.stdout);
+    if (error.stderr) console.error(error.stderr);
+    
     // Exit code != 0 (BLOCK)
     result.status = 'BLOCK';
     result.v2Only.passed = false;
     result.v2Only.exitCode = error.status || 1;
     result.message = '❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.';
     
-    // Intentar extraer violaciones del error (si están disponibles)
-    if (error.stdout) {
+    // Extraer violaciones del output capturado
+    const capturedOutput = error.stdout || error.stderr || '';
+    if (capturedOutput) {
       result.v2Only.violations.push({
         source: 'v2-only-validator',
-        details: 'Ver output arriba para detalles completos',
+        details: capturedOutput.trim().substring(0, 500) + (capturedOutput.length > 500 ? '...' : ''),
       });
     }
   }

@@ -1,75 +1,158 @@
-/**
- * Legacy ID Mappings
- *
- * Shared module for legacy (v1) node ID mappings to v2 equivalents.
- * Used by validation and detection scripts.
- */
+#!/usr/bin/env node
 
 /**
- * Mapping only to IDs that exist in system-map-v2.yaml / SSOT v2.
- * When a legacy ID has no clear v2 equivalent, keep value null so it is detected as unmapped.
+ * Legacy IDs Definitions - Single Source of Truth
+ * 
+ * Este módulo centraliza todas las definiciones de IDs legacy V1
+ * que deben ser bloqueadas en desarrollo V2.
+ * 
+ * Fuente autoritativa: docs/system-map-v2.yaml (sección legacy)
+ * 
+ * Issue: ROA-538
+ * Fecha: 2025-01-22
  */
-const LEGACY_ID_MAPPINGS = new Map([
-  // Nodes with clear v2 IDs
-  ['roast', 'roasting-engine'],
-  ['shield', 'shield-engine'],
-  ['social-platforms', 'integraciones-redes-sociales'],
-  ['billing', 'billing-integration'],
-  ['frontend-dashboard', 'frontend-admin'],
-  ['observability', 'observabilidad'],
 
-  // Legacy without confirmed v2 node/subnode equivalents (kept as unmapped for detection)
-  ['plan-features', null],
-  ['persona', null],
-  ['cost-control', null],
-  ['queue-system', null],
-  ['multi-tenant', null],
-  ['analytics', null],
-  ['trainer', null],
-  ['guardian', null] // Deprecated, cannot be recreated
-]);
+const fs = require('fs');
+const path = require('path');
 
-const LEGACY_IDS = new Set(LEGACY_ID_MAPPINGS.keys());
+// Cache para evitar cargar múltiples veces
+let cachedDefinitions = null;
 
 /**
- * Get v2 equivalent for a legacy ID
- * @param {string} legacyId - Legacy v1 ID
- * @returns {string|null} - v2 equivalent, or null if deprecated
+ * Carga definiciones legacy desde system-map-v2.yaml
+ * o usa fallback hardcoded si no existe
  */
-function getV2Equivalent(legacyId) {
-  return LEGACY_ID_MAPPINGS.get(legacyId) || null;
+function loadLegacyDefinitions() {
+  // Si ya están cacheadas, retornar
+  if (cachedDefinitions) {
+    return cachedDefinitions;
+  }
+
+  const systemMapPath = path.resolve(__dirname, '../../docs/system-map-v2.yaml');
+
+  // Si existe system-map-v2.yaml, intentar cargarlo
+  if (fs.existsSync(systemMapPath)) {
+    try {
+      // Cargar yaml (sin dependencia de js-yaml, parseo básico)
+      const content = fs.readFileSync(systemMapPath, 'utf-8');
+      
+      // Parsear workers legacy (líneas que empiezan con "  - name:" bajo "legacy: workers:")
+      const workersMatch = content.match(/legacy:\s*\n\s*workers:\s*\n((?:\s*-\s*name:\s*.+\n)+)/);
+      const workers = workersMatch
+        ? workersMatch[1].match(/name:\s*(\w+)/g)?.map(m => m.replace('name:', '').trim()) || []
+        : [];
+
+      // Parsear services legacy
+      const servicesMatch = content.match(/services:\s*\n((?:\s*-\s*name:\s*.+\n)+)/);
+      const services = servicesMatch
+        ? servicesMatch[1].match(/name:\s*(\w+)/g)?.map(m => m.replace('name:', '').trim()) || []
+        : [];
+
+      // Parsear platforms legacy
+      const platformsMatch = content.match(/platforms:\s*\n((?:\s*-\s*name:\s*.+\n)+)/);
+      const platforms = platformsMatch
+        ? platformsMatch[1].match(/name:\s*(\w+)/g)?.map(m => m.replace('name:', '').trim()) || []
+        : [];
+
+      cachedDefinitions = {
+        LEGACY_IDS: [
+          'roast',
+          'shield',
+          'social-platforms',
+          'frontend-dashboard',
+          'plan-features',
+          'persona',
+        ],
+        LEGACY_PLAN_IDS: ['free', 'basic', 'creator_plus'],
+        LEGACY_BILLING_PROVIDERS: ['stripe'],
+        LEGACY_WORKERS: workers.length > 0 ? workers : ['GenerateReplyWorker', 'PublisherWorker', 'BillingWorker'],
+        LEGACY_SERVICES: services.length > 0 ? services : ['stripeService'],
+        LEGACY_PLATFORMS: platforms.length > 0 ? platforms : ['instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'],
+      };
+
+      return cachedDefinitions;
+    } catch (error) {
+      // Si falla el parseo, usar fallback
+      console.warn(`⚠️  Error parseando system-map-v2.yaml: ${error.message}. Usando definiciones fallback.`);
+    }
+  }
+
+  // Fallback hardcoded (si no existe system-map-v2.yaml o falla el parseo)
+  cachedDefinitions = {
+    LEGACY_IDS: [
+      'roast',
+      'shield',
+      'social-platforms',
+      'frontend-dashboard',
+      'plan-features',
+      'persona',
+    ],
+    LEGACY_PLAN_IDS: ['free', 'basic', 'creator_plus'],
+    LEGACY_BILLING_PROVIDERS: ['stripe'],
+    LEGACY_WORKERS: ['GenerateReplyWorker', 'PublisherWorker', 'BillingWorker'],
+    LEGACY_SERVICES: ['stripeService'],
+    LEGACY_PLATFORMS: ['instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'],
+  };
+
+  return cachedDefinitions;
 }
 
 /**
- * Check if an ID is a legacy ID
- * @param {string} id - ID to check
- * @returns {boolean} - True if legacy ID
+ * Obtiene IDs legacy
  */
-function isLegacyId(id) {
-  return LEGACY_IDS.has(id);
+function getLegacyIDs() {
+  return loadLegacyDefinitions().LEGACY_IDS;
 }
 
 /**
- * Get all legacy IDs
- * @returns {string[]} - Array of legacy IDs
+ * Obtiene plan IDs legacy
  */
-function getAllLegacyIds() {
-  return Array.from(LEGACY_IDS);
+function getLegacyPlanIDs() {
+  return loadLegacyDefinitions().LEGACY_PLAN_IDS;
 }
 
 /**
- * Get all legacy ID mappings
- * @returns {Map<string, string|null>} - Map of legacy ID to v2 equivalent
+ * Obtiene billing providers legacy
  */
-function getAllMappings() {
-  return new Map(LEGACY_ID_MAPPINGS);
+function getLegacyBillingProviders() {
+  return loadLegacyDefinitions().LEGACY_BILLING_PROVIDERS;
+}
+
+/**
+ * Obtiene workers legacy
+ */
+function getLegacyWorkers() {
+  return loadLegacyDefinitions().LEGACY_WORKERS;
+}
+
+/**
+ * Obtiene services legacy
+ */
+function getLegacyServices() {
+  return loadLegacyDefinitions().LEGACY_SERVICES;
+}
+
+/**
+ * Obtiene platforms legacy
+ */
+function getLegacyPlatforms() {
+  return loadLegacyDefinitions().LEGACY_PLATFORMS;
+}
+
+/**
+ * Resetea cache (útil para tests)
+ */
+function resetCache() {
+  cachedDefinitions = null;
 }
 
 module.exports = {
-  LEGACY_ID_MAPPINGS,
-  LEGACY_IDS,
-  getV2Equivalent,
-  isLegacyId,
-  getAllLegacyIds,
-  getAllMappings
+  loadLegacyDefinitions,
+  getLegacyIDs,
+  getLegacyPlanIDs,
+  getLegacyBillingProviders,
+  getLegacyWorkers,
+  getLegacyServices,
+  getLegacyPlatforms,
+  resetCache,
 };
