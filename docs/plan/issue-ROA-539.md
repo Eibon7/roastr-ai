@@ -32,7 +32,7 @@
 ✅ Decision Engine: 21 tests passing  
 ✅ PRD Parser: 17 tests passing  
 ✅ Execute Task: 13 tests passing  
-✅ Escalation Handler: 13 tests passing  
+✅ Escalation Handler: 14 tests passing  
 ✅ Rollback Manager: 11 tests passing  
 ✅ Git Utils: 7 tests passing  
 ✅ Dry-run: Manual validation passing  
