@@ -568,6 +568,17 @@ async function executeTask(options) {
       const stagedFiles = gitUtils.getStagedFiles();
       const allFiles = [...new Set([...modifiedFiles, ...stagedFiles])];
       
+      // Contar archivos creados (existen Y creados durante/después de startTime)
+      const filesCreated = allFiles.filter(f => {
+        try {
+          if (!fs.existsSync(f)) return false;
+          const stat = fs.statSync(f);
+          return stat.birthtimeMs >= startTime;
+        } catch (error) {
+          return false;
+        }
+      }).length;
+      
       updateProgress(taskId, {
         status: 'completed',
         currentPhase: 'completed',
@@ -575,7 +586,7 @@ async function executeTask(options) {
         metrics: {
           executionTimeMs,
           filesModified: allFiles.length,
-          filesCreated: allFiles.filter(f => !fs.existsSync(f) || fs.statSync(f).birthtimeMs > startTime).length,
+          filesCreated,
           testsAdded: allFiles.filter(f => f.includes('test')).length,
           violationsDetected: 0,
           rollbacksApplied: 0,
@@ -658,13 +669,26 @@ async function executeTask(options) {
     console.log(`   RESUMEN - Task ${taskId}`);
     console.log(`═══════════════════════════════════════════════════════════\n`);
     
-    const progress = JSON.parse(fs.readFileSync(path.join(PROGRESS_DIR, taskId, 'progress.json'), 'utf-8'));
-    console.log(`Status: ${progress.status}`);
-    console.log(`Fase: ${progress.currentPhase}`);
-    console.log(`Tiempo: ${progress.metrics.executionTimeMs}ms`);
-    console.log(`Archivos modificados: ${progress.metrics.filesModified}`);
-    console.log(`Violaciones: ${progress.metrics.violationsDetected}`);
-    console.log(`Rollbacks: ${progress.metrics.rollbacksApplied}`);
+    // Leer progress.json solo si existe (podría fallar en createProgressFile)
+    const progressPath = path.join(PROGRESS_DIR, taskId, 'progress.json');
+    
+    if (fs.existsSync(progressPath)) {
+      try {
+        const progress = JSON.parse(fs.readFileSync(progressPath, 'utf-8'));
+        console.log(`Status: ${progress.status}`);
+        console.log(`Fase: ${progress.currentPhase}`);
+        console.log(`Tiempo: ${progress.metrics.executionTimeMs}ms`);
+        console.log(`Archivos modificados: ${progress.metrics.filesModified}`);
+        console.log(`Violaciones: ${progress.metrics.violationsDetected}`);
+        console.log(`Rollbacks: ${progress.metrics.rollbacksApplied}`);
+      } catch (parseError) {
+        console.log(`Status: unknown (error reading progress file)`);
+        console.log(`Error: ${parseError.message}`);
+      }
+    } else {
+      console.log(`Status: unknown (progress file not created)`);
+      console.log(`Task ID: ${taskId}`);
+    }
     console.log('');
   }
 }
@@ -679,7 +703,11 @@ async function main() {
   // Parse argumentos
   const getArg = (name) => {
     const arg = args.find(a => a.startsWith(`--${name}=`));
-    return arg ? arg.split('=')[1] : null;
+    if (!arg) return null;
+    
+    // Encontrar primer '=' y retornar todo después
+    const firstEqualIndex = arg.indexOf('=');
+    return firstEqualIndex !== -1 ? arg.substring(firstEqualIndex + 1) : null;
   };
   
   const hasFlag = (name) => args.includes(`--${name}`);
