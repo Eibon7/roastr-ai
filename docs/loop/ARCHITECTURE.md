@@ -518,7 +518,7 @@ docs/autonomous-progress/
 - **Execute Task:** 13 tests ✅ PASS
 - **Escalation Handler:** 14 tests ✅ PASS
 - **Rollback Manager:** 11 tests ✅ PASS
-- **Git Utils:** 7 tests ✅ PASS
+- **Git Utils:** 6 tests ✅ PASS
 
 #### Total: 82 tests, 100% passing
 
