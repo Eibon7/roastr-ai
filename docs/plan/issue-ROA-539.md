@@ -64,7 +64,7 @@ Implementación del Loop Autónomo Supervisado v1 - un sistema que permite a Cur
 
 **Arquitectura:**
 
-```text
+```
 ┌─────────────────────────────────────────────────────────────┐
 │                  LOOP AUTÓNOMO SUPERVISADO                  │
 ├─────────────────────────────────────────────────────────────┤
@@ -90,7 +90,7 @@ Implementación del Loop Autónomo Supervisado v1 - un sistema que permite a Cur
 │  └─────────────────────────────────────────────────┘        │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
-```text
+```
 
 **Alcance v1:**
 
@@ -185,7 +185,7 @@ Implementación del Loop Autónomo Supervisado v1 - un sistema que permite a Cur
 
 **API:**
 
-```javascript
+```
 /**
  * Ejecuta una tarea del Loop
  * 
@@ -208,11 +208,11 @@ async function executeTask(options) {
   // 8. Si PASS → commit + actualizar progress
   // 9. Retornar resultado
 }
-```text
+```
 
 **Estados:**
 
-```javascript
+```
 const TASK_STATUS = {
   PENDING: 'pending',           // Tarea creada pero no iniciada
   VALIDATING_PRE: 'validating-pre',  // Ejecutando pre-task gate
@@ -223,21 +223,21 @@ const TASK_STATUS = {
   ROLLED_BACK: 'rolled-back',   // Rollback aplicado
   ESCALATED: 'escalated',       // Requiere intervención humana
 };
-```text
+```
 
 **Decisiones:**
 
-```javascript
+```
 const DECISION = {
   CONTINUE: 'continue',   // Continuar con siguiente paso
   BLOCK: 'block',         // Detener por violaciones
   ESCALATE: 'escalate',   // Requiere decisión humana
 };
-```text
+```
 
 **Ejemplo de ejecución:**
 
-```text
+```
 # Ejecutar tarea desde PRD
 node scripts/loop/execute-task.js \
   --task-id="task-001" \
@@ -255,7 +255,7 @@ node scripts/loop/execute-task.js \
   --task-id="task-003" \
   --prd="docs/prd/feature-y.md" \
   --dry-run
-```text
+```
 
 ---
 
@@ -265,7 +265,7 @@ node scripts/loop/execute-task.js \
 
 **Estructura:**
 
-```text
+```
 docs/autonomous-progress/
 ├── task-001/
 │   ├── progress.json       # Estado de la tarea
@@ -278,11 +278,11 @@ docs/autonomous-progress/
 ├── task-002/
 │   └── ...
 └── README.md               # Documentación del sistema
-```text
+```
 
 **progress.json:**
 
-```json
+```
 {
   "taskId": "task-001",
   "description": "Implementar AC1: Crear endpoint /api/v2/roast",
@@ -314,23 +314,23 @@ docs/autonomous-progress/
   "currentPhase": "execution",
   "lastUpdate": "2026-01-22T10:02:00Z"
 }
-```text
+```
 
 **decisions.jsonl** (append-only log):
 
-```jsonl
+```
 {"timestamp":"2026-01-22T10:01:05Z","phase":"pre-task","decision":"CONTINUE","reason":"No violations detected","v2Only":{"passed":true}}
 {"timestamp":"2026-01-22T10:05:30Z","phase":"execution","decision":"CONTINUE","reason":"File created: apps/backend-v2/src/routes/roast.ts","artifact":"apps/backend-v2/src/routes/roast.ts"}
 {"timestamp":"2026-01-22T10:10:00Z","phase":"post-task","decision":"CONTINUE","reason":"No violations detected","v2Only":{"passed":true}}
 {"timestamp":"2026-01-22T10:10:05Z","phase":"completion","decision":"COMPLETED","reason":"Task completed successfully","metrics":{"filesModified":3,"testsAdded":2}}
-```text
+```
 
 **violations.jsonl** (solo si hay violaciones):
 
-```jsonl
+```
 {"timestamp":"2026-01-22T10:15:00Z","phase":"post-task","type":"LEGACY_IMPORT","file":"apps/backend-v2/src/routes/roast.ts","details":"Import from src/ (V1) detected","suggestion":"Use apps/backend-v2/ modules"}
 {"timestamp":"2026-01-22T10:15:05Z","phase":"rollback","action":"REVERT","commit":"abc123","reason":"Post-task violations detected"}
-```text
+```
 
 ---
 
@@ -347,7 +347,7 @@ docs/autonomous-progress/
 
 **Implementación:**
 
-```javascript
+```
 async function executeTaskWithRollback(taskId, instruction) {
   let tempCommit = null;
   
@@ -393,7 +393,7 @@ async function executeTaskWithRollback(taskId, instruction) {
     }
   }
 }
-```text
+```
 
 ---
 
@@ -401,7 +401,7 @@ async function executeTaskWithRollback(taskId, instruction) {
 
 **PRD Structure:**
 
-```markdown
+```
 # PRD: Feature X
 
 ## Objetivos
@@ -428,11 +428,11 @@ async function executeTaskWithRollback(taskId, instruction) {
 - Usar apps/backend-v2/
 - Seguir convenciones V2
 - Integrar con Polar billing
-```text
+```
 
 **Parser del PRD:**
 
-```javascript
+```
 function parsePRD(prdPath) {
   const content = fs.readFileSync(prdPath, 'utf-8');
   
@@ -460,11 +460,11 @@ function generateSubtasksFromACs(content) {
   
   return subtasks;
 }
-```text
+```
 
 **Workflow con PRD:**
 
-```text
+```
 # 1. Crear PRD
 cat > docs/prd/feature-roast-v2.md <<EOF
 # PRD: Roast V2 Endpoint
@@ -482,7 +482,7 @@ node scripts/loop/execute-task.js \
   --subtask="AC1"
 
 # 3. Loop genera subtareas automáticamente y las ejecuta
-```text
+```
 
 ---
 
@@ -490,7 +490,7 @@ node scripts/loop/execute-task.js \
 
 **Criterios de Decisión:**
 
-```javascript
+```
 function makeDecision(phase, validationResult, context) {
   // Pre-task: Solo CONTINUE o BLOCK
   if (phase === 'pre-task') {
@@ -527,11 +527,11 @@ function hasCriticalViolations(validationResult) {
     criticalTypes.includes(v.type)
   );
 }
-```text
+```
 
 **Escalación Humana:**
 
-```javascript
+```
 function escalateToHuman(taskId, reason, violations) {
   const message = `
 🚨 ESCALACIÓN REQUERIDA - Task ${taskId}
@@ -554,7 +554,7 @@ Responder: [1/2/3]
   // Esperar input humano (stdin o archivo)
   return waitForHumanDecision(taskId);
 }
-```text
+```
 
 ---
 
@@ -665,7 +665,7 @@ Responder: [1/2/3]
 - [ ] Tests pasando (100% coverage en engine core)
 
 **Validación:**
-```text
+```
 # Test 1: Ejecución exitosa
 node scripts/loop/execute-task.js --task-id="test-1" --instruction="echo 'test'"
 # Esperado: COMPLETED
@@ -677,7 +677,7 @@ node scripts/loop/execute-task.js --task-id="test-2" --instruction="touch docs/l
 # Test 3: Dry-run
 node scripts/loop/execute-task.js --task-id="test-3" --dry-run
 # Esperado: Validación sin ejecutar
-```text
+```
 
 ### AC2: Progress Tracking implementado ✅
 
@@ -688,7 +688,7 @@ node scripts/loop/execute-task.js --task-id="test-3" --dry-run
 - [ ] README con documentación del formato
 
 **Validación:**
-```text
+```
 # Test 1: Verificar estructura creada
 ls -la docs/autonomous-progress/task-test/
 # Esperado: progress.json, decisions.jsonl
@@ -700,7 +700,7 @@ cat docs/autonomous-progress/task-test/progress.json
 # Test 3: Verificar decisions.jsonl es append-only
 cat docs/autonomous-progress/task-test/decisions.jsonl
 # Esperado: JSONL con 1 decisión por línea
-```text
+```
 
 ### AC3: Decision System operativo ✅
 
@@ -711,7 +711,7 @@ cat docs/autonomous-progress/task-test/decisions.jsonl
 - [ ] Tests de decisiones pasando
 
 **Validación:**
-```text
+```
 # Test 1: Decisión CONTINUE (no violaciones)
 node scripts/loop/lib/decision-engine.js --test-continue
 # Esperado: CONTINUE
@@ -723,7 +723,7 @@ node scripts/loop/lib/decision-engine.js --test-block
 # Test 3: Decisión ESCALATE (violaciones no críticas)
 node scripts/loop/lib/decision-engine.js --test-escalate
 # Esperado: ESCALATE + prompt humano
-```text
+```
 
 ### AC4: Integración con PRDs funcional ✅
 
@@ -734,7 +734,7 @@ node scripts/loop/lib/decision-engine.js --test-escalate
 - [ ] Tests de parser pasando
 
 **Validación:**
-```text
+```
 # Test 1: Parsear PRD de ejemplo
 node scripts/loop/lib/prd-parser.js --prd="docs/prd/example.md"
 # Esperado: JSON con objectives, ACs, subtasks
@@ -746,7 +746,7 @@ node scripts/loop/lib/prd-parser.js --prd="docs/prd/example.md" --generate-subta
 # Test 3: Actualizar PRD con progreso
 node scripts/loop/execute-task.js --prd="docs/prd/example.md" --subtask="AC1"
 # Esperado: AC1 marcado como [x] en PRD después de completar
-```text
+```
 
 ### AC5: Integración Cursor documentada ✅
 
@@ -757,7 +757,7 @@ node scripts/loop/execute-task.js --prd="docs/prd/example.md" --subtask="AC1"
 - [ ] Guía rápida en `CLAUDE.md`
 
 **Validación:**
-```text
+```
 # Test 1: Verificar comando Cursor existe
 cat .cursor/commands/loop.md
 # Esperado: Comandos definidos
@@ -769,7 +769,7 @@ cat docs/loop/CURSOR-INTEGRATION.md
 # Test 3: Ejecutar desde Cursor
 # Cursor Chat: /loop execute --task-id="test" --instruction="..."
 # Esperado: Loop se ejecuta correctamente
-```text
+```
 
 ### AC6: Tests completos ✅
 
@@ -780,7 +780,7 @@ cat docs/loop/CURSOR-INTEGRATION.md
 - [ ] Validación E2E con tarea real
 
 **Validación:**
-```text
+```
 # Test 1: Tests unitarios
 npm test -- tests/loop/
 # Esperado: 100% passing
@@ -792,7 +792,7 @@ npm run test:coverage -- tests/loop/
 # Test 3: E2E
 npm test -- tests/loop/e2e.test.js
 # Esperado: Flujo completo passing
-```text
+```
 
 ### AC7: Documentación completa ✅
 
@@ -803,7 +803,7 @@ npm test -- tests/loop/e2e.test.js
 - [ ] Sección en `CLAUDE.md` actualizada
 
 **Validación:**
-```text
+```
 # Test 1: Verificar documentación existe
 ls -la docs/loop/
 # Esperado: README.md, ARCHITECTURE.md, USAGE.md, TROUBLESHOOTING.md
@@ -814,7 +814,7 @@ grep -A 10 "Loop Autónomo" CLAUDE.md
 
 # Test 3: Links funcionan
 # Abrir docs/loop/README.md y verificar links internos
-```text
+```
 
 ---
 

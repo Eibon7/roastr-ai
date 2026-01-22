@@ -20,7 +20,7 @@ El Loop Autónomo Supervisado es un sistema de ejecución de tareas con validaci
 
 **Flujo:**
 
-```text
+```
 ┌─────────────────────────────────────────────────────────┐
 │                   EXECUTION ENGINE                      │
 ├─────────────────────────────────────────────────────────┤
@@ -51,16 +51,16 @@ El Loop Autónomo Supervisado es un sistema de ejecución de tareas con validaci
 │     └─> Log final decision                              │
 │                                                          │
 └─────────────────────────────────────────────────────────┘
-```text
+```
 
 **APIs:**
 
-```javascript
+```
 async function executeTask(options) {
   // options: { taskId, description, instruction, prdPath, dryRun, timeout }
   // returns: { success, taskId, phase, status, reason, executionTimeMs }
 }
-```text
+```
 
 **Estados de tarea:**
 
@@ -80,7 +80,7 @@ async function executeTask(options) {
 
 **Estrategia:**
 
-```text
+```
 ┌─────────────────────────────────────────────────────────┐
 │                   ROLLBACK STRATEGY                     │
 ├─────────────────────────────────────────────────────────┤
@@ -106,11 +106,11 @@ async function executeTask(options) {
 │      - EXIT with error                                   │
 │                                                          │
 └─────────────────────────────────────────────────────────┘
-```text
+```
 
 **APIs:**
 
-```javascript
+```
 async function executeWithRollback(taskId, taskFn, postTaskValidationFn) {
   // returns: { success, executed, validated, rolledBack, rollbackReason }
 }
@@ -118,11 +118,11 @@ async function executeWithRollback(taskId, taskFn, postTaskValidationFn) {
 async function rollback(taskId, state) {
   // returns: { success, commitReverted, stashRestored, errors, steps }
 }
-```text
+```
 
 **RollbackState:**
 
-```javascript
+```
 {
   taskId: "task-001",
   originalCommit: "abc123...",
@@ -131,7 +131,7 @@ async function rollback(taskId, state) {
   stashCreated: true,
   timestamp: "2026-01-22T10:00:00Z"
 }
-```text
+```
 
 ---
 
@@ -141,7 +141,7 @@ async function rollback(taskId, state) {
 
 **Funciones principales:**
 
-```javascript
+```
 // State
 isWorkingDirectoryClean()
 getCurrentCommit()
@@ -162,7 +162,7 @@ resetToCommit(commitSha)
 
 // Rollback completo
 rollbackTask(taskId, commitSha)
-```text
+```
 
 **Garantías:**
 
@@ -179,7 +179,7 @@ rollbackTask(taskId, commitSha)
 
 **Decisiones:**
 
-```javascript
+```
 const DECISION = {
   CONTINUE: 'CONTINUE',     // Continuar
   BLOCK: 'BLOCK',           // Detener + rollback
@@ -187,18 +187,18 @@ const DECISION = {
   COMPLETED: 'COMPLETED',   // Tarea completa
   ROLLED_BACK: 'ROLLED_BACK', // Rollback aplicado
 };
-```text
+```
 
 **Severidades:**
 
-```javascript
+```
 const VIOLATION_SEVERITY = {
   CRITICAL: 'critical',  // BLOCK inmediato
   HIGH: 'high',          // BLOCK o ESCALATE
   MEDIUM: 'medium',      // ESCALATE
   LOW: 'low',            // Warning, CONTINUE
 };
-```text
+```
 
 **Tipos de violación por severidad:**
 
@@ -211,7 +211,7 @@ const VIOLATION_SEVERITY = {
 
 **Lógica de decisión:**
 
-```javascript
+```
 function makeDecision(phase, validationResult, context) {
   // Pre-task: CONTINUE o BLOCK
   if (phase === 'pre-task') {
@@ -231,7 +231,7 @@ function makeDecision(phase, validationResult, context) {
     return ESCALATE; // MEDIUM/LOW
   }
 }
-```text
+```
 
 ---
 
@@ -241,14 +241,14 @@ function makeDecision(phase, validationResult, context) {
 
 **Opciones de decisión:**
 
-```javascript
+```
 const ESCALATION_OPTIONS = {
   APPROVE: 'approve',   // Aprobar (ignorar violaciones)
   REJECT: 'reject',     // Rechazar (rollback + reintento)
   MODIFY: 'modify',     // Modificar manualmente
   ABORT: 'abort',       // Abortar completamente
 };
-```text
+```
 
 **Modos de escalación:**
 
@@ -258,7 +258,7 @@ const ESCALATION_OPTIONS = {
 
 **Flujo:**
 
-```text
+```
 ┌─────────────────────────────────────────────────────────┐
 │                ESCALATION WORKFLOW                      │
 ├─────────────────────────────────────────────────────────┤
@@ -281,7 +281,7 @@ const ESCALATION_OPTIONS = {
 │     └─> ABORT → Rollback + mark aborted                 │
 │                                                          │
 └─────────────────────────────────────────────────────────┘
-```text
+```
 
 **Archivos generados:**
 
@@ -297,7 +297,7 @@ const ESCALATION_OPTIONS = {
 
 **Estructura de PRD:**
 
-```markdown
+```
 # PRD: Feature X
 
 ## Objetivos
@@ -318,11 +318,11 @@ const ESCALATION_OPTIONS = {
 
 ## Technical Notes
 - Nota técnica
-```text
+```
 
 **Parser output:**
 
-```javascript
+```
 {
   path: "/path/to/prd.md",
   title: "Feature X",
@@ -351,17 +351,17 @@ const ESCALATION_OPTIONS = {
     }
   ]
 }
-```text
+```
 
 **Funciones:**
 
-```javascript
+```
 parsePRD(prdPath)
 isInScope(prd, taskDescription)
 findSubtaskByAC(prd, acId)
 updateACProgress(prdPath, acId, itemIndex)
 markACComplete(prdPath, acId)
-```text
+```
 
 ---
 
@@ -373,15 +373,15 @@ markACComplete(prdPath, acId)
 
 **Ejecución:**
 
-```bash
+```
 node scripts/loop/pre-task.js
 # Exit code 0: PASS (CONTINUE)
 # Exit code 1: BLOCK (violaciones detectadas)
-```text
+```
 
 **Output JSON:**
 
-```json
+```
 {
   "phase": "pre-task",
   "timestamp": "2026-01-22T10:00:00Z",
@@ -393,7 +393,7 @@ node scripts/loop/pre-task.js
   },
   "message": "✅ Pre-task validation PASSED"
 }
-```text
+```
 
 ### Post-Task Gate (`scripts/loop/post-task.js`)
 
@@ -401,11 +401,11 @@ node scripts/loop/pre-task.js
 
 **Ejecución:**
 
-```bash
+```
 node scripts/loop/post-task.js
 # Exit code 0: PASS (CONTINUE)
 # Exit code 1: BLOCK (violaciones detectadas)
-```text
+```
 
 **Output JSON:** (mismo formato que pre-task)
 
@@ -437,7 +437,7 @@ node scripts/loop/post-task.js
 
 ### Estructura de Directorios
 
-```text
+```
 docs/autonomous-progress/
 ├── task-001/
 │   ├── progress.json           # Estado actual (overwrite)
@@ -449,13 +449,13 @@ docs/autonomous-progress/
 │       ├── rollback-state.json
 │       └── rollback-log.txt
 └── README.md
-```text
+```
 
 ### progress.json
 
 **Estado completo de tarea:**
 
-```json
+```
 {
   "taskId": "task-001",
   "description": "Crear endpoint roast",
@@ -487,25 +487,25 @@ docs/autonomous-progress/
   "currentPhase": "completed",
   "lastUpdate": "2026-01-22T10:05:00Z"
 }
-```text
+```
 
 ### decisions.jsonl
 
 **Log append-only de decisiones:**
 
-```jsonl
+```
 {"timestamp":"2026-01-22T10:01:05Z","phase":"pre-task","decision":"CONTINUE","reason":"No violations detected"}
 {"timestamp":"2026-01-22T10:04:55Z","phase":"post-task","decision":"CONTINUE","reason":"No violations detected"}
 {"timestamp":"2026-01-22T10:05:00Z","phase":"completion","decision":"COMPLETED","reason":"Task completed successfully"}
-```text
+```
 
 ### violations.jsonl
 
 **Log append-only de violaciones (si las hay):**
 
-```jsonl
+```
 {"timestamp":"2026-01-22T10:04:50Z","phase":"post-task","type":"LEGACY_IMPORT","file":"test.js","details":"Import from src/ detected","suggestion":"Use apps/backend-v2/"}
-```text
+```
 
 ---
 
@@ -524,7 +524,7 @@ docs/autonomous-progress/
 
 ### Ejecutar Tests
 
-```bash
+```
 # Tests de decision engine
 npm test -- tests/loop/decision-engine.test.js
 
@@ -533,7 +533,7 @@ npm test -- tests/loop/prd-parser.test.js
 
 # Todos los tests del Loop
 npm test -- tests/loop/
-```text
+```
 
 ---
 

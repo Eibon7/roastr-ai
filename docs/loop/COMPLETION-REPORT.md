@@ -154,27 +154,27 @@ El Loop Autónomo Supervisado v1 está **completamente funcional** y listo para 
 
 ### Comando Básico
 
-```bash
+```
 node scripts/loop/execute-task.js \
   --task-id="task-001" \
   --description="Crear endpoint roast" \
   --instruction="touch apps/backend-v2/src/routes/roast.ts"
-```text
+```
 
 ### Dry-Run
 
-```bash
+```
 node scripts/loop/execute-task.js --task-id="test" --dry-run
-```text
+```
 
 ### Con PRD
 
-```bash
+```
 node scripts/loop/execute-task.js \
   --task-id="roast-v2-ac1" \
   --prd="docs/prd/example-roast-v2-endpoint.md" \
   --instruction="..."
-```text
+```
 
 ---
 
