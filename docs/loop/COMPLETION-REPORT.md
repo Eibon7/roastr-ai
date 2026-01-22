@@ -159,13 +159,13 @@ node scripts/loop/execute-task.js \
   --task-id="task-001" \
   --description="Crear endpoint roast" \
   --instruction="touch apps/backend-v2/src/routes/roast.ts"
-```
+```text
 
 ### Dry-Run
 
 ```bash
 node scripts/loop/execute-task.js --task-id="test" --dry-run
-```
+```text
 
 ### Con PRD
 
@@ -174,7 +174,7 @@ node scripts/loop/execute-task.js \
   --task-id="roast-v2-ac1" \
   --prd="docs/prd/example-roast-v2-endpoint.md" \
   --instruction="..."
-```
+```text
 
 ---
 
@@ -325,7 +325,9 @@ node scripts/loop/execute-task.js \
 
 ### CodeRabbit Review - Issues Resueltos
 
-**Total issues resueltos: 10 críticos/major + documentación**
+#### Total Issues Resueltos
+
+**10 críticos/major + documentación**
 
 #### Issues Críticos/Major (10 resueltos)
 
