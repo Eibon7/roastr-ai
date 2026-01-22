@@ -648,17 +648,29 @@ async function executeTask(options) {
   } catch (error) {
     console.error(`\n❌ ERROR FATAL: ${error.message}\n`);
     
-    updateProgress(taskId, {
-      status: 'blocked',
-      currentPhase: 'error',
-      completedAt: new Date().toISOString(),
-      metrics: {
-        executionTimeMs: Date.now() - startTime,
-      },
-    });
+    // Intentar actualizar progress, pero no permitir que falle y enmascare el error original
+    try {
+      updateProgress(taskId, {
+        status: 'blocked',
+        currentPhase: 'error',
+        completedAt: new Date().toISOString(),
+        metrics: {
+          executionTimeMs: Date.now() - startTime,
+        },
+      });
+    } catch (progressError) {
+      // Loggear error secundario pero no reemplazar el original
+      console.warn(`⚠️ Warning: Failed to update progress during error handling: ${progressError.message}`);
+    }
     
-    logDecision(taskId, 'error', 'BLOCKED', `Fatal error: ${error.message}`);
+    // Intentar log de decisión, también guardado
+    try {
+      logDecision(taskId, 'error', 'BLOCKED', `Fatal error: ${error.message}`);
+    } catch (logError) {
+      console.warn(`⚠️ Warning: Failed to log decision during error handling: ${logError.message}`);
+    }
     
+    // PRESERVAR Y RETORNAR EL ERROR ORIGINAL
     return {
       success: false,
       taskId,
