@@ -38,10 +38,47 @@ const DEFAULT_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutos
 // ============================================================================
 
 /**
+ * Sanitiza y valida taskId para prevenir path traversal
+ */
+function sanitizeTaskId(taskId) {
+  if (!taskId || typeof taskId !== 'string') {
+    throw new Error('Invalid taskId: must be a non-empty string');
+  }
+  
+  // Solo permitir alphanumeric, dashes, underscores
+  const sanitized = taskId.replace(/[^a-zA-Z0-9_-]/g, '');
+  
+  if (sanitized !== taskId) {
+    throw new Error(`Invalid taskId: contains forbidden characters. Only alphanumeric, dashes and underscores allowed. Got: ${taskId}`);
+  }
+  
+  if (sanitized.length === 0) {
+    throw new Error('Invalid taskId: empty after sanitization');
+  }
+  
+  return sanitized;
+}
+
+/**
+ * Valida que el path resuelto esté dentro de PROGRESS_DIR
+ */
+function validateTaskPath(taskId) {
+  const sanitized = sanitizeTaskId(taskId);
+  const resolvedPath = path.resolve(PROGRESS_DIR, sanitized);
+  const resolvedBase = path.resolve(PROGRESS_DIR);
+  
+  if (!resolvedPath.startsWith(resolvedBase + path.sep) && resolvedPath !== resolvedBase) {
+    throw new Error(`Path traversal detected: ${taskId} resolves outside PROGRESS_DIR`);
+  }
+  
+  return { sanitized, resolvedPath };
+}
+
+/**
  * Inicializa directorio de progreso para la tarea
  */
 function initializeProgressDir(taskId) {
-  const taskDir = path.join(PROGRESS_DIR, taskId);
+  const { resolvedPath: taskDir } = validateTaskPath(taskId);
   
   if (!fs.existsSync(taskDir)) {
     fs.mkdirSync(taskDir, { recursive: true });
@@ -100,28 +137,49 @@ function createProgressFile(taskId, options) {
 }
 
 /**
+ * Deep merge helper para preservar objetos anidados
+ */
+function deepMerge(target, source) {
+  const result = { ...target };
+  
+  for (const key in source) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      result[key] = deepMerge(target[key] || {}, source[key]);
+    } else {
+      result[key] = source[key];
+    }
+  }
+  
+  return result;
+}
+
+/**
  * Actualiza archivo progress.json
  */
 function updateProgress(taskId, updates) {
-  const progressPath = path.join(PROGRESS_DIR, taskId, 'progress.json');
+  const { resolvedPath: taskDir } = validateTaskPath(taskId);
+  const progressPath = path.join(taskDir, 'progress.json');
   
   if (!fs.existsSync(progressPath)) {
     throw new Error(`Progress file not found for task ${taskId}`);
   }
   
   const progress = JSON.parse(fs.readFileSync(progressPath, 'utf-8'));
-  Object.assign(progress, updates);
-  progress.lastUpdate = new Date().toISOString();
   
-  fs.writeFileSync(progressPath, JSON.stringify(progress, null, 2));
-  return progress;
+  // Deep merge para preservar nested objects
+  const merged = deepMerge(progress, updates);
+  merged.lastUpdate = new Date().toISOString();
+  
+  fs.writeFileSync(progressPath, JSON.stringify(merged, null, 2));
+  return merged;
 }
 
 /**
  * Log de decisión en decisions.jsonl (append-only)
  */
 function logDecision(taskId, phase, decision, reason, metadata = {}) {
-  const decisionsPath = path.join(PROGRESS_DIR, taskId, 'decisions.jsonl');
+  const { resolvedPath: taskDir } = validateTaskPath(taskId);
+  const decisionsPath = path.join(taskDir, 'decisions.jsonl');
   
   const entry = {
     timestamp: new Date().toISOString(),
@@ -138,7 +196,8 @@ function logDecision(taskId, phase, decision, reason, metadata = {}) {
  * Log de violación en violations.jsonl (append-only)
  */
 function logViolation(taskId, phase, type, file, details, suggestion) {
-  const violationsPath = path.join(PROGRESS_DIR, taskId, 'violations.jsonl');
+  const { resolvedPath: taskDir } = validateTaskPath(taskId);
+  const violationsPath = path.join(taskDir, 'violations.jsonl');
   
   const entry = {
     timestamp: new Date().toISOString(),
