@@ -434,6 +434,6 @@ function loadLegacyDefinitions() {
 
 ---
 
-**Última actualización:** 2025-01-22  
+**Última actualización:** 2026-01-22  
 **Issue:** ROA-538  
 **Versión:** 1.0
