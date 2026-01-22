@@ -12,6 +12,7 @@ const {
   detectLegacyIDReferences,
   detectLegacyWorkers,
   detectLegacyServices,
+  detectLegacyTokens,
   mapLegacyToV2,
   mapLegacyIDToV2,
   mapLegacyWorkerToV2,
@@ -203,6 +204,123 @@ describe('V2-Only Validator', () => {
 
     it('tiene LEGACY_SERVICES definidos', () => {
       expect(LEGACY_SERVICES).toContain('stripeService');
+    });
+  });
+
+  describe('detectLegacyTokens', () => {
+    const fs = require('fs');
+    const os = require('os');
+    const path = require('path');
+    const { detectLegacyTokens } = require('../../scripts/loop/validators/v2-only');
+
+    let tempDir;
+    let tempFile;
+
+    beforeEach(() => {
+      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v2-only-test-'));
+    });
+
+    afterEach(() => {
+      if (tempFile && fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile);
+      }
+      if (tempDir && fs.existsSync(tempDir)) {
+        fs.rmdirSync(tempDir, { recursive: true });
+      }
+    });
+
+    it('detecta token "v1" en código ejecutable', () => {
+      tempFile = path.join(tempDir, 'test-v1.js');
+      fs.writeFileSync(tempFile, 'const version = v1;\nconst mode = "production";');
+      
+      const violations = detectLegacyTokens([tempFile]);
+      
+      expect(violations.length).toBeGreaterThan(0);
+      expect(violations[0].type).toBe('LEGACY_TOKEN');
+      expect(violations[0].token).toBe('v1');
+      expect(violations[0].line).toBe(1);
+    });
+
+    it('detecta token "legacy" en código ejecutable', () => {
+      tempFile = path.join(tempDir, 'test-legacy.js');
+      fs.writeFileSync(tempFile, 'const system = legacy;\nconst config = {};');
+      
+      const violations = detectLegacyTokens([tempFile]);
+      
+      expect(violations.length).toBeGreaterThan(0);
+      expect(violations[0].type).toBe('LEGACY_TOKEN');
+      expect(violations[0].token).toBe('legacy');
+      expect(violations[0].line).toBe(1);
+    });
+
+    it('detecta token "old" en código ejecutable', () => {
+      tempFile = path.join(tempDir, 'test-old.js');
+      fs.writeFileSync(tempFile, 'function processOld() {\n  const old = true;\n}');
+      
+      const violations = detectLegacyTokens([tempFile]);
+      
+      expect(violations.length).toBeGreaterThan(0);
+      expect(violations[0].type).toBe('LEGACY_TOKEN');
+      expect(violations[0].token).toBe('old');
+    });
+
+    it('NO detecta tokens en comentarios de línea', () => {
+      tempFile = path.join(tempDir, 'test-comment.js');
+      fs.writeFileSync(tempFile, '// Legacy V1 used roast node\nconst version = 2;');
+      
+      const violations = detectLegacyTokens([tempFile]);
+      
+      expect(violations.length).toBe(0);
+    });
+
+    it('NO detecta tokens en comentarios de bloque', () => {
+      tempFile = path.join(tempDir, 'test-block-comment.js');
+      fs.writeFileSync(tempFile, '/* Old v1 legacy system */\nconst version = 2;');
+      
+      const violations = detectLegacyTokens([tempFile]);
+      
+      expect(violations.length).toBe(0);
+    });
+
+    it('NO detecta tokens en strings de documentación con palabra clave "legacy"', () => {
+      tempFile = path.join(tempDir, 'test-doc-string.js');
+      fs.writeFileSync(tempFile, 'const note = "V1 deprecated - legacy system";');
+      
+      const violations = detectLegacyTokens([tempFile]);
+      
+      expect(violations.length).toBe(0);
+    });
+
+    it('detecta múltiples tokens en diferentes líneas', () => {
+      tempFile = path.join(tempDir, 'test-multiple.js');
+      fs.writeFileSync(tempFile, 'const v1 = true;\nconst legacy = false;\nconst old = null;');
+      
+      const violations = detectLegacyTokens([tempFile]);
+      
+      // Detecta 3 tokens (v1, legacy, old) pero solo reporta 1 por línea
+      expect(violations.length).toBe(3);
+      expect(violations[0].line).toBe(1);
+      expect(violations[1].line).toBe(2);
+      expect(violations[2].line).toBe(3);
+    });
+
+    it('incluye snippet de código en la violación', () => {
+      tempFile = path.join(tempDir, 'test-snippet.js');
+      fs.writeFileSync(tempFile, 'const version = v1; // This is wrong');
+      
+      const violations = detectLegacyTokens([tempFile]);
+      
+      expect(violations[0].code).toBeDefined();
+      expect(violations[0].code).toContain('const version = v1');
+    });
+
+    it('NO procesa archivos que no son JS/TS', () => {
+      const mdFile = path.join(tempDir, 'test.md');
+      fs.writeFileSync(mdFile, 'Legacy v1 system documentation');
+      
+      const violations = detectLegacyTokens([mdFile]);
+      
+      expect(violations.length).toBe(0);
     });
   });
 });

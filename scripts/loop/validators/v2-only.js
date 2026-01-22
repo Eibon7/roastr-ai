@@ -18,7 +18,10 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const logger = require('../../src/utils/logger');
+// Path absoluto desde root del proyecto
+const projectRoot = path.resolve(__dirname, '../../..');
+const logger = require(path.join(projectRoot, 'src/utils/logger'));
+const legacyIds = require(path.join(projectRoot, 'scripts/shared/legacy-ids'));
 const {
   getLegacyIDs,
   getLegacyPlanIDs,
@@ -26,7 +29,7 @@ const {
   getLegacyWorkers,
   getLegacyServices,
   getLegacyPlatforms,
-} = require('../shared/legacy-ids');
+} = legacyIds;
 
 // ============================================================================
 // CONFIGURACIÓN - Rutas Legacy Prohibidas
@@ -155,33 +158,48 @@ function detectLegacyImports(files) {
     if (!content) continue;
 
     // Buscar imports desde src/ (V1 backend)
-    // Solo matchea cuando src/ viene directamente después de ./ o ../
-    const srcImports = content.match(/(?:import|require)\s*\(?['"](?:\.\.?\/)+src\//g);
-    if (srcImports) {
+    // Detecta tanto require() como ES6 import from
+    const requireSrcPattern = /require\s*\(['"](?:\.\.?\/)+src\//g;
+    const importSrcPattern = /import\s+.+\s+from\s+['"](?:\.\.?\/)+src\//g;
+    const srcRequires = content.match(requireSrcPattern) || [];
+    const srcImports = content.match(importSrcPattern) || [];
+    const allSrcImports = [...srcRequires, ...srcImports];
+    
+    if (allSrcImports.length > 0) {
       violations.push({
         type: 'LEGACY_IMPORT',
         file,
-        imports: srcImports,
+        imports: allSrcImports,
         message: `Import desde src/ (V1) detectado en ${file}`,
         suggestion: 'Usar módulos de apps/backend-v2/ en su lugar',
       });
     }
 
     // Buscar imports desde frontend/ (V1 frontend)
-    const frontendImports = content.match(/(?:import|require)\s*\(?['"](?:\.\.?\/)+frontend\//g);
-    if (frontendImports) {
+    const requireFrontendPattern = /require\s*\(['"](?:\.\.?\/)+frontend\//g;
+    const importFrontendPattern = /import\s+.+\s+from\s+['"](?:\.\.?\/)+frontend\//g;
+    const frontendRequires = content.match(requireFrontendPattern) || [];
+    const frontendImports = content.match(importFrontendPattern) || [];
+    const allFrontendImports = [...frontendRequires, ...frontendImports];
+    
+    if (allFrontendImports.length > 0) {
       violations.push({
         type: 'LEGACY_IMPORT',
         file,
-        imports: frontendImports,
+        imports: allFrontendImports,
         message: `Import desde frontend/ (V1) detectado en ${file}`,
         suggestion: 'Usar módulos de apps/frontend-v2/ en su lugar',
       });
     }
 
     // Buscar imports desde docs/legacy/
-    const legacyDocsImports = content.match(/(?:import|require)\s*\(?['"].*?\/docs\/legacy\//g);
-    if (legacyDocsImports) {
+    const requireLegacyPattern = /require\s*\(['"].*?\/docs\/legacy\//g;
+    const importLegacyPattern = /import\s+.+\s+from\s+['"].*?\/docs\/legacy\//g;
+    const legacyRequires = content.match(requireLegacyPattern) || [];
+    const legacyImports = content.match(importLegacyPattern) || [];
+    const legacyDocsImports = [...legacyRequires, ...legacyImports];
+    
+    if (legacyDocsImports.length > 0) {
       violations.push({
         type: 'LEGACY_IMPORT',
         file,
@@ -377,14 +395,24 @@ function detectLegacyTokens(files) {
       for (const token of tokens) {
         const regex = new RegExp(`\\b${token}\\b`, 'i');
         if (regex.test(line)) {
-          // Verificar que no está en string literal de documentación
-          const isInDocString = line.includes(`'${token}'`) || 
-                                 line.includes(`"${token}"`) || 
-                                 line.includes(`\`${token}\``);
-          
-          // Permitir strings literales que documentan el token
-          if (isInDocString && (line.includes('legacy') || line.includes('deprecated'))) {
-            continue;
+          // Verificar que no está en string literal
+          // Buscar el token y verificar si está entre comillas
+          const tokenMatch = line.match(regex);
+          if (tokenMatch) {
+            const tokenIndex = line.indexOf(tokenMatch[0]);
+            
+            // Contar comillas antes del token
+            const beforeToken = line.substring(0, tokenIndex);
+            const singleQuotes = (beforeToken.match(/'/g) || []).length;
+            const doubleQuotes = (beforeToken.match(/"/g) || []).length;
+            const backQuotes = (beforeToken.match(/`/g) || []).length;
+            
+            // Si hay un número impar de comillas, está dentro de un string
+            const inString = (singleQuotes % 2 !== 0) || (doubleQuotes % 2 !== 0) || (backQuotes % 2 !== 0);
+            
+            if (inString) {
+              continue; // Skip tokens en strings literales
+            }
           }
 
           violations.push({
