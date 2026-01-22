@@ -3,8 +3,8 @@
 **Estado:** ✅ En Implementación  
 **Prioridad:** P1  
 **Labels:** `area:infrastructure`, `v2-only`, `prerequisite`  
-**Fecha inicio:** 2025-01-22  
-**Fecha estimada:** 2025-01-26
+**Fecha inicio:** 2026-01-22  
+**Fecha estimada:** 2026-01-26
 
 ---
 
@@ -238,12 +238,12 @@ function loadLegacyDefinitions() {
 - [x] Validar en CI existente
 - [x] Documentar que es herramienta de CI/observabilidad, NO gate del Loop
 
-### Fase 4: Validación y documentación ⏳ EN PROCESO
+### Fase 4: Validación y documentación ✅ COMPLETADO
 
 - [x] Validar que no rompe nada existente
 - [x] Documentar uso de `v2-only.js`
 - [x] Aclarar diferencia con `detect-legacy-v1.js`
-- [ ] Actualizar `CLAUDE.md` con nueva rule
+- [x] Actualizar `CLAUDE.md` con nueva rule
 - [x] Crear ejemplos de violaciones bloqueadas
 
 ---
