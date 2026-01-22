@@ -91,6 +91,7 @@ node scripts/cursor-agents/detect-triggers.js
 ### Durante Desarrollo
 
 **SIEMPRE:**
+- ✅ USAR SOLO ARTEFACTOS V2 (docs/SSOT-V2.md, docs/nodes-v2/, apps/backend-v2/, apps/frontend-v2/)
 - ✅ Leer nodos GDD, NO spec.md (excepto test:e2e)
 - ✅ Actualizar nodos afectados cuando código cambia
 - ✅ Añadir agents a "Agentes Relevantes" en nodos si se invocan
@@ -98,10 +99,45 @@ node scripts/cursor-agents/detect-triggers.js
 - ✅ Mantener docs sincronizadas con código
 
 **NUNCA:**
+- ❌ NO Modificar o importar artefactos legacy V1 (src/, frontend/, docs/legacy/, spec.md)
 - ❌ Cargar spec.md completo (excepto explícitamente requerido)
 - ❌ Saltar actualización de nodos después de cambios
 - ❌ Olvidar añadir nuevos agents a "Agentes Relevantes"
 - ❌ Commit sin validación pasando
+
+### 🛡️ Blindaje V2-only (ROA-538)
+
+**Propósito:** Bloquear acceso a artefactos legacy V1 en desarrollo nuevo (Loop Autónomo).
+
+**Validadores:**
+- **Gate (Loop):** `scripts/loop/validators/v2-only.js` - Bloquea ejecución si detecta violaciones
+- **CI (Observability):** `scripts/ci/detect-legacy-v1.js` - Reporta violaciones en codebase
+
+**Fuentes Permitidas (V2 ONLY):**
+- ✅ `docs/SSOT-V2.md`, `docs/nodes-v2/`, `docs/system-map-v2.yaml`
+- ✅ `apps/backend-v2/`, `apps/frontend-v2/`, `apps/shared/`
+- ✅ `scripts/loop/`, `scripts/ci/`
+
+**Fuentes Prohibidas (LEGACY V1):**
+- ❌ `docs/legacy/`, `docs/nodes/`, `spec.md`, `docs/system-map.yaml`
+- ❌ `src/` (Backend V1), `frontend/` (Frontend V1)
+- ❌ Workers: `GenerateReplyWorker`, `PublisherWorker`, `BillingWorker`
+- ❌ IDs: `roast`, `shield`, `persona`, `free`, `basic`, `creator_plus`
+
+**Errores comunes:**
+```javascript
+// ❌ PROHIBIDO
+import { stripeService } from 'src/services/stripeService';
+const plan = 'free'; // Legacy plan ID
+
+// ✅ CORRECTO
+import { polarBilling } from 'apps/backend-v2/billing';
+const plan = 'starter'; // V2 plan ID
+```
+
+**Ver:** `.cursor/rules/v2-only-strict.mdc`, `docs/plan/issue-ROA-538.md`
+
+---
 
 ### Antes de Cerrar PR
 
@@ -110,14 +146,18 @@ node scripts/cursor-agents/detect-triggers.js
 # 1. Tests pasando
 npm test
 
-# 2. GDD validado
+# 2. Blindaje V2-only (ROA-538)
+node scripts/loop/validators/v2-only.js --post-task
+node scripts/ci/detect-legacy-v1.js --full
+
+# 3. GDD validado
 node scripts/validate-gdd-runtime.js --full
 node scripts/score-gdd-health.js --ci  # Debe >=87
 
-# 3. Receipts presentes
+# 4. Receipts presentes
 ls docs/agents/receipts/cursor-*-[timestamp].md
 
-# 4. Coverage >=90%
+# 5. Coverage >=90%
 npm run test:coverage
 
 # 5. CodeRabbit = 0 comentarios

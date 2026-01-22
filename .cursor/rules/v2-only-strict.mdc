@@ -1,0 +1,481 @@
+---
+description: Blindaje V2-only estricto - Bloquea acceso a artefactos legacy en desarrollo nuevo
+globs:
+  - "scripts/loop/**/*"
+  - "docs/prd/**/*"
+  - "docs/autonomous-progress/**/*"
+alwaysApply: false
+---
+
+# V2-ONLY STRICT ENFORCEMENT
+
+**Versión:** 1.0  
+**Fecha:** 2025-01-22  
+**Estado:** ✅ Activo  
+**Propósito:** Garantizar que cualquier desarrollo nuevo (incluido Loop Autónomo Supervisado) SOLO opere sobre artefactos Roastr V2, bloqueando acceso a legacy V1
+
+---
+
+## 0. Principio Fundamental
+
+**TODO desarrollo nuevo DEBE usar EXCLUSIVAMENTE artefactos V2.**
+
+- ✅ **Lectura pasiva permitida**: Inspeccionar archivos legacy para contexto NO es violación
+- ❌ **Modificación/import bloqueado**: Cualquier modificación o import de legacy → BLOCK inmediato
+- ❌ **Referencias activas bloqueadas**: Uso de rutas/IDs/workers legacy en código nuevo → BLOCK inmediato
+
+---
+
+## 1. Fuentes Permitidas (V2 ONLY)
+
+**SOLO estas fuentes pueden usarse en desarrollo nuevo:**
+
+### 1.1 Documentación V2
+
+- ✅ `docs/SSOT-V2.md` - Single Source of Truth V2
+- ✅ `docs/nodes-v2/**/*.md` - Nodos GDD V2
+- ✅ `docs/system-map-v2.yaml` - System Map V2
+- ✅ `docs/SSOT/` - Archivos SSOT auxiliares (disclaimers.yaml, etc.)
+
+### 1.2 Código V2
+
+- ✅ `apps/backend-v2/**/*` - Backend V2
+- ✅ `apps/frontend-v2/**/*` - Frontend V2 (cuando exista)
+- ✅ `apps/shared/**/*` - Código compartido V2
+
+### 1.3 Scripts V2
+
+- ✅ `scripts/loop/**/*` - Scripts del Loop Autónomo
+- ✅ `scripts/ci/**/*` - Scripts de CI (con excepciones documentadas)
+- ✅ `scripts/shared/**/*` - Utilidades compartidas
+
+### 1.4 Configuración V2
+
+- ✅ `.cursor/rules/**/*.mdc` - Reglas Cursor V2
+- ✅ `docs/prd/**/*` - PRDs del Loop
+
+---
+
+## 2. Fuentes Prohibidas (LEGACY V1)
+
+**ESTAS fuentes están BLOQUEADAS para modificación/import:**
+
+### 2.1 Documentación Legacy
+
+- ❌ `docs/legacy/**/*` - Documentación archivada V1
+- ❌ `docs/nodes/**/*.md` - Nodos GDD V1 (sin `-v2` en path)
+- ❌ `docs/system-map.yaml` - System Map V1 (sin `-v2` en nombre)
+- ❌ `spec.md` - Spec legacy V1
+
+### 2.2 Código Legacy
+
+- ❌ `src/**/*` - Backend V1 (excepto si explícitamente en migración)
+- ❌ `frontend/**/*` - Frontend V1 (excepto si explícitamente en migración)
+
+### 2.3 Workers/Servicios Legacy
+
+**Según `system-map-v2.yaml` → `legacy.workers` y `legacy.services`:**
+
+- ❌ `GenerateReplyWorker` → Usar `GenerateRoast`
+- ❌ `PublisherWorker` → Usar `SocialPosting`
+- ❌ `BillingWorker` → Usar `BillingUpdate`
+- ❌ `stripeService` → Usar Polar billing
+
+### 2.4 IDs/Referencias Legacy
+
+**Prohibido en código ejecutable, imports, paths, constantes:**
+
+- ❌ Referencias a `"v1"`, `"legacy"`, `"old"` en código activo
+- ❌ IDs legacy: `roast`, `shield`, `social-platforms`, `frontend-dashboard`, `plan-features`, `persona` (sin sufijo v2)
+- ❌ Plan IDs legacy: `free`, `basic`, `creator_plus` (usar equivalentes Polar)
+- ❌ Billing provider legacy: `stripe` (usar `polar`)
+
+**Permitido:**
+
+- ✅ Comentarios históricos: `// Legacy V1 behavior was...`
+- ✅ Documentación: `"Migrated from V1"`
+- ✅ Strings de UI: `"Upgrade from legacy plan"`
+
+---
+
+## 3. Detección Activa vs Lectura Pasiva
+
+### 3.1 Lectura Pasiva (PERMITIDA)
+
+**Estas acciones NO son violaciones:**
+
+- ✅ Leer archivo legacy para entender contexto
+- ✅ Navegar repo sin modificar
+- ✅ Inspeccionar código legacy en IDE
+- ✅ Copiar snippet de legacy como referencia (sin ejecutar)
+- ✅ Analizar comportamiento legacy para replicar en V2
+
+### 3.2 Acceso Activo (BLOQUEADO)
+
+**Estas acciones SÍ son violaciones:**
+
+- ❌ Modificar archivo legacy
+- ❌ Importar módulo legacy en código nuevo
+- ❌ Referenciar ruta legacy en código ejecutable
+- ❌ Usar worker/servicio legacy en código nuevo
+- ❌ Añadir dependencia a módulo legacy
+- ❌ Ejecutar código legacy desde código nuevo
+
+---
+
+## 4. Enforcement Técnico
+
+### 4.1 Validador del Loop
+
+**Script:** `scripts/loop/validators/v2-only.js`
+
+**Ejecuta en:**
+
+- Pre-task (antes de comenzar tarea)
+- Post-task (después de completar tarea)
+
+**Detecta:**
+
+- Archivos modificados que tocan rutas legacy
+- Imports desde módulos legacy
+- Referencias a IDs/workers legacy en código nuevo
+
+**Acción:**
+
+- `BLOCK` inmediato si detecta violación
+- Exit code 1 + mensaje de error detallado
+- NO permite continuar hasta resolver
+
+### 4.2 Validador de CI
+
+**Script:** `scripts/ci/detect-legacy-v1.js` (reforzado)
+
+**Ejecuta en:**
+
+- CI workflow (GitHub Actions)
+- Pre-commit hook (opcional)
+
+**Detecta:**
+
+- Todas las violaciones de v2-only.js
+- Análisis global del repo
+- Drift entre V2 y legacy
+
+**Acción:**
+
+- Reporte de violaciones
+- Warning o error según severidad
+- NO bloquea Loop (es observabilidad)
+
+---
+
+## 5. Casos de BLOCK Inmediato
+
+**El validador del Loop DEBE bloquear si detecta:**
+
+### 5.1 Modificación de Archivos Legacy
+
+```bash
+# ❌ VIOLACIÓN - Modificar archivo legacy
+git diff --name-only | grep "docs/legacy/"
+git diff --name-only | grep "docs/nodes/[^-].*\.md$"  # No docs/nodes-v2/
+git diff --name-only | grep "docs/system-map\.yaml$"  # No system-map-v2.yaml
+git diff --name-only | grep "^spec\.md$"
+```
+
+### 5.2 Imports Desde Legacy
+
+```javascript
+// ❌ VIOLACIÓN - Import desde legacy
+import { something } from '../../../docs/legacy/...';
+import { RoastService } from '../../../src/services/roastService'; // V1
+const legacySpec = require('../../../spec.md');
+```
+
+### 5.3 Referencias a IDs Legacy
+
+```javascript
+// ❌ VIOLACIÓN - IDs legacy en código nuevo
+const node = 'roast'; // Debe ser 'roast-generation' o 'roasting-engine'
+const plan = 'free'; // Debe ser plan Polar
+const worker = 'GenerateReplyWorker'; // Debe ser 'GenerateRoast'
+```
+
+### 5.4 Uso de Workers/Servicios Legacy
+
+```javascript
+// ❌ VIOLACIÓN - Worker legacy
+const { GenerateReplyWorker } = require('../../src/workers/GenerateReplyWorker');
+
+// ❌ VIOLACIÓN - Servicio legacy
+const stripeService = require('../../src/services/stripeService');
+```
+
+---
+
+## 6. Casos Permitidos
+
+### 6.1 Lectura para Contexto
+
+```javascript
+// ✅ PERMITIDO - Leer para entender comportamiento
+// (NO ejecutar, solo inspección)
+// Lectura pasiva en IDE: src/services/roastService.js
+// Objetivo: Entender cómo funcionaba V1 antes de implementar V2
+```
+
+### 6.2 Comentarios Históricos
+
+```javascript
+// ✅ PERMITIDO - Comentario histórico
+/**
+ * Migrated from V1 roastService.js
+ * Legacy behavior: Used OpenAI directly without cost control
+ * V2 behavior: Uses costControl + Polar billing
+ */
+```
+
+### 6.3 Documentación de Migración
+
+```markdown
+# ✅ PERMITIDO - Documentar origen legacy
+## Migración desde V1
+
+El worker `GenerateReplyWorker` (V1) fue reemplazado por `GenerateRoast` (V2).
+```
+
+---
+
+## 7. Workflow de Enforcement
+
+### 7.1 Pre-Task Validation
+
+**Antes de comenzar cualquier tarea del Loop:**
+
+```bash
+# 1. Ejecutar validador V2-only
+node scripts/loop/validators/v2-only.js --pre-task
+
+# 2. Si BLOCK → detener inmediatamente
+# 3. Si PASS → continuar con tarea
+```
+
+### 7.2 Post-Task Validation
+
+**Después de completar cualquier tarea del Loop:**
+
+```bash
+# 1. Ejecutar validador V2-only
+node scripts/loop/validators/v2-only.js --post-task
+
+# 2. Si BLOCK → revertir cambios + detener
+# 3. Si PASS → continuar con commit
+```
+
+### 7.3 CI Validation
+
+**En cada PR/commit:**
+
+```bash
+# 1. Ejecutar detect-legacy-v1.js (reforzado)
+node scripts/ci/detect-legacy-v1.js --full
+
+# 2. Reportar violaciones (warning/error)
+# 3. Bloquear merge si errores críticos
+```
+
+---
+
+## 8. Excepciones Documentadas
+
+### 8.1 Scripts de Migración
+
+**Solo scripts explícitamente marcados como "migración" pueden acceder a legacy:**
+
+- ✅ `scripts/migrate-*.js` - Scripts de migración documentados
+- ✅ `scripts/compare-v1-v2.js` - Scripts de comparación V1/V2
+
+**Requisitos:**
+
+- Debe tener comentario al inicio: `// MIGRATION SCRIPT - Legacy access permitted`
+- Debe estar documentado en `docs/migrations/`
+- Debe tener aprobación explícita en PR
+
+### 8.2 Tests de Integración
+
+**Tests que validan comportamiento legacy vs V2:**
+
+- ✅ `tests/integration/v1-v2-parity.test.js`
+- ✅ `tests/integration/migration-*.test.js`
+
+**Requisitos:**
+
+- Debe tener comentario: `// INTEGRATION TEST - Legacy access for validation`
+- NO debe ejecutarse en producción
+- Debe validar equivalencia, no usar legacy activamente
+
+---
+
+## 9. Mensajes de Error
+
+### 9.1 Modificación de Archivo Legacy
+
+```
+🚨 BLOCK - Modificación de Archivo Legacy Detectada
+
+Archivo: docs/legacy/v1/roast-flow.md
+Acción: Modificación
+Razón: Archivos legacy están protegidos y no deben modificarse
+
+Acción requerida:
+1. Revertir cambios en archivo legacy
+2. Si necesitas información, léelo pasivamente (sin modificar)
+3. Implementa cambios en artefactos V2 equivalentes
+
+Equivalente V2: docs/nodes-v2/06-motor-roasting.md
+```
+
+### 9.2 Import desde Legacy
+
+```
+🚨 BLOCK - Import desde Módulo Legacy Detectado
+
+Archivo: scripts/loop/task-processor.js
+Línea: 15
+Import: import { RoastService } from '../../../src/services/roastService';
+Razón: Imports desde src/ (V1) están prohibidos en código nuevo
+
+Acción requerida:
+1. Remover import legacy
+2. Usar módulo V2 equivalente: apps/backend-v2/src/services/roastService.ts
+3. Si no existe equivalente V2, crear issue para implementarlo
+
+Equivalente V2: apps/backend-v2/src/services/roastService.ts
+```
+
+### 9.3 Referencia a ID Legacy
+
+```
+🚨 BLOCK - ID Legacy Detectado en Código Nuevo
+
+Archivo: scripts/loop/node-resolver.js
+Línea: 42
+Código: const node = 'roast';
+Razón: ID legacy 'roast' prohibido, usar ID V2
+
+Acción requerida:
+1. Reemplazar ID legacy por ID V2
+2. Verificar en system-map-v2.yaml el ID correcto
+
+Mapeo:
+  'roast' → 'roasting-engine' (system-map-v2.yaml)
+  'shield' → 'shield-engine'
+  'persona' → 'analysis-engine' (subnode: persona-integration)
+```
+
+---
+
+## 10. Integración con Reglas Existentes
+
+### 10.1 Compatibilidad
+
+**Esta regla se integra con:**
+
+- ✅ `.cursor/rules/v2-development.mdc` - Desarrollo V2 limpio
+- ✅ `.cursor/rules/system-map-consistency-drift-guard.mdc` - Consistency V2
+- ✅ `.cursor/rules/v2-optimized-system.mdc` - Sistema optimizado V2
+
+### 10.2 Precedencia
+
+**Jerarquía de autoridad:**
+
+1. **SSOT-V2** → Gana siempre
+2. **system-map-v2.yaml** → Define estructura V2
+3. **v2-only-strict.mdc** (esta regla) → Define qué es legacy
+4. **Otras reglas V2** → Refinan comportamiento
+
+---
+
+## 11. Validación del Validador
+
+### 11.1 Tests del Validador
+
+**El validador `v2-only.js` DEBE tener tests que verifiquen:**
+
+```javascript
+// Test 1: Detecta modificación de archivo legacy
+test('detecta modificación de docs/legacy/', () => {
+  const files = ['docs/legacy/v1/roast.md'];
+  expect(detectLegacyViolations(files)).toContain('docs/legacy/');
+});
+
+// Test 2: Detecta import desde legacy
+test('detecta import desde src/ (V1)', () => {
+  const content = "import { X } from '../../../src/services/X';";
+  expect(detectLegacyImports(content)).toHaveLength(1);
+});
+
+// Test 3: Detecta ID legacy
+test('detecta ID legacy en código', () => {
+  const content = "const node = 'roast';";
+  expect(detectLegacyIDs(content)).toContain('roast');
+});
+
+// Test 4: NO detecta lectura pasiva
+test('NO bloquea lectura pasiva', () => {
+  const comment = "// Ver src/services/roastService.js para contexto";
+  expect(detectLegacyViolations(comment)).toHaveLength(0);
+});
+```
+
+---
+
+## 12. Resumen Ejecutivo
+
+### 12.1 Antes de Cualquier Tarea
+
+1. ✅ Ejecutar `v2-only.js --pre-task`
+2. ✅ Verificar que NO hay violaciones
+3. ✅ Si BLOCK → resolver antes de continuar
+
+### 12.2 Durante la Tarea
+
+1. ✅ Usar SOLO artefactos V2
+2. ✅ Leer legacy pasivamente si necesario (sin modificar)
+3. ✅ NO importar ni modificar legacy
+
+### 12.3 Después de la Tarea
+
+1. ✅ Ejecutar `v2-only.js --post-task`
+2. ✅ Verificar que NO hay violaciones
+3. ✅ Si BLOCK → revertir + corregir
+
+### 12.4 Si Hay BLOCK
+
+1. 🚨 **DETENER** inmediatamente
+2. 📝 **LEER** mensaje de error detallado
+3. 🔄 **CORREGIR** violación
+4. ✅ **REVALIDAR** antes de continuar
+
+---
+
+## 13. Referencias Obligatorias
+
+### 13.1 Archivos Clave
+
+- **SSOT V2:** `docs/SSOT-V2.md`
+- **System-map V2:** `docs/system-map-v2.yaml`
+- **Validador Loop:** `scripts/loop/validators/v2-only.js`
+- **Validador CI:** `scripts/ci/detect-legacy-v1.js`
+
+### 13.2 Documentación
+
+- **Plan de issue:** `docs/plan/issue-ROA-538.md`
+- **Tests:** `tests/validators/v2-only.test.js`
+
+---
+
+**Última actualización:** 2025-01-22  
+**Versión:** 1.0  
+**Estado:** ✅ Activo  
+**Issue:** ROA-538

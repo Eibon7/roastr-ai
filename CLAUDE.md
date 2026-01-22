@@ -8,6 +8,66 @@ Multi-tenant toxicity detection and roast generation system for social media pla
 
 **Business Model:** Subscription tiers (Free, Starter €5/mo, Pro €15/mo, Plus €50/mo)
 
+---
+
+## 🛡️ V2-Only Enforcement (Loop Prerequisite)
+
+**⚠️ CRÍTICO: El blindaje V2-only es un prerequisito OBLIGATORIO del Loop Autónomo Supervisado.**
+
+### Contrato de Enforcement
+
+**Si este gate falla, el Loop Autónomo NO puede iniciarse bajo ningún concepto.**
+
+El sistema garantiza que TODO desarrollo nuevo use EXCLUSIVAMENTE artefactos Roastr V2, bloqueando cualquier acceso (modificación/import) a artefactos legacy V1.
+
+### Gates de Validación
+
+#### Pre-Task Gate
+**Script:** `scripts/loop/pre-task.js`
+
+Ejecuta ANTES de iniciar cualquier tarea del Loop:
+- Invoca `scripts/loop/validators/v2-only.js --pre-task`
+- Interpreta exit code: `0` (CONTINUE) o `1` (BLOCK)
+- Retorna JSON estructurado con resultado
+
+**Si BLOCK:** El Loop NO inicia. Violaciones V2-only deben resolverse primero.
+
+#### Post-Task Gate
+**Script:** `scripts/loop/post-task.js`
+
+Ejecuta DESPUÉS de completar cualquier tarea del Loop:
+- Invoca `scripts/loop/validators/v2-only.js --post-task`
+- Interpreta exit code: `0` (CONTINUE) o `1` (BLOCK)
+- Retorna JSON estructurado con resultado
+
+**Si BLOCK:** Cambios deben revertirse. Violaciones V2-only detectadas.
+
+### Fuentes Permitidas (V2 ONLY)
+
+✅ **Documentación:** `docs/SSOT-V2.md`, `docs/nodes-v2/`, `docs/system-map-v2.yaml`  
+✅ **Código:** `apps/backend-v2/`, `apps/frontend-v2/`, `apps/shared/`  
+✅ **Scripts:** `scripts/loop/`, `scripts/ci/`
+
+### Fuentes Prohibidas (LEGACY V1)
+
+❌ **Documentación:** `docs/legacy/`, `docs/nodes/`, `spec.md`, `docs/system-map.yaml`  
+❌ **Código:** `src/` (Backend V1), `frontend/` (Frontend V1)  
+❌ **Workers:** `GenerateReplyWorker`, `PublisherWorker`, `BillingWorker`  
+❌ **IDs:** `roast`, `shield`, `persona`, `free`, `basic`, `creator_plus`
+
+### Referencias
+
+- **Cursor Rule:** `.cursor/rules/v2-only-strict.mdc`
+- **Validador:** `scripts/loop/validators/v2-only.js`
+- **Detector CI:** `scripts/ci/detect-legacy-v1.js`
+- **Documentación:** `docs/plan/issue-ROA-538.md`
+- **Issue:** ROA-538
+
+**Lectura pasiva de legacy ESTÁ PERMITIDA** (inspección sin modificar).  
+**Acceso activo (modificación/import) ESTÁ BLOQUEADO** (BLOCK inmediato).
+
+---
+
 ## 🎯 POLÍTICA OBLIGATORIA: Uso de GDD, Agentes, Skills y MCPs
 
 **⚠️ CRÍTICO: Esta política es OBLIGATORIA para TODA tarea, sin excepciones.**
