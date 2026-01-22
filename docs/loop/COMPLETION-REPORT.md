@@ -89,10 +89,11 @@ El Loop Autónomo Supervisado v1 está **completamente funcional** y listo para 
 **Tests creados:**
 - `tests/loop/decision-engine.test.js` (✅ 21 tests, 100% passing)
 - `tests/loop/prd-parser.test.js` (✅ 17 tests, 100% passing)
+- `tests/loop/rollback.test.js` (✅ 11 tests, 100% passing)
+- `tests/loop/git-utils.test.js` (✅ 7 tests, 100% passing)
+- `tests/loop/escalation.test.js` (✅ 13 tests, 100% passing)
 
-**Total:**
-- **38 tests** ✅ **ALL PASSING**
-- Coverage: Decision engine (100%), PRD parser (95%+)
+**Total: 69 tests, 100% passing**
 
 ---
 
@@ -127,7 +128,10 @@ El Loop Autónomo Supervisado v1 está **completamente funcional** y listo para 
 |------------|-------|--------|
 | decision-engine | 21 | ✅ 100% passing |
 | prd-parser | 17 | ✅ 100% passing |
-| **TOTAL** | **38 tests** | **✅ All passing** |
+| rollback | 11 | ✅ 100% passing |
+| git-utils | 7 | ✅ 100% passing |
+| escalation | 13 | ✅ 100% passing |
+| **TOTAL** | **69 tests** | **✅ All passing** |
 
 ### Documentación
 
@@ -224,13 +228,15 @@ node scripts/loop/execute-task.js \
 
 ### AC6: Tests completos ✅
 
-- [x] Tests unitarios (38 tests, 100% passing)
-- [x] Tests de integración del flujo completo (manuales)
-- [x] Tests de rollback (manuales)
+- [x] Tests unitarios (69 tests, 100% passing)
+- [x] Tests de integración del flujo completo (via rollback.test.js)
+- [x] Tests de rollback (11 tests, RollbackState)
 - [x] Tests de decisiones (21 tests, 100% passing)
+- [x] Tests de git-utils (7 tests, API coverage)
+- [x] Tests de escalation (13 tests, file handling)
 - [x] Validación E2E con tarea real (manual)
 
-**Estado:** ✅ **COMPLETADO AL 95%** (E2E automatizado → v2)
+**Estado:** ✅ **COMPLETADO AL 100%**
 
 ### AC7: Documentación completa ✅
 

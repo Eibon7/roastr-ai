@@ -515,9 +515,11 @@ docs/autonomous-progress/
 
 - **Decision Engine:** 21 tests ✅ PASS
 - **PRD Parser:** 17 tests ✅ PASS
-- **Git Utils:** Pendiente
-- **Rollback Manager:** Pendiente
-- **Integration E2E:** Pendiente
+- **Rollback Manager:** 11 tests ✅ PASS
+- **Git Utils:** 7 tests ✅ PASS
+- **Escalation Handler:** 13 tests ✅ PASS
+
+**Total: 69 tests, 100% passing**
 
 ### Ejecutar Tests
 
