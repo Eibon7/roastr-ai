@@ -524,9 +524,12 @@ async function executeTask(options) {
         // Post-task validation function
         const postTaskResult = runPostTaskValidation();
         
+        const { resolvedPath: taskDir } = validateTaskPath(taskId);
+        const existingProgress = JSON.parse(fs.readFileSync(path.join(taskDir, 'progress.json'), 'utf-8'));
+        
         updateProgress(taskId, {
           validation: {
-            ...JSON.parse(fs.readFileSync(path.join(PROGRESS_DIR, taskId, 'progress.json'), 'utf-8')).validation,
+            ...existingProgress.validation,
             postTask: {
               passed: postTaskResult.status === 'CONTINUE',
               timestamp: new Date().toISOString(),
@@ -670,7 +673,8 @@ async function executeTask(options) {
     console.log(`═══════════════════════════════════════════════════════════\n`);
     
     // Leer progress.json solo si existe (podría fallar en createProgressFile)
-    const progressPath = path.join(PROGRESS_DIR, taskId, 'progress.json');
+    const { resolvedPath: taskDir } = validateTaskPath(taskId);
+    const progressPath = path.join(taskDir, 'progress.json');
     
     if (fs.existsSync(progressPath)) {
       try {

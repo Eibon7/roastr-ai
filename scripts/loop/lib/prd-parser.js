@@ -319,9 +319,10 @@ function updateACProgress(prdPath, acId, itemIndex = null) {
       break;
     }
     
-    // Marcar checklist item como completado
-    if (inTargetAC && trimmed.match(/^- \[ \]/)) {
-      if (itemIndex === null || checklistItemCount === itemIndex) {
+    // Contar TODOS los items de checklist (marcados y sin marcar)
+    if (inTargetAC && (trimmed.match(/^- \[ \]/) || trimmed.match(/^- \[x\]/))) {
+      // Solo marcar si está sin marcar Y es el índice correcto
+      if (trimmed.match(/^- \[ \]/) && (itemIndex === null || checklistItemCount === itemIndex)) {
         lines[i] = line.replace('- [ ]', '- [x]');
         
         if (itemIndex !== null) {

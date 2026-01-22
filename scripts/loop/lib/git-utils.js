@@ -227,11 +227,19 @@ function amendCommit(taskId, newMessage = null) {
  */
 function revertCommit(commitSha = 'HEAD') {
   try {
-    // Revert sin crear commit (para poder hacer rollback limpio)
-    execSync(`git revert --no-commit ${commitSha}`, { encoding: 'utf-8' });
+    const currentHead = execSync('git rev-parse HEAD', { encoding: 'utf-8' }).trim();
     
-    // Reset para eliminar el commit revertido
-    execSync('git reset --hard HEAD~1', { encoding: 'utf-8' });
+    // Si el commit a revertir es HEAD, usar el workflow original
+    if (commitSha === currentHead) {
+      // Revert sin crear commit (para poder hacer rollback limpio)
+      execSync(`git revert --no-commit ${commitSha}`, { encoding: 'utf-8' });
+      
+      // Reset para eliminar el commit revertido
+      execSync('git reset --hard HEAD~1', { encoding: 'utf-8' });
+    } else {
+      // Si es un commit diferente, hacer revert limpio sin tocar HEAD
+      execSync(`git revert --no-edit ${commitSha}`, { encoding: 'utf-8' });
+    }
     
     return true;
   } catch (error) {
