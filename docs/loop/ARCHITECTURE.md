@@ -519,7 +519,7 @@ docs/autonomous-progress/
 - **Git Utils:** 7 tests ✅ PASS
 - **Escalation Handler:** 13 tests ✅ PASS
 
-**Total: 69 tests, 100% passing**
+#### Total: 69 tests, 100% passing
 
 ### Ejecutar Tests
 

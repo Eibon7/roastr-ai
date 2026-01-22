@@ -37,7 +37,7 @@
 ✅ Dry-run: Manual validation passing  
 ✅ Real execution: Manual validation passing
 
-**Total: 69 tests, 100% passing**
+#### Total: 69 tests, 100% passing
 
 ### Estado de ACs
 
@@ -63,7 +63,7 @@ Implementación del Loop Autónomo Supervisado v1 - un sistema que permite a Cur
 
 **Arquitectura:**
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                  LOOP AUTÓNOMO SUPERVISADO                  │
 ├─────────────────────────────────────────────────────────────┤
@@ -236,7 +236,7 @@ const DECISION = {
 
 **Ejemplo de ejecución:**
 
-```bash
+```
 # Ejecutar tarea desde PRD
 node scripts/loop/execute-task.js \
   --task-id="task-001" \
@@ -463,7 +463,7 @@ function generateSubtasksFromACs(content) {
 
 **Workflow con PRD:**
 
-```bash
+```
 # 1. Crear PRD
 cat > docs/prd/feature-roast-v2.md <<EOF
 # PRD: Roast V2 Endpoint
@@ -664,7 +664,7 @@ Responder: [1/2/3]
 - [ ] Tests pasando (100% coverage en engine core)
 
 **Validación:**
-```bash
+```
 # Test 1: Ejecución exitosa
 node scripts/loop/execute-task.js --task-id="test-1" --instruction="echo 'test'"
 # Esperado: COMPLETED
@@ -687,7 +687,7 @@ node scripts/loop/execute-task.js --task-id="test-3" --dry-run
 - [ ] README con documentación del formato
 
 **Validación:**
-```bash
+```
 # Test 1: Verificar estructura creada
 ls -la docs/autonomous-progress/task-test/
 # Esperado: progress.json, decisions.jsonl
@@ -710,7 +710,7 @@ cat docs/autonomous-progress/task-test/decisions.jsonl
 - [ ] Tests de decisiones pasando
 
 **Validación:**
-```bash
+```
 # Test 1: Decisión CONTINUE (no violaciones)
 node scripts/loop/lib/decision-engine.js --test-continue
 # Esperado: CONTINUE
@@ -733,7 +733,7 @@ node scripts/loop/lib/decision-engine.js --test-escalate
 - [ ] Tests de parser pasando
 
 **Validación:**
-```bash
+```
 # Test 1: Parsear PRD de ejemplo
 node scripts/loop/lib/prd-parser.js --prd="docs/prd/example.md"
 # Esperado: JSON con objectives, ACs, subtasks
@@ -756,7 +756,7 @@ node scripts/loop/execute-task.js --prd="docs/prd/example.md" --subtask="AC1"
 - [ ] Guía rápida en `CLAUDE.md`
 
 **Validación:**
-```bash
+```
 # Test 1: Verificar comando Cursor existe
 cat .cursor/commands/loop.md
 # Esperado: Comandos definidos
@@ -779,7 +779,7 @@ cat docs/loop/CURSOR-INTEGRATION.md
 - [ ] Validación E2E con tarea real
 
 **Validación:**
-```bash
+```
 # Test 1: Tests unitarios
 npm test -- tests/loop/
 # Esperado: 100% passing
@@ -802,7 +802,7 @@ npm test -- tests/loop/e2e.test.js
 - [ ] Sección en `CLAUDE.md` actualizada
 
 **Validación:**
-```bash
+```
 # Test 1: Verificar documentación existe
 ls -la docs/loop/
 # Esperado: README.md, ARCHITECTURE.md, USAGE.md, TROUBLESHOOTING.md

@@ -1,8 +1,8 @@
 # ROA-539: Loop Autónomo Supervisado v1 - COMPLETADO ✅
 
 **Fecha de Completitud:** 2026-01-22  
-**Estado:** ✅ **v1 OPERACIONAL**  
-**Progreso:** **100%** (todas las fases core completadas)
+**Estado:** ✅ **v1 OPERACIONAL** (v1 core complete — overall 80%, AC7 pending v2 docs)  
+**Progreso:** **100% fases v1** (AC1-AC6 completos, AC7 documentación adicional pendiente para v2)
 
 ---
 
@@ -253,11 +253,11 @@ node scripts/loop/execute-task.js \
 ## 🎯 Logros Principales
 
 1. ✅ **Loop v1 100% funcional** - Todas las fases core completadas
-2. ✅ **38 tests pasando** - Decision engine + PRD parser
+2. ✅ **69 tests pasando** - Cobertura completa de todos los módulos
 3. ✅ **Integración V2-only perfecta** - Gates funcionando
 4. ✅ **Rollback automático robusto** - Tested manualmente
 5. ✅ **Progress tracking completo** - JSON + JSONL
-6. ✅ **Documentación exhaustiva** - 1500+ líneas
+6. ✅ **Documentación exhaustiva** - 2200+ líneas
 7. ✅ **Git safety** - Stash/commit/revert automático
 8. ✅ **Decision system** - CONTINUE/BLOCK/ESCALATE
 9. ✅ **PRD integration** - Parser + subtasks
