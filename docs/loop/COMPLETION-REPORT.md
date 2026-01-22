@@ -94,9 +94,9 @@ El Loop Autónomo Supervisado v1 está **completamente funcional** y listo para 
 - `tests/loop/rollback.test.js` (✅ 11 tests, 100% passing)
 - `tests/loop/git-utils.test.js` (✅ 7 tests, 100% passing)
 
-**Total: 82 tests, 100% passing**
+#### Total: 82 tests, 100% passing
 
-**Cobertura: 6/6 módulos (100% core modules covered)**
+#### Cobertura: 6/6 módulos (100% core modules covered)
 
 ---
 

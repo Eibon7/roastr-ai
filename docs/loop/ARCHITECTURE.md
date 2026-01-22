@@ -20,7 +20,7 @@ El Loop Autónomo Supervisado es un sistema de ejecución de tareas con validaci
 
 **Flujo:**
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                   EXECUTION ENGINE                      │
 ├─────────────────────────────────────────────────────────┤
