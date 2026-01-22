@@ -243,7 +243,7 @@ node scripts/loop/execute-task.js \
 
 **Estado:** ✅ **COMPLETADO AL 100%**
 
-### AC7: Documentación completa ✅
+### AC7: Documentación — 80% completada ⚠️
 
 - [x] `docs/loop/README.md` - Guía completa
 - [x] `docs/loop/ARCHITECTURE.md` - Arquitectura
@@ -251,7 +251,7 @@ node scripts/loop/execute-task.js \
 - [ ] `docs/loop/TROUBLESHOOTING.md` - Troubleshooting - **v2**
 - [x] Sección en `CLAUDE.md` actualizada
 
-**Estado:** ✅ **80% COMPLETADO** (guías adicionales → v2)
+**Estado:** ⚠️ **80% COMPLETADO** (guías adicionales → v2)
 
 ---
 
