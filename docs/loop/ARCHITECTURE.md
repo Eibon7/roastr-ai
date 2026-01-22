@@ -425,11 +425,9 @@ node scripts/loop/post-task.js
 - `apps/backend-v2/`, `apps/frontend-v2/`, `apps/shared/`
 - `scripts/loop/`, `scripts/ci/`
 
-**Fuentes Prohibidas (LEGACY V1):**
+**Fuentes Prohibidas:**
 
-- `docs/legacy/`, `docs/nodes/`, `spec.md`, `docs/system-map.yaml`
-- `src/` (Backend V1), `frontend/` (Frontend V1)
-- Workers/servicios legacy según `system-map-v2.yaml`
+Do not reference legacy V1 sources. Validate all paths and imports against the v2-only validator and consult `docs/SSOT-V2.md`, `docs/system-map-v2.yaml`, and `docs/nodes-v2/` for allowed sources. The v2-only gate will block any legacy V1 references automatically.
 
 ---
 
