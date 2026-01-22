@@ -63,8 +63,92 @@ Ejecuta DESPUÉS de completar cualquier tarea del Loop:
 - **Documentación:** `docs/plan/issue-ROA-538.md`
 - **Issue:** ROA-538
 
-**Lectura pasiva de legacy ESTÁ PERMITIDA** (inspección sin modificar).  
+**Lectura pasiva de legacy ESTÁ PERMITIDA** (inspección sin modificar). 
 **Acceso activo (modificación/import) ESTÁ BLOQUEADO** (BLOCK inmediato).
+
+---
+
+## 🔄 Loop Autónomo Supervisado (v1 Operacional)
+
+**⚠️ NUEVO: Sistema de desarrollo autónomo con validación V2-only integrada.**
+
+### ¿Qué es el Loop?
+
+Sistema que permite ejecutar tareas de desarrollo de forma autónoma con supervisión y rollback automático ante violaciones V2-only.
+
+**Estado:** ✅ v1 Operacional  
+**Issue:** ROA-539  
+**Prerequisito:** ROA-538 (Blindaje V2-only) ✅ Completado
+
+### Uso Rápido
+
+```bash
+# Dry-run (solo validar)
+node scripts/loop/execute-task.js --task-id="test" --dry-run
+
+# Ejecutar tarea
+node scripts/loop/execute-task.js \
+  --task-id="task-001" \
+  --description="Crear endpoint roast" \
+  --instruction="touch apps/backend-v2/src/routes/roast.ts"
+
+# Ver progreso
+cat docs/autonomous-progress/task-001/progress.json | jq
+```
+
+### Flujo del Loop
+
+```
+1. PRE-TASK VALIDATION (V2-only gate)
+   ↓ Si PASS → Continuar
+   ↓ Si BLOCK → STOP (no ejecutar tarea)
+
+2. EXECUTION (con stash/commit temporal)
+   ↓ Ejecutar instrucción
+   ↓ Crear commit temporal
+
+3. POST-TASK VALIDATION (V2-only gate)
+   ↓ Si PASS → Commit final + restaurar stash
+   ↓ Si BLOCK → Rollback automático + STOP
+
+4. COMPLETION
+   ✅ Tarea completada (si PASS)
+   ❌ Tarea revertida (si BLOCK)
+```
+
+### Características v1
+
+- ✅ Pre-task y post-task gates V2-only
+- ✅ Rollback automático si violaciones
+- ✅ Progress tracking en `docs/autonomous-progress/`
+- ✅ Decision logging (append-only)
+- ✅ Violation logging (append-only)
+- ✅ Git safety (stash/commit/revert)
+
+### Garantías de Seguridad
+
+1. **NUNCA modifica legacy V1** - Bloqueado por V2-only gate
+2. **Rollback automático** - Si post-task BLOCK, cambios revertidos
+3. **No deja residuos** - Stash/commit/revert limpio
+4. **Logging completo** - Todas las decisiones registradas
+
+### Cuando Usar el Loop
+
+✅ **Usar Loop para:**
+- Tareas repetitivas (crear archivos, refactors simples)
+- Implementación de AC claros
+- Cambios con scope bien definido
+
+❌ **NO usar Loop para:**
+- Tareas ambiguas (requieren decisiones de diseño)
+- Cambios arquitectónicos grandes
+- Features sin AC claros
+
+### Documentación Completa
+
+🔗 **Guía completa:** `docs/loop/README.md`  
+🔗 **Progress tracking:** `docs/autonomous-progress/README.md`  
+🔗 **Plan de issue:** `docs/plan/issue-ROA-539.md`
 
 ---
 
