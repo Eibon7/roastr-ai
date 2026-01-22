@@ -341,6 +341,70 @@ function detectLegacyServices(files) {
   return violations;
 }
 
+/**
+ * Detecta tokens legacy prohibidos en código ejecutable
+ * 
+ * Tokens: "v1", "legacy", "old" (case-insensitive)
+ * Solo en código ejecutable, NO en comentarios/strings de documentación
+ */
+function detectLegacyTokens(files) {
+  const violations = [];
+  const tokens = ['v1', 'legacy', 'old'];
+
+  for (const file of files) {
+    if (isException(file)) continue;
+    if (!file.match(/\.(js|ts|jsx|tsx)$/)) continue;
+
+    const content = readFileContent(file);
+    if (!content) continue;
+
+    const lines = content.split('\n');
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const lineNum = i + 1;
+      
+      // Skip comentarios y strings de documentación
+      const trimmed = line.trim();
+      if (trimmed.startsWith('//') || 
+          trimmed.startsWith('*') || 
+          trimmed.startsWith('/*') ||
+          trimmed.match(/^\s*\*\s/)) {
+        continue;
+      }
+
+      // Buscar tokens en código ejecutable
+      for (const token of tokens) {
+        const regex = new RegExp(`\\b${token}\\b`, 'i');
+        if (regex.test(line)) {
+          // Verificar que no está en string literal de documentación
+          const isInDocString = line.includes(`'${token}'`) || 
+                                 line.includes(`"${token}"`) || 
+                                 line.includes(`\`${token}\``);
+          
+          // Permitir strings literales que documentan el token
+          if (isInDocString && (line.includes('legacy') || line.includes('deprecated'))) {
+            continue;
+          }
+
+          violations.push({
+            type: 'LEGACY_TOKEN',
+            file,
+            line: lineNum,
+            token,
+            message: `Token legacy '${token}' detectado en código ejecutable (línea ${lineNum})`,
+            suggestion: 'Usar nomenclatura V2 (verificar system-map-v2.yaml). Si es documentación, mover a comentario.',
+            code: line.trim().substring(0, 80),
+          });
+          break; // Solo un token por línea
+        }
+      }
+    }
+  }
+
+  return violations;
+}
+
 // ============================================================================
 // MAPEOS LEGACY → V2
 // ============================================================================
@@ -420,6 +484,7 @@ function validateV2Only(mode = 'pre-task') {
     ...detectLegacyIDReferences(allFiles),
     ...detectLegacyWorkers(allFiles),
     ...detectLegacyServices(allFiles),
+    ...detectLegacyTokens(allFiles),
   ];
 
   return {
@@ -459,12 +524,15 @@ function printViolationsReport(result) {
 
     for (const v of violations) {
       console.log(`❌ Archivo: ${v.file}`);
+      if (v.line) console.log(`   Línea: ${v.line}`);
       console.log(`   Mensaje: ${v.message}`);
       if (v.legacyID) console.log(`   ID legacy: ${v.legacyID}`);
       if (v.worker) console.log(`   Worker legacy: ${v.worker}`);
       if (v.service) console.log(`   Servicio legacy: ${v.service}`);
       if (v.planID) console.log(`   Plan ID legacy: ${v.planID}`);
+      if (v.token) console.log(`   Token legacy: ${v.token}`);
       if (v.imports) console.log(`   Imports: ${v.imports.join(', ')}`);
+      if (v.code) console.log(`   Código: ${v.code}`);
       console.log(`   💡 Sugerencia: ${v.suggestion}`);
       console.log('');
     }
@@ -548,6 +616,7 @@ if (require.main === module) {
     detectLegacyIDReferences,
     detectLegacyWorkers,
     detectLegacyServices,
+    detectLegacyTokens,
     mapLegacyToV2,
     mapLegacyIDToV2,
     mapLegacyWorkerToV2,

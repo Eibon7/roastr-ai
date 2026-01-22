@@ -19,6 +19,13 @@ Implementación de blindajes técnicos para garantizar que cualquier sistema nue
 - ✅ Imports desde rutas legacy (`src/`, `frontend/`, `docs/legacy/`)
 - ✅ Referencias a IDs legacy en código (`roast`, `shield`, `free`, `basic`)
 - ✅ Uso de workers/services legacy (`GenerateReplyWorker`, `stripeService`)
+- ✅ Tokens legacy en código ejecutable (`v1`, `legacy`, `old`)
+
+**Tokens legacy en código ejecutable:**
+- Detecta `v1`, `legacy`, `old` en código (case-insensitive)
+- NO bloquea en comentarios o strings de documentación
+- Ejemplo bloqueado: `const version = v1;` ❌
+- Ejemplo permitido: `// Legacy V1 used roast node` ✅
 
 **Lectura pasiva:** Permitida (inspección sin modificar)
 
