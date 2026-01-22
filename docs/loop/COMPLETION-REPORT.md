@@ -325,9 +325,9 @@ node scripts/loop/execute-task.js \
 
 ### CodeRabbit Review - Issues Resueltos
 
-**Total issues resueltos: 9 críticos/major + documentación**
+**Total issues resueltos: 10 críticos/major + documentación**
 
-#### Issues Críticos/Major (9 resueltos)
+#### Issues Críticos/Major (10 resueltos)
 
 | Commit | Severidad | Archivo | Issue | Status |
 |--------|-----------|---------|-------|--------|
@@ -340,6 +340,7 @@ node scripts/loop/execute-task.js \
 | 6e897ef | 🟠 MAJOR | prd-parser.js:332 | Checklist index cuenta solo unchecked | ✅ Resuelto |
 | 6e897ef | 🟠 MAJOR | execute-task.js:529 | Path traversal en read progress | ✅ Resuelto |
 | 6e897ef | 🟠 MAJOR | execute-task.js:673 | Path traversal en finally | ✅ Resuelto |
+| 4c16a2f | 🟠 MAJOR | execute-task.js:648-658 | Catch block error masking | ✅ Resuelto |
 
 #### Issues Minor - Documentación (resueltos)
 
@@ -371,6 +372,7 @@ node scripts/loop/execute-task.js \
 - Safe guards en finally blocks
 - Existence checks antes de fs operations
 - Try/catch apropiados
+- Catch block protegido contra errores secundarios (no enmascara error original)
 
 **Resumen final:** `.pr-comment-coderabbit.md`
 
