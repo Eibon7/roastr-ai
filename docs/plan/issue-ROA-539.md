@@ -909,9 +909,7 @@ grep -A 10 "Loop Autónomo" CLAUDE.md
 
 ## 📊 Estimación de Esfuerzo
 
-### Total Estimado
-
-**7 días (1 semana de trabajo)**
+### Total Estimado: 7 días (1 semana de trabajo)
 
 | Fase | Días | Complejidad |
 |------|------|-------------|
