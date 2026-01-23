@@ -34,7 +34,7 @@
 ✅ Execute Task: 13 tests passing  
 ✅ Escalation Handler: 14 tests passing  
 ✅ Rollback Manager: 11 tests passing  
-✅ Git Utils: 7 tests passing  
+✅ Git Utils: 6 tests passing  
 ✅ Dry-run: Manual validation passing  
 ✅ Real execution: Manual validation passing
 
