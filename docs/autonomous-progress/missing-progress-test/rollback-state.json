@@ -1,0 +1,8 @@
+{
+  "taskId": "missing-progress-test",
+  "originalCommit": "1b677f4052dd26b48a75b8456453281213e15923",
+  "originalBranch": "feature/ROA-539-loop-autonomo-supervisado-clean",
+  "tempCommit": null,
+  "stashCreated": true,
+  "timestamp": "2026-01-22T17:52:17.690Z"
+}

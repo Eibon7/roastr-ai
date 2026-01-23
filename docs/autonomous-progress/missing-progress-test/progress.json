@@ -1,0 +1,31 @@
+{
+  "taskId": "missing-progress-test",
+  "description": "Task missing-progress-test",
+  "prdPath": null,
+  "status": "rolled-back",
+  "createdAt": "2026-01-22T17:52:17.498Z",
+  "startedAt": "2026-01-22T17:52:17.500Z",
+  "completedAt": "2026-01-22T17:52:18.144Z",
+  "validation": {
+    "preTask": {
+      "passed": true,
+      "timestamp": "2026-01-22T17:52:17.689Z",
+      "violations": []
+    },
+    "postTask": {
+      "passed": null,
+      "timestamp": null,
+      "violations": []
+    }
+  },
+  "metrics": {
+    "executionTimeMs": 647,
+    "filesModified": 0,
+    "filesCreated": 0,
+    "testsAdded": 0,
+    "violationsDetected": 0,
+    "rollbacksApplied": 1
+  },
+  "currentPhase": "rolled-back",
+  "lastUpdate": "2026-01-22T17:52:18.144Z"
+}
