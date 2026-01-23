@@ -658,11 +658,11 @@ Responder: [1/2/3]
 
 ### AC1: Execution Engine funcional ✅
 
-- [ ] Script `execute-task.js` creado
-- [ ] Orquesta pre-task → execution → post-task
-- [ ] Integra con gates V2-only (`pre-task.js`, `post-task.js`)
-- [ ] Rollback automático si post-task BLOCK
-- [ ] Tests pasando (100% coverage en engine core)
+- [x] Script `execute-task.js` creado
+- [x] Orquesta pre-task → execution → post-task
+- [x] Integra con gates V2-only (`pre-task.js`, `post-task.js`)
+- [x] Rollback automático si post-task BLOCK
+- [x] Tests pasando (100% coverage en engine core)
 
 **Validación:**
 ```
@@ -681,11 +681,11 @@ node scripts/loop/execute-task.js --task-id="test-3" --dry-run
 
 ### AC2: Progress Tracking implementado ✅
 
-- [ ] Directorio `docs/autonomous-progress/` creado
-- [ ] `progress.json` se crea y actualiza correctamente
-- [ ] `decisions.jsonl` registra decisiones (append-only)
-- [ ] `violations.jsonl` registra violaciones (si las hay)
-- [ ] README con documentación del formato
+- [x] Directorio `docs/autonomous-progress/` creado
+- [x] `progress.json` se crea y actualiza correctamente
+- [x] `decisions.jsonl` registra decisiones (append-only)
+- [x] `violations.jsonl` registra violaciones (si las hay)
+- [x] README con documentación del formato
 
 **Validación:**
 ```
@@ -704,11 +704,11 @@ cat docs/autonomous-progress/task-test/decisions.jsonl
 
 ### AC3: Decision System operativo ✅
 
-- [ ] Criterios de decisión implementados (CONTINUE/BLOCK/ESCALATE)
-- [ ] Detección de violaciones críticas vs no críticas
-- [ ] Sistema de escalación humana funcional
-- [ ] Timeout si no hay decisión en X tiempo
-- [ ] Tests de decisiones pasando
+- [x] Criterios de decisión implementados (CONTINUE/BLOCK/ESCALATE)
+- [x] Detección de violaciones críticas vs no críticas
+- [x] Sistema de escalación humana funcional
+- [x] Timeout si no hay decisión en X tiempo
+- [x] Tests de decisiones pasando
 
 **Validación:**
 ```
@@ -727,11 +727,11 @@ node scripts/loop/lib/decision-engine.js --test-escalate
 
 ### AC4: Integración con PRDs funcional ✅
 
-- [ ] Parser de PRDs implementado
-- [ ] Generador de subtareas desde ACs
-- [ ] Validación de scope (tarea dentro de PRD)
-- [ ] Actualización de PRD con progreso (checkboxes)
-- [ ] Tests de parser pasando
+- [x] Parser de PRDs implementado
+- [x] Generador de subtareas desde ACs
+- [x] Validación de scope (tarea dentro de PRD)
+- [x] Actualización de PRD con progreso (checkboxes)
+- [x] Tests de parser pasando
 
 **Validación:**
 ```
@@ -750,11 +750,11 @@ node scripts/loop/execute-task.js --prd="docs/prd/example.md" --subtask="AC1"
 
 ### AC5: Integración Cursor documentada ✅
 
-- [ ] Comandos Cursor creados (`.cursor/commands/loop.md`)
-- [ ] Documentación de uso en Cursor (`docs/loop/CURSOR-INTEGRATION.md`)
-- [ ] Prompts específicos para Loop
-- [ ] Video demo (3-5 minutos)
-- [ ] Guía rápida en `CLAUDE.md`
+- [x] Comandos Cursor creados (`.cursor/commands/loop.md`)
+- [x] Documentación de uso en Cursor (`docs/loop/CURSOR-INTEGRATION.md`)
+- [x] Prompts específicos para Loop
+- [x] Video demo (3-5 minutos)
+- [x] Guía rápida en `CLAUDE.md`
 
 **Validación:**
 ```
@@ -773,11 +773,11 @@ cat docs/loop/CURSOR-INTEGRATION.md
 
 ### AC6: Tests completos ✅
 
-- [ ] Tests unitarios (≥90% coverage)
-- [ ] Tests de integración del flujo completo
-- [ ] Tests de rollback
-- [ ] Tests de decisiones
-- [ ] Validación E2E con tarea real
+- [x] Tests unitarios (≥90% coverage)
+- [x] Tests de integración del flujo completo
+- [x] Tests de rollback
+- [x] Tests de decisiones
+- [x] Validación E2E con tarea real
 
 **Validación:**
 ```
@@ -796,11 +796,11 @@ npm test -- tests/loop/e2e.test.js
 
 ### AC7: Documentación completa ✅
 
-- [ ] `docs/loop/README.md` - Guía completa
-- [ ] `docs/loop/ARCHITECTURE.md` - Arquitectura
-- [ ] `docs/loop/USAGE.md` - Guía de uso
-- [ ] `docs/loop/TROUBLESHOOTING.md` - Troubleshooting
-- [ ] Sección en `CLAUDE.md` actualizada
+- [x] `docs/loop/README.md` - Guía completa
+- [x] `docs/loop/ARCHITECTURE.md` - Arquitectura
+- [x] `docs/loop/USAGE.md` - Guía de uso
+- [x] `docs/loop/TROUBLESHOOTING.md` - Troubleshooting
+- [x] Sección en `CLAUDE.md` actualizada
 
 **Validación:**
 ```
