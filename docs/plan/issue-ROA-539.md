@@ -129,31 +129,31 @@ Implementación del Loop Autónomo Supervisado v1 - un sistema que permite a Cur
 
 ### O2: Sistema de Ejecución del Loop
 
-- [ ] Script `scripts/loop/execute-task.js` que orquesta el flujo completo
-- [ ] Integración con Cursor mediante comandos específicos
-- [ ] Sistema de rollback automático ante violaciones
-- [ ] Logging estructurado de decisiones
+- [x] Script `scripts/loop/execute-task.js` que orquesta el flujo completo
+- [x] Integración con Cursor mediante comandos específicos
+- [x] Sistema de rollback automático ante violaciones
+- [x] Logging estructurado de decisiones
 
 ### O3: Tracking de Progreso
 
-- [ ] Directorio `docs/autonomous-progress/<task-id>/`
-- [ ] Archivo `progress.json` con estado de tarea
-- [ ] Archivo `decisions.jsonl` con log de decisiones
-- [ ] Archivo `violations.jsonl` con log de violaciones (si las hay)
+- [x] Directorio `docs/autonomous-progress/<task-id>/`
+- [x] Archivo `progress.json` con estado de tarea
+- [x] Archivo `decisions.jsonl` con log de decisiones
+- [x] Archivo `violations.jsonl` con log de violaciones (si las hay)
 
 ### O4: Sistema de Decisión Supervisado
 
-- [ ] Enum de estados: `CONTINUE`, `BLOCK`, `ESCALATE`
-- [ ] Criterios de decisión documentados
-- [ ] Prompts para escalación humana
-- [ ] Timeout automático si no hay decisión en X tiempo
+- [x] Enum de estados: `CONTINUE`, `BLOCK`, `ESCALATE`
+- [x] Criterios de decisión documentados
+- [x] Prompts para escalación humana
+- [x] Timeout automático si no hay decisión en X tiempo
 
 ### O5: Integración con PRDs
 
-- [ ] Leer PRDs desde `docs/prd/<feature>.md`
-- [ ] Validar que tarea está dentro de scope del PRD
-- [ ] Generar subtareas desde AC del PRD
-- [ ] Actualizar PRD con progreso
+- [x] Leer PRDs desde `docs/prd/<feature>.md`
+- [x] Validar que tarea está dentro de scope del PRD
+- [x] Generar subtareas desde AC del PRD
+- [x] Actualizar PRD con progreso
 
 ---
 
