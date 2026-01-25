@@ -123,17 +123,17 @@ result.success = commitSuccess && stashSuccess;
 
 ---
 
-#### 7. Load DEFAULT_TIMEOUT_MS from SSOT ✅
+#### 7. Document TODO: Load DEFAULT_TIMEOUT_MS from SSOT (not implemented)
 **Archivo:** `scripts/loop/execute-task.js`
 
-**Solución implementada:**
-- Añadido TODO comment indicando cargar desde SSOT cuando exista SettingsLoader
+**Cambio realizado:**
+- Añadido TODO comment en código indicando cargar desde SSOT cuando exista SettingsLoader
 - Documentado path esperado: `settings.task.defaultTimeoutMs`
-- Fallback actual: 10 * 60 * 1000 (10 minutos)
+- Fallback actual: `10 * 60 * 1000` (10 minutos)
 
-**Nota:** SettingsLoader no existe aún en codebase. TODO documentado para implementación futura.
+**Nota:** SettingsLoader no existe aún en codebase. Este cambio es **documentación únicamente** (TODO comment), NO implementación. La carga desde SSOT queda pendiente para cuando SettingsLoader esté disponible.
 
-**Impacto:** 🔵 Documentado para futura integración con SSOT
+**Impacto:** 🔵 TODO documentado para futura integración con SSOT
 
 ---
 
