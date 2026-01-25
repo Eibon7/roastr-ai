@@ -96,4 +96,47 @@ test.describe('Login Page', () => {
     // Should redirect to login
     await expect(page).toHaveURL(/\/login/);
   });
+
+  test('should have link to register page (ROA-532)', async ({ page }) => {
+    await page.goto('/login');
+
+    // Check for "Crear cuenta" link
+    const registerLink = page.getByRole('link', { name: /crear cuenta/i });
+    await expect(registerLink).toBeVisible();
+
+    // Click and verify navigation to /register
+    await registerLink.click();
+    await expect(page).toHaveURL(/\/register/);
+
+    // Verify register page loaded (should have "Crear cuenta" heading)
+    await expect(page.getByRole('heading', { name: /crear cuenta/i })).toBeVisible();
+  });
+
+  test('should validate email format (ROA-532)', async ({ page }) => {
+    await page.goto('/login');
+
+    // Type invalid email (TLD invalid)
+    const emailInput = page.getByLabel(/email/i);
+    await emailInput.fill('test@test.con');
+    
+    // Blur to trigger validation
+    await emailInput.blur();
+
+    // Should show error message
+    await expect(page.getByText(/email inválido/i)).toBeVisible();
+
+    // Button should be disabled
+    const loginButton = page.getByRole('button', { name: /^iniciar sesión$/i });
+    await expect(loginButton).toBeDisabled();
+
+    // Fix email
+    await emailInput.fill('test@roastr.ai');
+    await emailInput.blur();
+
+    // Error should disappear
+    await expect(page.getByText(/email inválido/i)).not.toBeVisible();
+
+    // Button should be enabled
+    await expect(loginButton).toBeEnabled();
+  });
 });

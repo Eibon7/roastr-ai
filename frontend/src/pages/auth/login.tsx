@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AuthLayout } from '@/components/layout/auth-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth-context';
 import { Loader2, Sparkles } from 'lucide-react';
 // ROA-362: Analytics tracking for login flow
@@ -34,6 +34,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -48,6 +49,24 @@ export default function LoginPage() {
   }
 
   /**
+   * Validates email format
+   * Same regex as RegisterForm for consistency
+   */
+  const validateEmail = (email: string): boolean => {
+    if (!email) {
+      setEmailError('El email es requerido');
+      return false;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setEmailError('Email inválido');
+      return false;
+    }
+    setEmailError(null);
+    return true;
+  };
+
+  /**
    * Handles form submission for email/password login
    *
    * @param e - Form submission event
@@ -55,6 +74,12 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Validate email before submitting
+    if (!validateEmail(email)) {
+      return;
+    }
+
     setLoading(true);
 
     // ROA-362: Track login attempt at form submit
@@ -143,9 +168,20 @@ export default function LoginPage() {
                 type="email"
                 placeholder="tu@email.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailError(null);
+                }}
+                onBlur={() => validateEmail(email)}
+                disabled={loading}
+                aria-invalid={!!emailError}
+                aria-describedby={emailError ? 'email-error' : undefined}
               />
+              {emailError && (
+                <p id="email-error" className="text-sm text-destructive" role="alert">
+                  {emailError}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Contraseña</Label>
@@ -154,6 +190,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
                 required
               />
             </div>
@@ -162,7 +199,7 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || !!emailError}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -200,6 +237,14 @@ export default function LoginPage() {
             </div>
           </form>
         </CardContent>
+        <CardFooter className="flex flex-col space-y-4">
+          <div className="text-sm text-center text-muted-foreground">
+            ¿No tienes cuenta?{' '}
+            <Link to="/register" className="underline hover:text-primary font-medium">
+              Crear cuenta
+            </Link>
+          </div>
+        </CardFooter>
       </Card>
     </AuthLayout>
   );
