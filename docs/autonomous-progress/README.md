@@ -230,7 +230,7 @@ Para eliminar tareas antiguas:
 rm -rf docs/autonomous-progress/task-001/
 
 # Eliminar tareas completadas hace más de 30 días
-find docs/autonomous-progress/ -type d -mtime +30 -exec rm -rf {} +
+find docs/autonomous-progress/ -mindepth 1 -maxdepth 1 -type d -name 'task-*' -mtime +30 -delete
 ```
 
 ## 📚 Referencias

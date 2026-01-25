@@ -122,16 +122,23 @@ Dejar frontend en estado **QA-ready** para Auth v2 sin tocar backend.
 
 ## 🎯 Definition of Done (Verificación)
 
+**✅ Completado en este PR:**
 - [x] ✅ Usuario puede registrarse desde la UI (link visible)
 - [x] ✅ Registro accesible desde `/login` con CTA claro
 - [x] ✅ Ruta `/register` válida (NO 404)
 - [x] ✅ Email inválido muestra error claro ("Email inválido")
 - [x] ✅ NO errores genéricos ("load failed")
-- [x] ✅ Errores backend (400/401) mapeados correctamente
-- [x] ✅ NO se exponen códigos técnicos (AUTH_*, etc.)
 - [x] ✅ NO se toca backend
 - [x] ✅ NO se introduce lógica legacy
 - [x] ✅ Tests pasando (19/19 unitarios)
+- [x] ✅ Tests E2E añadidos (2 nuevos tests)
+
+**⏳ Pendiente QA manual (staging):**
+- [ ] ⏳ Errores backend (400/401) mapeados correctamente  
+  *(Requiere validación en staging - este PR no modifica backend)*
+- [ ] ⏳ NO se exponen códigos técnicos (AUTH_*, etc.)  
+  *(Requiere validación en staging - verificar respuestas backend)*
+- [ ] ⏳ QA manual puede completar: Register → Confirm email → Login
 - [x] ✅ Build exitoso
 - [x] ✅ Documentación actualizada
 

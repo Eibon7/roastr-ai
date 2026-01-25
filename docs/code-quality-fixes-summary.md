@@ -38,7 +38,7 @@ find docs/autonomous-progress/ -mindepth 1 -maxdepth 1 -type d -name 'task-*' -m
 ```
 
 **Constraints añadidos:**
-- `-mindepth 1` -maxdepth 1`: Solo nivel raíz (no nested)
+- `-mindepth 1` `-maxdepth 1`: Solo nivel raíz (no nested)
 - `-name 'task-*'`: Solo directorios task-*
 - `-delete`: Más seguro que `-exec rm -rf`
 

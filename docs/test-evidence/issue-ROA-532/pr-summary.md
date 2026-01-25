@@ -37,7 +37,7 @@ Se ha creado la PR #1292 con todos los cambios necesarios para resolver los 3 pr
 
 ## 🔗 Enlaces Importantes
 
-- **PR:** https://github.com/Eibon7/roastr-ai/pull/1292
+- **PR:** [#1292](https://github.com/Eibon7/roastr-ai/pull/1292)
 - **Branch:** `feature/ROA-532-auth-frontend-ux-fixes-1`
 - **Issue:** [ROA-532](https://linear.app/roastrai/issue/ROA-532/manual-testing)
 - **Checklist QA:** [manual-testing-checklist.md](https://github.com/Eibon7/roastr-ai/blob/feature/ROA-532-auth-frontend-ux-fixes-1/docs/test-evidence/issue-ROA-532/manual-testing-checklist.md)

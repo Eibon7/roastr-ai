@@ -44,19 +44,7 @@ global.fetch = vi.fn();
 // Global test teardown to prevent Vitest from hanging
 afterAll(async () => {
   try {
-    // Clean up AlertingService intervals
-    // NOTE: This requires legacy src/ - it's cleanup only (read-only), not active use
-    // Try-catch ensures tests pass even if alertingService doesn't exist
-    try {
-      const alertingService = require('../src/services/alertingService');
-      if (alertingService && typeof alertingService.shutdown === 'function') {
-        alertingService.shutdown();
-      }
-    } catch (requireError) {
-      // alertingService may not exist in v2-only environments, that's OK
-    }
-
-    // Clean up any other resources that might prevent Jest from exiting
+    // Clean up any resources that might prevent Jest from exiting
     if (global.gc) {
       global.gc();
     }
