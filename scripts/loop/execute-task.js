@@ -31,6 +31,9 @@ const PRE_TASK_SCRIPT = path.resolve(__dirname, 'pre-task.js');
 const POST_TASK_SCRIPT = path.resolve(__dirname, 'post-task.js');
 const PROGRESS_DIR = path.resolve(__dirname, '../../docs/autonomous-progress');
 
+// TODO: Load from SSOT when SettingsLoader exists
+// Expected path: settings.task.defaultTimeoutMs
+// Fallback to this constant if not found
 const DEFAULT_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutos
 
 // ============================================================================
@@ -217,10 +220,16 @@ function logViolation(taskId, phase, type, file, details, suggestion) {
 
 /**
  * Ejecuta pre-task validation
+ * 
+ * @param {number} timeout - Timeout en ms
+ * @returns {Object} Resultado de validación
  */
-function runPreTaskValidation() {
+function runPreTaskValidation(timeout = DEFAULT_TIMEOUT_MS) {
   try {
-    const output = execSync(`node ${PRE_TASK_SCRIPT}`, { encoding: 'utf-8' });
+    const output = execSync(`node ${PRE_TASK_SCRIPT}`, { 
+      encoding: 'utf-8',
+      timeout: timeout,
+    });
     
     // Parse resultado (el script retorna JSON multilinea)
     // Buscar el inicio del JSON y extraer hasta el final
@@ -289,10 +298,16 @@ function runPreTaskValidation() {
 
 /**
  * Ejecuta post-task validation
+ * 
+ * @param {number} timeout - Timeout en ms
+ * @returns {Object} Resultado de validación
  */
-function runPostTaskValidation() {
+function runPostTaskValidation(timeout = DEFAULT_TIMEOUT_MS) {
   try {
-    const output = execSync(`node ${POST_TASK_SCRIPT}`, { encoding: 'utf-8' });
+    const output = execSync(`node ${POST_TASK_SCRIPT}`, { 
+      encoding: 'utf-8',
+      timeout: timeout,
+    });
     
     // Parse resultado (el script retorna JSON multilinea)
     const lines = output.trim().split('\n');
@@ -362,9 +377,10 @@ function runPostTaskValidation() {
  * Ejecuta tarea según instrucción
  * 
  * @param {string} instruction - Instrucción para Cursor (o comando shell)
+ * @param {number} timeout - Timeout en ms
  * @returns {Promise<void>}
  */
-async function executeInstruction(instruction) {
+async function executeInstruction(instruction, timeout = DEFAULT_TIMEOUT_MS) {
   console.log(`\n📝 Instrucción: ${instruction}\n`);
   
   // Por ahora, asumimos que la instrucción es un comando shell
@@ -373,6 +389,7 @@ async function executeInstruction(instruction) {
     execSync(instruction, { 
       encoding: 'utf-8',
       stdio: 'inherit', // Mostrar output en tiempo real
+      timeout: timeout,
     });
   } catch (error) {
     throw new Error(`Instruction execution failed: ${error.message}`);
@@ -432,7 +449,7 @@ async function executeTask(options) {
     console.log(`\n🔍 FASE 1: Pre-Task Validation`);
     console.log(`─────────────────────────────────────────────────────────\n`);
     
-    const preTaskResult = runPreTaskValidation();
+    const preTaskResult = runPreTaskValidation(timeout);
     
     updateProgress(taskId, {
       validation: {
@@ -518,11 +535,11 @@ async function executeTask(options) {
       taskId,
       async () => {
         // Task function
-        await executeInstruction(instruction);
+        await executeInstruction(instruction, timeout);
       },
       async () => {
         // Post-task validation function
-        const postTaskResult = runPostTaskValidation();
+        const postTaskResult = runPostTaskValidation(timeout);
         
         const { resolvedPath: taskDir } = validateTaskPath(taskId);
         const existingProgress = JSON.parse(fs.readFileSync(path.join(taskDir, 'progress.json'), 'utf-8'));

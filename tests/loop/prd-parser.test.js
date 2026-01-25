@@ -137,11 +137,11 @@ describe('PRD Parser', () => {
       expect(isInScope(prd, 'Integrar con roasting-engine V2')).toBe(true);
     });
     
-    it('should return true by default if not explicitly out of scope', () => {
+    it('should return false by default if not explicitly in scope (deny by default)', () => {
       const prd = parsePRD(EXAMPLE_PRD_PATH);
       
-      // Por defecto, si no está en out-of-scope explícitamente, se asume en scope
-      expect(isInScope(prd, 'Nueva feature no mencionada')).toBe(true);
+      // Por defecto, si no está en AC/objectives, se asume fuera de scope (deny by default)
+      expect(isInScope(prd, 'Nueva feature no mencionada')).toBe(false);
     });
   });
   

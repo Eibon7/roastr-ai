@@ -25,6 +25,43 @@ const path = require('path');
 const ROLLBACK_LOG_DIR = path.resolve(__dirname, '../../../docs/autonomous-progress');
 
 // ============================================================================
+// PATH VALIDATION (Security)
+// ============================================================================
+
+/**
+ * Valida y resuelve un taskId a un path seguro dentro de ROLLBACK_LOG_DIR
+ * 
+ * Previene path traversal attacks (../../../etc/passwd)
+ * 
+ * @param {string} taskId - ID de la tarea
+ * @returns {string} Path resuelto y validado
+ * @throws {Error} Si el taskId contiene path traversal o resulta fuera del dir base
+ */
+function validateTaskPath(taskId) {
+  // Validar que taskId no esté vacío
+  if (!taskId || typeof taskId !== 'string') {
+    throw new Error('Invalid taskId: must be a non-empty string');
+  }
+  
+  // Validar que no contenga caracteres de path traversal
+  if (taskId.includes('..') || taskId.includes('/') || taskId.includes('\\')) {
+    throw new Error(`Invalid taskId: contains path traversal characters (${taskId})`);
+  }
+  
+  // Resolver el path completo
+  const taskDir = path.join(ROLLBACK_LOG_DIR, taskId);
+  const resolvedPath = path.resolve(taskDir);
+  
+  // Verificar que el path resuelto está dentro de ROLLBACK_LOG_DIR
+  const baseDir = path.resolve(ROLLBACK_LOG_DIR);
+  if (!resolvedPath.startsWith(baseDir + path.sep) && resolvedPath !== baseDir) {
+    throw new Error(`Security: resolved path is outside base directory (${resolvedPath})`);
+  }
+  
+  return resolvedPath;
+}
+
+// ============================================================================
 // ROLLBACK STATE
 // ============================================================================
 
@@ -81,7 +118,7 @@ class RollbackState {
    * Guarda el estado a archivo
    */
   save() {
-    const taskDir = path.join(ROLLBACK_LOG_DIR, this.taskId);
+    const taskDir = validateTaskPath(this.taskId);
     if (!fs.existsSync(taskDir)) {
       fs.mkdirSync(taskDir, { recursive: true });
     }
@@ -94,7 +131,8 @@ class RollbackState {
    * Carga el estado desde archivo
    */
   static load(taskId) {
-    const statePath = path.join(ROLLBACK_LOG_DIR, taskId, 'rollback-state.json');
+    const taskDir = validateTaskPath(taskId);
+    const statePath = path.join(taskDir, 'rollback-state.json');
     if (!fs.existsSync(statePath)) {
       throw new Error(`Rollback state not found for task ${taskId}`);
     }
@@ -325,7 +363,16 @@ async function rollback(taskId, state) {
       console.log(`✅ Verificado: Estado restaurado a commit original\n`);
     }
     
-    result.success = result.commitReverted || state.tempCommit === null;
+    // Determinar éxito: commit revertido (o no había temp commit) Y stash restaurado (si había stash)
+    const commitSuccess = result.commitReverted || state.tempCommit === null;
+    const stashSuccess = !state.stashCreated || result.stashRestored === true;
+    
+    if (!stashSuccess) {
+      result.errors.push('Stash restore failed');
+      console.warn(`⚠️  Rollback parcialmente exitoso: commit revertido pero stash no restaurado\n`);
+    }
+    
+    result.success = commitSuccess && stashSuccess;
     
     console.log(`═══════════════════════════════════════════════════════════\n`);
     return result;
@@ -347,9 +394,10 @@ async function rollback(taskId, state) {
  * @param {Object} rollbackResult - Resultado del rollback
  */
 function logRollback(taskId, validationResult, rollbackResult) {
-  const taskDir = path.join(ROLLBACK_LOG_DIR, taskId, 'artifacts');
-  if (!fs.existsSync(taskDir)) {
-    fs.mkdirSync(taskDir, { recursive: true });
+  const taskDir = validateTaskPath(taskId);
+  const artifactsDir = path.join(taskDir, 'artifacts');
+  if (!fs.existsSync(artifactsDir)) {
+    fs.mkdirSync(artifactsDir, { recursive: true });
   }
   
   const log = {
@@ -359,7 +407,7 @@ function logRollback(taskId, validationResult, rollbackResult) {
     rollback: rollbackResult,
   };
   
-  const logPath = path.join(taskDir, 'rollback-log.json');
+  const logPath = path.join(artifactsDir, 'rollback-log.json');
   fs.writeFileSync(logPath, JSON.stringify(log, null, 2));
   
   // También log en texto plano para fácil lectura
@@ -389,7 +437,7 @@ ${rollbackResult.errors.length > 0 ? `\nERRORS:\n${rollbackResult.errors.map(err
 ═══════════════════════════════════════════════════════════
   `.trim();
   
-  const textLogPath = path.join(taskDir, 'rollback-log.txt');
+  const textLogPath = path.join(artifactsDir, 'rollback-log.txt');
   fs.writeFileSync(textLogPath, textLog);
 }
 

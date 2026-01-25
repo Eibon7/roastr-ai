@@ -222,7 +222,8 @@ chmod +x scripts/loop-status.sh
 tar -czf autonomous-progress-backup-$(date +%Y%m%d).tar.gz docs/autonomous-progress/
 
 # Eliminar tareas completed de hace más de 7 días
-find docs/autonomous-progress/ -type d -mtime +7 -exec rm -rf {} \;
+# Constraints: -maxdepth 2 (solo task dirs), -mindepth 2 (no root), -name 'task-*' (solo task dirs)
+find docs/autonomous-progress/ -mindepth 1 -maxdepth 1 -type d -name 'task-*' -mtime +7 -delete
 
 # Eliminar tareas específicas
 rm -rf docs/autonomous-progress/task-001

@@ -1,3 +1,253 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="0" failures="0" errors="0" time="0">
+<testsuites name="vitest tests" tests="82" failures="10" errors="0" time="4.316840125">
+    <testsuite name="tests/loop/decision-engine.test.js" timestamp="2026-01-25T20:05:06.857Z" hostname="macbookpro.lan" tests="21" failures="0" errors="0" skipped="0" time="0.448405458">
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; makeDecision &gt; pre-task phase &gt; should return CONTINUE if no violations" time="0.001263334">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; makeDecision &gt; pre-task phase &gt; should return BLOCK if violations detected" time="0.000219084">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; makeDecision &gt; post-task phase &gt; should return CONTINUE if no violations" time="0.000151166">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; makeDecision &gt; post-task phase &gt; should return BLOCK if critical violations" time="0.000254625">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; makeDecision &gt; post-task phase &gt; should return BLOCK if high violations (default)" time="0.000105083">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; makeDecision &gt; post-task phase &gt; should return ESCALATE if high violations and allowHighViolations context" time="0.000088125">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; makeDecision &gt; post-task phase &gt; should return ESCALATE if medium violations" time="0.000134208">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; getSeverity &gt; should return null for empty violations" time="0.000080417">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; getSeverity &gt; should return CRITICAL for critical violation types" time="0.000245875">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; getSeverity &gt; should return HIGH for high violation types" time="0.000126">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; getSeverity &gt; should return MEDIUM for medium violation types" time="0.000056209">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; getSeverity &gt; should return highest severity if mixed violations" time="0.000070375">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; hasCriticalViolations &gt; should return false for empty violations" time="0.000072708">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; hasCriticalViolations &gt; should return true if any critical violation" time="0.000054166">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; hasCriticalViolations &gt; should return false if no critical violations" time="0.000047042">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; summarizeViolations &gt; should return empty summary for no violations" time="0.000198792">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; summarizeViolations &gt; should count violations correctly" time="0.000182916">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; shouldRollback &gt; should return true for BLOCK decision" time="0.000054917">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; shouldRollback &gt; should return false for other decisions" time="0.00007775">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; shouldEscalate &gt; should return true for ESCALATE decision" time="0.000050125">
+        </testcase>
+        <testcase classname="tests/loop/decision-engine.test.js" name="Decision Engine &gt; shouldEscalate &gt; should return false for other decisions" time="0.00007775">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/loop/escalation.test.js" timestamp="2026-01-25T20:05:06.860Z" hostname="macbookpro.lan" tests="14" failures="0" errors="0" skipped="0" time="0.451367834">
+        <testcase classname="tests/loop/escalation.test.js" name="Escalation Handler &gt; ESCALATION_OPTIONS &gt; should have all required options" time="0.001092">
+        </testcase>
+        <testcase classname="tests/loop/escalation.test.js" name="Escalation Handler &gt; saveEscalation &gt; should create escalation files" time="0.002341084">
+        </testcase>
+        <testcase classname="tests/loop/escalation.test.js" name="Escalation Handler &gt; saveEscalation &gt; should create instructions file" time="0.000933583">
+        </testcase>
+        <testcase classname="tests/loop/escalation.test.js" name="Escalation Handler &gt; getEscalationFilePath &gt; should return correct path" time="0.0003405">
+        </testcase>
+        <testcase classname="tests/loop/escalation.test.js" name="Escalation Handler &gt; readEscalationFile &gt; should read JSON decision file" time="0.000661417">
+        </testcase>
+        <testcase classname="tests/loop/escalation.test.js" name="Escalation Handler &gt; readEscalationFile &gt; should parse text file with option" time="0.00067475">
+        </testcase>
+        <testcase classname="tests/loop/escalation.test.js" name="Escalation Handler &gt; readEscalationFile &gt; should parse reject option from text" time="0.000572541">
+        </testcase>
+        <testcase classname="tests/loop/escalation.test.js" name="Escalation Handler &gt; readEscalationFile &gt; should parse modify option from text" time="0.000387625">
+        </testcase>
+        <testcase classname="tests/loop/escalation.test.js" name="Escalation Handler &gt; readEscalationFile &gt; should parse abort option from text" time="0.000718542">
+        </testcase>
+        <testcase classname="tests/loop/escalation.test.js" name="Escalation Handler &gt; readEscalationFile &gt; should default to abort on invalid text" time="0.000971458">
+        </testcase>
+        <testcase classname="tests/loop/escalation.test.js" name="Escalation Handler &gt; markEscalationResolved &gt; should update escalation status" time="0.001526041">
+        </testcase>
+        <testcase classname="tests/loop/escalation.test.js" name="Escalation Handler &gt; markEscalationResolved &gt; should handle missing escalation file gracefully" time="0.000489208">
+        </testcase>
+        <testcase classname="tests/loop/escalation.test.js" name="Escalation Handler &gt; Escalation Options Validation &gt; should have unique option values" time="0.000086541">
+        </testcase>
+        <testcase classname="tests/loop/escalation.test.js" name="Escalation Handler &gt; Escalation Options Validation &gt; should have lowercase option values" time="0.000102209">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/loop/execute-task.test.js" timestamp="2026-01-25T20:05:06.860Z" hostname="macbookpro.lan" tests="13" failures="10" errors="0" skipped="0" time="2.05870325">
+        <testcase classname="tests/loop/execute-task.test.js" name="Execute Task - Path Security &gt; should allow valid alphanumeric taskIds" time="0.209694459">
+            <failure message="Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-abc-123&quot; --instruction=&quot;echo test&quot; --dry-run" type="Error">
+Error: Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-abc-123&quot; --instruction=&quot;echo test&quot; --dry-run
+ ❯ tests/loop/execute-task.test.js:18:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 1, signal: null, output: [ null, &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-abc-123\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-abc-123\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-abc-123\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 164ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, &apos;&apos; ], pid: 97817, stdout: &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-abc-123\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-abc-123\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-abc-123\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 164ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, stderr: &apos;&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="tests/loop/execute-task.test.js" name="Execute Task - Path Security &gt; should reject path traversal attempts" time="0.047202">
+        </testcase>
+        <testcase classname="tests/loop/execute-task.test.js" name="Execute Task - Progress Tracking &gt; should create progress directory structure" time="0.180457833">
+            <failure message="Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-progress-001&quot; --instruction=&quot;echo test&quot; --dry-run" type="Error">
+Error: Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-progress-001&quot; --instruction=&quot;echo test&quot; --dry-run
+ ❯ tests/loop/execute-task.test.js:47:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 1, signal: null, output: [ null, &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-progress-001\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-progress-001\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-progress-001\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 138ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, &apos;&apos; ], pid: 97837, stdout: &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-progress-001\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-progress-001\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-progress-001\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 138ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, stderr: &apos;&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="tests/loop/execute-task.test.js" name="Execute Task - Progress Tracking &gt; should create progress.json file" time="0.157864167">
+            <failure message="Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-progress-001&quot; --instruction=&quot;echo test&quot; --dry-run" type="Error">
+Error: Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-progress-001&quot; --instruction=&quot;echo test&quot; --dry-run
+ ❯ tests/loop/execute-task.test.js:57:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 1, signal: null, output: [ null, &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-progress-001\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-progress-001\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-progress-001\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 119ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, &apos;&apos; ], pid: 97847, stdout: &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-progress-001\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-progress-001\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-progress-001\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 119ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, stderr: &apos;&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="tests/loop/execute-task.test.js" name="Execute Task - CLI Arguments &gt; should require task-id argument" time="0.036250167">
+        </testcase>
+        <testcase classname="tests/loop/execute-task.test.js" name="Execute Task - CLI Arguments &gt; should accept instruction argument" time="0.164776167">
+            <failure message="Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-cli-args&quot; --instruction=&quot;echo test&quot; --dry-run" type="Error">
+Error: Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-cli-args&quot; --instruction=&quot;echo test&quot; --dry-run
+ ❯ tests/loop/execute-task.test.js:87:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 1, signal: null, output: [ null, &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-cli-args\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-cli-args\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-cli-args\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 125ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, &apos;&apos; ], pid: 97862, stdout: &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-cli-args\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-cli-args\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-cli-args\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 125ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, stderr: &apos;&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="tests/loop/execute-task.test.js" name="Execute Task - CLI Arguments &gt; should parse args with equals in value" time="0.158214583">
+            <failure message="Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-cli-args&quot; --instruction=&quot;echo key=value=more&quot; --dry-run" type="Error">
+Error: Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-cli-args&quot; --instruction=&quot;echo key=value=more&quot; --dry-run
+ ❯ tests/loop/execute-task.test.js:96:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 1, signal: null, output: [ null, &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-cli-args\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-cli-args\nInstruction: echo key=value=more\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-cli-args\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 123ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, &apos;&apos; ], pid: 97867, stdout: &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-cli-args\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-cli-args\nInstruction: echo key=value=more\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-cli-args\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 123ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, stderr: &apos;&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="tests/loop/execute-task.test.js" name="Execute Task - Dry Run Mode &gt; should execute in dry-run without making changes" time="0.161298667">
+            <failure message="Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-dry-run-1&quot; --instruction=&quot;echo test&quot; --dry-run" type="Error">
+Error: Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-dry-run-1&quot; --instruction=&quot;echo test&quot; --dry-run
+ ❯ tests/loop/execute-task.test.js:110:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 1, signal: null, output: [ null, &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-dry-run-1\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-dry-run-1\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-dry-run-1\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 126ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, &apos;&apos; ], pid: 97872, stdout: &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-dry-run-1\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-dry-run-1\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-dry-run-1\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 126ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, stderr: &apos;&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="tests/loop/execute-task.test.js" name="Execute Task - Dry Run Mode &gt; should track progress in progress.json" time="0.166002083">
+            <failure message="Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-dry-run-2&quot; --instruction=&quot;echo test&quot; --dry-run" type="Error">
+Error: Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-dry-run-2&quot; --instruction=&quot;echo test&quot; --dry-run
+ ❯ tests/loop/execute-task.test.js:128:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 1, signal: null, output: [ null, &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-dry-run-2\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-dry-run-2\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-dry-run-2\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 131ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, &apos;&apos; ], pid: 97877, stdout: &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-dry-run-2\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-dry-run-2\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-dry-run-2\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 131ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, stderr: &apos;&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="tests/loop/execute-task.test.js" name="Execute Task - Exit Codes &gt; should exit 0 on successful dry-run" time="0.166833334">
+            <failure message="expected 1 to be +0 // Object.is equality" type="AssertionError">
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/loop/execute-task.test.js:171:22
+            </failure>
+        </testcase>
+        <testcase classname="tests/loop/execute-task.test.js" name="Execute Task - V2-Only Integration &gt; should call pre-task validator" time="0.169259292">
+            <failure message="Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-v2-gate&quot; --instruction=&quot;echo test&quot; --dry-run" type="Error">
+Error: Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-v2-gate&quot; --instruction=&quot;echo test&quot; --dry-run
+ ❯ tests/loop/execute-task.test.js:186:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 1, signal: null, output: [ null, &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-v2-gate\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-v2-gate\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-v2-gate\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 134ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, &apos;&apos; ], pid: 97896, stdout: &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-v2-gate\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-v2-gate\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-v2-gate\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 134ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, stderr: &apos;&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="tests/loop/execute-task.test.js" name="Execute Task - Output &amp; Summary &gt; should display summary at the end" time="0.175030834">
+            <failure message="Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-output&quot; --instruction=&quot;echo test&quot; --dry-run" type="Error">
+Error: Command failed: node /Users/emiliopostigo/roastr-ai/scripts/loop/execute-task.js --task-id=&quot;test-output&quot; --instruction=&quot;echo test&quot; --dry-run
+ ❯ tests/loop/execute-task.test.js:206:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 1, signal: null, output: [ null, &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-output\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-output\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-output\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 140ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, &apos;&apos; ], pid: 97901, stdout: &apos;\n═══════════════════════════════════════════════════════════\n   LOOP AUTÓNOMO SUPERVISADO - Task test-output\n═══════════════════════════════════════════════════════════\n\nDescription: Task test-output\nInstruction: echo test\nDry Run: YES\nTimeout: 600000ms\n\n📊 Inicializando progress tracking...\n\n🔍 FASE 1: Pre-Task Validation\n─────────────────────────────────────────────────────────\n\n\n🚨 Pre-task validation FAILED\n   Razón: ❌ Pre-task validation FAILED - Violaciones V2-only detectadas. Loop NO puede iniciar.\n\n═══════════════════════════════════════════════════════════\n   RESUMEN - Task test-output\n═══════════════════════════════════════════════════════════\n\nStatus: blocked\nFase: pre-task-validation-failed\nTiempo: 140ms\nArchivos modificados: 0\nViolaciones: 1\nRollbacks: 0\n\n&apos;, stderr: &apos;&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="tests/loop/execute-task.test.js" name="Execute Task - File System &gt; should verify execute-task.js exists" time="0.000107208">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/loop/git-utils.test.js" timestamp="2026-01-25T20:05:06.864Z" hostname="macbookpro.lan" tests="6" failures="0" errors="0" skipped="0" time="0.468644542">
+        <testcase classname="tests/loop/git-utils.test.js" name="Git Utils &gt; isWorkingDirectoryClean &gt; should return boolean" time="0.053776625">
+        </testcase>
+        <testcase classname="tests/loop/git-utils.test.js" name="Git Utils &gt; getCurrentCommit &gt; should return commit SHA string" time="0.021127083">
+        </testcase>
+        <testcase classname="tests/loop/git-utils.test.js" name="Git Utils &gt; getCurrentBranch &gt; should return branch name string" time="0.016359292">
+        </testcase>
+        <testcase classname="tests/loop/git-utils.test.js" name="Git Utils &gt; getModifiedFiles &gt; should return array" time="0.029582375">
+        </testcase>
+        <testcase classname="tests/loop/git-utils.test.js" name="Git Utils &gt; getStagedFiles &gt; should return array" time="0.020289666">
+        </testcase>
+        <testcase classname="tests/loop/git-utils.test.js" name="Git Utils &gt; API validation &gt; should export all required functions" time="0.000734167">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/loop/prd-parser.test.js" timestamp="2026-01-25T20:05:06.864Z" hostname="macbookpro.lan" tests="17" failures="0" errors="0" skipped="0" time="0.443949291">
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; parsePRD &gt; should parse PRD file successfully" time="0.001582083">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; parsePRD &gt; should throw error if PRD file not found" time="0.000427209">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; extractTitle &gt; should extract title from &quot;# PRD:&quot; format" time="0.0001275">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; extractTitle &gt; should extract title from &quot;# &quot; format" time="0.000212167">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; extractTitle &gt; should return default title if no title found" time="0.000079209">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; extractObjectives &gt; should extract objectives from PRD" time="0.000314541">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; extractAcceptanceCriteria &gt; should extract all ACs from PRD" time="0.000366917">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; extractAcceptanceCriteria &gt; should parse checklist items correctly" time="0.000334125">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; extractOutOfScope &gt; should extract out-of-scope items" time="0.000406875">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; extractTechnicalNotes &gt; should extract technical notes" time="0.000211625">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; generateSubtasksFromACs &gt; should generate subtasks from ACs" time="0.000253083">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; isInScope &gt; should return true for task in AC" time="0.000254625">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; isInScope &gt; should return true for task in objectives" time="0.000176541">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; isInScope &gt; should return false by default if not explicitly in scope (deny by default)" time="0.00018325">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; findSubtaskByAC &gt; should find subtask by AC ID" time="0.000193">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; findSubtaskByAC &gt; should return null if AC not found" time="0.000177125">
+        </testcase>
+        <testcase classname="tests/loop/prd-parser.test.js" name="PRD Parser &gt; findSubtaskByAC &gt; should be case-insensitive" time="0.00096575">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/loop/rollback.test.js" timestamp="2026-01-25T20:05:06.865Z" hostname="macbookpro.lan" tests="11" failures="0" errors="0" skipped="0" time="0.44576975">
+        <testcase classname="tests/loop/rollback.test.js" name="Rollback Manager &gt; RollbackState &gt; should create instance with taskId" time="0.000981167">
+        </testcase>
+        <testcase classname="tests/loop/rollback.test.js" name="Rollback Manager &gt; RollbackState &gt; should capture current git state" time="0.045240625">
+        </testcase>
+        <testcase classname="tests/loop/rollback.test.js" name="Rollback Manager &gt; RollbackState &gt; should mark stash created" time="0.000132625">
+        </testcase>
+        <testcase classname="tests/loop/rollback.test.js" name="Rollback Manager &gt; RollbackState &gt; should mark temp commit" time="0.000274166">
+        </testcase>
+        <testcase classname="tests/loop/rollback.test.js" name="Rollback Manager &gt; RollbackState &gt; should serialize to JSON correctly" time="0.041972333">
+        </testcase>
+        <testcase classname="tests/loop/rollback.test.js" name="Rollback Manager &gt; RollbackState &gt; should have valid ISO timestamp" time="0.000110667">
+        </testcase>
+        <testcase classname="tests/loop/rollback.test.js" name="Rollback Manager &gt; RollbackState - Edge Cases &gt; should handle empty taskId" time="0.000443917">
+        </testcase>
+        <testcase classname="tests/loop/rollback.test.js" name="Rollback Manager &gt; RollbackState - Edge Cases &gt; should handle special characters in taskId" time="0.000126542">
+        </testcase>
+        <testcase classname="tests/loop/rollback.test.js" name="Rollback Manager &gt; RollbackState - Edge Cases &gt; should create independent instances" time="0.000281375">
+        </testcase>
+        <testcase classname="tests/loop/rollback.test.js" name="Rollback Manager &gt; API Contract &gt; should have all required methods" time="0.000131458">
+        </testcase>
+        <testcase classname="tests/loop/rollback.test.js" name="Rollback Manager &gt; API Contract &gt; should have all required properties" time="0.00019175">
+        </testcase>
+    </testsuite>
 </testsuites>
