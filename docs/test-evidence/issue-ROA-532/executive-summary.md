@@ -1,7 +1,7 @@
 # 🎯 Resumen Ejecutivo - ROA-532: Manual Testing Auth v2 Frontend
 
 **Issue:** [ROA-532](https://linear.app/roastrai/issue/ROA-532/manual-testing)
-**Status:** ✅ COMPLETED
+**Status:** ✅ IMPLEMENTED (QA manual pendiente en staging)
 **Date:** 2026-01-25
 **Developer:** AI Agent (Cursor)
 
@@ -101,7 +101,7 @@ Dejar frontend en estado **QA-ready** para Auth v2 sin tocar backend.
 
 ### Tests E2E (Playwright)
 - **Añadidos:** 2 tests nuevos (ROA-532)
-- **Estado:** En ejecución (background)
+- **Estado:** Añadidos (validación manual pendiente en staging)
 - **Cobertura:** Link registro + validación email
 
 ---

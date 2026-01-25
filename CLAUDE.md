@@ -98,7 +98,7 @@ cat docs/autonomous-progress/task-001/progress.json | jq
 
 ### Flujo del Loop
 
-```
+```text
 1. PRE-TASK VALIDATION (V2-only gate)
    ↓ Si PASS → Continuar
    ↓ Si BLOCK → STOP (no ejecutar tarea)

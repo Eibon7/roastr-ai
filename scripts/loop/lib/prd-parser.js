@@ -247,7 +247,15 @@ function generateSubtasksFromACs(content) {
 function isInScope(prd, taskDescription) {
   const lowerDesc = taskDescription.toLowerCase();
   
-  // Verificar si menciona algún AC
+  // STEP 1: Verificar si está explícitamente fuera de scope (PRIORITY)
+  for (const outOfScope of prd.outOfScope) {
+    const lowerOut = outOfScope.toLowerCase();
+    if (lowerDesc.includes(lowerOut)) {
+      return false; // Explícitamente fuera de scope (gana siempre)
+    }
+  }
+  
+  // STEP 2: Verificar si menciona algún AC
   for (const ac of prd.acceptanceCriteria) {
     const lowerTitle = ac.title.toLowerCase();
     if (lowerDesc.includes(lowerTitle) || lowerTitle.includes(lowerDesc)) {
@@ -255,7 +263,7 @@ function isInScope(prd, taskDescription) {
     }
   }
   
-  // Verificar si menciona algún objetivo
+  // STEP 3: Verificar si menciona algún objetivo
   for (const objective of prd.objectives) {
     const lowerObj = objective.toLowerCase();
     if (lowerDesc.includes(lowerObj) || lowerObj.includes(lowerDesc)) {
@@ -263,16 +271,8 @@ function isInScope(prd, taskDescription) {
     }
   }
   
-  // Verificar si está explícitamente fuera de scope
-  for (const outOfScope of prd.outOfScope) {
-    const lowerOut = outOfScope.toLowerCase();
-    if (lowerDesc.includes(lowerOut)) {
-      return false; // Explícitamente fuera de scope
-    }
-  }
-  
-  // Por defecto, asumir que está en scope si no está en out-of-scope
-  return true;
+  // DEFAULT: Deny by default (unknown tasks are out of scope)
+  return false;
 }
 
 /**

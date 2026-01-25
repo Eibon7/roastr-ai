@@ -6,7 +6,7 @@ Este directorio contiene el tracking de progreso del **Loop Autónomo Supervisad
 
 Cada tarea del Loop tiene su propio directorio:
 
-```
+```text
 docs/autonomous-progress/
 ├── task-001/
 │   ├── progress.json           # Estado actual de la tarea

@@ -117,6 +117,9 @@ function stashChanges(taskId) {
 /**
  * Aplica el último stash del Loop
  * 
+ * Busca el stash que contiene el marker "Loop: Pre-task stash for {taskId}"
+ * y aplica ese stash específico (no necesariamente el más reciente)
+ * 
  * @param {string} taskId - ID de la tarea (para validación)
  * @returns {boolean} true si stash aplicado, false si no había stash
  */
@@ -128,14 +131,27 @@ function popStash(taskId) {
       return false; // No hay stash
     }
     
-    // Verificar que el stash más reciente es del Loop para esta tarea
-    const firstStash = stashList.split('\n')[0];
-    if (!firstStash.includes(`Loop: Pre-task stash for ${taskId}`)) {
-      console.warn(`⚠️  Warning: Latest stash is not for task ${taskId}`);
-      // Continuar de todas formas (puede ser stash previo del usuario)
+    // Buscar el stash que contiene el marker para esta tarea
+    const stashLines = stashList.trim().split('\n');
+    const marker = `Loop: Pre-task stash for ${taskId}`;
+    let stashIndex = -1;
+    
+    for (let i = 0; i < stashLines.length; i++) {
+      if (stashLines[i].includes(marker)) {
+        stashIndex = i;
+        break;
+      }
     }
     
-    execSync('git stash pop', { encoding: 'utf-8' });
+    if (stashIndex === -1) {
+      console.warn(`⚠️  Warning: No stash found with marker "${marker}"`);
+      return false;
+    }
+    
+    const stashRef = `stash@{${stashIndex}}`;
+    console.log(`   Found matching stash at ${stashRef}`);
+    
+    execSync(`git stash pop ${stashRef}`, { encoding: 'utf-8' });
     return true;
   } catch (error) {
     // Si pop falla (conflictos), dejar stash y reportar
@@ -148,6 +164,9 @@ function popStash(taskId) {
 /**
  * Descarta el último stash del Loop (sin aplicar)
  * 
+ * Busca el stash que contiene el marker "Loop: Pre-task stash for {taskId}"
+ * y descarta ese stash específico (no necesariamente el más reciente)
+ * 
  * @param {string} taskId - ID de la tarea (para validación)
  * @returns {boolean} true si stash descartado, false si no había stash
  */
@@ -158,12 +177,25 @@ function dropStash(taskId) {
       return false;
     }
     
-    const firstStash = stashList.split('\n')[0];
-    if (!firstStash.includes(`Loop: Pre-task stash for ${taskId}`)) {
-      console.warn(`⚠️  Warning: Latest stash is not for task ${taskId}`);
+    // Buscar el stash que contiene el marker para esta tarea
+    const stashLines = stashList.trim().split('\n');
+    const marker = `Loop: Pre-task stash for ${taskId}`;
+    let stashIndex = -1;
+    
+    for (let i = 0; i < stashLines.length; i++) {
+      if (stashLines[i].includes(marker)) {
+        stashIndex = i;
+        break;
+      }
     }
     
-    execSync('git stash drop', { encoding: 'utf-8' });
+    if (stashIndex === -1) {
+      console.warn(`⚠️  Warning: No stash found with marker "${marker}"`);
+      return false;
+    }
+    
+    const stashRef = `stash@{${stashIndex}}`;
+    execSync(`git stash drop ${stashRef}`, { encoding: 'utf-8' });
     return true;
   } catch (error) {
     throw new Error(`Failed to drop stash: ${error.message}`);

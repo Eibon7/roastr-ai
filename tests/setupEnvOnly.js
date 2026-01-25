@@ -45,17 +45,68 @@ global.fetch = vi.fn();
 afterAll(async () => {
   try {
     // Clean up AlertingService intervals
-    const alertingService = require('../src/services/alertingService');
-    if (alertingService && typeof alertingService.shutdown === 'function') {
-      alertingService.shutdown();
+    // NOTE: This requires legacy src/ - it's cleanup only (read-only), not active use
+    // Try-catch ensures tests pass even if alertingService doesn't exist
+    try {
+      const alertingService = require('../src/services/alertingService');
+      if (alertingService && typeof alertingService.shutdown === 'function') {
+        alertingService.shutdown();
+      }
+    } catch (requireError) {
+      // alertingService may not exist in v2-only environments, that's OK
     }
 
     // Clean up any other resources that might prevent Jest from exiting
     if (global.gc) {
       global.gc();
     }
+    
+    // GDD/SSOT validation (post-test hook)
+    // Only run in CI or when explicitly enabled
+    if (process.env.CI || process.env.RUN_GDD_VALIDATION === 'true') {
+      console.log('\n🔍 Running GDD/SSOT validation...\n');
+      
+      const { execSync } = require('child_process');
+      const path = require('path');
+      
+      try {
+        // Validate GDD runtime
+        execSync('node scripts/validate-gdd-runtime.js --full', {
+          encoding: 'utf-8',
+          stdio: 'inherit',
+          cwd: path.resolve(__dirname, '..')
+        });
+        
+        // Validate health score
+        const healthOutput = execSync('node scripts/score-gdd-health.js --ci', {
+          encoding: 'utf-8',
+          cwd: path.resolve(__dirname, '..')
+        });
+        
+        // Parse health score from output
+        const scoreMatch = healthOutput.match(/Health Score:\s*(\d+)/);
+        if (scoreMatch) {
+          const healthScore = parseInt(scoreMatch[1], 10);
+          console.log(`\n✅ GDD Health Score: ${healthScore}`);
+          
+          if (healthScore < 87) {
+            throw new Error(`GDD health score ${healthScore} is below threshold 87`);
+          }
+        } else {
+          console.warn('⚠️  Could not parse GDD health score from output');
+        }
+        
+        console.log('✅ GDD/SSOT validation passed\n');
+      } catch (error) {
+        console.error('❌ GDD/SSOT validation failed:', error.message);
+        throw error; // Fail the test suite
+      }
+    }
   } catch (error) {
-    // Ignore cleanup errors in tests
+    // Ignore cleanup errors in tests (but not GDD validation errors)
+    if (error.message.includes('GDD')) {
+      throw error;
+    }
     console.log('Test cleanup error (ignored):', error.message);
   }
 });

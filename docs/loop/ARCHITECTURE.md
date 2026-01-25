@@ -20,7 +20,7 @@ El Loop Autónomo Supervisado es un sistema de ejecución de tareas con validaci
 
 **Flujo:**
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                   EXECUTION ENGINE                      │
 ├─────────────────────────────────────────────────────────┤
@@ -55,7 +55,7 @@ El Loop Autónomo Supervisado es un sistema de ejecución de tareas con validaci
 
 **APIs:**
 
-```
+```javascript
 async function executeTask(options) {
   // options: { taskId, description, instruction, prdPath, dryRun, timeout }
   // returns: { success, taskId, phase, status, reason, executionTimeMs }
