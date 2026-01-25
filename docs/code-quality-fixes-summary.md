@@ -137,11 +137,11 @@ result.success = commitSuccess && stashSuccess;
 
 #### 8. MD040 - Missing language tags ✅
 **Archivos corregidos:**
-- `CLAUDE.md` - Flow diagram → ```text
-- `docs/autonomous-progress/README.md` - Directory tree → ```text
-- `docs/loop/ARCHITECTURE.md` - ASCII diagrams → ```text, ```javascript
-- `docs/loop/README.md` - ASCII diagram → ```text
-- `docs/test-evidence/issue-ROA-532/visual-changes.md` - UI diagrams → ```text
+- `CLAUDE.md` - Flow diagram → code fence with `text`
+- `docs/autonomous-progress/README.md` - Directory tree → code fence with `text`
+- `docs/loop/ARCHITECTURE.md` - ASCII diagrams → code fences with `text` and `javascript`
+- `docs/loop/README.md` - ASCII diagram → code fence with `text`
+- `docs/test-evidence/issue-ROA-532/visual-changes.md` - UI diagrams → code fence with `text`
 
 **Impacto:** 🔵 Markdownlint MD040 satisfied
 
