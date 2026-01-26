@@ -6,7 +6,6 @@ import { PasswordInput } from '@/components/auth/password-input';
 import { AuthButton } from '@/components/auth/auth-button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { setTokens } from '@/lib/auth/tokenStorage';
 
@@ -46,7 +45,6 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
   const [error, setError] = React.useState<string | null>(customError || null);
   
   const [formData, setFormData] = React.useState({
-    fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -54,25 +52,17 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
   });
 
   const [fieldErrors, setFieldErrors] = React.useState({
-    fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
     terms: ''
   });
 
-  // Validate full name
-  const validateFullName = (name: string): string => {
-    if (!name.trim()) return 'El nombre es requerido';
-    if (name.trim().length < 2) return 'El nombre debe tener al menos 2 caracteres';
-    return '';
-  };
-
   // Validate email
   const validateEmail = (email: string): string => {
     if (!email) return 'El email es requerido';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return 'Email inválido';
+    if (!emailRegex.test(email)) return 'Email no válido';
     return '';
   };
 
@@ -93,25 +83,64 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     return '';
   };
 
+  // Handle onChange validation (reactive validation)
+  const handleChange = (field: 'email' | 'password' | 'confirmPassword', value: string) => {
+    // Update form data
+    setFormData(prev => ({ ...prev, [field]: value }));
+
+    // Validate immediately for email (P0 requirement: onChange validation)
+    if (field === 'email') {
+      const emailError = validateEmail(value);
+      setFieldErrors(prev => ({ ...prev, email: emailError }));
+    }
+
+    // Validate confirmPassword reactively when it changes OR when password changes
+    if (field === 'confirmPassword') {
+      const confirmError = validateConfirmPassword(value, formData.password);
+      setFieldErrors(prev => ({ ...prev, confirmPassword: confirmError }));
+    }
+
+    // If password changes, re-validate confirmPassword if it has content
+    if (field === 'password' && formData.confirmPassword) {
+      const confirmError = validateConfirmPassword(formData.confirmPassword, value);
+      setFieldErrors(prev => ({ ...prev, confirmPassword: confirmError }));
+    }
+
+    // Clear general error when user fixes issues
+    if (error === 'Por favor corrige los errores en el formulario') {
+      setError(null);
+    }
+  };
+
   // Handle field blur validation
-  const handleBlur = (field: 'fullName' | 'email' | 'password' | 'confirmPassword') => {
-    let error = '';
+  const handleBlur = (field: 'email' | 'password' | 'confirmPassword') => {
+    let errorMsg = '';
     switch (field) {
-      case 'fullName':
-        error = validateFullName(formData.fullName);
-        break;
       case 'email':
-        error = validateEmail(formData.email);
+        errorMsg = validateEmail(formData.email);
         break;
       case 'password':
-        error = validatePassword(formData.password);
+        errorMsg = validatePassword(formData.password);
         break;
       case 'confirmPassword':
-        error = validateConfirmPassword(formData.confirmPassword, formData.password);
+        errorMsg = validateConfirmPassword(formData.confirmPassword, formData.password);
         break;
     }
-    setFieldErrors(prev => ({ ...prev, [field]: error }));
+    setFieldErrors(prev => ({ ...prev, [field]: errorMsg }));
   };
+
+  // Check if form is valid (for submit button)
+  const isFormValid = React.useMemo(() => {
+    return (
+      formData.email &&
+      !fieldErrors.email &&
+      formData.password &&
+      !fieldErrors.password &&
+      formData.confirmPassword &&
+      !fieldErrors.confirmPassword &&
+      formData.termsAccepted
+    );
+  }, [formData, fieldErrors]);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -119,14 +148,12 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     setError(null);
 
     // Validate all fields
-    const nameError = validateFullName(formData.fullName);
     const emailError = validateEmail(formData.email);
     const passwordError = validatePassword(formData.password);
     const confirmPasswordError = validateConfirmPassword(formData.confirmPassword, formData.password);
     const termsError = !formData.termsAccepted ? 'Debes aceptar los términos y condiciones' : '';
 
     setFieldErrors({
-      fullName: nameError,
       email: emailError,
       password: passwordError,
       confirmPassword: confirmPasswordError,
@@ -134,7 +161,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     });
 
     // If any error, stop
-    if (nameError || emailError || passwordError || confirmPasswordError || termsError) {
+    if (emailError || passwordError || confirmPasswordError || termsError) {
       setError('Por favor corrige los errores en el formulario');
       return;
     }
@@ -142,29 +169,52 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/v2/auth/register', {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const endpoint = apiUrl ? `${apiUrl}/v2/auth/register` : '/api/v2/auth/register';
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          full_name: formData.fullName,
           email: formData.email,
           password: formData.password,
           terms_accepted: formData.termsAccepted
         })
       });
 
-      const data = await response.json();
-
+      // Handle non-2xx responses
       if (!response.ok) {
-        const errorCode = data.error_code || 'REGISTER_FAILED';
-        setError(getErrorMessage(errorCode));
+        const data = await response.json().catch(() => ({}));
+        
+        // Differentiate error types (P0 requirement)
+        if (response.status === 400 || response.status === 422) {
+          // Validation errors
+          const errorCode = data.error_code || 'REGISTER_FAILED';
+          setError(getErrorMessage(errorCode));
+        } else if (response.status === 401) {
+          // Auth error (unlikely in register, but handle it)
+          setError('Error de autenticación. Inténtalo de nuevo');
+        } else if (response.status === 429) {
+          // Rate limit
+          setError(getErrorMessage('AUTH_RATE_LIMIT_EXCEEDED'));
+        } else if (response.status >= 500) {
+          // Server error
+          setError('Error del servidor. Inténtalo más tarde');
+        } else {
+          // Other 4xx errors
+          const errorCode = data.error_code || 'REGISTER_FAILED';
+          setError(getErrorMessage(errorCode));
+        }
         setIsLoading(false);
         return;
       }
 
-      // Success - save tokens using tokenStorage
+      // Success path
+      const data = await response.json();
+
+      // Save tokens using tokenStorage
       if (data.session?.access_token && data.session?.refresh_token) {
         setTokens(data.session.access_token, data.session.refresh_token);
       }
@@ -177,7 +227,9 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
         navigate('/dashboard');
       }
     } catch (err) {
-      setError('Error de conexión. Inténtalo de nuevo');
+      // Network error or JSON parse error (real connection issues)
+      console.error('Register error:', err);
+      setError('Error de conexión. Verifica tu internet e inténtalo de nuevo');
       setIsLoading(false);
     }
   };
@@ -193,37 +245,22 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
       <CardContent>
         <AuthForm onSubmit={handleSubmit} error={error} loading={isLoading}>
           <div className="space-y-4">
-            {/* Full Name */}
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Nombre completo</Label>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="Juan Pérez"
-                value={formData.fullName}
-                onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                onBlur={() => handleBlur('fullName')}
-                disabled={isLoading}
-                aria-invalid={!!fieldErrors.fullName}
-              />
-              {fieldErrors.fullName && (
-                <p className="text-sm text-destructive">{fieldErrors.fullName}</p>
-              )}
-            </div>
-
             {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <EmailInput
                 id="email"
                 value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                onChange={(e) => handleChange('email', e.target.value)}
                 onBlur={() => handleBlur('email')}
                 disabled={isLoading}
                 aria-invalid={!!fieldErrors.email}
+                aria-describedby={fieldErrors.email ? 'email-error' : undefined}
               />
               {fieldErrors.email && (
-                <p className="text-sm text-destructive">{fieldErrors.email}</p>
+                <p id="email-error" className="text-sm text-destructive" role="alert">
+                  {fieldErrors.email}
+                </p>
               )}
             </div>
 
@@ -233,16 +270,19 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
               <PasswordInput
                 id="password"
                 value={formData.password}
-                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                onChange={(e) => handleChange('password', e.target.value)}
                 onBlur={() => handleBlur('password')}
                 disabled={isLoading}
                 aria-invalid={!!fieldErrors.password}
+                aria-describedby={fieldErrors.password ? 'password-error' : 'password-requirements'}
               />
               {fieldErrors.password && (
-                <p className="text-sm text-destructive">{fieldErrors.password}</p>
+                <p id="password-error" className="text-sm text-destructive" role="alert">
+                  {fieldErrors.password}
+                </p>
               )}
               {/* Password requirements hint */}
-              <div className="text-xs text-muted-foreground space-y-1">
+              <div id="password-requirements" className="text-xs text-muted-foreground space-y-1">
                 <p>La contraseña debe contener:</p>
                 <ul className="list-disc list-inside space-y-0.5">
                   <li 
@@ -279,14 +319,17 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
               <PasswordInput
                 id="confirmPassword"
                 value={formData.confirmPassword}
-                onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                onChange={(e) => handleChange('confirmPassword', e.target.value)}
                 onBlur={() => handleBlur('confirmPassword')}
                 disabled={isLoading}
                 aria-invalid={!!fieldErrors.confirmPassword}
+                aria-describedby={fieldErrors.confirmPassword ? 'confirm-password-error' : undefined}
                 placeholder="Confirma tu contraseña"
               />
               {fieldErrors.confirmPassword && (
-                <p className="text-sm text-destructive">{fieldErrors.confirmPassword}</p>
+                <p id="confirm-password-error" className="text-sm text-destructive" role="alert">
+                  {fieldErrors.confirmPassword}
+                </p>
               )}
             </div>
 
@@ -322,8 +365,13 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
               </div>
             </div>
 
-            {/* Submit Button */}
-            <AuthButton type="submit" className="w-full" loading={isLoading}>
+            {/* Submit Button - disabled if form invalid */}
+            <AuthButton 
+              type="submit" 
+              className="w-full" 
+              loading={isLoading}
+              disabled={isLoading || !isFormValid}
+            >
               Crear cuenta
             </AuthButton>
           </div>

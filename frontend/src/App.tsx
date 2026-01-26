@@ -29,6 +29,8 @@ import PlansPage from '@/pages/admin/config/plans';
 import TonesPage from '@/pages/admin/config/tones';
 import MetricsPage from '@/pages/admin/metrics';
 import AppHomePage from '@/pages/app/home';
+import TermsPage from '@/pages/legal/terms';
+import PrivacyPage from '@/pages/legal/privacy';
 import NotFound from '@/pages/NotFound';
 
 /**
@@ -54,6 +56,10 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/recover" element={<RecoverPageV2 />} />
+            
+            {/* Legal routes (public) */}
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
 
             {/* App routes (user routes) - Protected with AuthGuard */}
             <Route

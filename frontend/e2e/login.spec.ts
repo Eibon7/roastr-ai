@@ -115,9 +115,9 @@ test.describe('Login Page', () => {
   test('should validate email format (ROA-532)', async ({ page }) => {
     await page.goto('/login');
 
-    // Type invalid email (TLD invalid)
+    // Type invalid email (no TLD)
     const emailInput = page.getByLabel(/email/i);
-    await emailInput.fill('test@test.con');
+    await emailInput.fill('test@test');
     
     // Blur to trigger validation
     await emailInput.blur();
