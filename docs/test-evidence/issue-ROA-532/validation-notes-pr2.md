@@ -201,7 +201,7 @@ These items are **backend responsibilities** and should be verified separately (
 # Manual test with curl
 curl -X POST https://roastr-backend-staging.railway.app/v2/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email": "user@domain..com", "password": "Test123", "terms_accepted": true}'
+  -d '{"email": "user@domain..com", "password": "StrongP@ssw0rd123!", "terms_accepted": true}'
 
 # Expected response:
 # 400 Bad Request
@@ -255,7 +255,7 @@ curl -X POST https://roastr-backend-staging.railway.app/v2/auth/register \
 for i in {1..20}; do
   curl -X POST https://roastr-backend-staging.railway.app/v2/auth/register \
     -H "Content-Type: application/json" \
-    -d "{\"email\": \"test$i@example.com\", \"password\": \"Test123\", \"terms_accepted\": true}"
+    -d "{\"email\": \"test$i@example.com\", \"password\": \"StrongP@ssw0rd123!\", \"terms_accepted\": true}"
 done
 
 # Expected: After ~10-15 requests, receive 429
