@@ -40,6 +40,16 @@ export default function TermsPage() {
                 comentarios en redes sociales, proporcionando respuestas automáticas con diferentes tonos 
                 y estilos.
               </p>
+              <p className="mt-3">
+                <strong>Funcionalidades principales:</strong>
+              </p>
+              <ul className="list-disc pl-6 space-y-2 mt-2">
+                <li>Análisis automático de comentarios con detección de toxicidad (Shield)</li>
+                <li>Generación de respuestas personalizadas con IA en múltiples tonos</li>
+                <li>Integración con plataformas: Twitter/X, YouTube, Instagram, Facebook, Discord, Twitch, Reddit, TikTok, Bluesky</li>
+                <li>Sistema de moderación automática basado en reglas personalizables</li>
+                <li>Dashboard de métricas y análisis de engagement</li>
+              </ul>
             </section>
 
             <section>
@@ -74,11 +84,19 @@ export default function TermsPage() {
 
             <section>
               <h2 className="text-xl font-semibold mb-3">6. Planes y Pagos</h2>
-              <ul className="list-disc pl-6 space-y-2">
+              <p>Roastr.AI ofrece diferentes planes de suscripción para adaptarse a tus necesidades:</p>
+              <ul className="list-disc pl-6 space-y-2 mt-3">
+                <li><strong>Plan Gratuito:</strong> Acceso limitado para probar el servicio</li>
+                <li><strong>Plan Starter:</strong> Ideal para usuarios individuales y pequeños proyectos</li>
+                <li><strong>Plan Pro:</strong> Para profesionales con mayor volumen de comentarios</li>
+                <li><strong>Plan Plus:</strong> Para equipos y uso intensivo</li>
+              </ul>
+              <p className="mt-3">Condiciones de pago:</p>
+              <ul className="list-disc pl-6 space-y-2 mt-2">
                 <li>Los planes de suscripción se cobran mensualmente según el plan seleccionado.</li>
                 <li>Puedes cancelar tu suscripción en cualquier momento desde tu panel de usuario.</li>
                 <li>No ofrecemos reembolsos por periodos de suscripción parcialmente utilizados.</li>
-                <li>Nos reservamos el derecho de modificar los precios con previo aviso.</li>
+                <li>Nos reservamos el derecho de modificar los precios con previo aviso de 30 días.</li>
               </ul>
             </section>
 
@@ -125,8 +143,14 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-semibold mb-3">12. Contacto</h2>
               <p>
-                Si tienes preguntas sobre estos Términos y Condiciones, por favor contáctanos a través 
-                de nuestro sitio web.
+                Si tienes preguntas sobre estos Términos y Condiciones, puedes contactarnos:
+              </p>
+              <ul className="list-none space-y-2 mt-4">
+                <li><strong>Email:</strong> legal@roastr.ai</li>
+                <li><strong>Sitio web:</strong> <a href="https://roastr.ai" className="underline hover:text-primary" target="_blank" rel="noreferrer">roastr.ai</a></li>
+              </ul>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Nos esforzamos por responder a todas las consultas en un plazo de 48 horas hábiles.
               </p>
             </section>
 
