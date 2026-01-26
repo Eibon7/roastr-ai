@@ -2,7 +2,7 @@
 
 **Issue:** ROA-532  
 **PR:** #1293 (2/x)  
-**Date:** 2025-01-26  
+**Date:** 2026-01-26  
 **Status:** ⏳ Pending QA Manual
 
 ---
@@ -199,7 +199,7 @@ These items are **backend responsibilities** and should be verified separately (
 **Testing:**
 ```bash
 # Manual test with curl
-curl -X POST https://staging-backend.railway.app/v2/auth/register \
+curl -X POST https://roastr-backend-staging.railway.app/v2/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email": "user@domain..com", "password": "Test123", "terms_accepted": true}'
 
@@ -228,7 +228,7 @@ curl -X POST https://staging-backend.railway.app/v2/auth/register \
 **Testing:**
 ```bash
 # Test weak password
-curl -X POST https://staging-backend.railway.app/v2/auth/register \
+curl -X POST https://roastr-backend-staging.railway.app/v2/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email": "test@example.com", "password": "weak", "terms_accepted": true}'
 
@@ -253,7 +253,7 @@ curl -X POST https://staging-backend.railway.app/v2/auth/register \
 ```bash
 # Spam registration endpoint
 for i in {1..20}; do
-  curl -X POST https://staging-backend.railway.app/v2/auth/register \
+  curl -X POST https://roastr-backend-staging.railway.app/v2/auth/register \
     -H "Content-Type: application/json" \
     -d "{\"email\": \"test$i@example.com\", \"password\": \"Test123\", \"terms_accepted\": true}"
 done
