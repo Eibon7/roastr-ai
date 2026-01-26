@@ -12,12 +12,12 @@ export default function TermsPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <Link to="/login">
-          <Button variant="ghost" className="mb-6">
+        <Button variant="ghost" className="mb-6" asChild>
+          <Link to="/login">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver
-          </Button>
-        </Link>
+          </Link>
+        </Button>
 
         <Card>
           <CardHeader>
