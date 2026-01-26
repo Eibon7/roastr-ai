@@ -147,7 +147,7 @@ These comments are about Loop code (ROA-539), **NOT** Auth (ROA-532):
 1. Go to PR Files Changed tab
 2. Find each Auth-related comment thread
 3. Reply individually:
-   ```
+   ```text
    Fixed in commit 55b3caf6. Please confirm resolution.
    ```
 4. Click "Resolve conversation" checkbox
@@ -162,7 +162,7 @@ These comments are about Loop code (ROA-539), **NOT** Auth (ROA-532):
 **If Loop comments persist:**
 
 1. Document in PR description:
-   ```
+   ```text
    Note: 9 CodeRabbit comments are Loop scope (ROA-539), 
    not Auth scope (ROA-532). All Auth issues resolved.
    ```
@@ -173,7 +173,7 @@ These comments are about Loop code (ROA-539), **NOT** Auth (ROA-532):
 
 ## 🧪 QA Testing Checklist
 
-**URL:** https://staging.roastr.ai/register
+**URL:** <https://staging.roastr.ai/register>
 
 ### Email Validation
 - [ ] Type `test@test` → Error appears immediately
