@@ -46,7 +46,6 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
   const [error, setError] = React.useState<string | null>(customError || null);
   
   const [formData, setFormData] = React.useState({
-    fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -54,19 +53,11 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
   });
 
   const [fieldErrors, setFieldErrors] = React.useState({
-    fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
     terms: ''
   });
-
-  // Validate full name
-  const validateFullName = (name: string): string => {
-    if (!name.trim()) return 'El nombre es requerido';
-    if (name.trim().length < 2) return 'El nombre debe tener al menos 2 caracteres';
-    return '';
-  };
 
   // Validate email
   const validateEmail = (email: string): string => {
@@ -94,12 +85,9 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
   };
 
   // Handle field blur validation
-  const handleBlur = (field: 'fullName' | 'email' | 'password' | 'confirmPassword') => {
+  const handleBlur = (field: 'email' | 'password' | 'confirmPassword') => {
     let error = '';
     switch (field) {
-      case 'fullName':
-        error = validateFullName(formData.fullName);
-        break;
       case 'email':
         error = validateEmail(formData.email);
         break;
@@ -119,14 +107,12 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     setError(null);
 
     // Validate all fields
-    const nameError = validateFullName(formData.fullName);
     const emailError = validateEmail(formData.email);
     const passwordError = validatePassword(formData.password);
     const confirmPasswordError = validateConfirmPassword(formData.confirmPassword, formData.password);
     const termsError = !formData.termsAccepted ? 'Debes aceptar los términos y condiciones' : '';
 
     setFieldErrors({
-      fullName: nameError,
       email: emailError,
       password: passwordError,
       confirmPassword: confirmPasswordError,
@@ -134,7 +120,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     });
 
     // If any error, stop
-    if (nameError || emailError || passwordError || confirmPasswordError || termsError) {
+    if (emailError || passwordError || confirmPasswordError || termsError) {
       setError('Por favor corrige los errores en el formulario');
       return;
     }
@@ -148,7 +134,6 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          full_name: formData.fullName,
           email: formData.email,
           password: formData.password,
           terms_accepted: formData.termsAccepted
@@ -193,24 +178,6 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
       <CardContent>
         <AuthForm onSubmit={handleSubmit} error={error} loading={isLoading}>
           <div className="space-y-4">
-            {/* Full Name */}
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Nombre completo</Label>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="Juan Pérez"
-                value={formData.fullName}
-                onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                onBlur={() => handleBlur('fullName')}
-                disabled={isLoading}
-                aria-invalid={!!fieldErrors.fullName}
-              />
-              {fieldErrors.fullName && (
-                <p className="text-sm text-destructive">{fieldErrors.fullName}</p>
-              )}
-            </div>
-
             {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>

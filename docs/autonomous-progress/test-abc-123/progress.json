@@ -2,20 +2,15 @@
   "taskId": "test-abc-123",
   "description": "Task test-abc-123",
   "prdPath": null,
-  "status": "blocked",
-  "createdAt": "2026-01-25T20:05:04.819Z",
-  "startedAt": "2026-01-25T20:05:04.820Z",
-  "completedAt": "2026-01-25T20:05:04.983Z",
+  "status": "completed",
+  "createdAt": "2026-01-25T20:45:41.261Z",
+  "startedAt": "2026-01-25T20:45:41.262Z",
+  "completedAt": "2026-01-25T20:45:41.394Z",
   "validation": {
     "preTask": {
-      "passed": false,
-      "timestamp": "2026-01-25T20:05:04.983Z",
-      "violations": [
-        {
-          "source": "v2-only-validator",
-          "details": "🔍 Ejecutando validación V2-only (pre-task)...\n\n📁 Analizando 23 archivo(s) modificado(s)...\n\n🚨 BLOCK - Violaciones V2-only detectadas\n\n   Archivos analizados: 23\n   Violaciones: 1\n\n\n═══════════════════════════════════════════════════════════\n   LEGACY_IMPORT (1)\n═══════════════════════════════════════════════════════════\n\n❌ Archivo: tests/setupEnvOnly.js\n   Mensaje: Import desde src/ (V1) detectado en tests/setupEnvOnly.js\n   Imports: require('../src/\n   💡 Sugerencia: Usar módulos de apps/bac..."
-        }
-      ]
+      "passed": true,
+      "timestamp": "2026-01-25T20:45:41.393Z",
+      "violations": []
     },
     "postTask": {
       "passed": null,
@@ -24,13 +19,13 @@
     }
   },
   "metrics": {
-    "executionTimeMs": 164,
+    "executionTimeMs": 133,
     "filesModified": 0,
     "filesCreated": 0,
     "testsAdded": 0,
-    "violationsDetected": 1,
+    "violationsDetected": 0,
     "rollbacksApplied": 0
   },
-  "currentPhase": "pre-task-validation-failed",
-  "lastUpdate": "2026-01-25T20:05:04.984Z"
+  "currentPhase": "dry-run-completed",
+  "lastUpdate": "2026-01-25T20:45:41.394Z"
 }
