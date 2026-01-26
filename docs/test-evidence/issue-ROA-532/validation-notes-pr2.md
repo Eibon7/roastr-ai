@@ -70,8 +70,8 @@ handleChange('email', value) {
 
 **User Experience Analysis:**
 
-**Scenario A: User types slowly**
-```
+#### Scenario A: User types slowly
+```text
 User types: "t" → Error: "Email no válido"
 User types: "e" → Error: "Email no válido"
 User types: "s" → Error: "Email no válido"
@@ -79,13 +79,13 @@ User types: "s" → Error: "Email no válido"
 User types: "@example.com" → Error disappears ✅
 ```
 
-**Scenario B: User types fast**
-```
+#### Scenario B: User types fast
+```text
 User types: "test@example.com" (fast) → Brief flash of error, then clear ✅
 ```
 
-**Scenario C: User pastes email**
-```
+#### Scenario C: User pastes email
+```text
 User pastes: "test@example.com" → Validates instantly ✅
 ```
 
