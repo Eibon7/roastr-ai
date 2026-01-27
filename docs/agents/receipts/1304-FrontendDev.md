@@ -125,8 +125,8 @@
 **Environment:** Local dev server (`npm run dev`)
 
 ✅ **Routes:**
-- `/terms` - Loads correctly
-- `/privacy` - Loads correctly
+- `/terms` — Loads successfully
+- `/privacy` — Accessible
 - Direct URL access works (no 404)
 
 ✅ **Navigation:**
