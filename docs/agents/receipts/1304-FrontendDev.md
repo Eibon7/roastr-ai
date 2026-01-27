@@ -285,9 +285,23 @@ cd frontend && npm run build
 | File | Type | Lines Changed |
 |------|------|---------------|
 | `frontend/vercel.json` | CREATED | +22 |
-| `frontend/src/pages/legal/terms.tsx` | MODIFIED | +40 |
+| `frontend/src/pages/legal/terms.tsx` | MODIFIED | +41 |
 | `frontend/src/pages/legal/privacy.tsx` | MODIFIED | +85 |
-| **TOTAL** | **3 files** | **+147** |
+| **TOTAL** | **3 files** | **+148** |
+
+---
+
+## 🐛 Post-Review Fix
+
+### CodeRabbit Issue - Missing Security Attributes
+
+**Issue:** Cross-link inconsistency (Privacy → Terms had `target="_blank"`, but Terms → Privacy didn't)
+
+**Fix:** Added `target="_blank" rel="noreferrer"` to Privacy link in Terms page (line 161)
+
+**Result:** ✅ Both cross-links now consistent and secure
+
+**Commit:** `a7e4c34a`
 
 ---
 
