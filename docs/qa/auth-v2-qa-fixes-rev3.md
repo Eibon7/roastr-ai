@@ -1,7 +1,7 @@
 # QA Fixes Auth v2 (Frontend + Error Mapping) - Revisión 3
 
 **Issue:** [ROA-532](https://linear.app/roastrai/issue/ROA-532/manual-testing)  
-**Fecha:** 2025-01-27  
+**Fecha:** 2026-01-27  
 **Estado:** ✅ Fixes Implementados
 
 ---

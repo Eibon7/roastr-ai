@@ -20,18 +20,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AuthLayout } from '@/components/layout/auth-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, AlertCircle } from 'lucide-react';
+import apiClient from '@/lib/api/client';
+import { setTokens } from '@/lib/auth/tokenStorage';
 
-// Form validation schema
+// Form validation schema - delegate TLD validation to backend
 const loginSchema = z.object({
   email: z
     .string()
     .min(1, 'El email es requerido')
-    .email('El email no es válido')
-    .refine((email) => {
-      // Validación de TLD válido
-      const validTLDRegex = /^[^\s@]+@[^\s@]+\.(com|org|net|edu|gov|io|co|es|uk|de|fr|it|mx|ar|cl|pe|ve)$/i;
-      return validTLDRegex.test(email);
-    }, 'El dominio del email no es válido'),
+    .email('El email no es válido'),
   password: z
     .string()
     .min(1, 'La contraseña es requerida'),
@@ -124,56 +121,31 @@ export default function LoginPageV2() {
     setErrorCode(undefined);
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '';
-      const endpoint = apiUrl ? `${apiUrl}/v2/auth/login` : '/api/v2/auth/login';
-      
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password
-        })
+      // Use centralized apiClient for CSRF, mock mode, and interceptors
+      const responseData = await apiClient.post('/v2/auth/login', {
+        email: data.email,
+        password: data.password
       });
 
-      // Parse response body
-      const responseData = await response.json().catch(() => ({}));
+      // Success path - log only generic success message
+      console.log('Login succeeded');
       
-      // Handle non-2xx responses
-      if (!response.ok) {
-        // Extract error slug from backend v2 response
-        const errorSlug = responseData?.error?.slug || responseData?.error_code || 'AUTH_UNKNOWN';
-        
-        // Log error real en consola (debugging)
-        console.error('Login failed:', {
-          status: response.status,
-          errorSlug,
-          data: responseData
-        });
-        
-        // Mostrar mensaje UX claro
-        setErrorCode(errorSlug);
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Success path
-      console.log('Login success:', responseData);
-      
-      // Save tokens if present
+      // Save tokens securely if present
       if (responseData.session?.access_token && responseData.session?.refresh_token) {
-        // TODO: Implement token storage
-        console.log('Tokens received, saving...');
+        setTokens(responseData.session.access_token, responseData.session.refresh_token);
       }
       
       // Redirect on success
       navigate(from, { replace: true });
     } catch (error: any) {
-      // Network error or JSON parse error
-      console.error('Login network error:', error);
-      setErrorCode('AUTH_UNKNOWN');
+      // Extract error slug from apiClient error
+      const errorSlug = error?.error?.slug || error?.error_code || error?.response?.data?.error?.slug || 'AUTH_UNKNOWN';
+      
+      // Log only non-sensitive identifiers
+      console.error('Login failed:', { errorSlug });
+      
+      // Show UX error message
+      setErrorCode(errorSlug);
     } finally {
       setIsSubmitting(false);
     }

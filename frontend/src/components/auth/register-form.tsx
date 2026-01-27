@@ -27,13 +27,13 @@ const authErrorMessages: Record<string, string> = {
   'AUTH_EMAIL_SEND_FAILED': 'No se pudo enviar el email. Inténtalo de nuevo',
   'AUTH_UNKNOWN': 'No se pudo crear la cuenta. Inténtalo de nuevo',
   
-  // Account errors
-  'ACCOUNT_EMAIL_ALREADY_EXISTS': 'Este email ya está registrado',
-  'ACCOUNT_NOT_FOUND': 'Cuenta no encontrada',
-  'ACCOUNT_SUSPENDED': 'Cuenta suspendida. Contacta a soporte',
-  'ACCOUNT_BANNED': 'Cuenta bloqueada. Contacta a soporte',
-  'ACCOUNT_DELETED': 'Cuenta eliminada',
-  'ACCOUNT_BLOCKED': 'Cuenta bloqueada. Contacta a soporte',
+  // Account errors - Generic messages to prevent enumeration
+  'ACCOUNT_EMAIL_ALREADY_EXISTS': 'No se pudo completar el registro. Inténtalo de nuevo',
+  'ACCOUNT_NOT_FOUND': 'No se pudo completar el registro. Inténtalo de nuevo',
+  'ACCOUNT_SUSPENDED': 'No se pudo completar el registro. Inténtalo de nuevo',
+  'ACCOUNT_BANNED': 'No se pudo completar el registro. Inténtalo de nuevo',
+  'ACCOUNT_DELETED': 'No se pudo completar el registro. Inténtalo de nuevo',
+  'ACCOUNT_BLOCKED': 'No se pudo completar el registro. Inténtalo de nuevo',
   
   // Policy errors
   'POLICY_RATE_LIMITED': 'Demasiados intentos. Intenta en 15 minutos',
@@ -43,7 +43,7 @@ const authErrorMessages: Record<string, string> = {
   'POLICY_NOT_FOUND': 'Recurso no encontrado',
   
   // Legacy fallbacks (por si acaso)
-  'AUTH_EMAIL_TAKEN': 'Este email ya está registrado',
+  'AUTH_EMAIL_TAKEN': 'No se pudo completar el registro. Inténtalo de nuevo',
   'AUTH_INVALID_EMAIL': 'Email inválido',
   'AUTH_WEAK_PASSWORD': 'La contraseña es muy débil',
   'AUTH_RATE_LIMIT_EXCEEDED': 'Demasiados intentos. Intenta más tarde',
@@ -97,19 +97,13 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     terms: ''
   });
 
-  // Validate email (formato + extensión válida)
+  // Validate email - delegate TLD validation to backend
   const validateEmail = (email: string): string => {
     if (!email) return 'El email es requerido';
     
     // Validación de formato básico
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) return 'El email no es válido';
-    
-    // Validación de TLD (evitar .con, .vom, etc)
-    const validTLDRegex = /^[^\s@]+@[^\s@]+\.(com|org|net|edu|gov|io|co|es|uk|de|fr|it|mx|ar|cl|pe|ve)$/i;
-    if (!validTLDRegex.test(email)) {
-      return 'El dominio del email no es válido';
-    }
     
     return '';
   };
@@ -240,11 +234,10 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
         // Extract error slug from backend v2 response
         const errorSlug = data?.error?.slug || data?.error_code || 'AUTH_UNKNOWN';
         
-        // Log error real en consola (debugging)
+        // Log only non-sensitive identifiers
         console.error('Register failed:', {
           status: response.status,
-          errorSlug,
-          data
+          errorSlug
         });
         
         // Mostrar mensaje UX claro
@@ -253,8 +246,8 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
         return;
       }
 
-      // Success path
-      console.log('Register success:', data);
+      // Success path - log only generic success message
+      console.log('Register succeeded');
 
       // Save tokens using tokenStorage
       if (data.session?.access_token && data.session?.refresh_token) {
@@ -270,7 +263,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
       }
     } catch (err) {
       // Network error or JSON parse error (real connection issues)
-      console.error('Register network error:', err);
+      console.error('Register network error');
       setError('Error de conexión. Verifica tu internet e inténtalo de nuevo');
       setIsLoading(false);
     }
