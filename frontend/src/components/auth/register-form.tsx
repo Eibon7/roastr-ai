@@ -9,18 +9,57 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { setTokens } from '@/lib/auth/tokenStorage';
 
-// Auth Error Messages (from authErrorTaxonomy)
+/**
+ * Auth Error Messages (Backend v2 taxonomy)
+ * Mapea error slugs del backend a mensajes UX claros
+ * 
+ * Contrato: Backend devuelve { success: false, error: { slug: 'AUTH_*', retryable: boolean } }
+ */
 const authErrorMessages: Record<string, string> = {
+  // Auth errors
+  'AUTH_INVALID_CREDENTIALS': 'El email o la contraseña no son correctos',
+  'AUTH_EMAIL_NOT_CONFIRMED': 'Por favor verifica tu email antes de iniciar sesión',
+  'AUTH_ACCOUNT_LOCKED': 'Cuenta bloqueada temporalmente. Intenta más tarde',
+  'AUTH_DISABLED': 'El registro está temporalmente deshabilitado. Intenta más tarde',
+  'AUTH_EMAIL_DISABLED': 'El registro por email está deshabilitado',
+  'AUTH_EMAIL_PROVIDER_ERROR': 'Error al enviar el email. Intenta más tarde',
+  'AUTH_EMAIL_RATE_LIMITED': 'Demasiadas solicitudes de email. Intenta más tarde',
+  'AUTH_EMAIL_SEND_FAILED': 'No se pudo enviar el email. Inténtalo de nuevo',
+  'AUTH_UNKNOWN': 'No se pudo crear la cuenta. Inténtalo de nuevo',
+  
+  // Account errors
+  'ACCOUNT_EMAIL_ALREADY_EXISTS': 'Este email ya está registrado',
+  'ACCOUNT_NOT_FOUND': 'Cuenta no encontrada',
+  'ACCOUNT_SUSPENDED': 'Cuenta suspendida. Contacta a soporte',
+  'ACCOUNT_BANNED': 'Cuenta bloqueada. Contacta a soporte',
+  'ACCOUNT_DELETED': 'Cuenta eliminada',
+  'ACCOUNT_BLOCKED': 'Cuenta bloqueada. Contacta a soporte',
+  
+  // Policy errors
+  'POLICY_RATE_LIMITED': 'Demasiados intentos. Intenta en 15 minutos',
+  'POLICY_ABUSE_DETECTED': 'Actividad sospechosa detectada. Contacta a soporte',
+  'POLICY_BLOCKED': 'Acción bloqueada por políticas de seguridad',
+  'POLICY_INVALID_REQUEST': 'Solicitud inválida. Verifica los datos e inténtalo de nuevo',
+  'POLICY_NOT_FOUND': 'Recurso no encontrado',
+  
+  // Legacy fallbacks (por si acaso)
   'AUTH_EMAIL_TAKEN': 'Este email ya está registrado',
   'AUTH_INVALID_EMAIL': 'Email inválido',
-  'AUTH_WEAK_PASSWORD': 'La contraseña es muy débil. Debe tener al menos 8 caracteres, una minúscula, una mayúscula y un número',
-  'AUTH_RATE_LIMIT_EXCEEDED': 'Demasiados intentos. Espera 15 minutos e inténtalo de nuevo',
+  'AUTH_WEAK_PASSWORD': 'La contraseña es muy débil',
+  'AUTH_RATE_LIMIT_EXCEEDED': 'Demasiados intentos. Intenta más tarde',
   'AUTH_TERMS_NOT_ACCEPTED': 'Debes aceptar los términos y condiciones',
-  'REGISTER_FAILED': 'Error al registrar. Inténtalo de nuevo'
+  'REGISTER_FAILED': 'No se pudo crear la cuenta. Inténtalo de nuevo'
 };
 
-function getErrorMessage(errorCode: string): string {
-  return authErrorMessages[errorCode] || 'Error al registrar. Inténtalo de nuevo';
+/**
+ * Obtiene mensaje de error UX a partir del error slug del backend
+ * NUNCA expone detalles técnicos al usuario
+ */
+function getErrorMessage(errorSlug: string | undefined): string {
+  if (!errorSlug) {
+    return 'No se pudo crear la cuenta. Inténtalo de nuevo';
+  }
+  return authErrorMessages[errorSlug] || 'No se pudo crear la cuenta. Inténtalo de nuevo';
 }
 
 export interface RegisterFormProps {
@@ -58,11 +97,20 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     terms: ''
   });
 
-  // Validate email
+  // Validate email (formato + extensión válida)
   const validateEmail = (email: string): string => {
     if (!email) return 'El email es requerido';
+    
+    // Validación de formato básico
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return 'Email no válido';
+    if (!emailRegex.test(email)) return 'El email no es válido';
+    
+    // Validación de TLD (evitar .con, .vom, etc)
+    const validTLDRegex = /^[^\s@]+@[^\s@]+\.(com|org|net|edu|gov|io|co|es|uk|de|fr|it|mx|ar|cl|pe|ve)$/i;
+    if (!validTLDRegex.test(email)) {
+      return 'El dominio del email no es válido';
+    }
+    
     return '';
   };
 
@@ -184,35 +232,29 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
         })
       });
 
+      // Parse response body
+      const data = await response.json().catch(() => ({}));
+      
       // Handle non-2xx responses
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
+        // Extract error slug from backend v2 response
+        const errorSlug = data?.error?.slug || data?.error_code || 'AUTH_UNKNOWN';
         
-        // Differentiate error types (P0 requirement)
-        if (response.status === 400 || response.status === 422) {
-          // Validation errors
-          const errorCode = data.error_code || 'REGISTER_FAILED';
-          setError(getErrorMessage(errorCode));
-        } else if (response.status === 401) {
-          // Auth error (unlikely in register, but handle it)
-          setError('Error de autenticación. Inténtalo de nuevo');
-        } else if (response.status === 429) {
-          // Rate limit
-          setError(getErrorMessage('AUTH_RATE_LIMIT_EXCEEDED'));
-        } else if (response.status >= 500) {
-          // Server error
-          setError('Error del servidor. Inténtalo más tarde');
-        } else {
-          // Other 4xx errors
-          const errorCode = data.error_code || 'REGISTER_FAILED';
-          setError(getErrorMessage(errorCode));
-        }
+        // Log error real en consola (debugging)
+        console.error('Register failed:', {
+          status: response.status,
+          errorSlug,
+          data
+        });
+        
+        // Mostrar mensaje UX claro
+        setError(getErrorMessage(errorSlug));
         setIsLoading(false);
         return;
       }
 
       // Success path
-      const data = await response.json();
+      console.log('Register success:', data);
 
       // Save tokens using tokenStorage
       if (data.session?.access_token && data.session?.refresh_token) {
@@ -228,7 +270,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
       }
     } catch (err) {
       // Network error or JSON parse error (real connection issues)
-      console.error('Register error:', err);
+      console.error('Register network error:', err);
       setError('Error de conexión. Verifica tu internet e inténtalo de nuevo');
       setIsLoading(false);
     }

@@ -18,14 +18,25 @@ export const login = async (email, password) => {
 };
 
 /**
- * Register new user with email and password
+ * Register new user with email and password (v2)
+ * Contract: POST /api/v2/auth/register
  * @param {string} email - User email
  * @param {string} password - User password
- * @param {string} name - User name
- * @returns {Promise<Object>} Registration response
+ * @returns {Promise<Object>} Registration response with { success: true }
  */
-export const register = async (email, password, name) => {
-  return apiClient.post('/auth/register', { email, password, name });
+export const register = async (email, password) => {
+  return apiClient.post('/v2/auth/register', { email, password });
+};
+
+/**
+ * Login with email and password (v2)
+ * Contract: POST /api/v2/auth/login
+ * @param {string} email - User email
+ * @param {string} password - User password
+ * @returns {Promise<Object>} Login response with session
+ */
+export const loginV2 = async (email, password) => {
+  return apiClient.post('/v2/auth/login', { email, password });
 };
 
 /**
@@ -136,6 +147,7 @@ export const cancelAccountDeletion = async () => {
 
 export default {
   login,
+  loginV2,
   register,
   loginWithMagicLink,
   registerWithMagicLink,

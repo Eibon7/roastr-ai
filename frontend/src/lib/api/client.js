@@ -205,13 +205,15 @@ class ApiClient {
       }
 
       // Add authorization header if not a public endpoint
-      // Fix BLOCKER 2: Include all public auth endpoints
+      // Fix BLOCKER 2: Include all public auth endpoints (v1 + v2)
       const publicEndpoints = [
         '/auth/login',
         '/auth/register',
         '/auth/magic-link',
         '/auth/signup/magic-link',
         '/auth/reset-password',
+        '/v2/auth/login',
+        '/v2/auth/register',
         '/v2/auth/password-recovery',
         '/v2/auth/update-password'
       ];

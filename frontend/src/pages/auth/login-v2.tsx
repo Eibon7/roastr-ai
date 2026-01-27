@@ -26,7 +26,12 @@ const loginSchema = z.object({
   email: z
     .string()
     .min(1, 'El email es requerido')
-    .email('Formato de email inválido'),
+    .email('El email no es válido')
+    .refine((email) => {
+      // Validación de TLD válido
+      const validTLDRegex = /^[^\s@]+@[^\s@]+\.(com|org|net|edu|gov|io|co|es|uk|de|fr|it|mx|ar|cl|pe|ve)$/i;
+      return validTLDRegex.test(email);
+    }, 'El dominio del email no es válido'),
   password: z
     .string()
     .min(1, 'La contraseña es requerida'),
@@ -36,31 +41,51 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 /**
  * Error code to user message mapping
- * Only shows messages based on error_code from backend, never raw messages
+ * Mapea error slugs del backend v2 a mensajes UX claros
+ * Backend contract: { success: false, error: { slug: 'AUTH_*', retryable: boolean } }
  */
 const ERROR_MESSAGES: Record<string, string> = {
-  AUTH_INVALID_CREDENTIALS: 'Email o contraseña incorrectos',
-  AUTH_EMAIL_NOT_FOUND: 'Email o contraseña incorrectos', // Anti-enumeration
-  AUTH_PASSWORD_INCORRECT: 'Email o contraseña incorrectos', // Anti-enumeration
-  AUTH_ACCOUNT_LOCKED: 'Cuenta bloqueada temporalmente debido a múltiples intentos fallidos',
-  AUTH_ACCOUNT_DISABLED: 'Cuenta deshabilitada. Por favor contacta a soporte',
-  AUTH_EMAIL_NOT_VERIFIED: 'Por favor verifica tu dirección de email',
-  AUTH_TOO_MANY_LOGIN_ATTEMPTS: 'Demasiados intentos de inicio de sesión. Intenta más tarde',
-  AUTH_RATE_LIMIT_EXCEEDED: 'Demasiadas solicitudes. Intenta más tarde',
-  AUTH_SERVICE_UNAVAILABLE: 'Servicio de autenticación temporalmente no disponible',
-  AUTH_DISABLED: 'Login no disponible temporalmente',
-  AUTH_UNKNOWN_ERROR: 'Algo ha fallado. Inténtalo más tarde',
+  // Auth errors
+  'AUTH_INVALID_CREDENTIALS': 'El email o la contraseña no son correctos',
+  'AUTH_EMAIL_NOT_FOUND': 'El email o la contraseña no son correctos', // Anti-enumeration
+  'AUTH_PASSWORD_INCORRECT': 'El email o la contraseña no son correctos', // Anti-enumeration
+  'AUTH_EMAIL_NOT_CONFIRMED': 'Por favor verifica tu email antes de iniciar sesión',
+  'AUTH_ACCOUNT_LOCKED': 'Cuenta bloqueada temporalmente debido a múltiples intentos fallidos',
+  'AUTH_DISABLED': 'Login no disponible temporalmente',
+  
+  // Account errors
+  'ACCOUNT_NOT_FOUND': 'El email o la contraseña no son correctos', // Anti-enumeration
+  'ACCOUNT_SUSPENDED': 'Cuenta suspendida. Por favor contacta a soporte',
+  'ACCOUNT_BANNED': 'Cuenta bloqueada. Por favor contacta a soporte',
+  'ACCOUNT_DELETED': 'Cuenta eliminada',
+  'ACCOUNT_BLOCKED': 'Cuenta bloqueada. Contacta a soporte',
+  
+  // Policy errors
+  'POLICY_RATE_LIMITED': 'Demasiados intentos de inicio de sesión. Intenta más tarde',
+  'POLICY_ABUSE_DETECTED': 'Actividad sospechosa detectada. Contacta a soporte',
+  'POLICY_BLOCKED': 'Acción bloqueada por políticas de seguridad',
+  'POLICY_INVALID_REQUEST': 'Solicitud inválida. Verifica los datos',
+  
+  // Service errors
+  'AUTH_SERVICE_UNAVAILABLE': 'Servicio de autenticación temporalmente no disponible',
+  'AUTH_UNKNOWN': 'Algo ha fallado. Inténtalo más tarde',
+  
+  // Legacy fallbacks
+  'AUTH_TOO_MANY_LOGIN_ATTEMPTS': 'Demasiados intentos de inicio de sesión. Intenta más tarde',
+  'AUTH_RATE_LIMIT_EXCEEDED': 'Demasiadas solicitudes. Intenta más tarde',
+  'AUTH_EMAIL_NOT_VERIFIED': 'Por favor verifica tu dirección de email',
 };
 
 /**
- * Get user-friendly error message from error_code
+ * Get user-friendly error message from error slug
+ * NUNCA expone detalles técnicos al usuario
  * Exported for testing purposes
  */
-export function getErrorMessage(errorCode: string | undefined): string {
-  if (!errorCode) {
-    return ERROR_MESSAGES.AUTH_UNKNOWN_ERROR;
+export function getErrorMessage(errorSlug: string | undefined): string {
+  if (!errorSlug) {
+    return ERROR_MESSAGES.AUTH_UNKNOWN;
   }
-  return ERROR_MESSAGES[errorCode] || ERROR_MESSAGES.AUTH_UNKNOWN_ERROR;
+  return ERROR_MESSAGES[errorSlug] || ERROR_MESSAGES.AUTH_UNKNOWN;
 }
 
 /**
@@ -99,27 +124,56 @@ export default function LoginPageV2() {
     setErrorCode(undefined);
 
     try {
-      // TODO: Replace with actual v2 API call when backend is ready
-      // const response = await api.auth.loginV2(data.email, data.password);
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const endpoint = apiUrl ? `${apiUrl}/v2/auth/login` : '/api/v2/auth/login';
       
-      // Temporary mock for development
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password
+        })
+      });
+
+      // Parse response body
+      const responseData = await response.json().catch(() => ({}));
       
-      // Mock response based on credentials
-      if (data.email === 'test@roastr.ai' && data.password === 'password') {
-        // Success - redirect handled by auth context
-        navigate(from, { replace: true });
-      } else {
-        // Mock error response
-        throw {
-          error_code: 'AUTH_INVALID_CREDENTIALS',
-          message: 'Invalid credentials'
-        };
+      // Handle non-2xx responses
+      if (!response.ok) {
+        // Extract error slug from backend v2 response
+        const errorSlug = responseData?.error?.slug || responseData?.error_code || 'AUTH_UNKNOWN';
+        
+        // Log error real en consola (debugging)
+        console.error('Login failed:', {
+          status: response.status,
+          errorSlug,
+          data: responseData
+        });
+        
+        // Mostrar mensaje UX claro
+        setErrorCode(errorSlug);
+        setIsSubmitting(false);
+        return;
       }
+
+      // Success path
+      console.log('Login success:', responseData);
+      
+      // Save tokens if present
+      if (responseData.session?.access_token && responseData.session?.refresh_token) {
+        // TODO: Implement token storage
+        console.log('Tokens received, saving...');
+      }
+      
+      // Redirect on success
+      navigate(from, { replace: true });
     } catch (error: any) {
-      // Extract error_code from backend response
-      const code = error?.error_code || error?.response?.data?.error_code;
-      setErrorCode(code);
+      // Network error or JSON parse error
+      console.error('Login network error:', error);
+      setErrorCode('AUTH_UNKNOWN');
     } finally {
       setIsSubmitting(false);
     }
@@ -209,6 +263,14 @@ export default function LoginPageV2() {
                 'Iniciar Sesión'
               )}
             </Button>
+
+            {/* Register CTA */}
+            <div className="text-sm text-center text-muted-foreground">
+              ¿No tienes cuenta?{' '}
+              <Link to="/register" className="font-medium text-primary hover:underline">
+                Crear cuenta
+              </Link>
+            </div>
           </form>
         </CardContent>
       </Card>
