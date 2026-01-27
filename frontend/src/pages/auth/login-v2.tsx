@@ -20,6 +20,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AuthLayout } from '@/components/layout/auth-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, AlertCircle } from 'lucide-react';
+// @ts-ignore - client.js is a JS module without types
 import apiClient from '@/lib/api/client';
 import { setTokens } from '@/lib/auth/tokenStorage';
 
