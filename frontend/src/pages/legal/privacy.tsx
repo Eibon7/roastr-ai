@@ -56,12 +56,39 @@ export default function PrivacyPage() {
               <p>
                 No vendemos tu información personal. Podemos compartir tu información únicamente en los siguientes casos:
               </p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li><strong>Proveedores de servicios:</strong> servicios de hosting, procesamiento de pagos, análisis</li>
-                <li><strong>APIs de IA:</strong> OpenAI para generar respuestas (sin almacenar datos identificables)</li>
-                <li><strong>Cumplimiento legal:</strong> cuando sea requerido por ley o para proteger nuestros derechos</li>
-                <li><strong>Transferencia de negocio:</strong> en caso de fusión, adquisición o venta de activos</li>
-              </ul>
+              
+              <div className="mt-4 space-y-4">
+                <div>
+                  <h3 className="font-semibold text-base mb-2">Proveedores de Servicios</h3>
+                  <ul className="list-disc pl-6 space-y-1 text-sm">
+                    <li><strong>Hosting:</strong> Vercel (frontend), Railway (backend)</li>
+                    <li><strong>Base de datos:</strong> Supabase (PostgreSQL)</li>
+                    <li><strong>Procesamiento de pagos:</strong> Polar.sh</li>
+                    <li><strong>Email:</strong> Resend</li>
+                    <li><strong>Monitorización:</strong> Sentry</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-base mb-2">APIs de IA</h3>
+                  <ul className="list-disc pl-6 space-y-1 text-sm">
+                    <li><strong>OpenAI:</strong> Para generar respuestas automáticas (sin almacenar datos identificables)</li>
+                    <li>Los comentarios se procesan de forma anónima y no se vinculan a tu identidad</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-base mb-2">Otros Casos</h3>
+                  <ul className="list-disc pl-6 space-y-1 text-sm">
+                    <li><strong>Cumplimiento legal:</strong> Cuando sea requerido por ley o para proteger nuestros derechos</li>
+                    <li><strong>Transferencia de negocio:</strong> En caso de fusión, adquisición o venta de activos</li>
+                  </ul>
+                </div>
+              </div>
+
+              <p className="mt-4 text-sm text-muted-foreground">
+                Todos nuestros proveedores cumplen con GDPR y tienen acuerdos de procesamiento de datos (DPA) en vigor.
+              </p>
             </section>
 
             <section>
@@ -109,16 +136,40 @@ export default function PrivacyPage() {
 
             <section>
               <h2 className="text-xl font-semibold mb-3">7. Cookies y Tecnologías Similares</h2>
-              <p>Utilizamos cookies y tecnologías similares para:</p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Mantener tu sesión activa</li>
-                <li>Recordar tus preferencias</li>
-                <li>Analizar el uso del servicio y mejorar la experiencia</li>
-                <li>Proporcionar funcionalidades de seguridad</li>
-              </ul>
-              <p className="mt-3">
+              <p>Utilizamos las siguientes cookies y tecnologías similares:</p>
+              
+              <div className="mt-4 space-y-4">
+                <div>
+                  <h3 className="font-semibold text-base mb-2">Cookies Esenciales (Necesarias)</h3>
+                  <ul className="list-disc pl-6 space-y-1 text-sm">
+                    <li><strong>roastr-auth-token:</strong> Mantiene tu sesión activa (30 días)</li>
+                    <li><strong>roastr-theme:</strong> Guarda tu preferencia de tema (claro/oscuro/sistema)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-base mb-2">Cookies Funcionales</h3>
+                  <ul className="list-disc pl-6 space-y-1 text-sm">
+                    <li><strong>roastr-preferences:</strong> Recuerda tus configuraciones de tono y personalización</li>
+                    <li><strong>roastr-language:</strong> Almacena tu preferencia de idioma</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-base mb-2">Cookies de Análisis</h3>
+                  <ul className="list-disc pl-6 space-y-1 text-sm">
+                    <li><strong>Analytics:</strong> Nos ayudan a entender cómo usas el servicio y mejorarlo</li>
+                  </ul>
+                </div>
+              </div>
+
+              <p className="mt-4">
                 Puedes configurar tu navegador para rechazar cookies, aunque esto puede afectar 
-                la funcionalidad del servicio.
+                la funcionalidad del servicio. Las cookies esenciales son necesarias para el funcionamiento 
+                básico y no pueden desactivarse.
+              </p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Para más información sobre cookies, visita: <a href="https://www.aboutcookies.org" className="underline hover:text-primary" target="_blank" rel="noreferrer">aboutcookies.org</a>
               </p>
             </section>
 
@@ -156,10 +207,23 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">12. Contacto</h2>
+              <h2 className="text-xl font-semibold mb-3">12. Contacto y Delegado de Protección de Datos</h2>
               <p>
                 Si tienes preguntas sobre esta Política de Privacidad o sobre cómo manejamos tus datos, 
-                por favor contáctanos a través de nuestro sitio web.
+                puedes contactarnos:
+              </p>
+              <ul className="list-none space-y-2 mt-4">
+                <li><strong>Email de Privacidad:</strong> privacy@roastr.ai</li>
+                <li><strong>Email Legal:</strong> legal@roastr.ai</li>
+                <li><strong>Sitio web:</strong> <a href="https://roastr.ai" className="underline hover:text-primary" target="_blank" rel="noreferrer">roastr.ai</a></li>
+              </ul>
+              <p className="mt-4">
+                Para ejercer tus derechos GDPR (acceso, rectificación, supresión, portabilidad, oposición, limitación), 
+                por favor envía un email a <strong>privacy@roastr.ai</strong> con el asunto "Ejercicio de Derechos GDPR" 
+                e incluye una copia de tu documento de identidad.
+              </p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Responderemos a tu solicitud en un plazo máximo de 30 días según lo establecido por el GDPR.
               </p>
             </section>
 
