@@ -158,7 +158,7 @@ cd frontend && npm run build
 ```
 
 **Result:**
-```
+```text
 ✓ 2143 modules transformed.
 ✓ built in 2.76s
 ```
