@@ -25,12 +25,11 @@ Durante QA manual de Auth v2 en staging (Frontend: Vercel staging.roastr.ai, Bac
 - **Archivo:** `frontend/src/components/auth/register-form.tsx`
 - Actualizado mapeo de errores para usar **backend v2 taxonomy (error slugs)**
 - Añadido manejo correcto de `data?.error?.slug` de backend v2
-- Logs detallados en consola para debugging (NO en UI)
-- Mensajes UX claros:
+- Logs seguros: Solo identificadores no sensibles (status, errorSlug)
+- Mensajes UX con anti-enumeration:
+  - Errores de cuenta → "No se pudo completar el registro. Inténtalo de nuevo" (genérico)
   - `AUTH_UNKNOWN` → "No se pudo crear la cuenta. Inténtalo de nuevo"
-  - `ACCOUNT_EMAIL_ALREADY_EXISTS` → "Este email ya está registrado"
   - `POLICY_RATE_LIMITED` → "Demasiados intentos. Intenta en 15 minutos"
-  - Etc.
 
 **Contrato Backend v2:**
 ```json
@@ -45,10 +44,11 @@ Durante QA manual de Auth v2 en staging (Frontend: Vercel staging.roastr.ai, Bac
 }
 ```
 
-**Frontend ahora extrae:**
+**Frontend extrae y mapea:**
 ```typescript
 const errorSlug = data?.error?.slug || data?.error_code || 'AUTH_UNKNOWN';
 setError(getErrorMessage(errorSlug));
+// getErrorMessage() devuelve mensajes genéricos anti-enumeration
 ```
 
 ---
@@ -56,23 +56,22 @@ setError(getErrorMessage(errorSlug));
 ### ✅ 2. Validación de Email Deficiente
 
 **Problema:**
-- Emails inválidos (.con, .vom) producían "load failed"
+- Emails inválidos producían "load failed"
 - No había validación en tiempo real
 
 **Solución:**
 - **Archivos:**
   - `frontend/src/components/auth/register-form.tsx`
   - `frontend/src/pages/auth/login-v2.tsx`
-- Validación en caliente con regex mejorado:
+- Validación básica de formato en frontend, TLD delegado a backend:
   ```typescript
-  // Validación de formato básico
+  // Validación de formato básico (frontend)
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  
-  // Validación de TLD válido (evitar .con, .vom, etc)
-  const validTLDRegex = /^[^\s@]+@[^\s@]+\.(com|org|net|edu|gov|io|co|es|uk|de|fr|it|mx|ar|cl|pe|ve)$/i;
+  if (!emailRegex.test(email)) return 'El email no es válido';
+  // Backend valida TLD correctamente (acepta .gov.uk, .co.uk, etc)
   ```
-- Mensaje de error claro: **"El dominio del email no es válido"**
-- Bloqueado submit si email es inválido
+- Submit bloqueado si formato inválido
+- Backend devuelve error si TLD no válido
 
 ---
 
@@ -194,18 +193,19 @@ setError(getErrorMessage(errorSlug));
 ### Archivos Modificados
 
 1. **`frontend/src/components/auth/register-form.tsx`**
-   - Mapeo completo de errores backend v2 (slugs)
-   - Validación de email mejorada (TLD válidos)
+   - Mapeo completo de errores backend v2 (slugs) con anti-enumeration
+   - Validación de email: formato básico (TLD delegado a backend)
    - Validación reactiva de confirmPassword
-   - Logs en consola (debugging, NO UI)
+   - Logs seguros: Solo status y errorSlug (NO tokens/PII)
    - Extracción de `data?.error?.slug` del backend
 
 2. **`frontend/src/pages/auth/login-v2.tsx`**
    - Mapeo completo de errores backend v2 (slugs)
-   - Validación de email mejorada (TLD válidos)
+   - Validación de email: formato básico (TLD delegado a backend)
    - CTA de registro añadido
-   - Endpoint real `/api/v2/auth/login` (NO mock)
-   - Logs en consola (debugging, NO UI)
+   - Uso de apiClient centralizado (CSRF, mock mode, interceptors)
+   - Token storage seguro con setTokens()
+   - Logs seguros: Solo errorSlug (NO tokens/PII)
 
 3. **`frontend/src/lib/api/auth.js`**
    - Añadido `loginV2()` para endpoint v2
@@ -236,15 +236,15 @@ setError(getErrorMessage(errorSlug));
 
 1. **Registro:**
    - [ ] Email válido (gmail.com) → Success
-   - [ ] Email inválido (.con) → Error claro "El dominio del email no es válido"
+   - [ ] Email inválido (.con) → Backend devuelve error (frontend acepta formato básico)
    - [ ] Contraseñas no coinciden → Error reactivo que se limpia al corregir
-   - [ ] Email ya registrado → "Este email ya está registrado"
+   - [ ] Email ya registrado → "No se pudo completar el registro..." (anti-enumeration)
    - [ ] Email de confirmación enviado correctamente
 
 2. **Login:**
    - [ ] Credenciales correctas → Redirect a `/app`
    - [ ] Credenciales incorrectas → "El email o la contraseña no son correctos"
-   - [ ] Email inválido (.con) → "El dominio del email no es válido"
+   - [ ] Email inválido (.con) → Backend devuelve error (frontend acepta formato básico)
    - [ ] Rate limit → "Demasiados intentos. Intenta en 15 minutos"
 
 3. **Navegación:**
@@ -258,9 +258,9 @@ setError(getErrorMessage(errorSlug));
    - [ ] Persistencia funciona (reload página)
 
 5. **Logs (Consola):**
-   - [ ] Register failed → Log con `status`, `errorSlug`, `data`
-   - [ ] Login failed → Log con `status`, `errorSlug`, `data`
-   - [ ] Success → Log "Register success" / "Login success"
+   - [ ] Register failed → Log con `status`, `errorSlug` (NO data completo)
+   - [ ] Login failed → Log con `errorSlug` (NO data completo)
+   - [ ] Success → Log "Register succeeded" / "Login succeeded" (NO tokens)
 
 ---
 
