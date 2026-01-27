@@ -158,7 +158,7 @@ export default function TermsPage() {
               <p className="text-sm text-muted-foreground">
                 Al utilizar Roastr.AI, confirmas que has leído, entendido y aceptado estos Términos y Condiciones, 
                 así como nuestra{' '}
-                <Link to="/privacy" className="underline hover:text-primary">
+                <Link to="/privacy" className="underline hover:text-primary" target="_blank" rel="noreferrer">
                   Política de Privacidad
                 </Link>.
               </p>
