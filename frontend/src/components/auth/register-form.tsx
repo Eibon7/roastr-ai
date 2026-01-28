@@ -47,6 +47,9 @@ const authErrorMessages: Record<string, string> = {
   'POLICY_INVALID_REQUEST': 'Solicitud inválida. Verifica los datos e inténtalo de nuevo',
   'POLICY_NOT_FOUND': 'Recurso no encontrado',
   
+  // Network errors
+  'NETWORK_ERROR': 'Error de conexión. Verifica tu internet e inténtalo de nuevo',
+  
   // Legacy fallbacks
   'AUTH_EMAIL_TAKEN': 'No se pudo completar el registro. Inténtalo de nuevo',
   'AUTH_INVALID_EMAIL': 'Email inválido',

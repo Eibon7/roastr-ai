@@ -353,7 +353,21 @@ class ApiClient {
         return this.handleMockRequest(method, endpoint, data, error);
       }
 
-      throw error;
+      // If error is already structured (thrown from response.ok check), re-throw as is
+      if (error && typeof error === 'object' && 'error' in error && 'status' in error) {
+        throw error;
+      }
+
+      // For network errors or other exceptions, wrap in structured format
+      const errorObject = {
+        status: 0,
+        error: { 
+          slug: 'NETWORK_ERROR',
+          message: error.message || 'Error de conexión. Verifica tu internet e inténtalo de nuevo'
+        },
+        originalError: error
+      };
+      throw errorObject;
     }
   }
 
