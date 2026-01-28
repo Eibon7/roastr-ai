@@ -28,6 +28,20 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+// Mock apiClient
+vi.mock('@/lib/api/client', () => ({
+  default: {
+    post: vi.fn(),
+  },
+}));
+
+// Mock tokenStorage
+vi.mock('@/lib/auth/tokenStorage', () => ({
+  setTokens: vi.fn(),
+}));
+
+import apiClient from '@/lib/api/client';
+
 // Helper to render component
 function renderLoginPage() {
   return render(
@@ -40,6 +54,8 @@ function renderLoginPage() {
 describe('LoginPageV2', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default mock: pending promise to simulate loading state
+    vi.mocked(apiClient.post).mockImplementation(() => new Promise(() => {}));
   });
 
   describe('Rendering', () => {
@@ -94,7 +110,7 @@ describe('LoginPageV2', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/formato de email inválido/i)).toBeInTheDocument();
+        expect(screen.getByText(/el email no es válido/i)).toBeInTheDocument();
       });
     });
 
@@ -190,6 +206,11 @@ describe('LoginPageV2', () => {
 
   describe('Error Handling', () => {
     it('displays error message for AUTH_INVALID_CREDENTIALS', async () => {
+      // Mock error response
+      vi.mocked(apiClient.post).mockRejectedValueOnce({
+        error: { slug: 'AUTH_INVALID_CREDENTIALS' },
+      });
+
       const user = userEvent.setup();
       renderLoginPage();
 
@@ -202,7 +223,7 @@ describe('LoginPageV2', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/email o contraseña incorrectos/i)).toBeInTheDocument();
+        expect(screen.getByText(/el email o la contraseña no son correctos/i)).toBeInTheDocument();
       });
     });
 
@@ -215,6 +236,11 @@ describe('LoginPageV2', () => {
     });
 
     it('displays error with accessible alert role', async () => {
+      // Mock error response
+      vi.mocked(apiClient.post).mockRejectedValueOnce({
+        error: { slug: 'AUTH_INVALID_CREDENTIALS' },
+      });
+
       const user = userEvent.setup();
       renderLoginPage();
 
@@ -230,11 +256,16 @@ describe('LoginPageV2', () => {
         // Alert component from shadcn has multiple elements with role="alert"
         const alerts = screen.getAllByRole('alert');
         expect(alerts.length).toBeGreaterThan(0);
-        expect(screen.getByText(/email o contraseña incorrectos/i)).toBeInTheDocument();
+        expect(screen.getByText(/el email o la contraseña no son correctos/i)).toBeInTheDocument();
       });
     });
 
     it('never reveals if email exists (anti-enumeration)', async () => {
+      // Mock error response
+      vi.mocked(apiClient.post).mockRejectedValueOnce({
+        error: { slug: 'AUTH_INVALID_CREDENTIALS' },
+      });
+
       const user = userEvent.setup();
       renderLoginPage();
 
@@ -248,7 +279,7 @@ describe('LoginPageV2', () => {
 
       await waitFor(() => {
         // Should show generic message, not "email not found"
-        const errorText = screen.getByText(/email o contraseña incorrectos/i);
+        const errorText = screen.getByText(/el email o la contraseña no son correctos/i);
         expect(errorText).toBeInTheDocument();
         expect(screen.queryByText(/email.*no.*encontrado/i)).not.toBeInTheDocument();
       });
@@ -315,6 +346,18 @@ describe('LoginPageV2', () => {
 
   describe('Integration', () => {
     it('navigates to app on successful login', async () => {
+      // Mock successful login response
+      vi.mocked(apiClient.post).mockResolvedValueOnce({
+        session: {
+          access_token: 'mock-access-token',
+          refresh_token: 'mock-refresh-token',
+        },
+        user: {
+          id: 'user-123',
+          email: 'test@roastr.ai',
+        },
+      });
+
       const user = userEvent.setup();
       renderLoginPage();
 
