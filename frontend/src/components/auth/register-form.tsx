@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { setTokens } from '@/lib/auth/tokenStorage';
-// @ts-ignore - client.js is a JS module without types
+// @ts-expect-error - client.js is a JS module without types
 import apiClient from '@/lib/api/client';
 
 /**
@@ -70,6 +70,7 @@ function getErrorMessage(errorSlug: string | undefined): string {
 /**
  * Zod schema for registration form
  * Validates email format, password requirements, and terms acceptance
+ * Password rules match backend: min 8, lowercase, digit, no whitespace, uppercase OR symbol
  */
 const registerSchema = z.object({
   email: z
@@ -80,8 +81,12 @@ const registerSchema = z.object({
     .string()
     .min(8, 'Mínimo 8 caracteres')
     .regex(/[a-z]/, 'Debe incluir al menos una minúscula')
-    .regex(/[A-Z]/, 'Debe incluir al menos una mayúscula')
-    .regex(/[0-9]/, 'Debe incluir al menos un número'),
+    .regex(/[0-9]/, 'Debe incluir al menos un número')
+    .regex(/^\S*$/, 'No debe contener espacios')
+    .refine(
+      (val) => /[A-Z]/.test(val) || /[^A-Za-z0-9\s]/.test(val),
+      'Debe incluir al menos una mayúscula o un símbolo'
+    ),
   confirmPassword: z
     .string()
     .min(1, 'Debes confirmar tu contraseña'),
@@ -132,6 +137,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     }
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- watch() is safe for UI feedback only
   const password = watch('password');
 
   /**
@@ -238,16 +244,22 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
                   Una letra minúscula
                 </li>
                 <li 
-                  data-testid="requirement-uppercase"
-                  className={password && /[A-Z]/.test(password) ? 'text-green-600 dark:text-green-400' : ''}
-                >
-                  Una letra mayúscula
-                </li>
-                <li 
                   data-testid="requirement-number"
                   className={password && /[0-9]/.test(password) ? 'text-green-600 dark:text-green-400' : ''}
                 >
                   Un número
+                </li>
+                <li 
+                  data-testid="requirement-no-whitespace"
+                  className={password && /^\S*$/.test(password) ? 'text-green-600 dark:text-green-400' : ''}
+                >
+                  Sin espacios
+                </li>
+                <li 
+                  data-testid="requirement-uppercase-or-symbol"
+                  className={password && (/[A-Z]/.test(password) || /[^A-Za-z0-9\s]/.test(password)) ? 'text-green-600 dark:text-green-400' : ''}
+                >
+                  Una letra mayúscula o un símbolo
                 </li>
               </ul>
             </div>
