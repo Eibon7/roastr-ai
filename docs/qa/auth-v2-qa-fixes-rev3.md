@@ -17,11 +17,13 @@ Durante QA manual de Auth v2 en staging (Frontend: Vercel staging.roastr.ai, Bac
 ### ✅ 1. Registro Falla - Error Mapping
 
 **Problema:**
+
 - Al crear cuenta aparecía "Error al registrar. Inténtalo de nuevo"
 - No se enviaba email
 - Backend devolvía error no mapeado
 
 **Solución:**
+
 - **Archivo:** `frontend/src/components/auth/register-form.tsx`
 - Actualizado mapeo de errores para usar **backend v2 taxonomy (error slugs)**
 - Añadido manejo correcto de `data?.error?.slug` de backend v2
@@ -32,6 +34,7 @@ Durante QA manual de Auth v2 en staging (Frontend: Vercel staging.roastr.ai, Bac
   - `POLICY_RATE_LIMITED` → "Demasiados intentos. Intenta en 15 minutos"
 
 **Contrato Backend v2:**
+
 ```json
 // Error response
 {
@@ -45,6 +48,7 @@ Durante QA manual de Auth v2 en staging (Frontend: Vercel staging.roastr.ai, Bac
 ```
 
 **Frontend extrae y mapea:**
+
 ```typescript
 const errorSlug = data?.error?.slug || data?.error_code || 'AUTH_UNKNOWN';
 setError(getErrorMessage(errorSlug));
@@ -56,10 +60,12 @@ setError(getErrorMessage(errorSlug));
 ### ✅ 2. Validación de Email Deficiente
 
 **Problema:**
+
 - Emails inválidos producían "load failed"
 - No había validación en tiempo real
 
 **Solución:**
+
 - **Archivos:**
   - `frontend/src/components/auth/register-form.tsx`
   - `frontend/src/pages/auth/login-v2.tsx`
@@ -78,30 +84,49 @@ setError(getErrorMessage(errorSlug));
 ### ✅ 3. Validación de Contraseña / Confirmación
 
 **Problema:**
+
 - Si las contraseñas no coinciden:
   - El error no desaparece al corregir
   - El mensaje global no se limpia
 
 **Solución:**
+
 - **Archivo:** `frontend/src/components/auth/register-form.tsx`
 - Migración a react-hook-form + Zod para validación declarativa:
+
   ```typescript
   // Zod schema con refine para confirmPassword
-  const registerSchema = z.object({
-    email: z.string().min(1).email(),
-    password: z.string().min(8).regex(/[a-z]/).regex(/[0-9]/).regex(/^\S*$/),
-    confirmPassword: z.string().min(1),
-    termsAccepted: z.boolean().refine((val) => val === true)
-  }).refine((data) => data.password === data.confirmPassword, {
-    message: 'Las contraseñas no coinciden',
-    path: ['confirmPassword']
-  });
-  
+  const registerSchema = z
+    .object({
+      email: z.string().min(1).email(),
+      password: z
+        .string()
+        .min(8)
+        .regex(/[a-z]/)
+        .regex(/[0-9]/)
+        .regex(/^\S*$/)
+        .refine(
+          (val) => /[A-Z]/.test(val) || /[^A-Za-z0-9\s]/.test(val),
+          'Debe incluir al menos una mayúscula o un símbolo'
+        ),
+      confirmPassword: z.string().min(1),
+      termsAccepted: z.boolean().refine((val) => val === true)
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: 'Las contraseñas no coinciden',
+      path: ['confirmPassword']
+    });
+
   // RHF maneja validación automáticamente
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm({
     resolver: zodResolver(registerSchema)
   });
   ```
+
 - Validación reactiva automática con RHF
 - Errores se limpian cuando el usuario corrige inputs (manejado por RHF)
 - Errores por campo via `formState.errors` (NO useState manual)
@@ -111,19 +136,19 @@ setError(getErrorMessage(errorSlug));
 ### ✅ 4. Mensajes de Error Claros
 
 **Problema:**
+
 - Login incorrecto mostraba mensajes técnicos o genéricos pobres
 
 **Solución:**
+
 - **Archivos:**
   - `frontend/src/pages/auth/login-v2.tsx`
   - `frontend/src/components/auth/register-form.tsx`
 - Mensajes UX mejorados (anti-enumeration mantenido):
   - ❌ **Antes:** "Invalid credentials"
   - ✅ **Ahora:** "El email o la contraseña no son correctos"
-  
   - ❌ **Antes:** "Error al registrar"
   - ✅ **Ahora:** "No se pudo crear la cuenta. Inténtalo de nuevo"
-  
   - ❌ **Antes:** "Rate limit exceeded"
   - ✅ **Ahora:** "Demasiados intentos. Intenta en 15 minutos"
 
@@ -135,11 +160,14 @@ setError(getErrorMessage(errorSlug));
 ### ✅ 5. Navegación Login ↔ Registro
 
 **Problema:**
+
 - No había botón claro para ir de login → registro
 
 **Solución:**
+
 - **Archivo:** `frontend/src/pages/auth/login-v2.tsx`
 - Añadido CTA de registro:
+
   ```tsx
   <div className="text-sm text-center text-muted-foreground">
     ¿No tienes cuenta?{' '}
@@ -165,9 +193,11 @@ setError(getErrorMessage(errorSlug));
 ### ✅ 6. Tema (Claro / Oscuro / Sistema)
 
 **Problema:**
+
 - La UI no respeta la configuración del usuario
 
 **Solución:**
+
 - **Verificado:** Ya funcionaba correctamente
 - **Archivos:**
   - `frontend/src/lib/theme-provider.tsx` - ThemeProvider con next-themes
@@ -175,9 +205,9 @@ setError(getErrorMessage(errorSlug));
   - `frontend/src/components/layout/theme-toggle.tsx` - Toggle funcionando
 - **Configuración:**
   ```tsx
-  <ThemeProvider 
-    defaultTheme="system" 
-    storageKey="roastr-theme" 
+  <ThemeProvider
+    defaultTheme="system"
+    storageKey="roastr-theme"
     enableSystem={true}
   >
   ```
@@ -224,7 +254,7 @@ setError(getErrorMessage(errorSlug));
 ✅ **NO añadir librerías nuevas** - Usado zod existente  
 ✅ **NO tocar infra** - Cero cambios  
 ✅ **NO cambiar feature flags** - Cero cambios  
-✅ **Anti-enumeration mantenido** - Email no encontrado = credenciales incorrectas  
+✅ **Anti-enumeration mantenido** - Email no encontrado = credenciales incorrectas
 
 ---
 
