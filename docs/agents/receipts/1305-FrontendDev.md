@@ -33,7 +33,7 @@ const handleBlur = (field) => {...};
 
 **Ahora:**
 ```typescript
-// react-hook-form con Zod resolver
+// react-hook-form con Zod resolver + Controller
 const registerSchema = z.object({
   email: z.string().min(1).email(),
   password: z.string().min(8).regex(/[a-z]/).regex(/[A-Z]/).regex(/[0-9]/),
@@ -44,9 +44,8 @@ const registerSchema = z.object({
   path: ['confirmPassword']
 });
 
-const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<RegisterFormData>({
-  resolver: zodResolver(registerSchema)
-});
+const { register, handleSubmit, watch, control, formState: { errors, isSubmitting } } = 
+  useForm<RegisterFormData>({ resolver: zodResolver(registerSchema) });
 ```
 
 **Beneficios:**
@@ -54,6 +53,7 @@ const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = u
 - ✅ Menos código boilerplate
 - ✅ Tipo-safe con TypeScript
 - ✅ Validación automática onChange/onBlur
+- ✅ Controller para Radix UI Checkbox (termsAccepted)
 
 ---
 
@@ -89,7 +89,7 @@ const responseData = await apiClient.post('/v2/auth/register', {
 
 ---
 
-### 3. Accesibilidad Mantenida
+### 3. Accesibilidad & Seguridad
 
 **Atributos ARIA preservados:**
 ```typescript
@@ -105,12 +105,38 @@ const responseData = await apiClient.post('/v2/auth/register', {
 )}
 ```
 
+**Checkbox con Controller (Radix UI):**
+```typescript
+<Controller
+  name="termsAccepted"
+  control={control}
+  render={({ field }) => (
+    <Checkbox
+      id="terms"
+      checked={field.value}
+      onCheckedChange={field.onChange}
+      disabled={isSubmitting}
+      aria-invalid={!!errors.termsAccepted}
+    />
+  )}
+/>
+```
+
+**Seguridad en Links externos:**
+```typescript
+<Link to="/terms" target="_blank" rel="noreferrer">
+  términos y condiciones
+</Link>
+```
+
 **Características:**
 - ✅ `aria-invalid` para campos con error
 - ✅ `aria-describedby` vincula error al campo
 - ✅ `role="alert"` para mensajes de error
 - ✅ IDs únicos para screen readers
 - ✅ Labels vinculados con htmlFor
+- ✅ `rel="noreferrer"` previene tabnabbing
+- ✅ Controller para Radix UI Checkbox
 
 ---
 

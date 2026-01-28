@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -120,6 +120,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors, isSubmitting }
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -274,11 +275,18 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
 
           {/* Terms Checkbox */}
           <div className="flex items-start space-x-2">
-            <Checkbox
-              id="terms"
-              disabled={isSubmitting}
-              aria-invalid={!!errors.termsAccepted}
-              {...register('termsAccepted')}
+            <Controller
+              name="termsAccepted"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id="terms"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  disabled={isSubmitting}
+                  aria-invalid={!!errors.termsAccepted}
+                />
+              )}
             />
             <div className="space-y-1">
               <Label
@@ -286,11 +294,11 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
                 className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 Acepto los{' '}
-                <Link to="/terms" className="underline hover:text-primary" target="_blank">
+                <Link to="/terms" className="underline hover:text-primary" target="_blank" rel="noreferrer">
                   términos y condiciones
                 </Link>
                 {' '}y la{' '}
-                <Link to="/privacy" className="underline hover:text-primary" target="_blank">
+                <Link to="/privacy" className="underline hover:text-primary" target="_blank" rel="noreferrer">
                   política de privacidad
                 </Link>
               </Label>
