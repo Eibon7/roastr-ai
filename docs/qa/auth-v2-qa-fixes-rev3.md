@@ -84,29 +84,27 @@ setError(getErrorMessage(errorSlug));
 
 **Solución:**
 - **Archivo:** `frontend/src/components/auth/register-form.tsx`
-- Validación reactiva implementada:
+- Migración a react-hook-form + Zod para validación declarativa:
   ```typescript
-  const handleChange = (field: 'email' | 'password' | 'confirmPassword', value: string) => {
-    // Validar inmediatamente
-    if (field === 'confirmPassword') {
-      const confirmError = validateConfirmPassword(value, formData.password);
-      setFieldErrors(prev => ({ ...prev, confirmPassword: confirmError }));
-    }
-    
-    // Si password cambia, re-validar confirmPassword
-    if (field === 'password' && formData.confirmPassword) {
-      const confirmError = validateConfirmPassword(formData.confirmPassword, value);
-      setFieldErrors(prev => ({ ...prev, confirmPassword: confirmError }));
-    }
-    
-    // Limpiar error global cuando usuario corrige
-    if (error === 'Por favor corrige los errores en el formulario') {
-      setError(null);
-    }
-  };
+  // Zod schema con refine para confirmPassword
+  const registerSchema = z.object({
+    email: z.string().min(1).email(),
+    password: z.string().min(8).regex(/[a-z]/).regex(/[0-9]/).regex(/^\S*$/),
+    confirmPassword: z.string().min(1),
+    termsAccepted: z.boolean().refine((val) => val === true)
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: 'Las contraseñas no coinciden',
+    path: ['confirmPassword']
+  });
+  
+  // RHF maneja validación automáticamente
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(registerSchema)
+  });
   ```
-- Errores se limpian cuando el usuario corrige inputs
-- Errores por campo (NO solo globales)
+- Validación reactiva automática con RHF
+- Errores se limpian cuando el usuario corrige inputs (manejado por RHF)
+- Errores por campo via `formState.errors` (NO useState manual)
 
 ---
 

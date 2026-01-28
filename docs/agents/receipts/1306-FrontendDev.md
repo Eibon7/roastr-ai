@@ -1,6 +1,6 @@
-# FrontendDev Agent Receipt - PR #1305
+# FrontendDev Agent Receipt - PR #1306
 
-**PR:** #1305 - QA Fixes Auth v2 - Error Mapping, Validation & Navigation (rev3/x)  
+**PR:** #1306 - QA Fixes Auth v2 - Error Mapping, Validation & Navigation (rev3/x)  
 **Issue:** [ROA-532](https://linear.app/roastrai/issue/ROA-532/manual-testing)  
 **Agent:** FrontendDev  
 **Fecha:** 2026-01-27  
@@ -242,7 +242,7 @@ const password = watch('password');
 
 ## 📚 Referencias
 
-- **PR:** #1305
+- **PR:** #1306
 - **Issue:** ROA-532
 - **Agent Manifest:** `agents/manifest.yaml` → FrontendDev
 - **Documentación:** `docs/qa/auth-v2-qa-fixes-rev3.md`

@@ -49,6 +49,8 @@ const authErrorMessages: Record<string, string> = {
   
   // Network errors
   'NETWORK_ERROR': 'Error de conexión. Verifica tu internet e inténtalo de nuevo',
+  'AUTH_SESSION_EXPIRED': 'Tu sesión ha expirado. Por favor inicia sesión de nuevo',
+  'AUTH_FORBIDDEN': 'No tienes permiso para realizar esta acción',
   
   // Legacy fallbacks
   'AUTH_EMAIL_TAKEN': 'No se pudo completar el registro. Inténtalo de nuevo',
