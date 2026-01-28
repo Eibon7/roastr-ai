@@ -11,6 +11,7 @@
 ## 🎯 Scope
 
 Refactorización de `register-form.tsx` para cumplir con estándares del proyecto:
+
 - Migrar de useState manual a react-hook-form + Zod
 - Reemplazar fetch directo con apiClient centralizado
 - Mantener accesibilidad (aria-invalid, role="alert")
@@ -23,6 +24,7 @@ Refactorización de `register-form.tsx` para cumplir con estándares del proyect
 ### 1. React Hook Form + Zod Integration
 
 **Antes:**
+
 ```typescript
 // Manual useState + validación manual
 const [formData, setFormData] = useState({...});
@@ -32,23 +34,32 @@ const handleBlur = (field) => {...};
 ```
 
 **Ahora:**
+
 ```typescript
 // react-hook-form con Zod resolver + Controller
-const registerSchema = z.object({
-  email: z.string().min(1).email(),
-  password: z.string().min(8).regex(/[a-z]/).regex(/[A-Z]/).regex(/[0-9]/),
-  confirmPassword: z.string().min(1),
-  termsAccepted: z.boolean().refine((val) => val === true)
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Las contraseñas no coinciden',
-  path: ['confirmPassword']
-});
+const registerSchema = z
+  .object({
+    email: z.string().min(1).email(),
+    password: z.string().min(8).regex(/[a-z]/).regex(/[A-Z]/).regex(/[0-9]/),
+    confirmPassword: z.string().min(1),
+    termsAccepted: z.boolean().refine((val) => val === true)
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Las contraseñas no coinciden',
+    path: ['confirmPassword']
+  });
 
-const { register, handleSubmit, watch, control, formState: { errors, isSubmitting } } = 
-  useForm<RegisterFormData>({ resolver: zodResolver(registerSchema) });
+const {
+  register,
+  handleSubmit,
+  watch,
+  control,
+  formState: { errors, isSubmitting }
+} = useForm<RegisterFormData>({ resolver: zodResolver(registerSchema) });
 ```
 
 **Beneficios:**
+
 - ✅ Validación declarativa con Zod
 - ✅ Menos código boilerplate
 - ✅ Tipo-safe con TypeScript
@@ -60,6 +71,7 @@ const { register, handleSubmit, watch, control, formState: { errors, isSubmittin
 ### 2. API Client Centralizado
 
 **Antes:**
+
 ```typescript
 // Fetch directo sin CSRF/interceptors
 const response = await fetch(endpoint, {
@@ -70,6 +82,7 @@ const response = await fetch(endpoint, {
 ```
 
 **Ahora:**
+
 ```typescript
 // apiClient centralizado
 const responseData = await apiClient.post('/v2/auth/register', {
@@ -80,6 +93,7 @@ const responseData = await apiClient.post('/v2/auth/register', {
 ```
 
 **Beneficios:**
+
 - ✅ CSRF token automático
 - ✅ Mock mode support
 - ✅ Rate limit handling
@@ -92,6 +106,7 @@ const responseData = await apiClient.post('/v2/auth/register', {
 ### 3. Accesibilidad & Seguridad
 
 **Atributos ARIA preservados:**
+
 ```typescript
 <Input
   aria-invalid={!!errors.email}
@@ -106,6 +121,7 @@ const responseData = await apiClient.post('/v2/auth/register', {
 ```
 
 **Checkbox con Controller (Radix UI):**
+
 ```typescript
 <Controller
   name="termsAccepted"
@@ -123,6 +139,7 @@ const responseData = await apiClient.post('/v2/auth/register', {
 ```
 
 **Seguridad en Links externos:**
+
 ```typescript
 <Link to="/terms" target="_blank" rel="noreferrer">
   términos y condiciones
@@ -130,6 +147,7 @@ const responseData = await apiClient.post('/v2/auth/register', {
 ```
 
 **Características:**
+
 - ✅ `aria-invalid` para campos con error
 - ✅ `aria-describedby` vincula error al campo
 - ✅ `role="alert"` para mensajes de error
@@ -143,11 +161,12 @@ const responseData = await apiClient.post('/v2/auth/register', {
 ### 4. Error Mapping Backend v2 (Sin Cambios)
 
 **Mantenido:**
+
 ```typescript
 const authErrorMessages: Record<string, string> = {
   // Anti-enumeration messages
-  'ACCOUNT_EMAIL_ALREADY_EXISTS': 'No se pudo completar el registro...',
-  'AUTH_UNKNOWN': 'No se pudo crear la cuenta...',
+  ACCOUNT_EMAIL_ALREADY_EXISTS: 'No se pudo completar el registro...',
+  AUTH_UNKNOWN: 'No se pudo crear la cuenta...'
   // ... resto de mensajes
 };
 
@@ -157,6 +176,7 @@ function getErrorMessage(errorSlug: string | undefined): string {
 ```
 
 **Características:**
+
 - ✅ Mapeo de error slugs backend v2
 - ✅ Anti-enumeration respetado
 - ✅ Mensajes UX claros
@@ -167,6 +187,7 @@ function getErrorMessage(errorSlug: string | undefined): string {
 ### 5. Password Requirements Visual Feedback
 
 **Mantenido con watch():**
+
 ```typescript
 const password = watch('password');
 
@@ -176,6 +197,7 @@ const password = watch('password');
 ```
 
 **Características:**
+
 - ✅ Feedback visual en tiempo real
 - ✅ Verde cuando requisito cumplido
 - ✅ Usa `watch()` de react-hook-form
@@ -197,6 +219,7 @@ const password = watch('password');
 ## 🧪 Testing
 
 **Manual Testing Checklist:**
+
 - [ ] Email válido → validación pasa
 - [ ] Email inválido → error "El email no es válido"
 - [ ] Password < 8 chars → error "Mínimo 8 caracteres"
@@ -229,9 +252,10 @@ const password = watch('password');
 
 **Breaking Changes:** ❌ Ninguno  
 **Dependencias Añadidas:** ❌ Ninguna  
-**API Changes:** ❌ Ninguno  
+**API Changes:** ❌ Ninguno
 
 **Beneficios:**
+
 - ✅ Código más mantenible (react-hook-form)
 - ✅ Menos boilerplate (-87 líneas)
 - ✅ Consistencia con login-v2.tsx

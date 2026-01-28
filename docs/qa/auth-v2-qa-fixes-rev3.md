@@ -50,9 +50,15 @@ Durante QA manual de Auth v2 en staging (Frontend: Vercel staging.roastr.ai, Bac
 **Frontend extrae y mapea:**
 
 ```typescript
-const errorSlug = data?.error?.slug || data?.error_code || 'AUTH_UNKNOWN';
-setError(getErrorMessage(errorSlug));
-// getErrorMessage() devuelve mensajes genéricos anti-enumeration
+// Extraer slug del error estructurado de apiClient
+const errorSlug = err?.error?.slug || err?.error_code || err?.response?.data?.error?.slug || 'AUTH_UNKNOWN';
+
+// Mostrar mensaje UX (anti-enumeration)
+setBackendError(getErrorMessage(errorSlug));
+
+// getErrorMessage() mapea slugs → mensajes genéricos:
+// AUTH_INVALID_CREDENTIALS → "El email o la contraseña no son correctos"
+// ACCOUNT_EMAIL_ALREADY_EXISTS → "No se pudo completar el registro. Inténtalo de nuevo"
 ```
 
 ---
@@ -69,12 +75,16 @@ setError(getErrorMessage(errorSlug));
 - **Archivos:**
   - `frontend/src/components/auth/register-form.tsx`
   - `frontend/src/pages/auth/login-v2.tsx`
-- Validación básica de formato en frontend, TLD delegado a backend:
+- Validación de formato en frontend via Zod schema:
   ```typescript
-  // Validación de formato básico (frontend)
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) return 'El email no es válido';
-  // Backend valida TLD correctamente (acepta .gov.uk, .co.uk, etc)
+  // Zod valida formato básico de email
+  email: z.string().min(1, 'El email es requerido').email('El email no es válido')
+  
+  // Ejemplo de error:
+  // Input: "usuario.com" (sin @)
+  // Error: "El email no es válido"
+  
+  // Backend valida TLD y formato completo (acepta .gov.uk, .co.uk, etc)
   ```
 - Submit bloqueado si formato inválido
 - Backend devuelve error si TLD no válido
@@ -264,7 +274,7 @@ setError(getErrorMessage(errorSlug));
 
 1. **Registro:**
    - [ ] Email válido (gmail.com) → Success
-   - [ ] Email inválido (.con) → Backend devuelve error (frontend acepta formato básico)
+   - [ ] Email sin @ (ej: usuario.com) → Error de formato en frontend "El email no es válido"
    - [ ] Contraseñas no coinciden → Error reactivo que se limpia al corregir
    - [ ] Email ya registrado → "No se pudo completar el registro..." (anti-enumeration)
    - [ ] Email de confirmación enviado correctamente

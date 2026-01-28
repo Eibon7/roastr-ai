@@ -142,7 +142,6 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     }
   });
 
-  // eslint-disable-next-line react-hooks/incompatible-library -- watch() is safe for UI feedback only
   const password = watch('password');
 
   /**
@@ -302,6 +301,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
                   onCheckedChange={field.onChange}
                   disabled={isSubmitting}
                   aria-invalid={!!errors.termsAccepted}
+                  aria-describedby={errors.termsAccepted ? 'terms-error' : undefined}
                 />
               )}
             />
@@ -320,7 +320,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
                 </Link>
               </Label>
               {errors.termsAccepted && (
-                <p className="text-sm text-destructive" role="alert">
+                <p id="terms-error" className="text-sm text-destructive" role="alert">
                   {errors.termsAccepted.message}
                 </p>
               )}
