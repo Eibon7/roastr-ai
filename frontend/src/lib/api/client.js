@@ -267,7 +267,12 @@ class ApiClient {
 
             if (!retryResponse.ok) {
               const errorData = await retryResponse.json().catch(() => ({}));
-              throw new Error(errorData.error || `HTTP error! status: ${retryResponse.status}`);
+              const errorObject = {
+                status: retryResponse.status,
+                error: errorData.error || { slug: errorData.error_code || 'AUTH_UNKNOWN' },
+                response: { data: errorData }
+              };
+              throw errorObject;
             }
 
             response = retryResponse;
@@ -323,7 +328,13 @@ class ApiClient {
       }
 
       if (!response.ok) {
-        throw new Error(responseData.error || `HTTP error! status: ${response.status}`);
+        // For backend v2 error format: { error: { slug: '...', retryable: boolean } }
+        const errorObject = {
+          status: response.status,
+          error: responseData.error || { slug: responseData.error_code || 'AUTH_UNKNOWN' },
+          response: { data: responseData }
+        };
+        throw errorObject;
       }
 
       // Run response interceptors
