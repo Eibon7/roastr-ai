@@ -40,7 +40,16 @@ const handleBlur = (field) => {...};
 const registerSchema = z
   .object({
     email: z.string().min(1).email(),
-    password: z.string().min(8).regex(/[a-z]/).regex(/[A-Z]/).regex(/[0-9]/),
+    password: z
+      .string()
+      .min(8)
+      .regex(/[a-z]/)
+      .regex(/[0-9]/)
+      .regex(/^\S*$/) // No spaces
+      .refine(
+        (val) => /[A-Z]/.test(val) || /[^A-Za-z0-9\s]/.test(val),
+        'Debe incluir al menos una mayúscula o un símbolo'
+      ),
     confirmPassword: z.string().min(1),
     termsAccepted: z.boolean().refine((val) => val === true)
   })
