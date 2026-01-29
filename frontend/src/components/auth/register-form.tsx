@@ -47,6 +47,11 @@ const authErrorMessages: Record<string, string> = {
   'POLICY_INVALID_REQUEST': 'Solicitud inválida. Verifica los datos e inténtalo de nuevo',
   'POLICY_NOT_FOUND': 'Recurso no encontrado',
   
+  // Network errors
+  'NETWORK_ERROR': 'Error de conexión. Verifica tu internet e inténtalo de nuevo',
+  'AUTH_SESSION_EXPIRED': 'Tu sesión ha expirado. Por favor inicia sesión de nuevo',
+  'AUTH_FORBIDDEN': 'No tienes permiso para realizar esta acción',
+  
   // Legacy fallbacks
   'AUTH_EMAIL_TAKEN': 'No se pudo completar el registro. Inténtalo de nuevo',
   'AUTH_INVALID_EMAIL': 'Email inválido',
@@ -137,7 +142,6 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     }
   });
 
-  // eslint-disable-next-line react-hooks/incompatible-library -- watch() is safe for UI feedback only
   const password = watch('password');
 
   /**
@@ -297,6 +301,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
                   onCheckedChange={field.onChange}
                   disabled={isSubmitting}
                   aria-invalid={!!errors.termsAccepted}
+                  aria-describedby={errors.termsAccepted ? 'terms-error' : undefined}
                 />
               )}
             />
@@ -315,7 +320,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
                 </Link>
               </Label>
               {errors.termsAccepted && (
-                <p className="text-sm text-destructive" role="alert">
+                <p id="terms-error" className="text-sm text-destructive" role="alert">
                   {errors.termsAccepted.message}
                 </p>
               )}

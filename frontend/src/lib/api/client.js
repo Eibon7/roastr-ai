@@ -262,12 +262,24 @@ class ApiClient {
             if (retryResponse.status === 401) {
               // Still 401 after refresh - handle logout
               await this.handle401();
-              throw new Error('Session expired. Please log in again.');
+              const errorObject = {
+                status: 401,
+                error: { 
+                  slug: 'AUTH_SESSION_EXPIRED',
+                  message: 'Session expired. Please log in again.'
+                }
+              };
+              throw errorObject;
             }
 
             if (!retryResponse.ok) {
               const errorData = await retryResponse.json().catch(() => ({}));
-              throw new Error(errorData.error || `HTTP error! status: ${retryResponse.status}`);
+              const errorObject = {
+                status: retryResponse.status,
+                error: errorData.error || { slug: errorData.error_code || 'AUTH_UNKNOWN' },
+                response: { data: errorData }
+              };
+              throw errorObject;
             }
 
             response = retryResponse;
@@ -284,9 +296,15 @@ class ApiClient {
       if (response.status === 403) {
         await this.handle403();
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error || 'Access denied. You do not have permission to access this resource.'
-        );
+        const errorObject = {
+          status: 403,
+          error: errorData.error || { 
+            slug: 'AUTH_FORBIDDEN',
+            message: 'Access denied. You do not have permission to access this resource.'
+          },
+          response: { data: errorData }
+        };
+        throw errorObject;
       }
 
       // Handle 429 Too Many Requests
@@ -307,9 +325,16 @@ class ApiClient {
           }
         }
 
-        throw new Error(
-          `Rate limit exceeded. Please wait ${Math.ceil(waitSeconds / 60)} minutes before trying again.`
-        );
+        const errorObject = {
+          status: 429,
+          error: errorData.error || {
+            slug: 'POLICY_RATE_LIMITED',
+            message: `Rate limit exceeded. Please wait ${Math.ceil(waitSeconds / 60)} minutes before trying again.`
+          },
+          response: { data: errorData },
+          retryAfter: waitSeconds
+        };
+        throw errorObject;
       }
 
       // Handle different response types
@@ -323,7 +348,13 @@ class ApiClient {
       }
 
       if (!response.ok) {
-        throw new Error(responseData.error || `HTTP error! status: ${response.status}`);
+        // For backend v2 error format: { error: { slug: '...', retryable: boolean } }
+        const errorObject = {
+          status: response.status,
+          error: responseData.error || { slug: responseData.error_code || 'AUTH_UNKNOWN' },
+          response: { data: responseData }
+        };
+        throw errorObject;
       }
 
       // Run response interceptors
@@ -342,7 +373,21 @@ class ApiClient {
         return this.handleMockRequest(method, endpoint, data, error);
       }
 
-      throw error;
+      // If error is already structured (thrown from response.ok check), re-throw as is
+      if (error && typeof error === 'object' && 'error' in error && 'status' in error) {
+        throw error;
+      }
+
+      // For network errors or other exceptions, wrap in structured format
+      const errorObject = {
+        status: 0,
+        error: { 
+          slug: 'NETWORK_ERROR',
+          message: error.message || 'Error de conexión. Verifica tu internet e inténtalo de nuevo'
+        },
+        originalError: error
+      };
+      throw errorObject;
     }
   }
 

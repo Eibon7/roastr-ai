@@ -68,6 +68,11 @@ const ERROR_MESSAGES: Record<string, string> = {
   'AUTH_SERVICE_UNAVAILABLE': 'Servicio de autenticación temporalmente no disponible',
   'AUTH_UNKNOWN': 'Algo ha fallado. Inténtalo más tarde',
   
+  // Network errors
+  'NETWORK_ERROR': 'Error de conexión. Verifica tu internet e inténtalo de nuevo',
+  'AUTH_SESSION_EXPIRED': 'Tu sesión ha expirado. Por favor inicia sesión de nuevo',
+  'AUTH_FORBIDDEN': 'No tienes permiso para realizar esta acción',
+  
   // Legacy fallbacks
   'AUTH_TOO_MANY_LOGIN_ATTEMPTS': 'Demasiados intentos de inicio de sesión. Intenta más tarde',
   'AUTH_RATE_LIMIT_EXCEEDED': 'Demasiadas solicitudes. Intenta más tarde',
