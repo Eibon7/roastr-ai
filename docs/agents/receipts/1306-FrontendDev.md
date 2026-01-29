@@ -39,19 +39,26 @@ const handleBlur = (field) => {...};
 // react-hook-form con Zod resolver + Controller
 const registerSchema = z
   .object({
-    email: z.string().min(1).email(),
+    email: z
+      .string()
+      .min(1, 'El email es requerido')
+      .email('El email no es válido'),
     password: z
       .string()
-      .min(8)
-      .regex(/[a-z]/)
-      .regex(/[0-9]/)
-      .regex(/^\S*$/) // No spaces
+      .min(8, 'Mínimo 8 caracteres')
+      .regex(/[a-z]/, 'Debe incluir al menos una minúscula')
+      .regex(/[0-9]/, 'Debe incluir al menos un número')
+      .regex(/^\S*$/, 'No debe contener espacios')
       .refine(
         (val) => /[A-Z]/.test(val) || /[^A-Za-z0-9\s]/.test(val),
         'Debe incluir al menos una mayúscula o un símbolo'
       ),
-    confirmPassword: z.string().min(1),
-    termsAccepted: z.boolean().refine((val) => val === true)
+    confirmPassword: z
+      .string()
+      .min(1, 'Debes confirmar tu contraseña'),
+    termsAccepted: z
+      .boolean()
+      .refine((val) => val === true, 'Debes aceptar los términos y condiciones')
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Las contraseñas no coinciden',
