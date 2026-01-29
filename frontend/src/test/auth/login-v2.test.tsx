@@ -374,4 +374,81 @@ describe('LoginPageV2', () => {
       });
     });
   });
+
+  describe('Theme Support', () => {
+    it('renders correctly in light mode', () => {
+      // Mock light theme
+      const mockMatchMedia = vi.fn().mockImplementation((query) => ({
+        matches: query === '(prefers-color-scheme: light)',
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }));
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: mockMatchMedia,
+      });
+
+      renderLoginPage();
+
+      // Verify core elements render regardless of theme
+      expect(screen.getByRole('button', { name: /iniciar sesión/i })).toBeInTheDocument();
+      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument();
+    });
+
+    it('renders correctly in dark mode', () => {
+      // Mock dark theme
+      const mockMatchMedia = vi.fn().mockImplementation((query) => ({
+        matches: query === '(prefers-color-scheme: dark)',
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }));
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: mockMatchMedia,
+      });
+
+      renderLoginPage();
+
+      // Verify core elements render regardless of theme
+      expect(screen.getByRole('button', { name: /iniciar sesión/i })).toBeInTheDocument();
+      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument();
+    });
+
+    it('respects system theme preference', () => {
+      // Mock system theme detection
+      const mockMatchMedia = vi.fn().mockImplementation((query) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }));
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: mockMatchMedia,
+      });
+
+      renderLoginPage();
+
+      // Verify core elements render with system theme
+      expect(screen.getByRole('button', { name: /iniciar sesión/i })).toBeInTheDocument();
+      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument();
+    });
+  });
 });

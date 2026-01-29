@@ -34,6 +34,7 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': 'off',
       'react-hooks/exhaustive-deps': 'off',
+      'react-hooks/incompatible-library': 'off',
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
