@@ -142,6 +142,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     }
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- watch() is safe for UI feedback only, not passed to memoized components
   const password = watch('password');
 
   /**
