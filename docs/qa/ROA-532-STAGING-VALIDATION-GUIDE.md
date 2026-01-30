@@ -220,6 +220,160 @@ Expected:
 
 ---
 
+### Rate Limiting (Login + Register)
+
+**Test 1: Login Rate Limit (5 Failed Attempts)**
+```text
+1. Navigate to staging login
+2. Enter email: testuser@example.com
+3. Enter wrong password: "wrongpass1"
+4. Click "Iniciar sesión"
+5. Repeat steps 3-4 four more times (total: 5 failed attempts)
+
+Expected (Frontend - Attempt 1-5):
+- ✅ User-facing message: "El email o la contraseña no son correctos"
+- ✅ No indication of rate limiting yet
+- ✅ Form remains usable
+
+Expected (Backend - Attempt 1-5):
+- ✅ Log entry for each failed attempt
+- ✅ Slug: AUTH_INVALID_CREDENTIALS
+- ✅ Backend log fields include:
+  - auth_action: "login"
+  - email: (masked or truncated)
+  - attempt_number: 1, 2, 3, 4, 5
+
+Expected (Attempt 6 - Rate Limited):
+- ✅ User-facing message: "Demasiados intentos. Inténtalo de nuevo en unos minutos"
+- ✅ Slug: AUTH_RATE_LIMITED
+- ✅ Backend log fields include:
+  - retryable: true
+  - auth_action: "login"
+  - request_id: (unique identifier)
+  - retry_after: (seconds or timestamp)
+- ✅ Submit button disabled or request blocked
+- ❌ NO reveal specific user existence
+
+Expected (After Wait Period):
+- ✅ Wait ~60 seconds (or configured retry_after)
+- ✅ Attempt with correct credentials → Success
+- ✅ Login proceeds normally
+```
+
+**Test 2: Register Rate Limit**
+```text
+1. Navigate to staging register
+2. Attempt to register with invalid data (e.g., weak password)
+3. Fix one issue, submit again (still invalid)
+4. Repeat 5+ times with different validation errors
+
+Expected (Frontend - Attempts 1-5):
+- ✅ Validation error messages displayed
+- ✅ Form remains usable
+- ✅ No rate limit message yet
+
+Expected (Backend - Attempts 1-5):
+- ✅ Log entry for each invalid attempt
+- ✅ Backend logs include:
+  - auth_action: "register"
+  - validation_errors: (array of errors)
+  - request_id: (unique per request)
+
+Expected (Attempt 6+ - Rate Limited):
+- ✅ User-facing message: "Demasiados intentos de registro. Inténtalo de nuevo más tarde"
+- ✅ Slug: AUTH_RATE_LIMITED
+- ✅ Backend log fields include:
+  - retryable: true
+  - auth_action: "register"
+  - request_id: (unique identifier)
+  - rate_limit_window: (e.g., "5_minutes")
+- ✅ Submit button disabled or request blocked
+
+Expected (After Wait Period):
+- ✅ Wait for configured window (e.g., 5 minutes)
+- ✅ Attempt with valid data → Success
+- ✅ Registration proceeds normally
+- ✅ Welcome email sent
+```
+
+**Test 3: Rate Limit Per-User vs Global**
+```text
+Purpose: Confirm if rate limits are per-user (email), per-IP, or global
+
+Setup:
+- User A: testuser1@example.com
+- User B: testuser2@example.com
+- Same IP address (same browser/network)
+
+Test Steps:
+1. With User A:
+   - Make 5 failed login attempts
+   - Observe rate limiting on 6th attempt
+
+2. Immediately after, with User B:
+   - Attempt login with User B credentials (correct password)
+
+Expected (Per-User Rate Limiting):
+- ✅ User B login succeeds (different email, not rate limited)
+- ✅ User A still rate limited
+- ✅ Backend logs show:
+  - rate_limit_key: includes email or user_id
+  - User A: blocked
+  - User B: allowed
+
+Expected (Per-IP Rate Limiting):
+- ❌ User B also blocked (same IP)
+- ⚠️ May indicate IP-based limiting (verify if intended)
+- ✅ Backend logs show:
+  - rate_limit_key: includes IP address
+  - Both users: blocked
+
+Backend Verification:
+- ✅ Check logs for rate_limit_key field
+- ✅ Verify rate limiting strategy matches product spec
+- ✅ Confirm request_id is unique per request
+- ✅ Verify retryable: true for all rate limit responses
+```
+
+**Test 4: Rate Limit Message Consistency**
+```text
+1. Trigger rate limit on login (5+ failed attempts)
+2. Note the exact error message
+3. Trigger rate limit on register (5+ invalid attempts)
+4. Note the exact error message
+
+Expected:
+- ✅ Both show AUTH_RATE_LIMITED slug
+- ✅ Messages are user-friendly (no technical details)
+- ✅ Messages may differ slightly by context:
+  - Login: "Demasiados intentos. Inténtalo de nuevo en unos minutos"
+  - Register: "Demasiados intentos de registro. Inténtalo de nuevo más tarde"
+- ✅ Backend logs include consistent fields:
+  - retryable: true
+  - auth_action: "login" | "register"
+  - request_id: (present in all)
+  - retry_after: (present in all)
+
+Backend Log Example (Expected):
+{
+  "timestamp": "2026-01-30T18:00:00Z",
+  "level": "warn",
+  "message": "Rate limit exceeded",
+  "error": {
+    "slug": "AUTH_RATE_LIMITED",
+    "message": "Too many attempts"
+  },
+  "retryable": true,
+  "auth_action": "login",
+  "request_id": "req_abc123xyz",
+  "rate_limit_key": "login:testuser@example.com",
+  "retry_after": 60,
+  "attempts": 6
+}
+```
+
+---
+
 ## 🛡️ Security Verification
 
 ### Production Logs Check
@@ -262,6 +416,8 @@ Expected:
 - [ ] No "Load failed" errors
 - [ ] No HTTP 500 errors
 - [ ] No debug logs in production console
+- [ ] Rate limiting: 5+ failed login attempts → AUTH_RATE_LIMITED
+- [ ] Rate limiting: Backend logs include retryable=true + auth_action + request_id
 
 ### Should Pass (Important):
 
@@ -272,6 +428,9 @@ Expected:
 - [ ] Theme support (light/dark/system)
 - [ ] All error messages are UX-friendly (no technical details)
 - [ ] Anti-enumeration maintained (generic register errors)
+- [ ] Rate limiting: Per-user strategy confirmed (User A blocked, User B allowed)
+- [ ] Rate limiting: retry_after field present in backend logs
+- [ ] Rate limiting: Success after wait period
 
 ### Nice to Have:
 
