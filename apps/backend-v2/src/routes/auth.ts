@@ -157,6 +157,28 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
     // Anti-enumeration: siempre homogéneo
     return res.json({ success: true });
   } catch (error) {
+    // #region agent log  
+    const fs = require('fs');
+    const logPath = '/Users/emiliopostigo/roastr-ai/.cursor/debug.log';
+    const logEntry = JSON.stringify({
+      location: 'auth.ts:159',
+      message: 'Register endpoint catch block',
+      data: {
+        errorType: typeof error,
+        errorName: error?.name,
+        errorMessage: error?.message,
+        errorStack: error?.stack?.substring(0, 300),
+        isAuthError: error?.constructor?.name === 'AuthError',
+        hasSlug: !!(error as any)?.slug,
+        errorSlug: (error as any)?.slug
+      },
+      timestamp: Date.now(),
+      sessionId: 'debug-session',
+      hypothesisId: 'BACKEND'
+    }) + '\n';
+    try { fs.appendFileSync(logPath, logEntry); } catch {}
+    // #endregion
+    
     // Track failed registration at endpoint level (B3: Register Analytics)
     try {
       trackEvent({
