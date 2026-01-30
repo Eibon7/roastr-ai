@@ -152,7 +152,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     setBackendError(null);
 
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:150',message:'Register attempt started',data:{email:data.email,hasPassword:!!data.password,termsAccepted:data.termsAccepted},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,E,F'})}).catch(()=>{});
+    try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:150',message:'Register attempt started',data:{email:data.email,hasPassword:!!data.password,termsAccepted:data.termsAccepted},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,E,F'})}).catch(()=>{}); } catch {}
     // #endregion
 
     try {
@@ -164,7 +164,7 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
       });
 
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:160',message:'Register API success',data:{hasSession:!!responseData.session,hasAccessToken:!!responseData.session?.access_token,responseKeys:Object.keys(responseData||{})},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})}).catch(()=>{});
+      try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:160',message:'Register API success',data:{hasSession:!!responseData.session,hasAccessToken:!!responseData.session?.access_token,responseKeys:Object.keys(responseData||{})},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})}).catch(()=>{}); } catch {}
       // #endregion
 
       // Success path - log only generic success message
@@ -183,14 +183,14 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
       }
     } catch (err: any) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:177',message:'Register API error caught',data:{errorType:typeof err,hasError:!!err,hasErrorProp:'error' in err,hasStatusProp:'status' in err,errorKeys:err?Object.keys(err):[],errorSlugPath1:err?.error?.slug,errorSlugPath2:err?.error_code,errorSlugPath3:err?.response?.data?.error?.slug,errorMessage:err?.message,errorStatus:err?.status,fullError:JSON.stringify(err).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,E,F'})}).catch(()=>{});
+      try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:177',message:'Register API error caught',data:{errorType:typeof err,hasError:!!err,hasErrorProp:'error' in err,hasStatusProp:'status' in err,errorKeys:err?Object.keys(err):[],errorSlugPath1:err?.error?.slug,errorSlugPath2:err?.error_code,errorSlugPath3:err?.response?.data?.error?.slug,errorMessage:err?.message,errorStatus:err?.status,fullError:JSON.stringify(err).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,E,F'})}).catch(()=>{}); } catch {}
       // #endregion
       
       // Extract error slug from apiClient error
       const errorSlug = err?.error?.slug || err?.error_code || err?.response?.data?.error?.slug || 'AUTH_UNKNOWN';
       
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:181',message:'Extracted error slug',data:{errorSlug,willShowMessage:getErrorMessage(errorSlug)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{});
+      try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:181',message:'Extracted error slug',data:{errorSlug,willShowMessage:getErrorMessage(errorSlug)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{}); } catch {}
       // #endregion
       
       // Log only non-sensitive identifiers

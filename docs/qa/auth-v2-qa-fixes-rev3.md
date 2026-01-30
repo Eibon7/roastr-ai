@@ -51,7 +51,8 @@ Durante QA manual de Auth v2 en staging (Frontend: Vercel staging.roastr.ai, Bac
 
 ```typescript
 // Extraer slug del error estructurado de apiClient
-const errorSlug = err?.error?.slug || err?.error_code || err?.response?.data?.error?.slug || 'AUTH_UNKNOWN';
+const errorSlug =
+  err?.error?.slug || err?.error_code || err?.response?.data?.error?.slug || 'AUTH_UNKNOWN';
 
 // Mostrar mensaje UX (anti-enumeration)
 setBackendError(getErrorMessage(errorSlug));
@@ -76,16 +77,18 @@ setBackendError(getErrorMessage(errorSlug));
   - `frontend/src/components/auth/register-form.tsx`
   - `frontend/src/pages/auth/login-v2.tsx`
 - Validación de formato en frontend via Zod schema:
+
   ```typescript
   // Zod valida formato básico de email
-  email: z.string().min(1, 'El email es requerido').email('El email no es válido')
-  
+  email: z.string().min(1, 'El email es requerido').email('El email no es válido');
+
   // Ejemplo de error:
   // Input: "usuario.com" (sin @)
   // Error: "El email no es válido"
-  
+
   // Backend valida TLD y formato completo (acepta .gov.uk, .co.uk, etc)
   ```
+
 - Submit bloqueado si formato inválido
 - Backend devuelve error si TLD no válido
 

@@ -13,7 +13,7 @@ import { getCsrfToken } from '../../utils/csrf';
 
 class ApiClient {
   constructor() {
-    this.baseURL = process.env.REACT_APP_API_URL || '/api';
+    this.baseURL = import.meta.env.VITE_API_URL || '/api';
     this.refreshPromise = null;
     this.interceptors = {
       request: [],
@@ -77,7 +77,7 @@ class ApiClient {
 
       return session;
     } catch (error) {
-      if (process.env.NODE_ENV !== 'production') {
+      if (import.meta.env.DEV) {
         console.error('Session validation error:', error);
       }
       throw new Error('Failed to get valid session');
@@ -136,7 +136,7 @@ class ApiClient {
       } = await supabase.auth.getSession();
       return session;
     } catch (error) {
-      if (process.env.NODE_ENV !== 'production') {
+      if (import.meta.env.DEV) {
         console.error('Token refresh failed:', error);
       }
       await supabase.auth.signOut();
@@ -345,9 +345,16 @@ class ApiClient {
         responseData = await response.json();
       } else {
         responseData = await response.text();
+      // #region agent log
+      try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'client.js:348',message:'Response was TEXT not JSON',data:{endpoint,method,status:response.status,contentType,textPreview:responseData.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{}); } catch {}
+      // #endregion
       }
 
       if (!response.ok) {
+        // #region agent log
+        try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'client.js:351',message:'Response not OK',data:{endpoint,method,status:response.status,hasErrorProp:!!responseData.error,hasErrorCode:!!responseData.error_code,responseDataType:typeof responseData,responseDataKeys:responseData&&typeof responseData==='object'?Object.keys(responseData):[],responseDataPreview:JSON.stringify(responseData).substring(0,300)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})}).catch(()=>{}); } catch {}
+        // #endregion
+        
         // For backend v2 error format: { error: { slug: '...', retryable: boolean } }
         const errorObject = {
           status: response.status,
@@ -364,9 +371,13 @@ class ApiClient {
 
       return responseData;
     } catch (error) {
-      if (process.env.NODE_ENV !== 'production') {
+      if (import.meta.env.DEV) {
         console.error(`API ${method} ${endpoint} error:`, error);
       }
+
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'client.js:368',message:'Request catch block',data:{endpoint,method,errorType:typeof error,errorName:error?.name,errorMessage:error?.message,hasErrorProp:'error' in error,hasStatusProp:'status' in error,isMockMode:isMockModeEnabled(),errorKeys:error&&typeof error==='object'?Object.keys(error):[],errorPreview:JSON.stringify(error).substring(0,400)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,C'})}).catch(()=>{});
+      // #endregion
 
       // Handle mock mode fallbacks
       if (isMockModeEnabled()) {
@@ -375,6 +386,9 @@ class ApiClient {
 
       // If error is already structured (thrown from response.ok check), re-throw as is
       if (error && typeof error === 'object' && 'error' in error && 'status' in error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'client.js:378',message:'Re-throwing structured error',data:{hasError:!!error.error,errorSlug:error.error?.slug,errorStatus:error.status},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         throw error;
       }
 
@@ -387,6 +401,11 @@ class ApiClient {
         },
         originalError: error
       };
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'client.js:391',message:'Throwing NETWORK_ERROR wrapper',data:{originalErrorMessage:error.message,originalErrorName:error?.name},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      
       throw errorObject;
     }
   }
@@ -395,7 +414,7 @@ class ApiClient {
    * Handle mock requests with fallbacks
    */
   async handleMockRequest(method, endpoint, data, originalError) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (import.meta.env.DEV) {
       console.log('🎭 Mock API request:', { method, endpoint, data });
     }
 

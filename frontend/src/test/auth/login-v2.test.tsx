@@ -62,8 +62,8 @@ describe('LoginPageV2', () => {
     it('renders login form with all fields', () => {
       renderLoginPage();
 
-      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /email/i })).toBeInTheDocument();
+      expect(screen.getByLabelText(/^contraseña$/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /iniciar sesión/i })).toBeInTheDocument();
     });
 
@@ -78,8 +78,8 @@ describe('LoginPageV2', () => {
     it('has proper labels associated with inputs', () => {
       renderLoginPage();
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/contraseña/i);
+      const emailInput = screen.getByRole('textbox', { name: /email/i });
+      const passwordInput = screen.getByLabelText(/^contraseña$/i);
 
       expect(emailInput).toHaveAttribute('id', 'email');
       expect(passwordInput).toHaveAttribute('id', 'password');
@@ -103,7 +103,7 @@ describe('LoginPageV2', () => {
       const user = userEvent.setup();
       renderLoginPage();
 
-      const emailInput = screen.getByLabelText(/email/i);
+      const emailInput = screen.getByRole('textbox', { name: /email/i });
       await user.type(emailInput, 'invalid-email');
 
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
@@ -118,7 +118,7 @@ describe('LoginPageV2', () => {
       const user = userEvent.setup();
       renderLoginPage();
 
-      const emailInput = screen.getByLabelText(/email/i);
+      const emailInput = screen.getByRole('textbox', { name: /email/i });
       await user.type(emailInput, 'test@roastr.ai');
 
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
@@ -137,8 +137,8 @@ describe('LoginPageV2', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        const emailInput = screen.getByLabelText(/email/i);
-        const passwordInput = screen.getByLabelText(/contraseña/i);
+        const emailInput = screen.getByRole('textbox', { name: /email/i });
+        const passwordInput = screen.getByLabelText(/^contraseña$/i);
         
         expect(emailInput).toHaveAttribute('aria-invalid', 'true');
         expect(passwordInput).toHaveAttribute('aria-invalid', 'true');
@@ -151,8 +151,8 @@ describe('LoginPageV2', () => {
       const user = userEvent.setup();
       renderLoginPage();
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/contraseña/i);
+      const emailInput = screen.getByRole('textbox', { name: /email/i });
+      const passwordInput = screen.getByLabelText(/^contraseña$/i);
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
 
       await user.type(emailInput, 'test@roastr.ai');
@@ -170,8 +170,8 @@ describe('LoginPageV2', () => {
       const user = userEvent.setup();
       renderLoginPage();
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/contraseña/i);
+      const emailInput = screen.getByRole('textbox', { name: /email/i });
+      const passwordInput = screen.getByLabelText(/^contraseña$/i);
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
 
       await user.type(emailInput, 'test@roastr.ai');
@@ -187,8 +187,8 @@ describe('LoginPageV2', () => {
       const user = userEvent.setup();
       renderLoginPage();
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/contraseña/i);
+      const emailInput = screen.getByRole('textbox', { name: /email/i });
+      const passwordInput = screen.getByLabelText(/^contraseña$/i);
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
 
       await user.type(emailInput, 'test@roastr.ai');
@@ -214,8 +214,8 @@ describe('LoginPageV2', () => {
       const user = userEvent.setup();
       renderLoginPage();
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/contraseña/i);
+      const emailInput = screen.getByRole('textbox', { name: /email/i });
+      const passwordInput = screen.getByLabelText(/^contraseña$/i);
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
 
       await user.type(emailInput, 'wrong@roastr.ai');
@@ -244,8 +244,8 @@ describe('LoginPageV2', () => {
       const user = userEvent.setup();
       renderLoginPage();
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/contraseña/i);
+      const emailInput = screen.getByRole('textbox', { name: /email/i });
+      const passwordInput = screen.getByLabelText(/^contraseña$/i);
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
 
       await user.type(emailInput, 'wrong@roastr.ai');
@@ -269,8 +269,8 @@ describe('LoginPageV2', () => {
       const user = userEvent.setup();
       renderLoginPage();
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/contraseña/i);
+      const emailInput = screen.getByRole('textbox', { name: /email/i });
+      const passwordInput = screen.getByLabelText(/^contraseña$/i);
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
 
       await user.type(emailInput, 'nonexistent@roastr.ai');
@@ -291,8 +291,8 @@ describe('LoginPageV2', () => {
       const user = userEvent.setup();
       renderLoginPage();
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/contraseña/i);
+      const emailInput = screen.getByRole('textbox', { name: /email/i });
+      const passwordInput = screen.getByLabelText(/^contraseña$/i);
 
       await user.type(emailInput, 'test@roastr.ai');
       await user.type(passwordInput, 'password');
@@ -306,8 +306,8 @@ describe('LoginPageV2', () => {
     it('has visible focus indicators', () => {
       renderLoginPage();
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/contraseña/i);
+      const emailInput = screen.getByRole('textbox', { name: /email/i });
+      const passwordInput = screen.getByLabelText(/^contraseña$/i);
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
 
       // Verify elements can receive focus (focusable)
@@ -319,8 +319,8 @@ describe('LoginPageV2', () => {
     it('has proper autocomplete attributes', () => {
       renderLoginPage();
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/contraseña/i);
+      const emailInput = screen.getByRole('textbox', { name: /email/i });
+      const passwordInput = screen.getByLabelText(/^contraseña$/i);
 
       expect(emailInput).toHaveAttribute('autocomplete', 'email');
       expect(passwordInput).toHaveAttribute('autocomplete', 'current-password');
@@ -330,8 +330,8 @@ describe('LoginPageV2', () => {
       const user = userEvent.setup();
       renderLoginPage();
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/contraseña/i);
+      const emailInput = screen.getByRole('textbox', { name: /email/i });
+      const passwordInput = screen.getByLabelText(/^contraseña$/i);
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
       const recoveryLink = screen.getByText(/¿olvidaste tu contraseña\?/i);
 
@@ -361,8 +361,8 @@ describe('LoginPageV2', () => {
       const user = userEvent.setup();
       renderLoginPage();
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/contraseña/i);
+      const emailInput = screen.getByRole('textbox', { name: /email/i });
+      const passwordInput = screen.getByLabelText(/^contraseña$/i);
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
 
       await user.type(emailInput, 'test@roastr.ai');
@@ -397,8 +397,8 @@ describe('LoginPageV2', () => {
 
       // Verify core elements render regardless of theme
       expect(screen.getByRole('button', { name: /iniciar sesión/i })).toBeInTheDocument();
-      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /email/i })).toBeInTheDocument();
+      expect(screen.getByLabelText(/^contraseña$/i)).toBeInTheDocument();
     });
 
     it('renders correctly in dark mode', () => {
@@ -422,8 +422,8 @@ describe('LoginPageV2', () => {
 
       // Verify core elements render regardless of theme
       expect(screen.getByRole('button', { name: /iniciar sesión/i })).toBeInTheDocument();
-      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /email/i })).toBeInTheDocument();
+      expect(screen.getByLabelText(/^contraseña$/i)).toBeInTheDocument();
     });
 
     it('respects system theme preference', () => {
@@ -447,8 +447,8 @@ describe('LoginPageV2', () => {
 
       // Verify core elements render with system theme
       expect(screen.getByRole('button', { name: /iniciar sesión/i })).toBeInTheDocument();
-      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /email/i })).toBeInTheDocument();
+      expect(screen.getByLabelText(/^contraseña$/i)).toBeInTheDocument();
     });
   });
 });
