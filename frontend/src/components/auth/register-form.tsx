@@ -152,7 +152,27 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     setBackendError(null);
 
     // #region agent log
-    try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:150',message:'Register attempt started',data:{email:data.email,hasPassword:!!data.password,termsAccepted:data.termsAccepted},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,E,F'})}).catch(()=>{}); } catch {}
+    if (process.env.NODE_ENV === 'development') {
+      const maskedEmail = data.email ? data.email.substring(0, 3) + '***@' + data.email.split('@')[1] : null;
+      try { 
+        fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            location:'register-form.tsx:150',
+            message:'Register attempt started',
+            data:{
+              email: maskedEmail, // Masked PII
+              hasPassword:!!data.password,
+              termsAccepted:data.termsAccepted
+            },
+            timestamp:Date.now(),
+            sessionId:'debug-session',
+            hypothesisId:'A,B,C,E,F'
+          })
+        }).catch(()=>{}); 
+      } catch {}
+    }
     // #endregion
 
     try {

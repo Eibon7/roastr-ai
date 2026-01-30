@@ -269,7 +269,7 @@ screen.getByLabelText(/^contraseña$/i)            // Exact match para password
 
 ## 🔗 Referencias
 
-- **Issue:** https://linear.app/roastrai/issue/ROA-532/manual-testing
+- **Issue:** [ROA-532](https://linear.app/roastrai/issue/ROA-532/manual-testing)
 - **Branch:** `bugfix/ROA-532-auth-v2-qa-fixes-rev3`
 - **Commits:**
   - `35d03e2c` - Enable auth feature flags + add PasswordInput with toggle

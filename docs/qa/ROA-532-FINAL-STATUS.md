@@ -58,12 +58,12 @@
 
 **Vercel Frontend:**
 - Ya desplegado en preview
-- Preview URL: https://vercel.com/eibon7s-projects/roastr-frontend-staging/44sTDvg9WXwjSJ34RvixcAeQtNuQ
+- **Preview URL:** [Staging Deploy](https://vercel.com/eibon7s-projects/roastr-frontend-staging/44sTDvg9WXwjSJ34RvixcAeQtNuQ)
 
 ### 2. Verificación Post-Deploy
 
 **Login Test:**
-```
+```text
 1. Ir a staging login
 2. Intentar login con email/password incorrectos
 3. ✅ Debe mostrar: "El email o la contraseña no son correctos"
@@ -72,7 +72,7 @@
 ```
 
 **Register Test:**
-```
+```text
 1. Ir a staging register
 2. Crear cuenta con email nuevo
 3. ✅ Debe enviar email de bienvenida

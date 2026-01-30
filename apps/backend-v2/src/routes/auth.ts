@@ -157,27 +157,19 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
     // Anti-enumeration: siempre homogéneo
     return res.json({ success: true });
   } catch (error) {
-    // #region agent log  
-    const fs = require('fs');
-    const logPath = '/Users/emiliopostigo/roastr-ai/.cursor/debug.log';
-    const logEntry = JSON.stringify({
-      location: 'auth.ts:159',
-      message: 'Register endpoint catch block',
-      data: {
+    // Log error with structured logger (non-blocking, redacted)
+    if (process.env.NODE_ENV !== 'production') {
+      logger.error('Register endpoint error', {
         errorType: typeof error,
         errorName: error?.name,
         errorMessage: error?.message,
-        errorStack: error?.stack?.substring(0, 300),
+        errorStack: error?.stack?.substring(0, 300), // Truncated
         isAuthError: error?.constructor?.name === 'AuthError',
         hasSlug: !!(error as any)?.slug,
-        errorSlug: (error as any)?.slug
-      },
-      timestamp: Date.now(),
-      sessionId: 'debug-session',
-      hypothesisId: 'BACKEND'
-    }) + '\n';
-    try { fs.appendFileSync(logPath, logEntry); } catch {}
-    // #endregion
+        errorSlug: (error as any)?.slug,
+        location: 'auth.ts:register'
+      });
+    }
     
     // Track failed registration at endpoint level (B3: Register Analytics)
     try {
