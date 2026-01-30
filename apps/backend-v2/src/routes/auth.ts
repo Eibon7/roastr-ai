@@ -157,6 +157,20 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
     // Anti-enumeration: siempre homogéneo
     return res.json({ success: true });
   } catch (error) {
+    // Log error with structured logger (non-blocking, redacted)
+    if (process.env.NODE_ENV !== 'production') {
+      logger.error('Register endpoint error', {
+        errorType: typeof error,
+        errorName: error?.name,
+        errorMessage: error?.message,
+        errorStack: error?.stack?.substring(0, 300), // Truncated
+        isAuthError: error?.constructor?.name === 'AuthError',
+        hasSlug: !!(error as any)?.slug,
+        errorSlug: (error as any)?.slug,
+        location: 'auth.ts:register'
+      });
+    }
+
     // Track failed registration at endpoint level (B3: Register Analytics)
     try {
       trackEvent({
