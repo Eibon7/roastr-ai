@@ -85,7 +85,7 @@ curl -X POST https://api-staging.roastr.ai/v2/auth/login \
 **Test 1: Incorrect Credentials**
 ```text
 1. Navigate to staging login
-2. Enter email: emiliopostigo@gmail.com
+2. Enter email: testuser@example.com
 3. Enter incorrect password
 4. Click "Iniciar sesión"
 
