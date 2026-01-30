@@ -170,7 +170,7 @@ router.post('/register', rateLimitByType('login'), async (req: Request, res: Res
         location: 'auth.ts:register'
       });
     }
-    
+
     // Track failed registration at endpoint level (B3: Register Analytics)
     try {
       trackEvent({
