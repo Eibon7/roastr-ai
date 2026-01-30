@@ -346,13 +346,17 @@ class ApiClient {
       } else {
         responseData = await response.text();
       // #region agent log
-      try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'client.js:348',message:'Response was TEXT not JSON',data:{endpoint,method,status:response.status,contentType,textPreview:responseData.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{}); } catch { /* ignore */ }
+      if (process.env.NODE_ENV === 'development') {
+        try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'client.js:348',message:'Response was TEXT not JSON',data:{endpoint,method,status:response.status,contentType,textPreview:responseData.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{}); } catch { /* ignore */ }
+      }
       // #endregion
       }
 
       if (!response.ok) {
         // #region agent log
-        try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'client.js:351',message:'Response not OK',data:{endpoint,method,status:response.status,hasErrorProp:!!responseData.error,hasErrorCode:!!responseData.error_code,responseDataType:typeof responseData,responseDataKeys:responseData&&typeof responseData==='object'?Object.keys(responseData):[],responseDataPreview:JSON.stringify(responseData).substring(0,300)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})}).catch(()=>{}); } catch { /* ignore */ }
+        if (process.env.NODE_ENV === 'development') {
+          try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'client.js:351',message:'Response not OK',data:{endpoint,method,status:response.status,hasErrorProp:!!responseData.error,hasErrorCode:!!responseData.error_code,responseDataType:typeof responseData,responseDataKeys:responseData&&typeof responseData==='object'?Object.keys(responseData):[],responseDataPreview:JSON.stringify(responseData).substring(0,300)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})}).catch(()=>{}); } catch { /* ignore */ }
+        }
         // #endregion
         
         // For backend v2 error format: { error: { slug: '...', retryable: boolean } }
