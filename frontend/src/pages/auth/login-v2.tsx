@@ -128,7 +128,7 @@ export default function LoginPageV2() {
     setErrorCode(undefined);
 
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:126',message:'Login attempt started',data:{email:data.email,hasPassword:!!data.password},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,F'})}).catch(()=>{});
+    try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:126',message:'Login attempt started',data:{email:data.email,hasPassword:!!data.password},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,F'})}).catch(()=>{}); } catch {}
     // #endregion
 
     try {
@@ -139,7 +139,7 @@ export default function LoginPageV2() {
       });
 
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:133',message:'Login API success',data:{hasSession:!!responseData.session,hasAccessToken:!!responseData.session?.access_token,responseKeys:Object.keys(responseData||{})},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
+      try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:133',message:'Login API success',data:{hasSession:!!responseData.session,hasAccessToken:!!responseData.session?.access_token,responseKeys:Object.keys(responseData||{})},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{}); } catch {}
       // #endregion
 
       // Success path - log only generic success message
@@ -154,14 +154,14 @@ export default function LoginPageV2() {
       navigate(from, { replace: true });
     } catch (error: any) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:148',message:'Login API error caught',data:{errorType:typeof error,hasError:!!error,hasErrorProp:'error' in error,hasStatusProp:'status' in error,errorKeys:error?Object.keys(error):[],errorSlugPath1:error?.error?.slug,errorSlugPath2:error?.error_code,errorSlugPath3:error?.response?.data?.error?.slug,errorMessage:error?.message,fullError:JSON.stringify(error).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,F'})}).catch(()=>{});
+      try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:148',message:'Login API error caught',data:{errorType:typeof error,hasError:!!error,hasErrorProp:'error' in error,hasStatusProp:'status' in error,errorKeys:error?Object.keys(error):[],errorSlugPath1:error?.error?.slug,errorSlugPath2:error?.error_code,errorSlugPath3:error?.response?.data?.error?.slug,errorMessage:error?.message,fullError:JSON.stringify(error).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,F'})}).catch(()=>{}); } catch {}
       // #endregion
       
       // Extract error slug from apiClient error
       const errorSlug = error?.error?.slug || error?.error_code || error?.response?.data?.error?.slug || 'AUTH_UNKNOWN';
       
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:152',message:'Extracted error slug',data:{errorSlug,willShowMessage:getErrorMessage(errorSlug)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{});
+      try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:152',message:'Extracted error slug',data:{errorSlug,willShowMessage:getErrorMessage(errorSlug)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{}); } catch {}
       // #endregion
       
       // Log only non-sensitive identifiers
