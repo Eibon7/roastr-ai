@@ -15,6 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AuthLayout } from '@/components/layout/auth-layout';
@@ -126,12 +127,20 @@ export default function LoginPageV2() {
     setIsSubmitting(true);
     setErrorCode(undefined);
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:126',message:'Login attempt started',data:{email:data.email,hasPassword:!!data.password},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,F'})}).catch(()=>{});
+    // #endregion
+
     try {
       // Use centralized apiClient for CSRF, mock mode, and interceptors
       const responseData = await apiClient.post('/v2/auth/login', {
         email: data.email,
         password: data.password
       });
+
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:133',message:'Login API success',data:{hasSession:!!responseData.session,hasAccessToken:!!responseData.session?.access_token,responseKeys:Object.keys(responseData||{})},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
 
       // Success path - log only generic success message
       console.log('Login succeeded');
@@ -144,8 +153,16 @@ export default function LoginPageV2() {
       // Redirect on success
       navigate(from, { replace: true });
     } catch (error: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:148',message:'Login API error caught',data:{errorType:typeof error,hasError:!!error,hasErrorProp:'error' in error,hasStatusProp:'status' in error,errorKeys:error?Object.keys(error):[],errorSlugPath1:error?.error?.slug,errorSlugPath2:error?.error_code,errorSlugPath3:error?.response?.data?.error?.slug,errorMessage:error?.message,fullError:JSON.stringify(error).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,F'})}).catch(()=>{});
+      // #endregion
+      
       // Extract error slug from apiClient error
       const errorSlug = error?.error?.slug || error?.error_code || error?.response?.data?.error?.slug || 'AUTH_UNKNOWN';
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:152',message:'Extracted error slug',data:{errorSlug,willShowMessage:getErrorMessage(errorSlug)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{});
+      // #endregion
       
       // Log only non-sensitive identifiers
       console.error('Login failed:', { errorSlug });
@@ -200,9 +217,8 @@ export default function LoginPageV2() {
                   ¿Olvidaste tu contraseña?
                 </Link>
               </div>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 autoComplete="current-password"
                 disabled={isSubmitting}
                 aria-invalid={!!errors.password}

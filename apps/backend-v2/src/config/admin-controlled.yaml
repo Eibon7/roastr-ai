@@ -60,6 +60,14 @@ auth:
 # Feature Flags (SSOT-driven)
 feature_flags:
   enable_user_registration: false
+  # Auth endpoint gates (ROA-406, ROA-532)
+  auth_enable_login: true
+  auth_enable_register: true
+  auth_enable_emails: true
+  auth_enable_magic_link: false
+  auth_enable_password_recovery: false
+  auth_enable_oauth: false
+  auth_enable_session_refresh: true
 
 # Shield Configuration
 shield:

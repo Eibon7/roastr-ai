@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -150,6 +151,10 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
   const onSubmit = async (data: RegisterFormData) => {
     setBackendError(null);
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:150',message:'Register attempt started',data:{email:data.email,hasPassword:!!data.password,termsAccepted:data.termsAccepted},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,E,F'})}).catch(()=>{});
+    // #endregion
+
     try {
       // Use centralized apiClient for CSRF, mock mode, and interceptors
       const responseData = await apiClient.post('/v2/auth/register', {
@@ -157,6 +162,10 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
         password: data.password,
         terms_accepted: data.termsAccepted
       });
+
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:160',message:'Register API success',data:{hasSession:!!responseData.session,hasAccessToken:!!responseData.session?.access_token,responseKeys:Object.keys(responseData||{})},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})}).catch(()=>{});
+      // #endregion
 
       // Success path - log only generic success message
       console.log('Register succeeded');
@@ -173,8 +182,16 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
         navigate('/dashboard');
       }
     } catch (err: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:177',message:'Register API error caught',data:{errorType:typeof err,hasError:!!err,hasErrorProp:'error' in err,hasStatusProp:'status' in err,errorKeys:err?Object.keys(err):[],errorSlugPath1:err?.error?.slug,errorSlugPath2:err?.error_code,errorSlugPath3:err?.response?.data?.error?.slug,errorMessage:err?.message,errorStatus:err?.status,fullError:JSON.stringify(err).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,E,F'})}).catch(()=>{});
+      // #endregion
+      
       // Extract error slug from apiClient error
       const errorSlug = err?.error?.slug || err?.error_code || err?.response?.data?.error?.slug || 'AUTH_UNKNOWN';
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:181',message:'Extracted error slug',data:{errorSlug,willShowMessage:getErrorMessage(errorSlug)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{});
+      // #endregion
       
       // Log only non-sensitive identifiers
       console.error('Register failed:', { errorSlug });
@@ -217,9 +234,8 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
           {/* Password */}
           <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="new-password"
               disabled={isSubmitting}
               aria-invalid={!!errors.password}
@@ -272,14 +288,14 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
           {/* Confirm Password */}
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
               autoComplete="new-password"
               placeholder="Confirma tu contraseña"
               disabled={isSubmitting}
               aria-invalid={!!errors.confirmPassword}
               aria-describedby={errors.confirmPassword ? 'confirm-password-error' : undefined}
+              toggleAriaLabel="Mostrar confirmación de contraseña"
               {...register('confirmPassword')}
             />
             {errors.confirmPassword && (
