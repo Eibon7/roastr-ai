@@ -26,40 +26,40 @@ const authErrorMessages: Record<string, string> = {
   'AUTH_INVALID_CREDENTIALS': 'El email o la contraseña no son correctos',
   'AUTH_EMAIL_NOT_CONFIRMED': 'Por favor verifica tu email antes de iniciar sesión',
   'AUTH_ACCOUNT_LOCKED': 'Cuenta bloqueada temporalmente. Intenta más tarde',
-  'AUTH_DISABLED': 'El registro está temporalmente deshabilitado. Intenta más tarde',
-  'AUTH_EMAIL_DISABLED': 'El registro por email está deshabilitado',
-  'AUTH_EMAIL_PROVIDER_ERROR': 'Error al enviar el email. Intenta más tarde',
-  'AUTH_EMAIL_RATE_LIMITED': 'Demasiadas solicitudes de email. Intenta más tarde',
-  'AUTH_EMAIL_SEND_FAILED': 'No se pudo enviar el email. Inténtalo de nuevo',
-  'AUTH_UNKNOWN': 'No se pudo crear la cuenta. Inténtalo de nuevo',
+  'AUTH_DISABLED': 'El servicio de registro está temporalmente deshabilitado. Por favor intenta más tarde o contacta a soporte.',
+  'AUTH_EMAIL_DISABLED': 'El registro por email está temporalmente deshabilitado',
+  'AUTH_EMAIL_PROVIDER_ERROR': 'Error al conectar con el servicio de email. Por favor intenta de nuevo o contacta a soporte si el problema persiste.',
+  'AUTH_EMAIL_RATE_LIMITED': 'Demasiadas solicitudes de email. Por favor intenta en unos minutos',
+  'AUTH_EMAIL_SEND_FAILED': 'No se pudo enviar el email de bienvenida. Por favor verifica tu dirección de email e inténtalo de nuevo.',
+  'AUTH_UNKNOWN': 'Ocurrió un error inesperado. Por favor intenta de nuevo o contacta a soporte si el problema persiste.',
   
   // Account errors - Generic messages to prevent enumeration
-  'ACCOUNT_EMAIL_ALREADY_EXISTS': 'No se pudo completar el registro. Inténtalo de nuevo',
-  'ACCOUNT_NOT_FOUND': 'No se pudo completar el registro. Inténtalo de nuevo',
-  'ACCOUNT_SUSPENDED': 'No se pudo completar el registro. Inténtalo de nuevo',
-  'ACCOUNT_BANNED': 'No se pudo completar el registro. Inténtalo de nuevo',
-  'ACCOUNT_DELETED': 'No se pudo completar el registro. Inténtalo de nuevo',
-  'ACCOUNT_BLOCKED': 'No se pudo completar el registro. Inténtalo de nuevo',
+  'ACCOUNT_EMAIL_ALREADY_EXISTS': 'No se pudo completar el registro. Verifica tus datos e inténtalo de nuevo.',
+  'ACCOUNT_NOT_FOUND': 'No se pudo completar el registro. Verifica tus datos e inténtalo de nuevo.',
+  'ACCOUNT_SUSPENDED': 'No se pudo completar el registro. Si crees que esto es un error, contacta a soporte.',
+  'ACCOUNT_BANNED': 'No se pudo completar el registro. Si crees que esto es un error, contacta a soporte.',
+  'ACCOUNT_DELETED': 'No se pudo completar el registro. Verifica tus datos e inténtalo de nuevo.',
+  'ACCOUNT_BLOCKED': 'Esta cuenta está bloqueada. Contacta a soporte para más información.',
   
   // Policy errors
-  'POLICY_RATE_LIMITED': 'Demasiados intentos. Intenta en 15 minutos',
-  'POLICY_ABUSE_DETECTED': 'Actividad sospechosa detectada. Contacta a soporte',
-  'POLICY_BLOCKED': 'Acción bloqueada por políticas de seguridad',
-  'POLICY_INVALID_REQUEST': 'Solicitud inválida. Verifica los datos e inténtalo de nuevo',
-  'POLICY_NOT_FOUND': 'Recurso no encontrado',
+  'POLICY_RATE_LIMITED': 'Demasiados intentos de registro. Por favor intenta de nuevo en 15 minutos.',
+  'POLICY_ABUSE_DETECTED': 'Se detectó actividad sospechosa. Por favor contacta a soporte si crees que esto es un error.',
+  'POLICY_BLOCKED': 'Esta acción está bloqueada por políticas de seguridad. Contacta a soporte si necesitas ayuda.',
+  'POLICY_INVALID_REQUEST': 'Los datos enviados son inválidos. Por favor verifica que tu email y contraseña cumplan los requisitos.',
+  'POLICY_NOT_FOUND': 'El servicio solicitado no está disponible. Por favor recarga la página e inténtalo de nuevo.',
   
   // Network errors
-  'NETWORK_ERROR': 'Error de conexión. Verifica tu internet e inténtalo de nuevo',
+  'NETWORK_ERROR': 'No se pudo conectar con el servidor. Verifica tu conexión a internet e inténtalo de nuevo.',
   'AUTH_SESSION_EXPIRED': 'Tu sesión ha expirado. Por favor inicia sesión de nuevo',
   'AUTH_FORBIDDEN': 'No tienes permiso para realizar esta acción',
   
   // Legacy fallbacks
-  'AUTH_EMAIL_TAKEN': 'No se pudo completar el registro. Inténtalo de nuevo',
-  'AUTH_INVALID_EMAIL': 'Email inválido',
-  'AUTH_WEAK_PASSWORD': 'La contraseña es muy débil',
-  'AUTH_RATE_LIMIT_EXCEEDED': 'Demasiados intentos. Intenta más tarde',
-  'AUTH_TERMS_NOT_ACCEPTED': 'Debes aceptar los términos y condiciones',
-  'REGISTER_FAILED': 'No se pudo crear la cuenta. Inténtalo de nuevo'
+  'AUTH_EMAIL_TAKEN': 'No se pudo completar el registro. Verifica tus datos e inténtalo de nuevo.',
+  'AUTH_INVALID_EMAIL': 'El formato del email no es válido. Por favor verifica e inténtalo de nuevo.',
+  'AUTH_WEAK_PASSWORD': 'La contraseña no cumple los requisitos mínimos de seguridad',
+  'AUTH_RATE_LIMIT_EXCEEDED': 'Demasiados intentos. Por favor intenta más tarde',
+  'AUTH_TERMS_NOT_ACCEPTED': 'Debes aceptar los términos y condiciones para crear una cuenta',
+  'REGISTER_FAILED': 'No se pudo crear la cuenta. Por favor inténtalo de nuevo'
 };
 
 /**
@@ -126,6 +126,7 @@ export interface RegisterFormProps {
 export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
   const navigate = useNavigate();
   const [backendError, setBackendError] = React.useState<string | null>(customError || null);
+  const [errorSlug, setErrorSlug] = React.useState<string | null>(null);
   
   const {
     register,
@@ -144,12 +145,21 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
   });
 
   const password = watch('password');
+  
+  // Clear backend error when user starts typing
+  React.useEffect(() => {
+    if (backendError) {
+      setBackendError(null);
+      setErrorSlug(null);
+    }
+  }, [watch('email'), watch('password')]);
 
   /**
    * Handle form submission with apiClient
    */
   const onSubmit = async (data: RegisterFormData) => {
     setBackendError(null);
+    setErrorSlug(null);
 
     // #region agent log
     if (process.env.NODE_ENV === 'development') {
@@ -211,19 +221,28 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
       // #endregion
       
       // Extract error slug from apiClient error
-      const errorSlug = err?.error?.slug || err?.error_code || err?.response?.data?.error?.slug || 'AUTH_UNKNOWN';
+      const extractedSlug = err?.error?.slug || err?.error_code || err?.response?.data?.error?.slug || 'AUTH_UNKNOWN';
       
       // #region agent log
       if (process.env.NODE_ENV === 'development') {
-        try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:181',message:'Extracted error slug',data:{errorSlug,willShowMessage:getErrorMessage(errorSlug)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{}); } catch { /* ignore */ }
+        try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:181',message:'Extracted error slug',data:{errorSlug:extractedSlug,willShowMessage:getErrorMessage(extractedSlug)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{}); } catch { /* ignore */ }
       }
       // #endregion
       
-      // Log only non-sensitive identifiers
-      console.error('Register failed:', { errorSlug });
+      // Enhanced error logging for QA debugging
+      console.error('Register failed:', {
+        slug: extractedSlug,
+        status: err?.status,
+        retryable: err?.error?.retryable,
+        request_id: err?.request_id,
+        message: getErrorMessage(extractedSlug)
+      });
+      
+      // Save slug for debug display
+      setErrorSlug(extractedSlug);
       
       // Show UX error message
-      setBackendError(getErrorMessage(errorSlug));
+      setBackendError(getErrorMessage(extractedSlug));
     }
   };
 
@@ -375,6 +394,16 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription role="alert">
                 {backendError}
+                {import.meta.env.DEV && errorSlug && (
+                  <div className="mt-2 pt-2 border-t border-destructive/20">
+                    <p className="text-xs font-mono opacity-70">
+                      Debug Info: <span className="font-semibold">{errorSlug}</span>
+                    </p>
+                    <p className="text-xs opacity-60 mt-1">
+                      (Solo visible en desarrollo)
+                    </p>
+                  </div>
+                )}
               </AlertDescription>
             </Alert>
           )}
