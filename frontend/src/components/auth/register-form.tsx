@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -247,15 +246,15 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto" data-testid="register-card">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Crear cuenta</CardTitle>
-        <CardDescription className="text-center">
+    <div className="space-y-4" data-testid="register-form">
+      <div className="space-y-1 text-center">
+        <h2 className="text-2xl font-bold">Crear cuenta</h2>
+        <p className="text-sm text-muted-foreground">
           Ingresa tus datos para crear tu cuenta en Roastr.AI
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        </p>
+      </div>
+      
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -424,15 +423,14 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
             )}
           </Button>
         </form>
-      </CardContent>
-      <CardFooter className="flex flex-col space-y-4">
-        <div className="text-sm text-center text-muted-foreground">
+        
+        {/* Login CTA */}
+        <div className="text-sm text-center text-muted-foreground pt-4 border-t">
           ¿Ya tienes cuenta?{' '}
           <Link to="/login" className="underline hover:text-primary font-medium">
             Inicia sesión
           </Link>
         </div>
-      </CardFooter>
-    </Card>
+      </div>
   );
 }
