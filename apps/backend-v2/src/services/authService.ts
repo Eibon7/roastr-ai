@@ -24,13 +24,7 @@ import {
   logMagicLinkRequest,
   logPasswordRecoveryRequest,
   logFeatureDisabled,
-  logAuthFlowStarted
-} from '../utils/authObservability.js';
-import {
-  logLoginAttempt,
-  logRegisterAttempt,
-  logMagicLinkRequest,
-  logPasswordRecoveryRequest,
+  logAuthFlowStarted,
   trackAuthDuration,
   logRateLimit
 } from '../utils/authObservability.js';

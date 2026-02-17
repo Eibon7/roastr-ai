@@ -379,8 +379,12 @@ class ApiClient {
         console.error(`API ${method} ${endpoint} error:`, error);
       }
 
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'client.js:368',message:'Request catch block',data:{endpoint,method,errorType:typeof error,errorName:error?.name,errorMessage:error?.message,hasErrorProp:'error' in error,hasStatusProp:'status' in error,isMockMode:isMockModeEnabled(),errorKeys:error&&typeof error==='object'?Object.keys(error):[],errorPreview:JSON.stringify(error).substring(0,400)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,C'})}).catch(()=>{});
+      // #region agent log (DEV only - no production logging)
+      if (import.meta.env.DEV) {
+        try {
+          fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'client.js:368',message:'Request catch block',data:{endpoint,method,errorType:typeof error,errorName:error?.name,hasErrorProp:'error' in error,hasStatusProp:'status' in error,isMockMode:isMockModeEnabled(),errorKeys:error&&typeof error==='object'?Object.keys(error):[]},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,C'})}).catch(()=>{});
+        } catch { /* ignore */ }
+      }
       // #endregion
 
       // Handle mock mode fallbacks
@@ -390,8 +394,12 @@ class ApiClient {
 
       // If error is already structured (thrown from response.ok check), re-throw as is
       if (error && typeof error === 'object' && 'error' in error && 'status' in error) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'client.js:378',message:'Re-throwing structured error',data:{hasError:!!error.error,errorSlug:error.error?.slug,errorStatus:error.status},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+        // #region agent log (DEV only)
+        if (import.meta.env.DEV) {
+          try {
+            fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'client.js:378',message:'Re-throwing structured error',data:{hasError:!!error.error,errorSlug:error.error?.slug,errorStatus:error.status},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+          } catch { /* ignore */ }
+        }
         // #endregion
         throw error;
       }
@@ -406,8 +414,12 @@ class ApiClient {
         originalError: error
       };
       
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'client.js:391',message:'Throwing NETWORK_ERROR wrapper',data:{originalErrorMessage:error.message,originalErrorName:error?.name},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+      // #region agent log (DEV only)
+      if (import.meta.env.DEV) {
+        try {
+          fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'client.js:391',message:'Throwing NETWORK_ERROR wrapper',data:{originalErrorName:error?.name},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+        } catch { /* ignore */ }
+      }
       // #endregion
       
       throw errorObject;

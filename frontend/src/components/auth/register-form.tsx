@@ -38,7 +38,7 @@ const authErrorMessages: Record<string, string> = {
   'ACCOUNT_SUSPENDED': 'No se pudo completar el registro. Si crees que esto es un error, contacta a soporte.',
   'ACCOUNT_BANNED': 'No se pudo completar el registro. Si crees que esto es un error, contacta a soporte.',
   'ACCOUNT_DELETED': 'No se pudo completar el registro. Verifica tus datos e inténtalo de nuevo.',
-  'ACCOUNT_BLOCKED': 'Esta cuenta está bloqueada. Contacta a soporte para más información.',
+  'ACCOUNT_BLOCKED': 'No se pudo completar el registro. Si crees que esto es un error, contacta a soporte.',
   
   // Policy errors
   'POLICY_RATE_LIMITED': 'Demasiados intentos de registro. Por favor intenta de nuevo en 15 minutos.',
@@ -143,15 +143,16 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     }
   });
 
+  const email = watch('email');
   const password = watch('password');
-  
-  // Clear backend error when user starts typing
+
+  // Clear backend error when user starts typing (not on mount - preserves customError prop)
   React.useEffect(() => {
-    if (backendError) {
+    if (backendError && (email || password)) {
       setBackendError(null);
       setErrorSlug(null);
     }
-  }, [watch('email'), watch('password')]);
+  }, [email, password]);
 
   /**
    * Handle form submission with apiClient
