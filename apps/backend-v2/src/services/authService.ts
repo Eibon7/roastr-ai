@@ -117,9 +117,13 @@ export class AuthService {
       // Email es best-effort, usuario puede confirmar más tarde
       let emailInfraAvailable = false;
       try {
-        const { provider } = await assertAuthEmailInfrastructureEnabled('register', normalizedEmail, {
-          request_id: params.request_id
-        });
+        const { provider } = await assertAuthEmailInfrastructureEnabled(
+          'register',
+          normalizedEmail,
+          {
+            request_id: params.request_id
+          }
+        );
 
         // Observability (ROA-409): request to send auth email (register verification)
         logger.info('auth_email_requested', {
