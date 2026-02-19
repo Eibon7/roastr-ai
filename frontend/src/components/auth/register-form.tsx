@@ -11,8 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { setTokens } from '@/lib/auth/tokenStorage';
-// @ts-expect-error - client.js is a JS module without types
-import apiClient from '@/lib/api/client';
+import { supabase } from '@/lib/supabaseClient';
 
 /**
  * Auth Error Messages (Backend v2 taxonomy)
@@ -154,97 +153,48 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     }
   }, [email, password]);
 
-  /**
-   * Handle form submission with apiClient
-   */
   const onSubmit = async (data: RegisterFormData) => {
     setBackendError(null);
     setErrorSlug(null);
 
-    // #region agent log
-    if (process.env.NODE_ENV === 'development') {
-      const maskedEmail = data.email ? data.email.substring(0, 3) + '***@' + data.email.split('@')[1] : null;
-      try { 
-        fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            location:'register-form.tsx:150',
-            message:'Register attempt started',
-            data:{
-              email: maskedEmail, // Masked PII
-              hasPassword:!!data.password,
-              termsAccepted:data.termsAccepted
-            },
-            timestamp:Date.now(),
-            sessionId:'debug-session',
-            hypothesisId:'A,B,C,E,F'
-          })
-        }).catch(()=>{}); 
-      } catch { /* ignore */ }
-    }
-    // #endregion
-
     try {
-      // Use centralized apiClient for CSRF, mock mode, and interceptors
-      const responseData = await apiClient.post('/v2/auth/register', {
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
-        terms_accepted: data.termsAccepted
       });
 
-      // #region agent log
-      if (process.env.NODE_ENV === 'development') {
-        try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:160',message:'Register API success',data:{hasSession:!!responseData.session,hasAccessToken:!!responseData.session?.access_token,responseKeys:Object.keys(responseData||{})},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})}).catch(()=>{}); } catch { /* ignore */ }
-      }
-      // #endregion
-
-      // Success path - log only generic success message
-      console.log('Register succeeded');
-
-      // Save tokens using tokenStorage
-      if (responseData.session?.access_token && responseData.session?.refresh_token) {
-        setTokens(responseData.session.access_token, responseData.session.refresh_token);
+      if (error) {
+        const slug = mapSupabaseError(error.message);
+        setErrorSlug(slug);
+        setBackendError(getErrorMessage(slug));
+        return;
       }
 
-      // Call success callback or redirect
+      if (signUpData.session?.access_token && signUpData.session?.refresh_token) {
+        setTokens(signUpData.session.access_token, signUpData.session.refresh_token);
+      }
+
       if (onSuccess) {
-        onSuccess(responseData);
+        onSuccess(signUpData);
       } else {
-        navigate('/dashboard');
+        navigate('/app');
       }
     } catch (err: any) {
-      // #region agent log
-      if (process.env.NODE_ENV === 'development') {
-        try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:177',message:'Register API error caught',data:{errorType:typeof err,hasError:!!err,hasErrorProp:'error' in err,hasStatusProp:'status' in err,errorKeys:err?Object.keys(err):[],errorSlugPath1:err?.error?.slug,errorSlugPath2:err?.error_code,errorSlugPath3:err?.response?.data?.error?.slug,errorMessage:err?.message,errorStatus:err?.status,fullError:JSON.stringify(err).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,E,F'})}).catch(()=>{}); } catch { /* ignore */ }
-      }
-      // #endregion
-      
-      // Extract error slug from apiClient error
-      const extractedSlug = err?.error?.slug || err?.error_code || err?.response?.data?.error?.slug || 'AUTH_UNKNOWN';
-      
-      // #region agent log
-      if (process.env.NODE_ENV === 'development') {
-        try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:181',message:'Extracted error slug',data:{errorSlug:extractedSlug,willShowMessage:getErrorMessage(extractedSlug)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{}); } catch { /* ignore */ }
-      }
-      // #endregion
-      
-      // Enhanced error logging for QA debugging
-      console.error('Register failed:', {
-        slug: extractedSlug,
-        status: err?.status,
-        retryable: err?.error?.retryable,
-        request_id: err?.request_id,
-        message: getErrorMessage(extractedSlug)
-      });
-      
-      // Save slug for debug display
-      setErrorSlug(extractedSlug);
-      
-      // Show UX error message
-      setBackendError(getErrorMessage(extractedSlug));
+      const slug = 'AUTH_UNKNOWN';
+      setErrorSlug(slug);
+      setBackendError(getErrorMessage(slug));
     }
   };
+
+  function mapSupabaseError(message: string): string {
+    const lower = message.toLowerCase();
+    if (lower.includes('already registered') || lower.includes('already been registered')) return 'ACCOUNT_EMAIL_ALREADY_EXISTS';
+    if (lower.includes('rate limit') || lower.includes('too many')) return 'POLICY_RATE_LIMITED';
+    if (lower.includes('password')) return 'AUTH_WEAK_PASSWORD';
+    if (lower.includes('invalid email') || lower.includes('email')) return 'AUTH_INVALID_EMAIL';
+    if (lower.includes('network') || lower.includes('fetch')) return 'NETWORK_ERROR';
+    return 'AUTH_UNKNOWN';
+  }
 
   return (
     <div className="space-y-4" data-testid="register-form">

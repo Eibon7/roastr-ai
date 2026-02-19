@@ -7,7 +7,7 @@
  * Issue #1059: Base client for modular API structure
  */
 
-import { supabase, authHelpers } from '../supabaseClient';
+import { supabase } from '../supabaseClient';
 import { isMockModeEnabled } from '../mockMode';
 import { getCsrfToken } from '../../utils/csrf';
 
@@ -51,7 +51,8 @@ class ApiClient {
    */
   async getValidSession() {
     try {
-      const session = await authHelpers.getCurrentSession();
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const session = currentSession;
 
       if (!session) {
         throw new Error('No active session');
