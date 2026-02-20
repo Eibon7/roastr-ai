@@ -229,10 +229,10 @@ describe('LoginPageV2', () => {
 
     it('displays generic error message for unknown error codes', () => {
       // Test getErrorMessage function directly for unknown codes
-      expect(getErrorMessage('UNKNOWN_CODE')).toBe('Algo ha fallado. Inténtalo más tarde');
-      expect(getErrorMessage('AUTH_SOME_NEW_ERROR')).toBe('Algo ha fallado. Inténtalo más tarde');
-      expect(getErrorMessage(undefined)).toBe('Algo ha fallado. Inténtalo más tarde');
-      expect(getErrorMessage('')).toBe('Algo ha fallado. Inténtalo más tarde');
+      expect(getErrorMessage('UNKNOWN_CODE')).toBe('Ocurrió un error inesperado al iniciar sesión. Por favor intenta de nuevo o contacta a soporte si el problema persiste.');
+      expect(getErrorMessage('AUTH_SOME_NEW_ERROR')).toBe('Ocurrió un error inesperado al iniciar sesión. Por favor intenta de nuevo o contacta a soporte si el problema persiste.');
+      expect(getErrorMessage(undefined)).toBe('Ocurrió un error inesperado al iniciar sesión. Por favor intenta de nuevo o contacta a soporte si el problema persiste.');
+      expect(getErrorMessage('')).toBe('Ocurrió un error inesperado al iniciar sesión. Por favor intenta de nuevo o contacta a soporte si el problema persiste.');
     });
 
     it('displays error with accessible alert role', async () => {

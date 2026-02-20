@@ -24,13 +24,7 @@ import {
   logMagicLinkRequest,
   logPasswordRecoveryRequest,
   logFeatureDisabled,
-  logAuthFlowStarted
-} from '../utils/authObservability.js';
-import {
-  logLoginAttempt,
-  logRegisterAttempt,
-  logMagicLinkRequest,
-  logPasswordRecoveryRequest,
+  logAuthFlowStarted,
   trackAuthDuration,
   logRateLimit
 } from '../utils/authObservability.js';
@@ -95,6 +89,7 @@ export class AuthService {
    * - Identidad: Supabase Auth (email + password)
    * - Anti-enumeration: si el email ya existe, NO se revela (caller debe responder homogéneo)
    * - Perfil mínimo: se intenta crear en `profiles` (best-effort, no bloquea registro)
+   * - Email: best-effort, NO bloquea si falla (usuario puede confirmar más tarde)
    */
   async register(params: RegisterParams): Promise<void> {
     const normalizedEmail = this.normalizeEmail(params.email);
@@ -112,31 +107,49 @@ export class AuthService {
         throw new AuthError(AUTH_ERROR_CODES.INVALID_REQUEST);
       }
 
-      const { provider } = await assertAuthEmailInfrastructureEnabled('register', normalizedEmail, {
-        request_id: params.request_id
-      });
-
-      // Observability (ROA-409): request to send auth email (register verification)
-      logger.info('auth_email_requested', {
-        request_id: params.request_id,
-        flow: 'register',
-        provider,
-        email: truncateEmailForLog(normalizedEmail)
-      });
+      // IMPORTANTE: NO bloquear registro si email falla
+      // Email es best-effort, usuario puede confirmar más tarde
+      let emailInfraAvailable = false;
       try {
-        trackEvent({
-          event: 'auth_email_requested',
-          properties: {
-            flow: 'register',
-            provider
-          },
-          context: {
-            flow: 'auth',
+        const { provider } = await assertAuthEmailInfrastructureEnabled(
+          'register',
+          normalizedEmail,
+          {
             request_id: params.request_id
           }
+        );
+
+        // Observability (ROA-409): request to send auth email (register verification)
+        logger.info('auth_email_requested', {
+          request_id: params.request_id,
+          flow: 'register',
+          provider,
+          email: truncateEmailForLog(normalizedEmail)
         });
-      } catch {
-        logger.warn('analytics.track_failed', { event: 'auth_email_requested' });
+        try {
+          trackEvent({
+            event: 'auth_email_requested',
+            properties: {
+              flow: 'register',
+              provider
+            },
+            context: {
+              flow: 'auth',
+              request_id: params.request_id
+            }
+          });
+        } catch {
+          logger.warn('analytics.track_failed', { event: 'auth_email_requested' });
+        }
+        emailInfraAvailable = true;
+      } catch (emailError) {
+        // Email infrastructure no disponible, pero NO bloquear registro
+        logger.warn('auth.register.email_infrastructure_unavailable', {
+          request_id: params.request_id,
+          email: truncateEmailForLog(normalizedEmail),
+          error_slug: (emailError as any)?.slug || 'AUTH_EMAIL_SEND_FAILED',
+          message: 'User will be created but email may not be sent'
+        });
       }
 
       const { data, error } = await supabase.auth.signUp({
@@ -157,25 +170,34 @@ export class AuthService {
         throw mapSupabaseError(error);
       }
 
-      // Observability (ROA-409): Supabase accepted signup (verification email should be enqueued by provider)
-      logger.info('auth_email_sent', {
-        request_id: params.request_id,
-        flow: 'register',
-        email: truncateEmailForLog(normalizedEmail)
-      });
-      try {
-        trackEvent({
-          event: 'auth_email_sent',
-          properties: {
-            flow: 'register'
-          },
-          context: {
-            flow: 'auth',
-            request_id: params.request_id
-          }
+      // Observability (ROA-409): Supabase accepted signup
+      // Email may or may not be sent depending on email infrastructure availability
+      if (emailInfraAvailable) {
+        logger.info('auth_email_sent', {
+          request_id: params.request_id,
+          flow: 'register',
+          email: truncateEmailForLog(normalizedEmail)
         });
-      } catch {
-        logger.warn('analytics.track_failed', { event: 'auth_email_sent' });
+        try {
+          trackEvent({
+            event: 'auth_email_sent',
+            properties: {
+              flow: 'register'
+            },
+            context: {
+              flow: 'auth',
+              request_id: params.request_id
+            }
+          });
+        } catch {
+          logger.warn('analytics.track_failed', { event: 'auth_email_sent' });
+        }
+      } else {
+        logger.warn('auth.register.user_created_without_email', {
+          request_id: params.request_id,
+          email: truncateEmailForLog(normalizedEmail),
+          message: 'User created but verification email was not sent (email infra unavailable)'
+        });
       }
 
       // Supabase puede devolver session null si requiere verificación. Aun así, user puede existir.

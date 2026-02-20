@@ -8,7 +8,7 @@
  * Contract: POST /api/v2/auth/login
  */
 
-import { useState } from 'react';
+import * as React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,36 +48,36 @@ const ERROR_MESSAGES: Record<string, string> = {
   'AUTH_INVALID_CREDENTIALS': 'El email o la contraseña no son correctos',
   'AUTH_EMAIL_NOT_FOUND': 'El email o la contraseña no son correctos', // Anti-enumeration
   'AUTH_PASSWORD_INCORRECT': 'El email o la contraseña no son correctos', // Anti-enumeration
-  'AUTH_EMAIL_NOT_CONFIRMED': 'Por favor verifica tu email antes de iniciar sesión',
-  'AUTH_ACCOUNT_LOCKED': 'Cuenta bloqueada temporalmente debido a múltiples intentos fallidos',
-  'AUTH_DISABLED': 'Login no disponible temporalmente',
+  'AUTH_EMAIL_NOT_CONFIRMED': 'Tu email aún no ha sido verificado. Por favor revisa tu bandeja de entrada y confirma tu cuenta antes de iniciar sesión.',
+  'AUTH_ACCOUNT_LOCKED': 'Tu cuenta ha sido bloqueada temporalmente debido a múltiples intentos fallidos. Por favor intenta de nuevo más tarde o contacta a soporte.',
+  'AUTH_DISABLED': 'El servicio de inicio de sesión está temporalmente deshabilitado. Por favor intenta más tarde o contacta a soporte.',
   
   // Account errors
   'ACCOUNT_NOT_FOUND': 'El email o la contraseña no son correctos', // Anti-enumeration
-  'ACCOUNT_SUSPENDED': 'Cuenta suspendida. Por favor contacta a soporte',
-  'ACCOUNT_BANNED': 'Cuenta bloqueada. Por favor contacta a soporte',
-  'ACCOUNT_DELETED': 'Cuenta eliminada',
-  'ACCOUNT_BLOCKED': 'Cuenta bloqueada. Contacta a soporte',
+  'ACCOUNT_SUSPENDED': 'Tu cuenta ha sido suspendida. Por favor contacta a soporte para más información.',
+  'ACCOUNT_BANNED': 'Tu cuenta ha sido bloqueada permanentemente. Por favor contacta a soporte si crees que esto es un error.',
+  'ACCOUNT_DELETED': 'Esta cuenta ha sido eliminada y ya no está disponible.',
+  'ACCOUNT_BLOCKED': 'Tu cuenta está bloqueada. Por favor contacta a soporte para más información.',
   
   // Policy errors
-  'POLICY_RATE_LIMITED': 'Demasiados intentos de inicio de sesión. Intenta más tarde',
-  'POLICY_ABUSE_DETECTED': 'Actividad sospechosa detectada. Contacta a soporte',
-  'POLICY_BLOCKED': 'Acción bloqueada por políticas de seguridad',
-  'POLICY_INVALID_REQUEST': 'Solicitud inválida. Verifica los datos',
+  'POLICY_RATE_LIMITED': 'Demasiados intentos de inicio de sesión. Por favor intenta de nuevo en 15 minutos.',
+  'POLICY_ABUSE_DETECTED': 'Se ha detectado actividad sospechosa en tu cuenta. Por favor contacta a soporte si crees que esto es un error.',
+  'POLICY_BLOCKED': 'Tu solicitud ha sido bloqueada por nuestras políticas de seguridad. Contacta a soporte si necesitas ayuda.',
+  'POLICY_INVALID_REQUEST': 'Los datos enviados son inválidos. Por favor verifica que tu email y contraseña sean correctos.',
   
   // Service errors
-  'AUTH_SERVICE_UNAVAILABLE': 'Servicio de autenticación temporalmente no disponible',
-  'AUTH_UNKNOWN': 'Algo ha fallado. Inténtalo más tarde',
+  'AUTH_SERVICE_UNAVAILABLE': 'El servicio de autenticación está temporalmente no disponible. Por favor intenta de nuevo en unos momentos.',
+  'AUTH_UNKNOWN': 'Ocurrió un error inesperado al iniciar sesión. Por favor intenta de nuevo o contacta a soporte si el problema persiste.',
   
   // Network errors
-  'NETWORK_ERROR': 'Error de conexión. Verifica tu internet e inténtalo de nuevo',
-  'AUTH_SESSION_EXPIRED': 'Tu sesión ha expirado. Por favor inicia sesión de nuevo',
-  'AUTH_FORBIDDEN': 'No tienes permiso para realizar esta acción',
+  'NETWORK_ERROR': 'No se pudo conectar con el servidor. Por favor verifica tu conexión a internet e inténtalo de nuevo.',
+  'AUTH_SESSION_EXPIRED': 'Tu sesión ha expirado. Por favor inicia sesión de nuevo.',
+  'AUTH_FORBIDDEN': 'No tienes permiso para realizar esta acción.',
   
   // Legacy fallbacks
-  'AUTH_TOO_MANY_LOGIN_ATTEMPTS': 'Demasiados intentos de inicio de sesión. Intenta más tarde',
-  'AUTH_RATE_LIMIT_EXCEEDED': 'Demasiadas solicitudes. Intenta más tarde',
-  'AUTH_EMAIL_NOT_VERIFIED': 'Por favor verifica tu dirección de email',
+  'AUTH_TOO_MANY_LOGIN_ATTEMPTS': 'Demasiados intentos de inicio de sesión. Por favor intenta más tarde.',
+  'AUTH_RATE_LIMIT_EXCEEDED': 'Demasiadas solicitudes. Por favor intenta más tarde.',
+  'AUTH_EMAIL_NOT_VERIFIED': 'Por favor verifica tu dirección de email antes de iniciar sesión.',
 };
 
 /**
@@ -103,18 +103,32 @@ export function getErrorMessage(errorSlug: string | undefined): string {
  * - No backend logic duplication
  */
 export default function LoginPageV2() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorCode, setErrorCode] = useState<string | undefined>(undefined);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [errorCode, setErrorCode] = React.useState<string | undefined>(undefined);
+  const [errorSlug, setErrorSlug] = React.useState<string | undefined>(undefined);
   const navigate = useNavigate();
   const location = useLocation();
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
+  
+  // Watch form fields for clearing errors
+  const email = watch('email');
+  const password = watch('password');
+  
+  // Clear error when user starts typing
+  React.useEffect(() => {
+    if (errorCode) {
+      setErrorCode(undefined);
+      setErrorSlug(undefined);
+    }
+  }, [email, password]);
 
   // Redirect destination after login
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/app';
@@ -127,9 +141,12 @@ export default function LoginPageV2() {
     setIsSubmitting(true);
     setErrorCode(undefined);
 
-    // #region agent log
-    if (process.env.NODE_ENV === 'development') {
-      try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:126',message:'Login attempt started',data:{email:data.email,hasPassword:!!data.password},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,F'})}).catch(()=>{}); } catch { /* ignore */ }
+    // #region agent log (no PII - email masked)
+    if (import.meta.env.DEV) {
+      try {
+        const emailDomain = data.email?.includes('@') ? data.email.split('@')[1] : null;
+        fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:126',message:'Login attempt started',data:{emailDomain,hasPassword:!!data.password},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,F'})}).catch(()=>{});
+      } catch { /* ignore */ }
     }
     // #endregion
 
@@ -140,8 +157,8 @@ export default function LoginPageV2() {
         password: data.password
       });
 
-      // #region agent log
-      if (process.env.NODE_ENV === 'development') {
+      // #region agent log (DEV only)
+      if (import.meta.env.DEV) {
         try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:133',message:'Login API success',data:{hasSession:!!responseData.session,hasAccessToken:!!responseData.session?.access_token,responseKeys:Object.keys(responseData||{})},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{}); } catch { /* ignore */ }
       }
       // #endregion
@@ -157,26 +174,37 @@ export default function LoginPageV2() {
       // Redirect on success
       navigate(from, { replace: true });
     } catch (error: any) {
-      // #region agent log
-      if (process.env.NODE_ENV === 'development') {
-        try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:148',message:'Login API error caught',data:{errorType:typeof error,hasError:!!error,hasErrorProp:'error' in error,hasStatusProp:'status' in error,errorKeys:error?Object.keys(error):[],errorSlugPath1:error?.error?.slug,errorSlugPath2:error?.error_code,errorSlugPath3:error?.response?.data?.error?.slug,errorMessage:error?.message,fullError:JSON.stringify(error).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,F'})}).catch(()=>{}); } catch { /* ignore */ }
+      // #region agent log (DEV only, no PII)
+      if (import.meta.env.DEV) {
+        try {
+          fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:148',message:'Login API error caught',data:{errorType:typeof error,hasError:!!error,hasErrorProp:'error' in error,hasStatusProp:'status' in error,errorKeys:error?Object.keys(error):[],errorSlugPath1:error?.error?.slug,errorSlugPath2:error?.error_code,errorSlugPath3:error?.response?.data?.error?.slug},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,F'})}).catch(()=>{});
+        } catch { /* ignore */ }
       }
       // #endregion
       
       // Extract error slug from apiClient error
-      const errorSlug = error?.error?.slug || error?.error_code || error?.response?.data?.error?.slug || 'AUTH_UNKNOWN';
+      const extractedSlug = error?.error?.slug || error?.error_code || error?.response?.data?.error?.slug || 'AUTH_UNKNOWN';
       
-      // #region agent log
-      if (process.env.NODE_ENV === 'development') {
-        try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:152',message:'Extracted error slug',data:{errorSlug,willShowMessage:getErrorMessage(errorSlug)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{}); } catch { /* ignore */ }
+      // #region agent log (DEV only)
+      if (import.meta.env.DEV) {
+        try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login-v2.tsx:152',message:'Extracted error slug',data:{errorSlug:extractedSlug},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{}); } catch { /* ignore */ }
       }
       // #endregion
       
-      // Log only non-sensitive identifiers
-      console.error('Login failed:', { errorSlug });
+      // Enhanced error logging for QA debugging
+      console.error('Login failed:', {
+        slug: extractedSlug,
+        status: error?.status,
+        retryable: error?.error?.retryable,
+        request_id: error?.request_id,
+        message: getErrorMessage(extractedSlug)
+      });
+      
+      // Save slug for debug display
+      setErrorSlug(extractedSlug);
       
       // Show UX error message
-      setErrorCode(errorSlug);
+      setErrorCode(extractedSlug);
     } finally {
       setIsSubmitting(false);
     }
@@ -246,6 +274,16 @@ export default function LoginPageV2() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription role="alert">
                   {getErrorMessage(errorCode)}
+                  {import.meta.env.DEV && errorSlug && (
+                    <div className="mt-2 pt-2 border-t border-destructive/20">
+                      <p className="text-xs font-mono opacity-70">
+                        Debug Info: <span className="font-semibold">{errorSlug}</span>
+                      </p>
+                      <p className="text-xs opacity-60 mt-1">
+                        (Solo visible en desarrollo)
+                      </p>
+                    </div>
+                  )}
                 </AlertDescription>
               </Alert>
             )}

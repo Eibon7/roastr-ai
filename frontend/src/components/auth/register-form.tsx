@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -12,8 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { setTokens } from '@/lib/auth/tokenStorage';
-// @ts-expect-error - client.js is a JS module without types
-import apiClient from '@/lib/api/client';
+import { supabase } from '@/lib/supabaseClient';
 
 /**
  * Auth Error Messages (Backend v2 taxonomy)
@@ -26,40 +24,40 @@ const authErrorMessages: Record<string, string> = {
   'AUTH_INVALID_CREDENTIALS': 'El email o la contraseña no son correctos',
   'AUTH_EMAIL_NOT_CONFIRMED': 'Por favor verifica tu email antes de iniciar sesión',
   'AUTH_ACCOUNT_LOCKED': 'Cuenta bloqueada temporalmente. Intenta más tarde',
-  'AUTH_DISABLED': 'El registro está temporalmente deshabilitado. Intenta más tarde',
-  'AUTH_EMAIL_DISABLED': 'El registro por email está deshabilitado',
-  'AUTH_EMAIL_PROVIDER_ERROR': 'Error al enviar el email. Intenta más tarde',
-  'AUTH_EMAIL_RATE_LIMITED': 'Demasiadas solicitudes de email. Intenta más tarde',
-  'AUTH_EMAIL_SEND_FAILED': 'No se pudo enviar el email. Inténtalo de nuevo',
-  'AUTH_UNKNOWN': 'No se pudo crear la cuenta. Inténtalo de nuevo',
+  'AUTH_DISABLED': 'El servicio de registro está temporalmente deshabilitado. Por favor intenta más tarde o contacta a soporte.',
+  'AUTH_EMAIL_DISABLED': 'El registro por email está temporalmente deshabilitado',
+  'AUTH_EMAIL_PROVIDER_ERROR': 'Error al conectar con el servicio de email. Por favor intenta de nuevo o contacta a soporte si el problema persiste.',
+  'AUTH_EMAIL_RATE_LIMITED': 'Demasiadas solicitudes de email. Por favor intenta en unos minutos',
+  'AUTH_EMAIL_SEND_FAILED': 'No se pudo enviar el email de bienvenida. Por favor verifica tu dirección de email e inténtalo de nuevo.',
+  'AUTH_UNKNOWN': 'Ocurrió un error inesperado. Por favor intenta de nuevo o contacta a soporte si el problema persiste.',
   
   // Account errors - Generic messages to prevent enumeration
-  'ACCOUNT_EMAIL_ALREADY_EXISTS': 'No se pudo completar el registro. Inténtalo de nuevo',
-  'ACCOUNT_NOT_FOUND': 'No se pudo completar el registro. Inténtalo de nuevo',
-  'ACCOUNT_SUSPENDED': 'No se pudo completar el registro. Inténtalo de nuevo',
-  'ACCOUNT_BANNED': 'No se pudo completar el registro. Inténtalo de nuevo',
-  'ACCOUNT_DELETED': 'No se pudo completar el registro. Inténtalo de nuevo',
-  'ACCOUNT_BLOCKED': 'No se pudo completar el registro. Inténtalo de nuevo',
+  'ACCOUNT_EMAIL_ALREADY_EXISTS': 'No se pudo completar el registro. Verifica tus datos e inténtalo de nuevo.',
+  'ACCOUNT_NOT_FOUND': 'No se pudo completar el registro. Verifica tus datos e inténtalo de nuevo.',
+  'ACCOUNT_SUSPENDED': 'No se pudo completar el registro. Si crees que esto es un error, contacta a soporte.',
+  'ACCOUNT_BANNED': 'No se pudo completar el registro. Si crees que esto es un error, contacta a soporte.',
+  'ACCOUNT_DELETED': 'No se pudo completar el registro. Verifica tus datos e inténtalo de nuevo.',
+  'ACCOUNT_BLOCKED': 'No se pudo completar el registro. Si crees que esto es un error, contacta a soporte.',
   
   // Policy errors
-  'POLICY_RATE_LIMITED': 'Demasiados intentos. Intenta en 15 minutos',
-  'POLICY_ABUSE_DETECTED': 'Actividad sospechosa detectada. Contacta a soporte',
-  'POLICY_BLOCKED': 'Acción bloqueada por políticas de seguridad',
-  'POLICY_INVALID_REQUEST': 'Solicitud inválida. Verifica los datos e inténtalo de nuevo',
-  'POLICY_NOT_FOUND': 'Recurso no encontrado',
+  'POLICY_RATE_LIMITED': 'Demasiados intentos de registro. Por favor intenta de nuevo en 15 minutos.',
+  'POLICY_ABUSE_DETECTED': 'Se detectó actividad sospechosa. Por favor contacta a soporte si crees que esto es un error.',
+  'POLICY_BLOCKED': 'Esta acción está bloqueada por políticas de seguridad. Contacta a soporte si necesitas ayuda.',
+  'POLICY_INVALID_REQUEST': 'Los datos enviados son inválidos. Por favor verifica que tu email y contraseña cumplan los requisitos.',
+  'POLICY_NOT_FOUND': 'El servicio solicitado no está disponible. Por favor recarga la página e inténtalo de nuevo.',
   
   // Network errors
-  'NETWORK_ERROR': 'Error de conexión. Verifica tu internet e inténtalo de nuevo',
+  'NETWORK_ERROR': 'No se pudo conectar con el servidor. Verifica tu conexión a internet e inténtalo de nuevo.',
   'AUTH_SESSION_EXPIRED': 'Tu sesión ha expirado. Por favor inicia sesión de nuevo',
   'AUTH_FORBIDDEN': 'No tienes permiso para realizar esta acción',
   
   // Legacy fallbacks
-  'AUTH_EMAIL_TAKEN': 'No se pudo completar el registro. Inténtalo de nuevo',
-  'AUTH_INVALID_EMAIL': 'Email inválido',
-  'AUTH_WEAK_PASSWORD': 'La contraseña es muy débil',
-  'AUTH_RATE_LIMIT_EXCEEDED': 'Demasiados intentos. Intenta más tarde',
-  'AUTH_TERMS_NOT_ACCEPTED': 'Debes aceptar los términos y condiciones',
-  'REGISTER_FAILED': 'No se pudo crear la cuenta. Inténtalo de nuevo'
+  'AUTH_EMAIL_TAKEN': 'No se pudo completar el registro. Verifica tus datos e inténtalo de nuevo.',
+  'AUTH_INVALID_EMAIL': 'El formato del email no es válido. Por favor verifica e inténtalo de nuevo.',
+  'AUTH_WEAK_PASSWORD': 'La contraseña no cumple los requisitos mínimos de seguridad',
+  'AUTH_RATE_LIMIT_EXCEEDED': 'Demasiados intentos. Por favor intenta más tarde',
+  'AUTH_TERMS_NOT_ACCEPTED': 'Debes aceptar los términos y condiciones para crear una cuenta',
+  'REGISTER_FAILED': 'No se pudo crear la cuenta. Por favor inténtalo de nuevo'
 };
 
 /**
@@ -126,6 +124,7 @@ export interface RegisterFormProps {
 export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
   const navigate = useNavigate();
   const [backendError, setBackendError] = React.useState<string | null>(customError || null);
+  const [errorSlug, setErrorSlug] = React.useState<string | null>(null);
   
   const {
     register,
@@ -143,100 +142,70 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
     }
   });
 
+  const email = watch('email');
   const password = watch('password');
 
-  /**
-   * Handle form submission with apiClient
-   */
+  // Clear backend error when user starts typing (not on mount - preserves customError prop)
+  React.useEffect(() => {
+    if (backendError && (email || password)) {
+      setBackendError(null);
+      setErrorSlug(null);
+    }
+  }, [email, password]);
+
   const onSubmit = async (data: RegisterFormData) => {
     setBackendError(null);
-
-    // #region agent log
-    if (process.env.NODE_ENV === 'development') {
-      const maskedEmail = data.email ? data.email.substring(0, 3) + '***@' + data.email.split('@')[1] : null;
-      try { 
-        fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            location:'register-form.tsx:150',
-            message:'Register attempt started',
-            data:{
-              email: maskedEmail, // Masked PII
-              hasPassword:!!data.password,
-              termsAccepted:data.termsAccepted
-            },
-            timestamp:Date.now(),
-            sessionId:'debug-session',
-            hypothesisId:'A,B,C,E,F'
-          })
-        }).catch(()=>{}); 
-      } catch { /* ignore */ }
-    }
-    // #endregion
+    setErrorSlug(null);
 
     try {
-      // Use centralized apiClient for CSRF, mock mode, and interceptors
-      const responseData = await apiClient.post('/v2/auth/register', {
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
-        terms_accepted: data.termsAccepted
       });
 
-      // #region agent log
-      if (process.env.NODE_ENV === 'development') {
-        try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:160',message:'Register API success',data:{hasSession:!!responseData.session,hasAccessToken:!!responseData.session?.access_token,responseKeys:Object.keys(responseData||{})},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})}).catch(()=>{}); } catch { /* ignore */ }
-      }
-      // #endregion
-
-      // Success path - log only generic success message
-      console.log('Register succeeded');
-
-      // Save tokens using tokenStorage
-      if (responseData.session?.access_token && responseData.session?.refresh_token) {
-        setTokens(responseData.session.access_token, responseData.session.refresh_token);
+      if (error) {
+        const slug = mapSupabaseError(error.message);
+        setErrorSlug(slug);
+        setBackendError(getErrorMessage(slug));
+        return;
       }
 
-      // Call success callback or redirect
+      if (signUpData.session?.access_token && signUpData.session?.refresh_token) {
+        setTokens(signUpData.session.access_token, signUpData.session.refresh_token);
+      }
+
       if (onSuccess) {
-        onSuccess(responseData);
+        onSuccess(signUpData);
       } else {
-        navigate('/dashboard');
+        navigate('/app');
       }
     } catch (err: any) {
-      // #region agent log
-      if (process.env.NODE_ENV === 'development') {
-        try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:177',message:'Register API error caught',data:{errorType:typeof err,hasError:!!err,hasErrorProp:'error' in err,hasStatusProp:'status' in err,errorKeys:err?Object.keys(err):[],errorSlugPath1:err?.error?.slug,errorSlugPath2:err?.error_code,errorSlugPath3:err?.response?.data?.error?.slug,errorMessage:err?.message,errorStatus:err?.status,fullError:JSON.stringify(err).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,E,F'})}).catch(()=>{}); } catch { /* ignore */ }
-      }
-      // #endregion
-      
-      // Extract error slug from apiClient error
-      const errorSlug = err?.error?.slug || err?.error_code || err?.response?.data?.error?.slug || 'AUTH_UNKNOWN';
-      
-      // #region agent log
-      if (process.env.NODE_ENV === 'development') {
-        try { fetch('http://127.0.0.1:7242/ingest/a097a380-d709-4058-88f6-38ea3b24d552',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-form.tsx:181',message:'Extracted error slug',data:{errorSlug,willShowMessage:getErrorMessage(errorSlug)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{}); } catch { /* ignore */ }
-      }
-      // #endregion
-      
-      // Log only non-sensitive identifiers
-      console.error('Register failed:', { errorSlug });
-      
-      // Show UX error message
-      setBackendError(getErrorMessage(errorSlug));
+      const slug = 'AUTH_UNKNOWN';
+      setErrorSlug(slug);
+      setBackendError(getErrorMessage(slug));
     }
   };
 
+  function mapSupabaseError(message: string): string {
+    const lower = message.toLowerCase();
+    if (lower.includes('already registered') || lower.includes('already been registered')) return 'ACCOUNT_EMAIL_ALREADY_EXISTS';
+    if (lower.includes('rate limit') || lower.includes('too many')) return 'POLICY_RATE_LIMITED';
+    if (lower.includes('password')) return 'AUTH_WEAK_PASSWORD';
+    if (lower.includes('invalid email') || lower.includes('email')) return 'AUTH_INVALID_EMAIL';
+    if (lower.includes('network') || lower.includes('fetch')) return 'NETWORK_ERROR';
+    return 'AUTH_UNKNOWN';
+  }
+
   return (
-    <Card className="w-full max-w-md mx-auto" data-testid="register-card">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Crear cuenta</CardTitle>
-        <CardDescription className="text-center">
+    <div className="space-y-4" data-testid="register-form">
+      <div className="space-y-1 text-center">
+        <h2 className="text-2xl font-bold">Crear cuenta</h2>
+        <p className="text-sm text-muted-foreground">
           Ingresa tus datos para crear tu cuenta en Roastr.AI
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        </p>
+      </div>
+      
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -375,6 +344,16 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription role="alert">
                 {backendError}
+                {import.meta.env.DEV && errorSlug && (
+                  <div className="mt-2 pt-2 border-t border-destructive/20">
+                    <p className="text-xs font-mono opacity-70">
+                      Debug Info: <span className="font-semibold">{errorSlug}</span>
+                    </p>
+                    <p className="text-xs opacity-60 mt-1">
+                      (Solo visible en desarrollo)
+                    </p>
+                  </div>
+                )}
               </AlertDescription>
             </Alert>
           )}
@@ -395,15 +374,14 @@ export function RegisterForm({ onSuccess, customError }: RegisterFormProps) {
             )}
           </Button>
         </form>
-      </CardContent>
-      <CardFooter className="flex flex-col space-y-4">
-        <div className="text-sm text-center text-muted-foreground">
+        
+        {/* Login CTA */}
+        <div className="text-sm text-center text-muted-foreground pt-4 border-t">
           ¿Ya tienes cuenta?{' '}
           <Link to="/login" className="underline hover:text-primary font-medium">
             Inicia sesión
           </Link>
         </div>
-      </CardFooter>
-    </Card>
+      </div>
   );
 }
