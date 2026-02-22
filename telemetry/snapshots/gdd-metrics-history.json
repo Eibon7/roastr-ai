@@ -1,73 +1,6 @@
 {
   "snapshots": [
     {
-      "timestamp": "2025-11-24T00:57:56.206Z",
-      "date": "2025-11-24",
-      "metrics": {
-        "health": {
-          "overall_score": 89.3,
-          "average_score": 89.3,
-          "healthy_count": 13,
-          "degraded_count": 2,
-          "critical_count": 0,
-          "total_nodes": 15,
-          "status": "healthy"
-        },
-        "drift": {
-          "average_drift_risk": 4,
-          "high_risk_count": 0,
-          "at_risk_count": 0,
-          "healthy_count": 15,
-          "overall_status": "HEALTHY"
-        },
-        "validation": {
-          "nodes_validated": 15,
-          "orphans": 0,
-          "missing_refs": 0,
-          "cycles": 0,
-          "status": "healthy"
-        },
-        "repair": {
-          "total_fixes_attempted": 1,
-          "successful_fixes": 1,
-          "failed_fixes": 0,
-          "success_rate": 100
-        },
-        "coverage": {
-          "avg_coverage": 58,
-          "nodes_with_coverage": 13,
-          "total_nodes": 15
-        },
-        "derived": {
-          "stability_index": 95,
-          "health_variance": 2,
-          "auto_fix_efficiency": 100,
-          "system_status": "DEGRADED"
-        },
-        "momentum": {
-          "trend": "declining",
-          "delta": -0.3,
-          "current_health": 89.3,
-          "previous_health": 89.6,
-          "message": "Health declining by 0.3 points"
-        }
-      },
-      "alerts": [
-        {
-          "type": "health",
-          "severity": "critical",
-          "message": "Health score 89.3 below threshold 90",
-          "value": 89.3,
-          "threshold": 90
-        }
-      ],
-      "metadata": {
-        "version": "1.0.0",
-        "phase": 13,
-        "collector": "collect-gdd-telemetry.js"
-      }
-    },
-    {
       "timestamp": "2025-11-26T00:56:18.144Z",
       "date": "2025-11-26",
       "metrics": {
@@ -5242,9 +5175,64 @@
         "phase": 13,
         "collector": "collect-gdd-telemetry.js"
       }
+    },
+    {
+      "timestamp": "2026-02-22T01:13:15.899Z",
+      "date": "2026-02-22",
+      "metrics": {
+        "health": {
+          "overall_score": 95.7,
+          "average_score": 95.7,
+          "healthy_count": 15,
+          "degraded_count": 0,
+          "critical_count": 0,
+          "total_nodes": 15,
+          "status": "healthy"
+        },
+        "drift": {
+          "average_drift_risk": 4,
+          "high_risk_count": 0,
+          "at_risk_count": 0,
+          "healthy_count": 15,
+          "overall_status": "HEALTHY"
+        },
+        "validation": {
+          "nodes_validated": 15,
+          "orphans": 0,
+          "missing_refs": 0,
+          "cycles": 0,
+          "status": "warning"
+        },
+        "repair": {
+          "total_fixes_attempted": 1,
+          "successful_fixes": 1,
+          "failed_fixes": 0,
+          "success_rate": 100
+        },
+        "coverage": null,
+        "derived": {
+          "stability_index": 97,
+          "health_variance": 15,
+          "auto_fix_efficiency": 100,
+          "system_status": "STABLE"
+        },
+        "momentum": {
+          "trend": "stable",
+          "delta": 0,
+          "current_health": 95.7,
+          "previous_health": 95.7,
+          "message": "Health stable by 0.0 points"
+        }
+      },
+      "alerts": [],
+      "metadata": {
+        "version": "1.0.0",
+        "phase": 13,
+        "collector": "collect-gdd-telemetry.js"
+      }
     }
   ],
-  "last_updated": "2026-02-21T01:08:05.799Z",
+  "last_updated": "2026-02-22T01:13:15.899Z",
   "total_snapshots": 89,
   "retention_days": 90
 }
