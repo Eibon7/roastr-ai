@@ -2,21 +2,23 @@
 
 *(Versión actualizada para arquitectura Shield-first, multi-plataforma)*
 
-Roastr v3 soporta **10 plataformas** con rollout progresivo:
+Roastr v3 soporta múltiples plataformas con rollout progresivo:
 
-**MVP (Phase 1):**
+**MVP:**
 - YouTube
-- Instagram
-- TikTok
 - X (Twitter)
-- Facebook (Pages)
-- Bluesky
 
-**Phase 2:**
+**Phase 2 (sin entidad legal):**
+- Bluesky (AT Protocol abierto)
 - Twitch
 - Reddit
 - Discord
-- LinkedIn (solo lectura)
+
+**Phase 3 (requiere entidad legal / verificación empresarial):**
+- Instagram (Meta Graph API → requiere Business Verification)
+- Facebook Pages (Meta Graph API → requiere Business Verification)
+- TikTok (requiere Developer Account verificado como empresa)
+- LinkedIn (Organization API → requiere empresa verificada)
 
 Las integraciones siguen arquitectura hexagonal con NestJS. Cada plataforma es un **adapter** que implementa una interfaz común:
 
@@ -28,11 +30,10 @@ src/
 │   │   ├── youtube.adapter.ts
 │   │   ├── youtube.oauth.ts
 │   │   └── youtube.types.ts
-│   ├── instagram/
-│   ├── tiktok/
-│   ├── x/
-│   ├── facebook/
-│   └── bluesky/
+│   └── x/
+│       ├── x.adapter.ts
+│       ├── x.oauth.ts
+│       └── x.types.ts
 ├── ingestion/
 │   ├── ingestion.service.ts
 │   └── ingestion.worker.ts
@@ -99,9 +100,9 @@ Los métodos no soportados lanzan `PlatformActionNotSupportedError`. El Shield c
 
 | Plan | Cuentas por plataforma | Plataformas MVP | Max cuentas total |
 |---|---|---|---|
-| Starter (€5/mo) | 1 | 6 | 6 |
-| Pro (€15/mo) | 2 | 6 | 12 |
-| Plus (€50/mo) | 3 | 6 | 18 |
+| Starter (€5/mo) | 1 | 2 (YouTube + X) | 2 |
+| Pro (€15/mo) | 2 | 2 (YouTube + X) | 4 |
+| Plus (€50/mo) | 2 | 2 (YouTube + X) | 4 |
 
 ### Reglas
 
@@ -109,7 +110,7 @@ Los métodos no soportados lanzan `PlatformActionNotSupportedError`. El Shield c
 - Si se alcanza el máximo → botón *Añadir cuenta* deshabilitado en UI.
 - El backend valida igualmente (hard limit en el endpoint).
 - Si billing está **paused** → todas las cuentas pasan a `paused`.
-- Las plataformas Phase 2 no cuentan contra el límite hasta que se activen.
+- Cuando se añadan plataformas en Phase 2/3, los límites se revisarán.
 
 ---
 
@@ -249,63 +250,43 @@ Todas las plataformas siguen este flujo base:
 10. Frontend recibe confirmación
 ```
 
-### 4.4.2 Notas específicas por plataforma
-
-#### YouTube
+### 4.4.2 YouTube
 
 - OAuth2 estándar con Google
 - Scopes: `youtube.readonly`, `youtube.force-ssl` (para comentarios y respuestas)
 - Google revoca refresh tokens tras ~6 meses sin uso → auto-detect y pedir reconexión
 - Quota: 10,000 units/día por proyecto (1 list = 1 unit, 1 insert = 50 units)
+- Capabilities: hide ✅, report ✅, block ✅ (ban de canal), reply ✅
 
-#### Instagram
-
-- OAuth2 via Meta Graph API
-- Solo Business/Creator accounts
-- Scopes: `instagram_basic`, `instagram_manage_comments`
-- No soporta reply automatizado ni report via API
-- Rate limit: 200 calls/hour per user
-
-#### TikTok
-
-- OAuth2 via TikTok Login Kit
-- Scopes: `video.list`, `comment.list`, `comment.list.manage`
-- Content Posting API para respuestas (limitada)
-- Rate limit: varía por endpoint (generalmente 100/min)
-
-#### X (Twitter)
+### 4.4.3 X (Twitter)
 
 - OAuth 2.0 con PKCE
 - Scopes: `tweet.read`, `tweet.write`, `users.read`, `block.write`, `hide.write`
-- Free tier: 1,500 tweets/month read, 500 posts/month
-- Basic ($200/mo): 10,000 reads/month, 3,000 posts/month
-- Enterprise ($42K+/año): full access
-- Hide reply disponible en todos los tiers. Reply automatizado solo Enterprise.
+- Tiers de API:
+  - Free: 1,500 tweets/month read, 500 posts/month
+  - Basic ($200/mo): 10,000 reads/month, 3,000 posts/month
+  - Enterprise ($42K+/año): full access
+- Capabilities: hide ✅ (todos los tiers), report ❌, block ✅, reply ⚠️ (solo Enterprise)
 
-#### Facebook (Pages)
+### 4.4.4 Plataformas futuras
 
-- OAuth2 via Meta Graph API
-- Solo Pages (no perfiles personales)
-- Scopes: `pages_manage_engagement`, `pages_read_engagement`
-- Puede ocultar comentarios y responder
-- No soporta report via API
-- Rate limit: 200 calls/hour per page
+**Phase 2 (sin entidad legal):**
 
-#### Bluesky
+| Plataforma | Auth | Capabilities | Notas |
+|---|---|---|---|
+| Bluesky | AT Protocol (app password) | hide, report, block, reply | API abierta, sin rate limits estrictos |
+| Twitch | OAuth2 + IRC/EventSub | hide, block, reply (chat) | Requiere permisos de mod |
+| Reddit | OAuth2 | hide, report, block, reply | Solo como moderador del subreddit |
+| Discord | OAuth2 + Bot token | hide (delete), block, reply | Requiere bot con permisos |
 
-- AT Protocol (no OAuth tradicional)
-- Auth via app password o session token
-- API abierta: no rate limits estrictos (fair use policy)
-- Soporta todas las acciones: hide (mute thread), report, block, reply
+**Phase 3 (requiere entidad legal):**
 
-### 4.4.3 Plataformas Phase 2
-
-| Plataforma | Auth | Notas |
-|---|---|---|
-| Twitch | OAuth2 + IRC/EventSub | Moderación via bot. Requiere permisos de mod. |
-| Reddit | OAuth2 | Solo como moderador del subreddit. Soporta todo. |
-| Discord | OAuth2 + Bot token | Requiere bot con permisos de manage messages. |
-| LinkedIn | OAuth2 (Organization API) | Solo lectura de comentarios en posts de empresa. No permite moderación. |
+| Plataforma | Auth | Capabilities | Bloqueante |
+|---|---|---|---|
+| Instagram | Meta Graph API | hide, block | Meta Business Verification |
+| Facebook | Meta Graph API | hide, block, reply | Meta Business Verification |
+| TikTok | Login Kit OAuth2 | hide, block | Developer Account verificado |
+| LinkedIn | Organization API | solo lectura | Empresa verificada |
 
 ---
 
@@ -360,11 +341,7 @@ Cada plataforma usa su mecanismo de cursor:
 | Plataforma | Cursor | Mecanismo |
 |---|---|---|
 | YouTube | `nextPageToken` | Paginación por token |
-| Instagram | `after` cursor | Cursor-based pagination |
-| TikTok | `cursor` + `has_more` | Cursor numérico |
 | X | `since_id` / `pagination_token` | Cronológico |
-| Facebook | `after` cursor | Cursor-based pagination |
-| Bluesky | `cursor` (AT Protocol) | Lexicon cursor |
 
 - Retry on fail con backoff
 - Guarda `last_successful_ingestion` en cada fetch exitoso
@@ -428,44 +405,20 @@ Error de quota (429 con retry-after, 403 quota exceeded):
   → Log de severidad media
 ```
 
-### 4.7.2 Errores específicos
-
-#### YouTube
+### 4.7.2 Errores específicos — YouTube
 
 - `quotaExceeded` (403) → frozen hasta midnight UTC (quota diaria de 10K units)
 - `commentsDisabled` → skip video, no error de cuenta
 - `channelNotFound` → inactive
+- `processingFailure` → retry con backoff
 
-#### Instagram
-
-- `OAuthException` code 190 → token expired → refresh o reconnect
-- Rate limit 200/hour → respeta `x-business-use-case-usage` header
-- Webhook delivery failures → fallback a polling
-
-#### TikTok
-
-- `access_token_invalid` → refresh token flow
-- `scope_not_authorized` → inactive, needs reconnect with new scopes
-- Sandbox vs Production rate limits diferentes
-
-#### X (Twitter)
+### 4.7.3 Errores específicos — X (Twitter)
 
 - 429 con `x-rate-limit-reset` → espera exacta hasta timestamp
-- Free tier: cap estricto de 1,500 reads/month → tracking interno
+- Free tier: cap estricto de 1,500 reads/month → tracking interno para no exceder
 - `ACCOUNT_SUSPENDED` → inactive
 - Edit window (30 min) → delay de análisis para roasts, Shield inmediato
-
-#### Facebook
-
-- Rate limiting via `x-business-use-case-usage` header
-- Page token vs User token → usar page tokens (long-lived, 60 días)
-- `OAuthException` code 10 → permisos insuficientes → reconnect
-
-#### Bluesky
-
-- Session expired → re-authenticate con app password
-- AT Protocol errores son genéricos → parse `error` field
-- No hay rate limits estrictos pero respetar fair use
+- `FORBIDDEN` (403) sin haber cambiado nada → posible revocación de app → log + alert
 
 ---
 
