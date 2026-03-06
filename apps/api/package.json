@@ -1,0 +1,33 @@
+{
+  "name": "@roastr/api",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "dev": "nest start --watch",
+    "start": "node dist/main",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11",
+    "@nestjs/core": "^11",
+    "@nestjs/platform-express": "^11",
+    "@nestjs/config": "^4",
+    "@nestjs/bullmq": "^11",
+    "bullmq": "^5",
+    "@supabase/supabase-js": "^2",
+    "reflect-metadata": "^0.2",
+    "rxjs": "^7",
+    "zod": "^3.24",
+    "@roastr/shared": "*"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11",
+    "@nestjs/schematics": "^11",
+    "@nestjs/testing": "^11",
+    "typescript": "^5.7",
+    "vitest": "^3",
+    "@types/express": "^5"
+  }
+}

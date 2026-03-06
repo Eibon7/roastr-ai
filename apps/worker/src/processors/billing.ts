@@ -1,0 +1,12 @@
+import type { Job } from "bullmq";
+
+export async function billingProcessor(job: Job): Promise<void> {
+  console.log(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    level: "info",
+    service: "worker",
+    queue: "billing",
+    jobId: job.id,
+    message: "Processing billing job",
+  }));
+}

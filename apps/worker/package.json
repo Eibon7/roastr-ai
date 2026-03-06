@@ -1,0 +1,21 @@
+{
+  "name": "@roastr/worker",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "bullmq": "^5",
+    "@supabase/supabase-js": "^2",
+    "zod": "^3.24",
+    "@roastr/shared": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7",
+    "tsx": "^4"
+  }
+}
