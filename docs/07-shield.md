@@ -354,7 +354,7 @@ El Shield debe consultar esta matriz antes de ejecutar cualquier acción. Si una
 | Instagram | ✅ | ❌ | ✅ | ❌ | Solo Business/Creator accounts via Graph API. No soporta report ni reply automatizado. |
 | TikTok | ✅ | ❌ | ✅ | ❌ | Content Posting API limitada. Hide = filter comments. |
 | Facebook | ✅ | ❌ | ✅ (ban de página) | ✅ | Solo Pages via Graph API. Report no disponible via API. |
-| X (Twitter) | ✅ (hide reply) | ❌ | ✅ | ⚠️ Solo Enterprise | Free/Basic: solo hide+block. Enterprise ($42K+/año): reply + full access. |
+| X (Twitter) | ✅ (hide reply) | ❌ | ✅ | ✅ (desde cuenta usuario) | Reply via OAuth del usuario. Posts cuentan contra cuota de app (Basic: 3K/mes). Shield (hide/block) no consume cuota. |
 | Twitch | ✅ | ❌ | ✅ (ban/timeout) | ✅ (chat) | Moderación via IRC/EventSub. Reply es mensaje en chat. |
 | Reddit | ✅ (remove) | ✅ | ✅ | ✅ | Solo como moderador del subreddit. |
 | Discord | ✅ (delete) | ❌ | ✅ (kick/ban) | ✅ | Requiere bot con permisos. |

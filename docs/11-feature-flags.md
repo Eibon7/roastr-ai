@@ -72,7 +72,7 @@ function useFeatureFlag(key: string): boolean {
 
 | Key | Tipo | Actor | Descripción | Default |
 |---|---|---|---|---|
-| `roasting_enabled` | boolean | admin | Activa/desactiva módulo de Roasting globalmente | `true` |
+| `roasting_enabled` | boolean | admin (per-user override) | Activa módulo de Roasting. Phase 2: OFF global, habilitado por usuario para testers | `false` |
 | `autopost_enabled` | boolean | usuario (per account) | Auto-publish roasts sin revisión manual | `false` |
 | `personal_tone_enabled` | boolean | admin | Habilita Tono Personal (Pro/Plus) | `false` |
 | `multi_version_enabled` | boolean | admin | Genera 2 variantes de roast en vez de 1 | `false` |

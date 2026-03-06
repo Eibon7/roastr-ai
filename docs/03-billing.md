@@ -14,32 +14,30 @@ No hay Stripe. No hay plan Free. Todos los ingresos y estados vienen exclusivame
 
 - **Trial:** 30 días
 - **Límites / mes:**
-  - 1.000 análisis
-  - 5 roasts (si módulo activo)
+  - 1.000 análisis (Shield + ingestión)
   - 1 cuenta por plataforma (YouTube + X = 2 max)
-- **Incluye:** Shield completo, tonos estándar, Roastr Persona
-- **No incluye:** tono personal, sponsors
+- **Incluye:** Shield completo, Roastr Persona
+- **No incluye:** tono personal, sponsors, roasts (Phase 2)
 
 ### Pro — €15/mes
 
 - **Trial:** 7 días
 - **Límites / mes:**
-  - 10.000 análisis
-  - 1.000 roasts (si módulo activo)
+  - 10.000 análisis (Shield + ingestión)
   - 2 cuentas por plataforma (YouTube + X = 4 max)
-- **Incluye:** Shield completo, tono personal, multi-cuenta, Roastr Persona
-- **No incluye:** sponsors
+- **Incluye:** Shield completo, multi-cuenta, Roastr Persona
+- **No incluye:** sponsors, roasts (Phase 2)
 
 ### Plus — €50/mes
 
 - **Sin trial** (pago inmediato)
 - **Límites / mes:**
-  - 100.000 análisis
-  - 5.000 roasts (si módulo activo)
+  - 100.000 análisis (Shield + ingestión)
   - 2 cuentas por plataforma (YouTube + X = 4 max)
-- **Incluye:** todo Pro + Sponsors (Phase 2) + prioridad en colas
+- **Incluye:** todo Pro + prioridad en colas
+- **No incluye:** sponsors (Phase 2), roasts (Phase 2)
 
-> **Shield-first:** Todos los planes incluyen Shield completo. Los roasts son una feature adicional. Si el módulo de Roasting no está activo, los créditos de roast no se consumen.
+> **Shield-first:** Todos los planes incluyen Shield completo. No hay créditos de roast en MVP. El módulo de Roasting se desarrollará post-MVP, se activará via feature flag `roasting_enabled` por usuario, y se habilitará primero para testers antes de lanzamiento público. Los límites de roasts por plan se definirán cuando se lance el módulo, ajustados a la cuota de X API.
 
 ---
 
@@ -283,11 +281,11 @@ CREATE TABLE subscriptions_usage (
 
   -- Límites del plan (copiados al crear/cambiar suscripción)
   analysis_limit    INTEGER NOT NULL,
-  roasts_limit      INTEGER NOT NULL,
+  roasts_limit      INTEGER NOT NULL DEFAULT 0,  -- 0 en MVP (Roasting Phase 2)
 
   -- Uso del ciclo actual
   analysis_used     INTEGER NOT NULL DEFAULT 0,
-  roasts_used       INTEGER NOT NULL DEFAULT 0,
+  roasts_used       INTEGER NOT NULL DEFAULT 0,  -- 0 en MVP
 
   -- Metadata de Polar
   polar_subscription_id  TEXT,

@@ -266,7 +266,8 @@ Todas las plataformas siguen este flujo base:
   - Free: 1,500 tweets/month read, 500 posts/month
   - Basic ($200/mo): 10,000 reads/month, 3,000 posts/month
   - Enterprise ($42K+/año): full access
-- Capabilities: hide ✅ (todos los tiers), report ❌, block ✅, reply ⚠️ (solo Enterprise)
+- Capabilities: hide ✅ (todos los tiers), report ❌, block ✅, reply ✅ (desde cuenta del usuario via OAuth, cuota compartida a nivel de app)
+- **Nota importante:** Roastr publica desde la cuenta del usuario (no como bot). Los posts cuentan contra la cuota mensual de la APP (Free: 500, Basic: 3,000). Shield (hide/block) no consume cuota de posts.
 
 ### 4.4.4 Plataformas futuras
 

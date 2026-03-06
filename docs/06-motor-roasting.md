@@ -1,8 +1,10 @@
-# 6. Motor de Roasting (v3)
+# 6. Motor de Roasting (v3) — Phase 2
 
-*(Versión actualizada para arquitectura Shield-first)*
+*(No se implementa en MVP. Se desarrollará post-lanzamiento de Shield.)*
 
-> **Este módulo es OPCIONAL.** El Shield (§7) funciona al 100% sin él. El Motor de Roasting se activa como feature adicional para plataformas que soportan respuestas automatizadas.
+> **PHASE 2:** Este módulo se construirá después de que el producto core (Shield) esté en producción y tenga tracción. Se habilitará via feature flag `roasting_enabled` por usuario, primero para testers internos. Los límites de roasts por plan se ajustarán según la cuota de X API (ver nota al final).
+>
+> El Shield (§7) funciona al 100% sin este módulo.
 
 El Motor de Roasting genera respuestas inteligentes y seguras cuando un comentario es marcado como `eligible_for_response` por el Motor de Análisis (§5).
 
@@ -360,3 +362,27 @@ Discarded --> [*]
 - **Workers (§8):** `GenerateRoast` y `SocialPosting` processors.
 - **SSOT:** Tonos, modelos LLM, prompts, límites de longitud, `multi_version_enabled`, disclaimers.
 - **OpenAI:** LLM para generación de roasts (modelo configurable por tono en SSOT).
+
+---
+
+## 6.13 Nota sobre cuota de X API y límites de roasts
+
+Los posts de X consumen una cuota **a nivel de app** (toda la app Roastr, no por usuario):
+
+| Tier X API | Posts/mes | Coste |
+|---|---|---|
+| Free | 500 | $0 |
+| Basic | 3,000 | $200/mo |
+| Pro | 300,000 | $5,000/mo |
+
+Esto significa que los límites de roasts por plan deben calcularse en función del número de usuarios activos y el tier de X API contratado. YouTube no tiene esta restricción (cuota por proyecto, mucho más generosa).
+
+**Cuando se lance Roasting, los límites propuestos son:**
+
+| Plan | Roasts/mes (estimado) | Sujeto a ajuste |
+|---|---|---|
+| Starter | 5 | Sí |
+| Pro | 50 | Sí |
+| Plus | 200 | Sí |
+
+Estos números asumen X API Basic ($200/mo) y ~50 usuarios activos. Se revisarán según datos reales de uso y crecimiento.
