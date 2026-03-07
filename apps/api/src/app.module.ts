@@ -9,14 +9,16 @@ import { ShieldModule } from "./modules/shield/shield.module";
 import { AnalysisModule } from "./modules/analysis/analysis.module";
 import { IngestionModule } from "./modules/ingestion/ingestion.module";
 import { PersonaModule } from "./modules/persona/persona.module";
-import { envValidation } from "./shared/config/env.validation";
+import { validateEnv } from "./shared/config/env.validation";
+import { SsotModule } from "./shared/config/ssot.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      validate: envValidation,
+      validate: validateEnv,
     }),
+    SsotModule,
     BullModule.forRoot({
       connection: {
         url: process.env.REDIS_URL || "redis://localhost:6379",

@@ -35,3 +35,29 @@ export type OffenderProfile = {
   strikeLevel: 0 | 1 | 2 | "critical";
   lastStrike: string | null;
 };
+
+export type RecurrenceFactors = {
+  strike1: number;
+  strike2: number;
+  critical: number;
+};
+
+export const DEFAULT_THRESHOLDS: Thresholds = {
+  tau_low: 0.25,
+  tau_shield: 0.55,
+  tau_critical: 0.85,
+};
+
+export const DEFAULT_WEIGHTS: Weights = {
+  linea_roja: 1.15,
+  identidad: 1.1,
+  tolerancia: 0.95,
+};
+
+export const DEFAULT_RECURRENCE_FACTORS: RecurrenceFactors = {
+  strike1: 1.1,
+  strike2: 1.25,
+  critical: 1.5,
+};
+
+export const N_DENSIDAD = 3;
