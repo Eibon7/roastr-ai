@@ -4,9 +4,15 @@ import { analysisProcessor } from "./processors/analysis.js";
 import { shieldProcessor } from "./processors/shield.js";
 import { billingProcessor } from "./processors/billing.js";
 import { maintenanceProcessor } from "./processors/maintenance.js";
+import { workerLogger, createJobLogger } from "./shared/logger.js";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const PREFIX = process.env.QUEUE_PREFIX || "dev";
+const CONCURRENCY = (() => {
+  const raw = Number.parseInt(process.env.WORKER_CONCURRENCY ?? '', 10);
+  return Number.isFinite(raw) && raw >= 1 && raw <= 100 ? raw : 5;
+})();
+const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 const connection = { url: REDIS_URL };
 
@@ -24,33 +30,53 @@ for (const q of queues) {
   const worker = new Worker(q.name, q.processor, {
     connection,
     prefix: PREFIX,
+    concurrency: CONCURRENCY,
   });
 
   worker.on("failed", (job, err) => {
-    console.error(JSON.stringify({
-      timestamp: new Date().toISOString(),
-      level: "error",
-      service: "worker",
-      queue: q.name,
-      jobId: job?.id,
-      error: err.message,
-    }));
+    const log = createJobLogger(q.name, job?.id ?? "unknown");
+    log.error("Job failed", { error: err.message, stack: err.stack });
+  });
+
+  worker.on("completed", (job) => {
+    const log = createJobLogger(q.name, job.id ?? "unknown");
+    log.debug("Job completed");
   });
 
   workers.push(worker);
 }
 
-console.log(JSON.stringify({
-  timestamp: new Date().toISOString(),
-  level: "info",
-  service: "worker",
-  message: `Worker started, listening on queues: ${queues.map((q) => `${PREFIX}:${q.name}`).join(", ")}`,
-}));
+workerLogger.info("Worker started", {
+  queues: queues.map((q) => `${PREFIX}:${q.name}`).join(", "),
+  concurrency: CONCURRENCY,
+});
+
+let shuttingDown = false;
 
 async function shutdown() {
-  console.log("Shutting down workers...");
-  await Promise.all(workers.map((w) => w.close()));
-  process.exit(0);
+  if (shuttingDown) return;
+  shuttingDown = true;
+
+  workerLogger.info("Graceful shutdown initiated");
+
+  const timeout = setTimeout(() => {
+    workerLogger.warn("Shutdown timed out, forcing exit");
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS);
+
+  let exitCode = 0;
+  try {
+    await Promise.all(workers.map((w) => w.close()));
+    workerLogger.info("All workers closed cleanly");
+  } catch (err) {
+    exitCode = 1;
+    workerLogger.error("Error during shutdown", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  } finally {
+    clearTimeout(timeout);
+    process.exit(exitCode);
+  }
 }
 
 process.on("SIGTERM", shutdown);

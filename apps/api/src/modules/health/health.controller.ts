@@ -4,16 +4,42 @@ import { Controller, Get } from "@nestjs/common";
 export class HealthController {
   @Get()
   check() {
-    return { status: "ok", timestamp: new Date().toISOString() };
+    return {
+      status: "ok",
+      version: process.env.npm_package_version || "0.0.1",
+      environment: process.env.NODE_ENV || "development",
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    };
   }
 
-  @Get("db")
-  async checkDb() {
-    return { status: "ok", service: "supabase" };
+  @Get("ready")
+  readiness() {
+    const checks: Record<string, { status: string; latency?: number }> = {};
+
+    checks.supabase = { status: "unknown" };
+    checks.redis = { status: "unknown" };
+
+    const allOk = Object.values(checks).every((c) => c.status === "ok");
+
+    return {
+      status: allOk ? "ok" : "degraded",
+      checks,
+      timestamp: new Date().toISOString(),
+    };
   }
 
-  @Get("redis")
-  async checkRedis() {
-    return { status: "ok", service: "redis" };
+  @Get("metrics")
+  metrics() {
+    const mem = process.memoryUsage();
+    return {
+      uptime: process.uptime(),
+      memory: {
+        rss: Math.round(mem.rss / 1024 / 1024),
+        heapUsed: Math.round(mem.heapUsed / 1024 / 1024),
+        heapTotal: Math.round(mem.heapTotal / 1024 / 1024),
+      },
+      timestamp: new Date().toISOString(),
+    };
   }
 }

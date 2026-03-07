@@ -1,12 +1,7 @@
 import type { Job } from "bullmq";
+import { createJobLogger } from "../shared/logger.js";
 
 export async function analysisProcessor(job: Job): Promise<void> {
-  console.log(JSON.stringify({
-    timestamp: new Date().toISOString(),
-    level: "info",
-    service: "worker",
-    queue: "analysis",
-    jobId: job.id,
-    message: "Processing analysis job",
-  }));
+  const log = createJobLogger("analysis", job.id ?? "unknown");
+  log.info("Processing analysis job");
 }

@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { BullModule } from "@nestjs/bullmq";
 import { HealthModule } from "./modules/health/health.module";
 import { AuthModule } from "./modules/auth/auth.module";
@@ -9,19 +9,25 @@ import { ShieldModule } from "./modules/shield/shield.module";
 import { AnalysisModule } from "./modules/analysis/analysis.module";
 import { IngestionModule } from "./modules/ingestion/ingestion.module";
 import { PersonaModule } from "./modules/persona/persona.module";
-import { envValidation } from "./shared/config/env.validation";
+import { FeatureFlagsModule } from "./modules/feature-flags/feature-flags.module";
+import { validateEnv } from "./shared/config/env.validation";
+import { SsotModule } from "./shared/config/ssot.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      validate: envValidation,
+      validate: validateEnv,
     }),
-    BullModule.forRoot({
-      connection: {
-        url: process.env.REDIS_URL || "redis://localhost:6379",
-      },
-      prefix: process.env.QUEUE_PREFIX || "dev",
+    SsotModule,
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          url: config.getOrThrow<string>("REDIS_URL"),
+        },
+        prefix: config.getOrThrow<string>("QUEUE_PREFIX"),
+      }),
     }),
     HealthModule,
     AuthModule,
@@ -31,6 +37,7 @@ import { envValidation } from "./shared/config/env.validation";
     AnalysisModule,
     IngestionModule,
     PersonaModule,
+    FeatureFlagsModule,
   ],
 })
 export class AppModule {}

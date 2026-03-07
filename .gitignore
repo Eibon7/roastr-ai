@@ -8,3 +8,9 @@ dist/
 .DS_Store
 coverage/
 .vite/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+.vercel

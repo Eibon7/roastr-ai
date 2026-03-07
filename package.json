@@ -10,7 +10,10 @@
     "dev": "turbo run dev",
     "test": "turbo run test",
     "lint": "turbo run lint",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean",
+    "supabase:start": "bash scripts/supabase-local.sh start",
+    "supabase:stop": "bash scripts/supabase-local.sh stop",
+    "supabase:reset": "bash scripts/supabase-local.sh reset"
   },
   "devDependencies": {
     "turbo": "^2"
