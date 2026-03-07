@@ -22,16 +22,20 @@ export function matchPersona(
 
   const normalizedText = text.toLowerCase();
 
-  const matchedRedLines = persona.redLines.filter((keyword) =>
+  const redLines = persona.redLines.map(k => k.trim()).filter(Boolean);
+  const identities = persona.identities.map(k => k.trim()).filter(Boolean);
+  const tolerances = persona.tolerances.map(k => k.trim()).filter(Boolean);
+
+  const matchedRedLines = redLines.filter((keyword) =>
     normalizedText.includes(keyword.toLowerCase()),
   );
 
   return {
     matchesLineaRoja: matchedRedLines.length > 0,
-    matchesIdentidad: persona.identities.some((keyword) =>
+    matchesIdentidad: identities.some((keyword) =>
       normalizedText.includes(keyword.toLowerCase()),
     ),
-    matchesTolerancia: persona.tolerances.some((keyword) =>
+    matchesTolerancia: tolerances.some((keyword) =>
       normalizedText.includes(keyword.toLowerCase()),
     ),
     matchedRedLines,

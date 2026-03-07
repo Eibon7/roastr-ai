@@ -61,16 +61,18 @@ async function shutdown() {
     process.exit(1);
   }, SHUTDOWN_TIMEOUT_MS);
 
+  let exitCode = 0;
   try {
     await Promise.all(workers.map((w) => w.close()));
     workerLogger.info("All workers closed cleanly");
   } catch (err) {
+    exitCode = 1;
     workerLogger.error("Error during shutdown", {
       error: err instanceof Error ? err.message : String(err),
     });
   } finally {
     clearTimeout(timeout);
-    process.exit(0);
+    process.exit(exitCode);
   }
 }
 

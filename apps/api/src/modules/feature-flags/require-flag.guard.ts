@@ -7,9 +7,10 @@ import {
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { FeatureFlagService } from "./feature-flag.service";
+import type { FeatureFlagName } from "./feature-flag-name";
 
 export const FEATURE_FLAG_KEY = "feature_flag";
-export const RequireFlag = (flagName: string) =>
+export const RequireFlag = (flagName: FeatureFlagName) =>
   SetMetadata(FEATURE_FLAG_KEY, flagName);
 
 @Injectable()
@@ -20,7 +21,7 @@ export class RequireFlagGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const flagName = this.reflector.getAllAndOverride<string>(
+    const flagName = this.reflector.getAllAndOverride<FeatureFlagName>(
       FEATURE_FLAG_KEY,
       [context.getHandler(), context.getClass()],
     );

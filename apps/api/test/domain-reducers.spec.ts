@@ -19,9 +19,9 @@ import type {
   BillingState,
   PersonaProfile,
 } from "@roastr/shared";
-import { DEFAULT_THRESHOLDS, DEFAULT_WEIGHTS, N_DENSIDAD } from "@roastr/shared";
+import { FALLBACK_THRESHOLDS, FALLBACK_WEIGHTS, N_DENSIDAD } from "@roastr/shared";
 
-const baseThresholds: Thresholds = { tau_low: 0.25, tau_shield: 0.55, tau_critical: 0.85 };
+const baseThresholds: Thresholds = { ...FALLBACK_THRESHOLDS };
 
 function routerInput(overrides: Partial<ThresholdRouterInput> = {}): ThresholdRouterInput {
   return {
@@ -228,7 +228,7 @@ describe("billingReducer", () => {
     });
   });
 
-  it("all 12 valid transitions are covered", () => {
+  it("all 15 valid transitions are covered", () => {
     const validTransitions: [BillingState, BillingEvent["type"]][] = [
       ["trialing", "TRIAL_EXPIRED"],
       ["trialing", "PAYMENT_SUCCEEDED"],
@@ -236,10 +236,13 @@ describe("billingReducer", () => {
       ["expired_trial_pending_payment", "GRACE_PERIOD_EXPIRED"],
       ["active", "PAYMENT_FAILED"],
       ["active", "SUBSCRIPTION_CANCELED"],
+      ["active", "SUBSCRIPTION_PAUSED"],
       ["payment_retry", "PAYMENT_SUCCEEDED"],
       ["payment_retry", "GRACE_PERIOD_EXPIRED"],
+      ["payment_retry", "SUBSCRIPTION_PAUSED"],
       ["canceled_pending", "PAYMENT_SUCCEEDED"],
       ["canceled_pending", "GRACE_PERIOD_EXPIRED"],
+      ["canceled_pending", "SUBSCRIPTION_PAUSED"],
       ["paused", "SUBSCRIPTION_RESUMED"],
       ["paused", "PAYMENT_SUCCEEDED"],
     ];
@@ -307,11 +310,12 @@ describe("matchPersona", () => {
 // analysisReducer
 // ---------------------------------------------------------------------------
 describe("analysisReducer", () => {
-  const baseWeights: Weights = DEFAULT_WEIGHTS;
+  const baseWeights: Weights = FALLBACK_WEIGHTS;
 
   function reducerInput(overrides: Partial<AnalysisReducerInput> = {}): AnalysisReducerInput {
     return {
       scoreBase: 0.5,
+      scoreSource: "perspective",
       personaMatches: {
         matchesLineaRoja: false,
         matchesIdentidad: false,
@@ -319,7 +323,7 @@ describe("analysisReducer", () => {
         matchedRedLines: [],
       },
       offender: null,
-      thresholds: DEFAULT_THRESHOLDS,
+      thresholds: FALLBACK_THRESHOLDS,
       weights: baseWeights,
       remainingAnalysis: 100,
       insultDensity: 0,
@@ -337,9 +341,9 @@ describe("analysisReducer", () => {
   });
 
   it("uses tau_shield as fallback when scoreBase is null", () => {
-    const result = analysisReducer(reducerInput({ scoreBase: null }));
+    const result = analysisReducer(reducerInput({ scoreBase: null, scoreSource: "both_failed" }));
     expect(result.score_source).toBe("both_failed");
-    expect(result.severity_score).toBeGreaterThanOrEqual(DEFAULT_THRESHOLDS.tau_shield);
+    expect(result.severity_score).toBeGreaterThanOrEqual(FALLBACK_THRESHOLDS.tau_shield);
   });
 
   it("overrides score to 1.0 when insult density >= N_DENSIDAD", () => {
@@ -362,7 +366,7 @@ describe("analysisReducer", () => {
       }),
     );
     expect(result.adjustments.persona_applied).toBe(true);
-    expect(result.adjustments.persona_factor).toBeCloseTo(DEFAULT_WEIGHTS.linea_roja, 5);
+    expect(result.adjustments.persona_factor).toBeCloseTo(FALLBACK_WEIGHTS.linea_roja, 5);
   });
 
   it("applies identidad weight cumulatively with linea_roja", () => {
@@ -378,7 +382,7 @@ describe("analysisReducer", () => {
         },
       }),
     );
-    const expectedFactor = DEFAULT_WEIGHTS.linea_roja * DEFAULT_WEIGHTS.identidad;
+    const expectedFactor = FALLBACK_WEIGHTS.linea_roja * FALLBACK_WEIGHTS.identidad;
     expect(result.adjustments.persona_factor).toBeCloseTo(expectedFactor, 5);
   });
 
@@ -394,7 +398,7 @@ describe("analysisReducer", () => {
         },
       }),
     );
-    expect(result.adjustments.persona_factor).toBeCloseTo(DEFAULT_WEIGHTS.tolerancia, 5);
+    expect(result.adjustments.persona_factor).toBeCloseTo(FALLBACK_WEIGHTS.tolerancia, 5);
   });
 
   it("does NOT apply tolerancia when adjusted >= tau_shield", () => {

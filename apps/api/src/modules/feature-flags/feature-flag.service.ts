@@ -1,34 +1,38 @@
-import { Injectable } from '@nestjs/common';
-
-const DEFAULT_FLAGS: Record<string, boolean> = {
-  roasting_enabled: false,
-  shield_enabled: true,
-  analysis_enabled: true,
-  billing_enabled: true,
-  admin_panel_enabled: false,
-  persona_enabled: true,
-  x_platform_enabled: true,
-  youtube_platform_enabled: true,
-};
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { SsotService } from '../../shared/config/ssot.service';
+import {
+  FEATURE_FLAG_NAMES,
+  type FeatureFlagName,
+  isValidFeatureFlagName,
+} from './feature-flag-name';
 
 @Injectable()
 export class FeatureFlagService {
-  // TODO: Replace with SsotService.getFlags() when SsotService is implemented
-  private flags: Map<string, boolean>;
+  private overrides = new Map<FeatureFlagName, boolean>();
 
-  constructor() {
-    this.flags = new Map(Object.entries(DEFAULT_FLAGS));
+  constructor(private readonly ssot: SsotService) {}
+
+  isEnabled(flagName: FeatureFlagName): boolean {
+    const override = this.overrides.get(flagName);
+    if (override !== undefined) return override;
+    return this.ssot.getFeatureFlag(flagName);
   }
 
-  isEnabled(flagName: string): boolean {
-    return this.flags.get(flagName) ?? false;
-  }
-
-  getAllFlags(): Record<string, boolean> {
-    return Object.fromEntries(this.flags);
+  getAllFlags(): Record<FeatureFlagName, boolean> {
+    const result = {} as Record<FeatureFlagName, boolean>;
+    for (const name of FEATURE_FLAG_NAMES) {
+      const override = this.overrides.get(name);
+      result[name] = override !== undefined ? override : this.ssot.getFeatureFlag(name);
+    }
+    return result;
   }
 
   setFlag(flagName: string, value: boolean): void {
-    this.flags.set(flagName, value);
+    if (!isValidFeatureFlagName(flagName)) {
+      throw new BadRequestException(
+        `Unknown feature flag "${flagName}". Valid flags: ${FEATURE_FLAG_NAMES.join(', ')}`,
+      );
+    }
+    this.overrides.set(flagName, value);
   }
 }

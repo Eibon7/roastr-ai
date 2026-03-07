@@ -17,13 +17,8 @@ export class HealthController {
   readiness() {
     const checks: Record<string, { status: string; latency?: number }> = {};
 
-    checks.supabase = {
-      status: process.env.SUPABASE_URL ? "ok" : "degraded",
-    };
-
-    checks.redis = {
-      status: process.env.REDIS_URL ? "ok" : "degraded",
-    };
+    checks.supabase = { status: "unknown" };
+    checks.redis = { status: "unknown" };
 
     const allOk = Object.values(checks).every((c) => c.status === "ok");
 

@@ -4,7 +4,7 @@ import {
   ExecutionContext,
   CallHandler,
 } from "@nestjs/common";
-import { Observable, tap } from "rxjs";
+import { Observable, finalize } from "rxjs";
 import { randomUUID } from "crypto";
 
 @Injectable()
@@ -17,12 +17,13 @@ export class RequestContextInterceptor implements NestInterceptor {
     request.requestId = requestId;
 
     return next.handle().pipe(
-      tap({
-        next: () => {
-          const response = context.switchToHttp().getResponse();
+      finalize(() => {
+        const duration = Date.now() - start;
+        const response = context.switchToHttp().getResponse();
+        if (!response.headersSent) {
           response.setHeader("x-request-id", requestId);
-          response.setHeader("x-response-time", `${Date.now() - start}ms`);
-        },
+          response.setHeader("x-response-time", `${duration}ms`);
+        }
       }),
     );
   }

@@ -4,7 +4,7 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "staging", "production"])
     .default("development"),
-  PORT: z.coerce.number().default(3000),
+  PORT: z.coerce.number().int().min(1).max(65535).default(3000),
 
   SUPABASE_URL: z.string().url().default("http://localhost:54321"),
   SUPABASE_ANON_KEY: z.string().min(1).default("placeholder"),
@@ -16,7 +16,7 @@ const envSchema = z.object({
   API_URL: z.string().url().default("http://localhost:3000"),
   FRONTEND_URL: z.string().url().default("http://localhost:5173"),
 
-  WORKER_CONCURRENCY: z.coerce.number().default(5),
+  WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(100).default(5),
 
   YOUTUBE_CLIENT_ID: z.string().optional(),
   YOUTUBE_CLIENT_SECRET: z.string().optional(),

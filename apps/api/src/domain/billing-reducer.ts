@@ -69,6 +69,10 @@ const TRANSITIONS: Record<
       target: "canceled_pending",
       sideEffects: [{ type: "SEND_EMAIL", template: "subscription_canceled" }],
     },
+    SUBSCRIPTION_PAUSED: {
+      target: "paused",
+      sideEffects: PAUSE,
+    },
   },
   payment_retry: {
     PAYMENT_SUCCEEDED: {
@@ -79,6 +83,10 @@ const TRANSITIONS: Record<
       target: "paused",
       sideEffects: PAUSE,
     },
+    SUBSCRIPTION_PAUSED: {
+      target: "paused",
+      sideEffects: PAUSE,
+    },
   },
   canceled_pending: {
     PAYMENT_SUCCEEDED: {
@@ -86,6 +94,10 @@ const TRANSITIONS: Record<
       sideEffects: ACTIVATE,
     },
     GRACE_PERIOD_EXPIRED: {
+      target: "paused",
+      sideEffects: PAUSE,
+    },
+    SUBSCRIPTION_PAUSED: {
       target: "paused",
       sideEffects: PAUSE,
     },
@@ -115,6 +127,6 @@ export function billingReducer(
 
   return {
     newState: transition.target,
-    sideEffects: transition.sideEffects,
+    sideEffects: transition.sideEffects.map(e => ({ ...e })),
   };
 }

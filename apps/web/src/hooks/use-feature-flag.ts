@@ -1,4 +1,15 @@
 import { useState, useEffect } from "react";
+import { apiFetch } from "../lib/api";
+
+export type FeatureFlagName =
+  | 'roasting_enabled'
+  | 'shield_enabled'
+  | 'analysis_enabled'
+  | 'billing_enabled'
+  | 'admin_panel_enabled'
+  | 'persona_enabled'
+  | 'x_platform_enabled'
+  | 'youtube_platform_enabled';
 
 type FeatureFlagResult = {
   enabled: boolean;
@@ -19,22 +30,27 @@ function getCached(flagName: string): boolean | null {
   return entry.value;
 }
 
-export function useFeatureFlag(flagName: string): FeatureFlagResult {
-  const cached = getCached(flagName);
-
-  const [enabled, setEnabled] = useState(cached ?? false);
-  const [loading, setLoading] = useState(cached === null);
+export function useFeatureFlag(flagName: FeatureFlagName): FeatureFlagResult {
+  const [enabled, setEnabled] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (cached !== null) return;
+    const cached = getCached(flagName);
+    if (cached !== null) {
+      setEnabled(cached);
+      setLoading(false);
+      return;
+    }
 
     let cancelled = false;
+    setLoading(true);
+    setEnabled(false);
 
     async function fetchFlag() {
       try {
-        const res = await fetch(`/api/feature-flags/${flagName}`);
-        if (!res.ok) throw new Error(res.statusText);
-        const data: { enabled: boolean } = await res.json();
+        const data = await apiFetch<{ enabled: boolean }>(
+          `/feature-flags/${flagName}`,
+        );
 
         flagCache.set(flagName, {
           value: data.enabled,
@@ -57,7 +73,7 @@ export function useFeatureFlag(flagName: string): FeatureFlagResult {
     return () => {
       cancelled = true;
     };
-  }, [flagName, cached]);
+  }, [flagName]);
 
   return { enabled, loading };
 }

@@ -5,10 +5,21 @@ export interface ErrorTracker {
 
 export class ConsoleErrorTracker implements ErrorTracker {
   captureException(error: Error, context?: Record<string, unknown>): void {
-    console.error("[ErrorTracker]", error.message, context);
+    console.error("[ErrorTracker]", error, context);
   }
 
   captureMessage(message: string, level: "info" | "warning" | "error" = "info"): void {
-    console.log(`[ErrorTracker:${level}]`, message);
+    const tag = `[ErrorTracker:${level}]`;
+    switch (level) {
+      case "error":
+        console.error(tag, message);
+        break;
+      case "warning":
+        console.warn(tag, message);
+        break;
+      default:
+        console.info(tag, message);
+        break;
+    }
   }
 }

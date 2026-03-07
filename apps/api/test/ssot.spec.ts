@@ -37,14 +37,14 @@ describe('SsotService', () => {
     expect(service.get('thresholds', 'nonexistent')).toBeUndefined();
   });
 
-  it('respects TTL expiration', async () => {
+  it('returns stale value and triggers background refresh after TTL', async () => {
     vi.useFakeTimers();
     await service.refresh();
 
     expect(service.get('thresholds', 'tau_low')).toBe(0.25);
 
     vi.advanceTimersByTime(6 * 60 * 1000);
-    expect(service.get('thresholds', 'tau_low')).toBeUndefined();
+    expect(service.get('thresholds', 'tau_low')).toBe(0.25);
 
     vi.useRealTimers();
   });

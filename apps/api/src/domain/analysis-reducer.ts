@@ -11,6 +11,7 @@ import { thresholdRouter } from "./threshold-router";
 
 export type AnalysisReducerInput = {
   scoreBase: number | null;
+  scoreSource: ScoreSource;
   personaMatches: {
     matchesLineaRoja: boolean;
     matchesIdentidad: boolean;
@@ -41,7 +42,7 @@ export function analysisReducer(input: AnalysisReducerInput): AnalysisResult {
   } = input;
 
   let scoreBase = input.scoreBase;
-  const scoreSource: ScoreSource = scoreBase === null ? "both_failed" : "perspective";
+  const scoreSource = input.scoreSource;
 
   // 0 — Credits guard (defense in depth)
   if (remainingAnalysis <= 0) {

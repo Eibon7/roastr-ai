@@ -88,12 +88,12 @@ export class Logger {
   ) {
     if (LEVEL_PRIORITY[level] < LEVEL_PRIORITY[this.minLevel]) return;
 
+    const merged = { ...this.defaultContext, ...(data ?? {}) };
     const entry = {
       level,
       message,
       timestamp: new Date().toISOString(),
-      ...this.defaultContext,
-      ...(data ? redact(data) : {}),
+      ...redact(merged),
     };
 
     const output = JSON.stringify(entry);

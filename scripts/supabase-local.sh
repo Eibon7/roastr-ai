@@ -5,7 +5,7 @@ case "${1:-start}" in
   start)
     echo "Starting Supabase local..."
     npx supabase start
-    echo "Supabase is running at http://localhost:54321"
+    npx supabase status
     ;;
   stop)
     echo "Stopping Supabase local..."

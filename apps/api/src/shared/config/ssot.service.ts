@@ -14,12 +14,14 @@ type SsotEntry = {
 export class SsotService implements OnModuleInit {
   private cache = new Map<string, { value: unknown; expiresAt: number }>();
   private readonly TTL_MS = 5 * 60 * 1000;
+  private refreshing = false;
 
   async onModuleInit() {
     await this.refresh();
   }
 
   async refresh(): Promise<void> {
+    // Fallback defaults until Supabase SSOT table is connected
     const defaults: SsotEntry[] = [
       { category: 'thresholds', key: 'tau_low', value: 0.25, updated_at: new Date().toISOString() },
       { category: 'thresholds', key: 'tau_shield', value: 0.55, updated_at: new Date().toISOString() },
@@ -45,8 +47,10 @@ export class SsotService implements OnModuleInit {
     const entry = this.cache.get(`${category}:${key}`);
     if (!entry) return undefined;
     if (Date.now() > entry.expiresAt) {
-      this.cache.delete(`${category}:${key}`);
-      return undefined;
+      if (!this.refreshing) {
+        this.refreshing = true;
+        this.refresh().finally(() => { this.refreshing = false; });
+      }
     }
     return entry.value as T;
   }
