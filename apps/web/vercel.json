@@ -1,6 +1,0 @@
-{
-  "framework": "vite",
-  "buildCommand": "cd ../.. && npx turbo build --filter=@roastr/web",
-  "outputDirectory": "dist",
-  "installCommand": "cd ../.. && npm ci"
-}
