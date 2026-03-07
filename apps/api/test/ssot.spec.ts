@@ -24,7 +24,7 @@ describe('SsotService', () => {
   });
 
   it('returns feature flags', () => {
-    expect(service.getFeatureFlag('shield_enabled')).toBe(true);
+    expect(service.getFeatureFlag('enable_shield')).toBe(true);
     expect(service.getFeatureFlag('roasting_enabled')).toBe(false);
   });
 

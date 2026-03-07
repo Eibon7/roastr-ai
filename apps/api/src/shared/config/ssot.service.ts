@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import type { Thresholds, Weights, FeatureFlagName } from '@roastr/shared';
+import { type Thresholds, type Weights, type FeatureFlagName, type PlanLimitKey } from '@roastr/shared';
 
 type SsotCategory = 'thresholds' | 'weights' | 'feature_flags' | 'plan_limits' | 'platform_config';
 
@@ -21,25 +21,34 @@ export class SsotService implements OnModuleInit {
   }
 
   async refresh(): Promise<void> {
+    const ts = new Date().toISOString();
     // Fallback defaults until Supabase SSOT table is connected
     const defaults: SsotEntry[] = [
-      { category: 'thresholds', key: 'tau_low', value: 0.25, updated_at: new Date().toISOString() },
-      { category: 'thresholds', key: 'tau_shield', value: 0.55, updated_at: new Date().toISOString() },
-      { category: 'thresholds', key: 'tau_critical', value: 0.85, updated_at: new Date().toISOString() },
-      { category: 'weights', key: 'linea_roja', value: 1.15, updated_at: new Date().toISOString() },
-      { category: 'weights', key: 'identidad', value: 1.1, updated_at: new Date().toISOString() },
-      { category: 'weights', key: 'tolerancia', value: 0.95, updated_at: new Date().toISOString() },
-      { category: 'feature_flags', key: 'roasting_enabled', value: false, updated_at: new Date().toISOString() },
-      { category: 'feature_flags', key: 'shield_enabled', value: true, updated_at: new Date().toISOString() },
-      { category: 'feature_flags', key: 'analysis_enabled', value: true, updated_at: new Date().toISOString() },
-      { category: 'feature_flags', key: 'billing_enabled', value: true, updated_at: new Date().toISOString() },
-      { category: 'feature_flags', key: 'admin_panel_enabled', value: false, updated_at: new Date().toISOString() },
-      { category: 'feature_flags', key: 'persona_enabled', value: true, updated_at: new Date().toISOString() },
-      { category: 'feature_flags', key: 'x_platform_enabled', value: true, updated_at: new Date().toISOString() },
-      { category: 'feature_flags', key: 'youtube_platform_enabled', value: true, updated_at: new Date().toISOString() },
-      { category: 'plan_limits', key: 'starter_monthly_analyses', value: 1000, updated_at: new Date().toISOString() },
-      { category: 'plan_limits', key: 'pro_monthly_analyses', value: 5000, updated_at: new Date().toISOString() },
-      { category: 'plan_limits', key: 'plus_monthly_analyses', value: 25000, updated_at: new Date().toISOString() },
+      { category: 'thresholds', key: 'tau_low', value: 0.25, updated_at: ts },
+      { category: 'thresholds', key: 'tau_shield', value: 0.55, updated_at: ts },
+      { category: 'thresholds', key: 'tau_critical', value: 0.85, updated_at: ts },
+      { category: 'weights', key: 'linea_roja', value: 1.15, updated_at: ts },
+      { category: 'weights', key: 'identidad', value: 1.1, updated_at: ts },
+      { category: 'weights', key: 'tolerancia', value: 0.95, updated_at: ts },
+      { category: 'feature_flags', key: 'roasting_enabled', value: false, updated_at: ts },
+      { category: 'feature_flags', key: 'autopost_enabled', value: false, updated_at: ts },
+      { category: 'feature_flags', key: 'personal_tone_enabled', value: false, updated_at: ts },
+      { category: 'feature_flags', key: 'multi_version_enabled', value: false, updated_at: ts },
+      { category: 'feature_flags', key: 'sponsor_feature_enabled', value: false, updated_at: ts },
+      { category: 'feature_flags', key: 'enable_shield', value: true, updated_at: ts },
+      { category: 'feature_flags', key: 'kill_switch_autopost', value: false, updated_at: ts },
+      { category: 'feature_flags', key: 'enable_perspective_fallback', value: true, updated_at: ts },
+      { category: 'feature_flags', key: 'manual_review_enabled', value: false, updated_at: ts },
+      { category: 'feature_flags', key: 'show_transparency_disclaimer', value: true, updated_at: ts },
+      { category: 'feature_flags', key: 'enable_magic_links_user', value: false, updated_at: ts },
+      { category: 'feature_flags', key: 'onboarding_skip_allowed', value: false, updated_at: ts },
+      { category: 'feature_flags', key: 'enable_nsfw_tone', value: false, updated_at: ts },
+      { category: 'feature_flags', key: 'enable_advanced_tones', value: false, updated_at: ts },
+      { category: 'feature_flags', key: 'enable_hall_of_fame', value: false, updated_at: ts },
+      { category: 'feature_flags', key: 'enable_brigading_detection', value: false, updated_at: ts },
+      { category: 'plan_limits', key: 'starter_monthly_analyses', value: 1000, updated_at: ts },
+      { category: 'plan_limits', key: 'pro_monthly_analyses', value: 5000, updated_at: ts },
+      { category: 'plan_limits', key: 'plus_monthly_analyses', value: 25000, updated_at: ts },
     ];
 
     const now = Date.now();
@@ -81,7 +90,7 @@ export class SsotService implements OnModuleInit {
     return this.get<boolean>('feature_flags', key) ?? false;
   }
 
-  getPlanLimit(key: string): number {
+  getPlanLimit(key: PlanLimitKey): number {
     return this.get<number>('plan_limits', key) ?? 0;
   }
 

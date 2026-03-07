@@ -13,7 +13,7 @@ describe('FeatureFlagService', () => {
   });
 
   it('returns true for enabled flags', () => {
-    expect(service.isEnabled('shield_enabled')).toBe(true);
+    expect(service.isEnabled('enable_shield')).toBe(true);
   });
 
   it('returns false for disabled flags', () => {
@@ -21,6 +21,7 @@ describe('FeatureFlagService', () => {
   });
 
   it('returns false for unknown flags', () => {
+    // @ts-expect-error testing runtime behavior with invalid flag name
     expect(service.isEnabled('nonexistent_flag')).toBe(false);
   });
 
@@ -32,7 +33,7 @@ describe('FeatureFlagService', () => {
 
   it('getAllFlags returns all defaults', () => {
     const all = service.getAllFlags();
-    expect(all.shield_enabled).toBe(true);
+    expect(all.enable_shield).toBe(true);
     expect(all.roasting_enabled).toBe(false);
   });
 });
