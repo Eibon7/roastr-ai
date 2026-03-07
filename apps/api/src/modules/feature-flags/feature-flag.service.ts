@@ -4,7 +4,7 @@ import {
   FEATURE_FLAG_NAMES,
   type FeatureFlagName,
   isValidFeatureFlagName,
-} from './feature-flag-name';
+} from '@roastr/shared';
 
 @Injectable()
 export class FeatureFlagService {

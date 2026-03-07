@@ -13,7 +13,7 @@ case "${1:-start}" in
     ;;
   reset)
     echo "Resetting Supabase local..."
-    npx supabase db reset
+    npx supabase db reset --local
     ;;
   status)
     npx supabase status

@@ -1,6 +1,6 @@
 import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
 import { FeatureFlagService } from './feature-flag.service';
-import { isValidFeatureFlagName } from './feature-flag-name';
+import { isValidFeatureFlagName } from '@roastr/shared';
 
 @Controller('feature-flags')
 export class FeatureFlagsController {

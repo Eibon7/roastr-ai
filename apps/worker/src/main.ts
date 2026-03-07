@@ -8,7 +8,10 @@ import { workerLogger, createJobLogger } from "./shared/logger.js";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const PREFIX = process.env.QUEUE_PREFIX || "dev";
-const CONCURRENCY = Number(process.env.WORKER_CONCURRENCY) || 5;
+const CONCURRENCY = (() => {
+  const raw = Number.parseInt(process.env.WORKER_CONCURRENCY ?? '', 10);
+  return Number.isFinite(raw) && raw >= 1 && raw <= 100 ? raw : 5;
+})();
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 const connection = { url: REDIS_URL };

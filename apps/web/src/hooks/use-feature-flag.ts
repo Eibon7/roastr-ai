@@ -1,15 +1,6 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../lib/api";
-
-export type FeatureFlagName =
-  | 'roasting_enabled'
-  | 'shield_enabled'
-  | 'analysis_enabled'
-  | 'billing_enabled'
-  | 'admin_panel_enabled'
-  | 'persona_enabled'
-  | 'x_platform_enabled'
-  | 'youtube_platform_enabled';
+import type { FeatureFlagName } from "@roastr/shared";
 
 type FeatureFlagResult = {
   enabled: boolean;

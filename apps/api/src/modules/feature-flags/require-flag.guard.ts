@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { FeatureFlagService } from "./feature-flag.service";
-import type { FeatureFlagName } from "./feature-flag-name";
+import type { FeatureFlagName } from "@roastr/shared";
 
 export const FEATURE_FLAG_KEY = "feature_flag";
 export const RequireFlag = (flagName: FeatureFlagName) =>
