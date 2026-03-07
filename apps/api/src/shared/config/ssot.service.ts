@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import type { Thresholds, Weights } from '@roastr/shared';
+import type { Thresholds, Weights, FeatureFlagName } from '@roastr/shared';
 
 type SsotCategory = 'thresholds' | 'weights' | 'feature_flags' | 'plan_limits' | 'platform_config';
 
@@ -77,7 +77,7 @@ export class SsotService implements OnModuleInit {
     };
   }
 
-  getFeatureFlag(key: string): boolean {
+  getFeatureFlag(key: FeatureFlagName): boolean {
     return this.get<boolean>('feature_flags', key) ?? false;
   }
 
