@@ -11,6 +11,7 @@ import { SettingsPage } from "./routes/settings";
 import { OnboardingWizard } from "./components/onboarding/OnboardingWizard";
 import { BillingRoute } from "./routes/billing";
 import { ShieldPage } from "./routes/shield";
+import { AccountsPage } from "./routes/accounts";
 
 function ProtectedWithLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -39,6 +40,10 @@ export function App() {
             <Route
               path="/billing"
               element={<ProtectedWithLayout><BillingRoute /></ProtectedWithLayout>}
+            />
+            <Route
+              path="/accounts"
+              element={<ProtectedWithLayout><AccountsPage /></ProtectedWithLayout>}
             />
             <Route
               path="/connect"
