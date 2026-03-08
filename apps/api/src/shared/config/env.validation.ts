@@ -18,6 +18,11 @@ const envSchema = z.object({
 
   WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(100).default(5),
 
+  TOKEN_ENCRYPTION_KEY: z
+    .string()
+    .min(32)
+    .default("development-only-32-char-secret-key!!"),
+
   YOUTUBE_CLIENT_ID: z.string().optional(),
   YOUTUBE_CLIENT_SECRET: z.string().optional(),
   YOUTUBE_REDIRECT_URI: z.string().url().optional(),
@@ -28,6 +33,7 @@ const envSchema = z.object({
 
   OPENAI_API_KEY: z.string().optional(),
   PERSPECTIVE_API_KEY: z.string().optional(),
+  PERSPECTIVE_TIMEOUT_MS: z.coerce.number().int().min(1000).max(30000).default(3000),
 
   POLAR_ACCESS_TOKEN: z.string().optional(),
   POLAR_WEBHOOK_SECRET: z.string().optional(),

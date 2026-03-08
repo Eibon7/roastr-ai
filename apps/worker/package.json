@@ -6,7 +6,8 @@
     "build": "tsc",
     "dev": "tsx watch src/main.ts",
     "start": "node dist/main.js",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "vitest run"
   },
   "dependencies": {
     "bullmq": "^5",
@@ -16,6 +17,7 @@
   },
   "devDependencies": {
     "typescript": "^5.7",
-    "tsx": "^4"
+    "tsx": "^4",
+    "vitest": "^3"
   }
 }

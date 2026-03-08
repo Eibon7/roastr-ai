@@ -10,7 +10,7 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 export type BillingGuardResult =
-  | { allowed: true }
+  | { allowed: true; remaining: number }
   | { allowed: false; reason: "paused" | "over_limit" | "lookup_error" | "not_found" };
 
 export async function checkBillingLimits(
@@ -38,7 +38,7 @@ export async function checkBillingLimits(
     return { allowed: false, reason: "over_limit" };
   }
 
-  return { allowed: true };
+  return { allowed: true, remaining };
 }
 
 export async function incrementAnalysisUsed(userId: string): Promise<void> {
