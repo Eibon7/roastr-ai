@@ -17,6 +17,10 @@ const supabaseHandlers = [
   http.patch(`${supabaseUrl}/rest/v1/:table`, () => {
     return HttpResponse.json([], { status: 200 });
   }),
+  // RPC calls (apply_billing_event, try_consume_analysis_slot, etc.)
+  http.post(`${supabaseUrl}/rest/v1/rpc/:fn`, () => {
+    return HttpResponse.json("ok", { status: 200 });
+  }),
 ];
 
 const perspectiveHandlers = [

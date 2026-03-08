@@ -1,6 +1,5 @@
 import type { Job } from "bullmq";
 import { createClient } from "@supabase/supabase-js";
-import { checkBillingLimits } from "../shared/billing-guard.js";
 import { ensureFreshToken } from "../shared/token-refresh.js";
 import { resolveShieldAction } from "@roastr/shared";
 import { hideComment, blockUser, reportComment } from "../shared/action-executor.js";
@@ -27,13 +26,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
     return;
   }
 
-  const guard = await checkBillingLimits(userId);
-  if (!guard.allowed) {
-    if (guard.reason === "lookup_error") {
-      throw new Error("Billing lookup failed, will retry");
-    }
-    return;
-  }
+  // Billing slot was already consumed by analysisProcessor; no re-check here.
 
   const resolved = resolveShieldAction(
     analysisResult as Parameters<typeof resolveShieldAction>[0],
@@ -46,12 +39,16 @@ export async function shieldProcessor(job: Job): Promise<void> {
     return;
   }
 
-  const { data: account } = await supabase
+  const { data: account, error: accountError } = await supabase
     .from("accounts")
     .select("access_token_encrypted, refresh_token_encrypted, access_token_expires_at")
     .eq("id", accountId)
     .eq("user_id", userId)
     .maybeSingle();
+
+  if (accountError) {
+    throw new Error(`Failed to fetch account for shield action: ${accountError.message}`);
+  }
 
   if (!account?.access_token_encrypted) {
     log.warn("Account has no access token");

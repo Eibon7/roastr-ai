@@ -104,46 +104,71 @@ export class PolarWebhookController {
     const supabaseKey = this.config?.get?.("SUPABASE_SERVICE_ROLE_KEY") ?? process.env["SUPABASE_SERVICE_ROLE_KEY"] ?? "placeholder";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { data: existing } = await supabase
-      .from("subscriptions_usage")
-      .select("billing_state")
-      .eq("user_id", userId)
-      .maybeSingle();
+    // Atomic CAS: read current state → compute next state in memory → apply
+    // under a FOR UPDATE lock via apply_billing_event().  Retry on conflict
+    // so concurrent webhook deliveries serialize correctly.
+    const MAX_RETRIES = 4;
+    let applied = false;
 
-    const currentState = (existing?.billing_state ?? "trialing") as BillingState;
-    const result = billingReducer(currentState, billingEvent);
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const { data: existing, error: selectError } = await supabase
+        .from("subscriptions_usage")
+        .select("billing_state")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-    const shouldResetUsage = result.sideEffects.some((e) => e.type === "RESET_USAGE");
-    for (const effect of result.sideEffects) {
-      this.logger.debug(`Side effect: ${effect.type}`, effect);
+      if (selectError) {
+        this.logger.error("Failed to read subscription usage", {
+          error: selectError.message,
+          subscriptionId: subscriptionId ?? "unknown",
+        });
+        throw selectError;
+      }
+
+      const currentState = (existing?.billing_state ?? "trialing") as BillingState;
+      const result = billingReducer(currentState, billingEvent);
+
+      const shouldResetUsage = result.sideEffects.some((e) => e.type === "RESET_USAGE");
+      for (const effect of result.sideEffects) {
+        this.logger.debug(`Side effect: ${effect.type}`, effect);
+      }
+
+      const limits = PLAN_LIMITS[planKey];
+
+      const { data: rpcResult, error: rpcError } = await supabase.rpc(
+        "apply_billing_event",
+        {
+          p_user_id: userId,
+          p_expected_state: currentState,
+          p_new_state: result.newState,
+          p_plan: planKey,
+          p_analysis_limit: limits.analysisLimit,
+          p_roasts_limit: limits.roastsLimit,
+          p_analysis_used: shouldResetUsage ? 0 : null,
+          p_roasts_used: shouldResetUsage ? 0 : null,
+          p_subscription_id: subscriptionId ?? null,
+        },
+      );
+
+      if (rpcError) {
+        this.logger.error("Failed to apply billing event", {
+          error: rpcError.message,
+          subscriptionId: subscriptionId ?? "unknown",
+        });
+        throw rpcError;
+      }
+
+      if (rpcResult === "ok") {
+        applied = true;
+        break;
+      }
+
+      // 'conflict' → another webhook advanced the state; re-read and retry
+      this.logger.debug(`Billing CAS conflict on attempt ${attempt + 1}, retrying`);
     }
 
-    const limits = PLAN_LIMITS[planKey];
-    const row: Record<string, unknown> = {
-      user_id: userId,
-      plan: planKey,
-      billing_state: result.newState,
-      analysis_limit: limits.analysisLimit,
-      roasts_limit: limits.roastsLimit,
-      polar_subscription_id: subscriptionId ?? null,
-      updated_at: new Date().toISOString(),
-    };
-    if (shouldResetUsage) {
-      row.analysis_used = 0;
-      row.roasts_used = 0;
-    }
-
-    // Atomic upsert — avoids racy read-then-write branching.
-    const { error: upsertError } = await supabase
-      .from("subscriptions_usage")
-      .upsert(row, { onConflict: "user_id" });
-    if (upsertError) {
-      // Log subscriptionId instead of userId to avoid PII in logs
-      this.logger.error("Failed to upsert subscription usage", {
-        error: upsertError.message,
-        subscriptionId: subscriptionId ?? "unknown",
-      });
-      throw upsertError;
+    if (!applied) {
+      throw new Error("Billing state conflict after max retries — concurrent webhook deliveries");
     }
 
     return { received: true };

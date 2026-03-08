@@ -221,7 +221,9 @@ export async function analysisProcessor(job: Job): Promise<void> {
     offender,
     thresholds: FALLBACK_THRESHOLDS,
     weights: FALLBACK_WEIGHTS,
-    remainingAnalysis: guard.allowed ? guard.remaining : 0,
+    // guard.remaining is post-decrement; pass pre-decrement so the reducer
+    // doesn't short-circuit as "over limit" when we just consumed the last slot.
+    remainingAnalysis: guard.allowed ? guard.remaining + 1 : 0,
     insultDensity: normalized.insultDensity,
     hasIdentityAttack: normalized.hasIdentityAttack,
     hasThreat: normalized.hasThreat,

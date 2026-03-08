@@ -15,7 +15,16 @@ import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
 import { Public } from "../../shared/guards/public.decorator";
 
-type OnboardingState = "welcome" | "select_plan" | "payment" | "persona_setup" | "connect_accounts" | "done";
+const ONBOARDING_STATES = [
+  "welcome",
+  "select_plan",
+  "payment",
+  "persona_setup",
+  "connect_accounts",
+  "done",
+] as const;
+
+type OnboardingState = (typeof ONBOARDING_STATES)[number];
 
 @Controller("auth")
 export class AuthController {
@@ -81,15 +90,7 @@ export class AuthController {
       throw new UnauthorizedException();
     }
 
-    const VALID_STATES: OnboardingState[] = [
-      "welcome",
-      "select_plan",
-      "payment",
-      "persona_setup",
-      "connect_accounts",
-      "done",
-    ];
-    if (!body.state || !VALID_STATES.includes(body.state)) {
+    if (!body.state || !ONBOARDING_STATES.includes(body.state as OnboardingState)) {
       throw new BadRequestException("Invalid onboarding state");
     }
 

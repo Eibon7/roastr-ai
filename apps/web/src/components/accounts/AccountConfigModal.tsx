@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { MouseEvent } from "react";
 import { apiFetch } from "@/lib/api";
 import { X } from "lucide-react";
 
@@ -26,8 +27,11 @@ export function AccountConfigModal({
 }: Props) {
   const [aggressiveness, setAggressiveness] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  // loadError: blocks save (config could not be fetched)
+  const [loadError, setLoadError] = useState<string | null>(null);
+  // saveError: shown below the form but does NOT disable the Save button
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<Element | null>(null);
 
@@ -37,7 +41,7 @@ export function AccountConfigModal({
       { token },
     )
       .then((c) => setAggressiveness(c.shieldAggressiveness))
-      .catch((e) => setError(e instanceof Error ? e.message : "Error al cargar configuración"))
+      .catch((e) => setLoadError(e instanceof Error ? e.message : "Error al cargar configuración"))
       .finally(() => setLoading(false));
   }, [accountId, token]);
 
@@ -88,7 +92,7 @@ export function AccountConfigModal({
   const handleSave = async () => {
     if (aggressiveness === null) return;
     setSaving(true);
-    setError(null);
+    setSaveError(null);
     try {
       await apiFetch(`/shield/accounts/${accountId}/config`, {
         method: "PATCH",
@@ -97,13 +101,13 @@ export function AccountConfigModal({
       });
       onSaved();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al guardar");
+      setSaveError(e instanceof Error ? e.message : "Error al guardar");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleBackdropClick = (e: MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) onClose();
   };
 
@@ -164,9 +168,15 @@ export function AccountConfigModal({
               </p>
             </div>
 
-            {error && (
+            {loadError && (
               <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {error}
+                {loadError}
+              </div>
+            )}
+
+            {saveError && (
+              <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {saveError}
               </div>
             )}
 
@@ -181,7 +191,7 @@ export function AccountConfigModal({
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={saving || aggressiveness === null || error !== null}
+                disabled={saving || aggressiveness === null || loadError !== null}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {saving ? "Guardando..." : "Guardar"}

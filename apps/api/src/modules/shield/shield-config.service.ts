@@ -41,15 +41,16 @@ export class ShieldConfigService {
       return false;
     }
     const supabase = this.getSupabase();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("accounts")
       .update({
         shield_aggressiveness: shieldAggressiveness,
         updated_at: new Date().toISOString(),
       })
       .eq("id", accountId)
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .select("id");
 
-    return !error;
+    return !error && Array.isArray(data) && data.length > 0;
   }
 }

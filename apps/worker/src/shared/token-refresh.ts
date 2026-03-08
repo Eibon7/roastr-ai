@@ -10,6 +10,11 @@ const X_TOKEN_URL = "https://api.x.com/2/oauth2/token";
 // Fallback only in test environments — never in development or production
 const TEST_FALLBACK_SECRET = "development-only-32-char-secret-key!!";
 const TOKEN_REFRESH_TIMEOUT_MS = Number(process.env.TOKEN_REFRESH_TIMEOUT_MS) || 8_000;
+// Lease TTL in milliseconds (one worker holds the lock for up to this long)
+const REFRESH_LEASE_TTL_MS = 30_000;
+// How long to poll while another worker holds the lease
+const REFRESH_LEASE_POLL_INTERVAL_MS = 1_500;
+const REFRESH_LEASE_POLL_RETRIES = 12;
 
 function encryptToken(plaintext: string): Buffer {
   const secret =
@@ -40,11 +45,16 @@ type RefreshedTokens = {
   expiresAt: string | null;
 };
 
-/** Returns true if token expires within the next 5 minutes, is already expired, or has an invalid timestamp. */
-export function isTokenExpiringSoon(expiresAt: string | null): boolean {
-  if (!expiresAt) return false;
+/**
+ * Returns true if the token is expiring soon, already expired, has an
+ * invalid timestamp, OR has no expiry (null/undefined) — we treat unknown
+ * expiry as "needs refresh" rather than "still valid".
+ */
+export function isTokenExpiringSoon(expiresAt: string | null | undefined): boolean {
+  // Missing or empty expiry → treat as expiring so we always attempt refresh
+  if (!expiresAt) return true;
   const expiry = new Date(expiresAt).getTime();
-  // Treat malformed timestamps (NaN) as expiring so we always attempt refresh
+  // Malformed timestamp → treat as expiring
   if (Number.isNaN(expiry)) return true;
   const buffer = 5 * 60 * 1000;
   return Date.now() + buffer >= expiry;
@@ -160,7 +170,9 @@ async function refreshXToken(refreshToken: string): Promise<RefreshedTokens> {
 
 /**
  * Returns a valid access token for the given account.
- * If the token is expiring soon, it refreshes automatically and persists the new tokens.
+ * If the token is expiring soon (or has no expiry), it refreshes
+ * automatically, using a per-account lease to prevent concurrent workers
+ * from calling the OAuth provider with the same refresh token.
  */
 export async function ensureFreshToken(account: AccountTokenRow): Promise<string> {
   const accessToken = decryptToken(toBuffer(account.access_token_encrypted));
@@ -173,55 +185,96 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
     throw new Error(`Token expired for account ${account.id} and no refresh token available`);
   }
 
-  const refreshToken = decryptToken(toBuffer(account.refresh_token_encrypted));
-
-  let newTokens: RefreshedTokens;
-
-  if (account.platform === "youtube") {
-    newTokens = await refreshYouTubeToken(refreshToken);
-  } else if (account.platform === "x") {
-    newTokens = await refreshXToken(refreshToken);
-  } else {
-    throw new Error(`Token refresh not supported for platform: ${account.platform}`);
-  }
-
   const supabase = createClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 
-  const newAccessEncrypted = encryptToken(newTokens.accessToken);
-  const newRefreshEncrypted = newTokens.refreshToken
-    ? encryptToken(newTokens.refreshToken)
-    : null;
-
-  // Conditional write: only update if the stored expiry still matches what we read.
-  // If another worker already refreshed concurrently, skip overwriting.
-  const { data, error } = await supabase
+  // Try to claim a refresh lease: only one worker proceeds to the provider.
+  // The lease is a future timestamp stored in accounts.refresh_lease_at.
+  const leaseExpiry = new Date(Date.now() + REFRESH_LEASE_TTL_MS).toISOString();
+  const { data: leased } = await supabase
     .from("accounts")
-    .update({
-      access_token_encrypted: Buffer.from(newAccessEncrypted),
-      ...(newRefreshEncrypted
-        ? { refresh_token_encrypted: Buffer.from(newRefreshEncrypted) }
-        : {}),
-      access_token_expires_at: newTokens.expiresAt,
-      updated_at: new Date().toISOString(),
-    })
+    .update({ refresh_lease_at: leaseExpiry })
     .eq("id", account.id)
-    // Only commit if the expiry we observed is still the current one (optimistic lock)
-    .eq("access_token_expires_at", account.access_token_expires_at ?? "")
+    .or(`refresh_lease_at.is.null,refresh_lease_at.lt.${new Date().toISOString()}`)
     .select("id")
     .maybeSingle();
 
-  if (error) {
-    throw new Error(`Failed to persist refreshed tokens for account ${account.id}: ${error.message}`);
+  if (!leased) {
+    // Another worker holds the lease — poll until it finishes or times out.
+    for (let i = 0; i < REFRESH_LEASE_POLL_RETRIES; i++) {
+      await new Promise((r) => setTimeout(r, REFRESH_LEASE_POLL_INTERVAL_MS));
+      const { data: polled } = await supabase
+        .from("accounts")
+        .select("access_token_encrypted, access_token_expires_at, refresh_lease_at")
+        .eq("id", account.id)
+        .maybeSingle();
+      // Lease cleared and expiry updated → another worker succeeded
+      const leaseGone = !polled?.refresh_lease_at || new Date(polled.refresh_lease_at) < new Date();
+      const expiryChanged = polled?.access_token_expires_at !== account.access_token_expires_at;
+      if (leaseGone || expiryChanged) {
+        if (polled?.access_token_encrypted) {
+          return decryptToken(toBuffer(polled.access_token_encrypted as Buffer | Uint8Array));
+        }
+      }
+    }
+    throw new Error(`Refresh lease timeout for account ${account.id}`);
   }
 
-  // data === null means another worker already refreshed (conditional write missed).
-  // The current in-memory token is still valid for this job's lifetime.
-  if (!data) {
+  try {
+    const refreshToken = decryptToken(toBuffer(account.refresh_token_encrypted));
+
+    let newTokens: RefreshedTokens;
+    if (account.platform === "youtube") {
+      newTokens = await refreshYouTubeToken(refreshToken);
+    } else if (account.platform === "x") {
+      newTokens = await refreshXToken(refreshToken);
+    } else {
+      throw new Error(`Token refresh not supported for platform: ${account.platform}`);
+    }
+
+    const newAccessEncrypted = encryptToken(newTokens.accessToken);
+    const newRefreshEncrypted = newTokens.refreshToken
+      ? encryptToken(newTokens.refreshToken)
+      : null;
+
+    // Conditional write: only apply if the stored expiry still matches what
+    // we observed (optimistic lock guards against a concurrent refresh that
+    // already succeeded while we held the lease).
+    const { data, error } = await supabase
+      .from("accounts")
+      .update({
+        access_token_encrypted: Buffer.from(newAccessEncrypted),
+        ...(newRefreshEncrypted
+          ? { refresh_token_encrypted: Buffer.from(newRefreshEncrypted) }
+          : {}),
+        access_token_expires_at: newTokens.expiresAt,
+        refresh_lease_at: null, // release the lease
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", account.id)
+      .eq("access_token_expires_at", account.access_token_expires_at ?? "")
+      .select("id")
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to persist refreshed tokens for account ${account.id}: ${error.message}`);
+    }
+
+    // data === null → another worker already wrote (shouldn't happen with
+    // the lease but handled gracefully).
+    if (!data) {
+      return newTokens.accessToken;
+    }
+
     return newTokens.accessToken;
+  } catch (err) {
+    // Always release the lease on failure so other workers aren't blocked.
+    await supabase
+      .from("accounts")
+      .update({ refresh_lease_at: null })
+      .eq("id", account.id);
+    throw err;
   }
-
-  return newTokens.accessToken;
 }
