@@ -47,10 +47,12 @@ export function OnboardingWizard() {
                 type="button"
                 role="tab"
                 aria-selected={i === step}
-                onClick={() => setStep(i)}
+                aria-disabled={i > step}
+                disabled={i > step}
+                onClick={() => { if (i <= step) setStep(i); }}
                 className={`h-2 flex-1 rounded-full transition-colors ${
                   i <= step ? "bg-primary" : "bg-muted"
-                }`}
+                } disabled:cursor-not-allowed`}
                 aria-label={`Paso ${i + 1}: ${s.label}`}
               />
             ))}
@@ -206,14 +208,21 @@ export function OnboardingWizard() {
             <div className="space-y-4">
               <h2 className="text-2xl font-bold">Conecta tus cuentas</h2>
               <p className="text-muted-foreground">
-                YouTube y X (próximamente).
+                Conecta YouTube y X para proteger tus comentarios y menciones.
               </p>
               <button
                 type="button"
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate("/connect")}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
-                Ir al dashboard
+                Conectar cuentas
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard")}
+                className="ml-4 text-sm text-muted-foreground underline"
+              >
+                Saltar por ahora
               </button>
             </div>
           )}

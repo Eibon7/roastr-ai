@@ -18,6 +18,8 @@ const envSchema = z.object({
 
   WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(100).default(5),
 
+  TOKEN_ENCRYPTION_KEY: z.string().min(32).optional(), // required at runtime except in dev/test
+
   YOUTUBE_CLIENT_ID: z.string().optional(),
   YOUTUBE_CLIENT_SECRET: z.string().optional(),
   YOUTUBE_REDIRECT_URI: z.string().url().optional(),
@@ -28,6 +30,7 @@ const envSchema = z.object({
 
   OPENAI_API_KEY: z.string().optional(),
   PERSPECTIVE_API_KEY: z.string().optional(),
+  PERSPECTIVE_TIMEOUT_MS: z.coerce.number().int().min(1000).max(30000).default(3000),
 
   POLAR_ACCESS_TOKEN: z.string().optional(),
   POLAR_WEBHOOK_SECRET: z.string().optional(),
@@ -48,5 +51,10 @@ export function validateEnv(config: Record<string, unknown>): EnvConfig {
       .join("\n");
     throw new Error(`Environment validation failed:\n${formatted}`);
   }
-  return result.data;
+  const data = result.data;
+  const nodeEnv = (data.NODE_ENV ?? "development") as string;
+  if (!data.TOKEN_ENCRYPTION_KEY && nodeEnv !== "development" && nodeEnv !== "test") {
+    throw new Error("Environment validation failed:\n  • TOKEN_ENCRYPTION_KEY: Required in non-development environments");
+  }
+  return data;
 }

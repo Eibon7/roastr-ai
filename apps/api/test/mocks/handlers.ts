@@ -1,5 +1,24 @@
 import { http, HttpResponse } from 'msw';
 
+// Mock Supabase REST API used by integration tests that boot the full AppModule.
+// The default SUPABASE_URL is http://localhost:54321 (env.validation.ts default).
+const supabaseUrl = process.env.SUPABASE_URL ?? 'http://localhost:54321';
+
+const supabaseHandlers = [
+  // maybeSingle() SELECT — return empty result set
+  http.get(`${supabaseUrl}/rest/v1/:table`, () => {
+    return HttpResponse.json(null, { status: 200 });
+  }),
+  // INSERT / UPSERT (POST with Prefer: resolution=merge-duplicates)
+  http.post(`${supabaseUrl}/rest/v1/:table`, () => {
+    return HttpResponse.json([], { status: 201 });
+  }),
+  // UPDATE (PATCH)
+  http.patch(`${supabaseUrl}/rest/v1/:table`, () => {
+    return HttpResponse.json([], { status: 200 });
+  }),
+];
+
 const perspectiveHandlers = [
   http.post(
     'https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze',
@@ -50,6 +69,7 @@ const polarHandlers = [
 ];
 
 export const handlers = [
+  ...supabaseHandlers,
   ...perspectiveHandlers,
   ...openaiHandlers,
   ...polarHandlers,
