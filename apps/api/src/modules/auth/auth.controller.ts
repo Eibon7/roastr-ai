@@ -8,6 +8,8 @@ import {
   HttpStatus,
   UnauthorizedException,
   InternalServerErrorException,
+  BadRequestException,
+  NotFoundException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
@@ -75,14 +77,40 @@ export class AuthController {
     @Req() req: { user?: { id: string } },
     @Body() body: { state: OnboardingState },
   ): Promise<{ state: OnboardingState }> {
+    if (!req.user?.id) {
+      throw new UnauthorizedException();
+    }
+
+    const VALID_STATES: OnboardingState[] = [
+      "welcome",
+      "select_plan",
+      "payment",
+      "persona_setup",
+      "connect_accounts",
+      "done",
+    ];
+    if (!body.state || !VALID_STATES.includes(body.state)) {
+      throw new BadRequestException("Invalid onboarding state");
+    }
+
     const supabase = createClient(
       this.config.getOrThrow("SUPABASE_URL"),
       this.config.getOrThrow("SUPABASE_SERVICE_ROLE_KEY"),
     );
-    await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .update({ onboarding_state: body.state, updated_at: new Date().toISOString() })
-      .eq("id", req.user!.id);
+      .eq("id", req.user.id)
+      .select("id")
+      .single();
+
+    if (error) {
+      throw new InternalServerErrorException(error.message);
+    }
+    if (!data) {
+      throw new NotFoundException("Profile not found");
+    }
+
     return { state: body.state };
   }
 }

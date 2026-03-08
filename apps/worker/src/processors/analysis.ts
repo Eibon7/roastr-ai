@@ -164,33 +164,45 @@ export async function analysisProcessor(job: Job): Promise<void> {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 
-  const { data: account } = await supabase
+  const { data: account, error: accountError } = await supabase
     .from("accounts")
     .select("shield_aggressiveness")
     .eq("id", accountId)
     .eq("user_id", userId)
     .maybeSingle();
 
+  if (accountError) {
+    throw new Error(`Failed to fetch account config: ${accountError.message}`);
+  }
+
   const aggressiveness = (account?.shield_aggressiveness as number) ?? 0.95;
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("roastr_persona_config")
     .eq("id", userId)
     .maybeSingle();
+
+  if (profileError) {
+    throw new Error(`Failed to fetch profile: ${profileError.message}`);
+  }
 
   const persona = decryptPersona(
     profile?.roastr_persona_config as Buffer | Uint8Array | null | undefined,
   );
   const personaMatches = matchPersona(text, persona);
 
-  const { data: offenderRow } = await supabase
+  const { data: offenderRow, error: offenderError } = await supabase
     .from("offenders")
     .select("strike_level")
     .eq("user_id", userId)
     .eq("account_id", accountId)
     .eq("offender_id", authorId ?? "")
     .maybeSingle();
+
+  if (offenderError) {
+    throw new Error(`Failed to fetch offender data: ${offenderError.message}`);
+  }
 
   const mapStrikeLevel = (
     n: number,
@@ -224,24 +236,33 @@ export async function analysisProcessor(job: Job): Promise<void> {
     result.decision === "shield_moderado" ||
     result.decision === "shield_critico"
   ) {
-    const queue = getShieldQueue();
-    await queue.add(
-      "shield-action",
-      {
-        commentId: commentId ?? "",
-        userId,
+    if (!commentId || !authorId) {
+      log.warn("Skipping shield action: missing platform identifiers", {
+        commentId,
+        authorId,
         accountId,
         platform,
-        authorId: authorId ?? "",
-        analysisResult: result,
-        aggressiveness,
-      },
-      DEFAULT_JOB_OPTIONS,
-    );
-    log.debug("Enqueued shield action", {
-      decision: result.decision,
-      severity: result.severity_score,
-    });
+      });
+    } else {
+      const queue = getShieldQueue();
+      await queue.add(
+        "shield-action",
+        {
+          commentId,
+          userId,
+          accountId,
+          platform,
+          authorId,
+          analysisResult: result,
+          aggressiveness,
+        },
+        DEFAULT_JOB_OPTIONS,
+      );
+      log.debug("Enqueued shield action", {
+        decision: result.decision,
+        severity: result.severity_score,
+      });
+    }
   }
 
   log.info("Analysis complete", {

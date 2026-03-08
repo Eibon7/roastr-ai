@@ -15,8 +15,10 @@ export class TokenEncryptionService {
   constructor(private readonly config: ConfigService) {
     const secret =
       this.config?.get<string>("TOKEN_ENCRYPTION_KEY") ??
-      process.env.TOKEN_ENCRYPTION_KEY ??
-      "development-only-32-char-secret-key!!";
+      process.env.TOKEN_ENCRYPTION_KEY;
+    if (!secret) {
+      throw new Error("TOKEN_ENCRYPTION_KEY is required");
+    }
     this.key = scryptSync(secret, "roastr-token-salt", KEY_LENGTH);
   }
 

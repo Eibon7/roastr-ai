@@ -1,6 +1,9 @@
 import type { PersonaProfile } from "@roastr/shared";
 import { decryptToken } from "./token-decrypt.js";
 
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === "string");
+
 export function decryptPersona(ciphertext: Buffer | Uint8Array | null | undefined): PersonaProfile | null {
   if (!ciphertext || ciphertext.length === 0) return null;
   const buf = ciphertext instanceof Buffer ? ciphertext : Buffer.from(ciphertext);
@@ -10,9 +13,9 @@ export function decryptPersona(ciphertext: Buffer | Uint8Array | null | undefine
     if (
       parsed &&
       typeof parsed === "object" &&
-      Array.isArray((parsed as PersonaProfile).identities) &&
-      Array.isArray((parsed as PersonaProfile).redLines) &&
-      Array.isArray((parsed as PersonaProfile).tolerances)
+      isStringArray((parsed as { identities?: unknown }).identities) &&
+      isStringArray((parsed as { redLines?: unknown }).redLines) &&
+      isStringArray((parsed as { tolerances?: unknown }).tolerances)
     ) {
       return parsed as PersonaProfile;
     }

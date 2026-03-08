@@ -55,10 +55,16 @@ export function ShieldFeed() {
   const [actionFilter, setActionFilter] = useState<string>("");
 
   useEffect(() => {
+    setError(null);
+    setLoading(true);
+
     if (!session?.access_token) {
+      setLogs([]);
+      setTotal(0);
       setLoading(false);
       return;
     }
+
     const params = new URLSearchParams();
     if (platformFilter) params.set("platform", platformFilter);
     if (actionFilter) params.set("action_taken", actionFilter);

@@ -50,37 +50,12 @@ export class OffendersService {
     offenderId: string,
   ): Promise<OffenderRow> {
     const supabase = this.getSupabase();
-    const now = new Date().toISOString();
-
-    const { data: existing } = await supabase
-      .from("offenders")
-      .select("strike_level")
-      .eq("user_id", userId)
-      .eq("account_id", accountId)
-      .eq("offender_id", offenderId)
-      .maybeSingle();
-
-    const newStrikeLevel = existing
-      ? Math.min((existing.strike_level ?? 0) + 1, 3)
-      : 1;
-
-    const { data, error } = await supabase
-      .from("offenders")
-      .upsert(
-        {
-          user_id: userId,
-          account_id: accountId,
-          platform,
-          offender_id: offenderId,
-          strike_level: newStrikeLevel,
-          last_strike: now,
-          updated_at: now,
-        },
-        { onConflict: "user_id,account_id,offender_id" },
-      )
-      .select()
-      .single();
-
+    const { data, error } = await supabase.rpc("increment_offender_strike", {
+      p_user_id: userId,
+      p_account_id: accountId,
+      p_platform: platform,
+      p_offender_id: offenderId,
+    });
     if (error) throw error;
     return data as OffenderRow;
   }

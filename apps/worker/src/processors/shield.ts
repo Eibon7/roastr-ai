@@ -74,20 +74,24 @@ export async function shieldProcessor(job: Job): Promise<void> {
   }
 
   const actionsToTry = [resolved.primary, ...resolved.fallbacks];
-  let actionTaken: string = resolved.primary;
+  let actionTaken: string | null = null;
   let success = false;
 
   for (const action of actionsToTry) {
-    if (action === "hide") {
+    if (action === "hide" || action === "strike1" || action === "strike1_silent") {
       const result = await hideComment(platform, accessToken, commentId);
       if (result.ok) {
-        actionTaken = "hide";
+        actionTaken = action;
         success = true;
         break;
       }
       log.warn("Hide failed, trying fallback", { error: result.error });
     } else if (action === "block") {
-      const result = await blockUser(platform, accessToken, authorId ?? "", commentId);
+      if (!authorId) {
+        log.warn("Skipping block action without authorId", { platform, commentId });
+        continue;
+      }
+      const result = await blockUser(platform, accessToken, authorId, commentId);
       if (result.ok) {
         actionTaken = "block";
         success = true;
@@ -102,63 +106,60 @@ export async function shieldProcessor(job: Job): Promise<void> {
         break;
       }
       log.warn("Report failed", { error: result.error });
-    } else if (action === "strike1" || action === "strike1_silent") {
-      const result = await hideComment(platform, accessToken, commentId);
-      if (result.ok) {
-        actionTaken = action;
-        success = true;
-        break;
-      }
     }
   }
 
   const severityScore = (analysisResult.severity_score as number) ?? 0;
   const matchedRedLine = (analysisResult.flags as { matched_red_lines?: string[] })?.matched_red_lines?.[0] ?? null;
 
-  await supabase.from("shield_logs").insert({
-    user_id: userId,
-    account_id: accountId,
-    platform,
-    comment_id: commentId,
-    offender_id: authorId ?? null,
-    action_taken: actionTaken,
-    severity_score: severityScore,
-    matched_red_line: matchedRedLine,
-    using_aggressiveness: aggressiveness,
-    platform_fallback: resolved.platformFallback,
-  });
+  try {
+    const { error: logError } = await supabase.from("shield_logs").insert({
+      user_id: userId,
+      account_id: accountId,
+      platform,
+      comment_id: commentId,
+      offender_id: authorId ?? null,
+      action_taken: actionTaken ?? "none",
+      severity_score: severityScore,
+      matched_red_line: matchedRedLine,
+      using_aggressiveness: aggressiveness,
+      platform_fallback: resolved.platformFallback,
+    });
+    if (logError) {
+      log.error("Failed to insert shield_log", { error: logError.message });
+    }
+  } catch (e) {
+    log.error("Unexpected error inserting shield_log", { error: (e as Error).message });
+  }
 
-  if (success && authorId && (actionTaken === "hide" || actionTaken === "block" || actionTaken === "report" || actionTaken.startsWith("strike"))) {
+  if (success && authorId && actionTaken) {
     const now = new Date().toISOString();
-    const { data: existing } = await supabase
-      .from("offenders")
-      .select("id, strike_level")
-      .eq("user_id", userId)
-      .eq("account_id", accountId)
-      .eq("offender_id", authorId)
-      .maybeSingle();
-
-    const newStrikeLevel = existing ? Math.min((existing.strike_level ?? 0) + 1, 3) : 1;
-
-    await supabase.from("offenders").upsert(
-      {
-        user_id: userId,
-        account_id: accountId,
-        platform,
-        offender_id: authorId,
-        strike_level: newStrikeLevel,
-        last_strike: now,
-        updated_at: now,
-      },
-      {
-        onConflict: "user_id,account_id,offender_id",
-        ignoreDuplicates: false,
-      },
-    );
+    try {
+      const { error: upsertError } = await supabase.from("offenders").upsert(
+        {
+          user_id: userId,
+          account_id: accountId,
+          platform,
+          offender_id: authorId,
+          strike_level: 1,
+          last_strike: now,
+          updated_at: now,
+        },
+        {
+          onConflict: "user_id,account_id,offender_id",
+          ignoreDuplicates: false,
+        },
+      );
+      if (upsertError) {
+        log.error("Failed to upsert offender", { error: upsertError.message });
+      }
+    } catch (e) {
+      log.error("Unexpected error upserting offender", { error: (e as Error).message });
+    }
   }
 
   log.info("Shield action completed", {
-    actionTaken,
+    actionTaken: actionTaken ?? "none",
     success,
     platform,
     commentId,

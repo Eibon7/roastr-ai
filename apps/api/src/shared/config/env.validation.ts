@@ -18,10 +18,7 @@ const envSchema = z.object({
 
   WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(100).default(5),
 
-  TOKEN_ENCRYPTION_KEY: z
-    .string()
-    .min(32)
-    .default("development-only-32-char-secret-key!!"),
+  TOKEN_ENCRYPTION_KEY: z.string().min(32).optional(),
 
   YOUTUBE_CLIENT_ID: z.string().optional(),
   YOUTUBE_CLIENT_SECRET: z.string().optional(),

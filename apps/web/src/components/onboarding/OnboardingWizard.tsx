@@ -47,10 +47,12 @@ export function OnboardingWizard() {
                 type="button"
                 role="tab"
                 aria-selected={i === step}
-                onClick={() => setStep(i)}
+                aria-disabled={i > step}
+                disabled={i > step}
+                onClick={() => { if (i <= step) setStep(i); }}
                 className={`h-2 flex-1 rounded-full transition-colors ${
                   i <= step ? "bg-primary" : "bg-muted"
-                }`}
+                } disabled:cursor-not-allowed`}
                 aria-label={`Paso ${i + 1}: ${s.label}`}
               />
             ))}

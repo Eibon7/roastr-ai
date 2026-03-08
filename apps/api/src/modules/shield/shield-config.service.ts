@@ -27,7 +27,8 @@ export class ShieldConfigService {
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) throw error;
+    if (!data) return null;
     return { shieldAggressiveness: data.shield_aggressiveness };
   }
 

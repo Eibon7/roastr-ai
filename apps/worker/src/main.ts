@@ -40,7 +40,7 @@ for (const q of queues) {
   worker.on("failed", (job, err) => {
     const log = createJobLogger(q.name, job?.id ?? "unknown");
     log.error("Job failed", { error: err.message, stack: err.stack });
-    if ((job?.attemptsMade ?? 0) >= 4) {
+    if ((job?.attemptsMade ?? 0) >= (job?.opts?.attempts ?? 5)) {
       handleDlqJob(job, q.name, err);
     }
   });

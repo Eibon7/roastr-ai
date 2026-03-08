@@ -22,7 +22,7 @@ export function AccountConfigModal({
   onClose,
   onSaved,
 }: Props) {
-  const [aggressiveness, setAggressiveness] = useState(0.95);
+  const [aggressiveness, setAggressiveness] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,11 +33,12 @@ export function AccountConfigModal({
       { token },
     )
       .then((c) => setAggressiveness(c.shieldAggressiveness))
-      .catch((e) => setError(e instanceof Error ? e.message : "Error"))
+      .catch((e) => setError(e instanceof Error ? e.message : "Error al cargar configuración"))
       .finally(() => setLoading(false));
   }, [accountId, token]);
 
   const handleSave = async () => {
+    if (aggressiveness === null) return;
     setSaving(true);
     setError(null);
     try {
@@ -89,11 +90,12 @@ export function AccountConfigModal({
               </label>
               <select
                 id="aggressiveness"
-                value={aggressiveness}
+                value={aggressiveness ?? ""}
                 onChange={(e) =>
                   setAggressiveness(Number(e.target.value) as 0.9 | 0.95 | 0.98 | 1)
                 }
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                disabled={aggressiveness === null}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
               >
                 {AGGRESSIVENESS_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -123,7 +125,7 @@ export function AccountConfigModal({
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || aggressiveness === null || error !== null}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {saving ? "Guardando..." : "Guardar"}

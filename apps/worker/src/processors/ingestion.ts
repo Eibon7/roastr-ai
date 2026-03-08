@@ -60,7 +60,15 @@ export async function ingestionProcessor(job: Job): Promise<void> {
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (accountError || !account) {
+  if (accountError) {
+    log.error("Account lookup failed", {
+      accountId,
+      error: accountError.message,
+    });
+    throw new Error("Account lookup failed, will retry");
+  }
+
+  if (!account) {
     log.warn("Account not found", { accountId });
     return;
   }
@@ -80,11 +88,14 @@ export async function ingestionProcessor(job: Job): Promise<void> {
     return;
   }
 
+  // Use the persisted platform from the account row, not the job payload
+  const accountPlatform = account.platform as "youtube" | "x";
+
   let accessToken: string;
   try {
     accessToken = await ensureFreshToken({
       id: account.id as string,
-      platform: platform,
+      platform: accountPlatform,
       access_token_encrypted: account.access_token_encrypted as Buffer,
       refresh_token_encrypted: (account.refresh_token_encrypted as Buffer | null) ?? null,
       access_token_expires_at: (account.access_token_expires_at as string | null) ?? null,
@@ -100,7 +111,7 @@ export async function ingestionProcessor(job: Job): Promise<void> {
   let page: Awaited<ReturnType<typeof fetchComments>>;
   try {
     page = await fetchComments({
-      platform: platform as "youtube" | "x",
+      platform: accountPlatform,
       accessToken,
       accountId,
       userId,
@@ -130,7 +141,11 @@ export async function ingestionProcessor(job: Job): Promise<void> {
         authorId: comment.authorId,
         timestamp: comment.timestamp,
       },
-      DEFAULT_JOB_OPTIONS,
+      {
+        ...DEFAULT_JOB_OPTIONS,
+        // Stable jobId prevents duplicate analysis jobs on ingestion retry
+        jobId: `analysis_${comment.platform}_${comment.accountId}_${comment.id}`,
+      },
     );
   }
 

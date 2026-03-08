@@ -32,7 +32,9 @@ export function ConnectedAccounts({ token }: Props) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    setIsLoading(true);
     if (!token) {
+      setAccounts([]);
       setIsLoading(false);
       return;
     }
@@ -52,6 +54,10 @@ export function ConnectedAccounts({ token }: Props) {
 
   const youtubeCount = accounts.filter((a) => a.platform === "youtube").length;
   const xCount = accounts.filter((a) => a.platform === "x").length;
+  // Max accounts per platform is determined by the plan; for now we derive it
+  // from the data: if any platform already has 2+ accounts the cap is at least 2.
+  // This will be replaced by a plan-aware hook when billing context is available.
+  const maxPerPlatform = 2;
   const [configAccountId, setConfigAccountId] = useState<string | null>(null);
 
   if (isLoading) {
@@ -132,10 +138,10 @@ export function ConnectedAccounts({ token }: Props) {
           <button
             type="button"
             onClick={() => handleConnect("youtube")}
-            disabled={!token}
+            disabled={!token || youtubeCount >= maxPerPlatform}
             className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            Conectar YouTube ({youtubeCount}/2)
+            Conectar YouTube ({youtubeCount}/{maxPerPlatform})
           </button>
         </div>
         <div className="rounded-lg border border-input bg-card p-4">
@@ -146,10 +152,10 @@ export function ConnectedAccounts({ token }: Props) {
           <button
             type="button"
             onClick={() => handleConnect("x")}
-            disabled={!token}
+            disabled={!token || xCount >= maxPerPlatform}
             className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            Conectar X ({xCount}/2)
+            Conectar X ({xCount}/{maxPerPlatform})
           </button>
         </div>
       </div>

@@ -7,10 +7,18 @@ const IV_LENGTH = 12;
 const KEY_LENGTH = 32;
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const X_TOKEN_URL = "https://api.x.com/2/oauth2/token";
+const DEV_FALLBACK_SECRET = "development-only-32-char-secret-key!!";
+const TOKEN_REFRESH_TIMEOUT_MS = Number(process.env.TOKEN_REFRESH_TIMEOUT_MS) || 8_000;
 
 function encryptToken(plaintext: string): Buffer {
   const secret =
-    process.env.TOKEN_ENCRYPTION_KEY ?? "development-only-32-char-secret-key!!";
+    process.env.TOKEN_ENCRYPTION_KEY ??
+    (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test"
+      ? DEV_FALLBACK_SECRET
+      : undefined);
+  if (!secret) {
+    throw new Error("TOKEN_ENCRYPTION_KEY is required");
+  }
   const key = scryptSync(secret, "roastr-token-salt", KEY_LENGTH);
   const iv = randomBytes(IV_LENGTH);
   const cipher = createCipheriv(ALGORITHM, key, iv);
@@ -46,6 +54,20 @@ function toBuffer(raw: Buffer | Uint8Array | ArrayBuffer): Buffer {
   return Buffer.from(raw instanceof Uint8Array ? raw : new Uint8Array(raw as ArrayBuffer));
 }
 
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function refreshYouTubeToken(refreshToken: string): Promise<RefreshedTokens> {
   const body = new URLSearchParams({
     client_id: process.env.YOUTUBE_CLIENT_ID ?? "",
@@ -54,15 +76,18 @@ async function refreshYouTubeToken(refreshToken: string): Promise<RefreshedToken
     grant_type: "refresh_token",
   });
 
-  const res = await fetch(GOOGLE_TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: body.toString(),
-  });
+  const res = await fetchWithTimeout(
+    GOOGLE_TOKEN_URL,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    },
+    TOKEN_REFRESH_TIMEOUT_MS,
+  );
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`YouTube token refresh failed: ${res.status} ${err}`);
+    throw new Error(`YouTube token refresh failed: ${res.status}`);
   }
 
   const data = (await res.json()) as {
@@ -90,18 +115,21 @@ async function refreshXToken(refreshToken: string): Promise<RefreshedTokens> {
   const clientSecret = process.env.X_CLIENT_SECRET ?? "";
   const basicAuth = Buffer.from(`${clientId}:${clientSecret}`, "utf8").toString("base64");
 
-  const res = await fetch(X_TOKEN_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${basicAuth}`,
+  const res = await fetchWithTimeout(
+    X_TOKEN_URL,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${basicAuth}`,
+      },
+      body: body.toString(),
     },
-    body: body.toString(),
-  });
+    TOKEN_REFRESH_TIMEOUT_MS,
+  );
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`X token refresh failed: ${res.status} ${err}`);
+    throw new Error(`X token refresh failed: ${res.status}`);
   }
 
   const data = (await res.json()) as {
@@ -131,7 +159,7 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
   }
 
   if (!account.refresh_token_encrypted) {
-    return accessToken;
+    throw new Error(`Token expired for account ${account.id} and no refresh token available`);
   }
 
   const refreshToken = decryptToken(toBuffer(account.refresh_token_encrypted));
@@ -143,7 +171,7 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
   } else if (account.platform === "x") {
     newTokens = await refreshXToken(refreshToken);
   } else {
-    return accessToken;
+    throw new Error(`Token refresh not supported for platform: ${account.platform}`);
   }
 
   const supabase = createClient(
@@ -156,7 +184,7 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
     ? encryptToken(newTokens.refreshToken)
     : null;
 
-  await supabase
+  const { data, error } = await supabase
     .from("accounts")
     .update({
       access_token_encrypted: Buffer.from(newAccessEncrypted),
@@ -166,7 +194,13 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
       access_token_expires_at: newTokens.expiresAt,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", account.id);
+    .eq("id", account.id)
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Failed to persist refreshed tokens for account ${account.id}`);
+  }
 
   return newTokens.accessToken;
 }

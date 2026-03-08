@@ -134,12 +134,28 @@ export class PolarWebhookController {
     }
 
     if (existing) {
-      await supabase
+      const { error: updateError } = await supabase
         .from("subscriptions_usage")
         .update(row)
         .eq("id", existing.id);
+      if (updateError) {
+        this.logger.error("Failed to update subscription usage", {
+          error: updateError.message,
+          userId,
+        });
+        throw updateError;
+      }
     } else {
-      await supabase.from("subscriptions_usage").insert(row);
+      const { error: insertError } = await supabase
+        .from("subscriptions_usage")
+        .insert(row);
+      if (insertError) {
+        this.logger.error("Failed to insert subscription usage", {
+          error: insertError.message,
+          userId,
+        });
+        throw insertError;
+      }
     }
 
     return { received: true };

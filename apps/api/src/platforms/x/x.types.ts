@@ -4,7 +4,6 @@ export const X_SCOPES = [
   "tweet.write",
   "users.read",
   "block.write",
-  "hide.write",
   "offline.access",
 ] as const;
 
