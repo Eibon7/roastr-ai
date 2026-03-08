@@ -169,13 +169,21 @@ export function AccountConfigModal({
             </div>
 
             {loadError && (
-              <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div
+                role="status"
+                aria-live="assertive"
+                className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
                 {loadError}
               </div>
             )}
 
             {saveError && (
-              <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div
+                role="status"
+                aria-live="assertive"
+                className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
                 {saveError}
               </div>
             )}

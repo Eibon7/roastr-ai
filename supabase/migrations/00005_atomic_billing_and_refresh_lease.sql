@@ -23,6 +23,11 @@ CREATE OR REPLACE FUNCTION apply_billing_event(
 DECLARE
   v_current_state TEXT;
 BEGIN
+  -- Advisory transaction lock serializes concurrent calls for the same user,
+  -- including the first-write race where SELECT ... FOR UPDATE cannot lock a
+  -- non-existent row and two concurrent INSERTs would clobber each other.
+  PERFORM pg_advisory_xact_lock(hashtext(p_user_id::text)::bigint);
+
   -- Lock the row (or establish the absence of a row) before writing
   SELECT billing_state
     INTO v_current_state

@@ -210,13 +210,15 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
         .select("access_token_encrypted, access_token_expires_at, refresh_lease_at")
         .eq("id", account.id)
         .maybeSingle();
-      // Lease cleared and expiry updated → another worker succeeded
-      const leaseGone = !polled?.refresh_lease_at || new Date(polled.refresh_lease_at) < new Date();
+
       const expiryChanged = polled?.access_token_expires_at !== account.access_token_expires_at;
-      if (leaseGone || expiryChanged) {
-        if (polled?.access_token_encrypted) {
-          return decryptToken(toBuffer(polled.access_token_encrypted as Buffer | Uint8Array));
-        }
+      const tokenFresh = !isTokenExpiringSoon(polled?.access_token_expires_at ?? null);
+
+      // Only return when the other worker actually refreshed successfully —
+      // either the expiry changed, or the token is now fresh.
+      // Do NOT return a stale/expired token just because the lease was cleared.
+      if ((expiryChanged || tokenFresh) && polled?.access_token_encrypted) {
+        return decryptToken(toBuffer(polled.access_token_encrypted as Buffer | Uint8Array));
       }
     }
     throw new Error(`Refresh lease timeout for account ${account.id}`);
@@ -242,7 +244,10 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
     // Conditional write: only apply if the stored expiry still matches what
     // we observed (optimistic lock guards against a concurrent refresh that
     // already succeeded while we held the lease).
-    const { data, error } = await supabase
+    // Conditional write: only apply if the stored expiry still matches what
+    // we observed (optimistic lock).  Use IS NULL when the original expiry was
+    // null — .eq() with "" would not match a true NULL column value.
+    const updateBuilder = supabase
       .from("accounts")
       .update({
         access_token_encrypted: Buffer.from(newAccessEncrypted),
@@ -250,13 +255,17 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
           ? { refresh_token_encrypted: Buffer.from(newRefreshEncrypted) }
           : {}),
         access_token_expires_at: newTokens.expiresAt,
-        refresh_lease_at: null, // release the lease
+        refresh_lease_at: null,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", account.id)
-      .eq("access_token_expires_at", account.access_token_expires_at ?? "")
-      .select("id")
-      .maybeSingle();
+      .eq("id", account.id);
+
+    const lockedBuilder =
+      account.access_token_expires_at === null
+        ? updateBuilder.is("access_token_expires_at", null)
+        : updateBuilder.eq("access_token_expires_at", account.access_token_expires_at);
+
+    const { data, error } = await lockedBuilder.select("id").maybeSingle();
 
     if (error) {
       throw new Error(`Failed to persist refreshed tokens for account ${account.id}: ${error.message}`);

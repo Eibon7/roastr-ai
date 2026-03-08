@@ -98,12 +98,29 @@ async function callLLMFallback(text: string): Promise<ReturnType<typeof normaliz
           {
             role: "system",
             content:
-              "Eres un clasificador de toxicidad. Responde SOLO con un JSON válido: {\"score\": 0.0-1.0, \"hasIdentityAttack\": boolean, \"hasThreat\": boolean}. score=0 no tóxico, score=1 muy tóxico. hasIdentityAttack/hasThreat true si el texto ataca identidad o amenaza.",
+              "Eres un clasificador de toxicidad. score=0 no tóxico, score=1 muy tóxico. hasIdentityAttack/hasThreat true si el texto ataca identidad o amenaza.",
           },
           { role: "user", content: text.slice(0, 2000) },
         ],
         max_tokens: 100,
         temperature: 0,
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "toxicity",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                score: { type: "number", minimum: 0, maximum: 1 },
+                hasIdentityAttack: { type: "boolean" },
+                hasThreat: { type: "boolean" },
+              },
+              required: ["score", "hasIdentityAttack", "hasThreat"],
+              additionalProperties: false,
+            },
+          },
+        },
       }),
       signal: controller.signal,
     });
@@ -115,10 +132,10 @@ async function callLLMFallback(text: string): Promise<ReturnType<typeof normaliz
     const content = json.choices?.[0]?.message?.content;
     if (!content) return normalizeBothFailed();
 
-    const parsed = JSON.parse(content) as { score?: number; hasIdentityAttack?: boolean; hasThreat?: boolean };
-    const score = typeof parsed.score === "number" ? parsed.score : 0.5;
+    // response_format json_schema guarantees valid JSON matching the schema
+    const parsed = JSON.parse(content) as { score: number; hasIdentityAttack: boolean; hasThreat: boolean };
     return normalizeFromLLM({
-      score,
+      score: parsed.score,
       hasIdentityAttack: parsed.hasIdentityAttack,
       hasThreat: parsed.hasThreat,
     });
@@ -236,10 +253,8 @@ export async function analysisProcessor(job: Job): Promise<void> {
     result.decision === "shield_moderado" ||
     result.decision === "shield_critico"
   ) {
-    if (!commentId || !authorId) {
-      log.warn("Skipping shield action: missing platform identifiers", {
-        commentId,
-        authorId,
+    if (!commentId) {
+      log.warn("Skipping shield action: missing commentId", {
         accountId,
         platform,
       });
