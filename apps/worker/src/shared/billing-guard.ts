@@ -11,7 +11,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 export type BillingGuardResult =
   | { allowed: true }
-  | { allowed: false; reason: "paused" | "over_limit" | "lookup_error" };
+  | { allowed: false; reason: "paused" | "over_limit" | "lookup_error" | "not_found" };
 
 export async function checkBillingLimits(
   userId: string,
@@ -26,7 +26,7 @@ export async function checkBillingLimits(
     return { allowed: false, reason: "lookup_error" };
   }
   if (!data) {
-    return { allowed: false, reason: "paused" };
+    return { allowed: false, reason: "not_found" };
   }
 
   if (data.billing_state === "paused") {

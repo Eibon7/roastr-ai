@@ -5,7 +5,9 @@ import { supabase } from "@/lib/supabase-client";
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const confirmMessage = (location.state as { message?: string } | null)?.message;
+  const state = location.state as { message?: unknown } | null;
+  const confirmMessage =
+    typeof state?.message === "string" ? state.message : undefined;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);

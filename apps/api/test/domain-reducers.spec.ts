@@ -132,6 +132,16 @@ describe("billingReducer", () => {
       expect(r.sideEffects).toContainEqual({ type: "ENABLE_INGESTION" });
       expect(r.sideEffects).toContainEqual({ type: "RESET_USAGE" });
     });
+
+    it("SUBSCRIPTION_CANCELED → paused (cancel during trial)", () => {
+      const r = billingReducer("trialing", { type: "SUBSCRIPTION_CANCELED" });
+      expect(r.newState).toBe("paused");
+      expect(r.sideEffects).toContainEqual({ type: "DISABLE_INGESTION" });
+      expect(r.sideEffects).toContainEqual({
+        type: "SEND_EMAIL",
+        template: "subscription_paused",
+      });
+    });
   });
 
   describe("expired_trial_pending_payment transitions", () => {
@@ -209,12 +219,6 @@ describe("billingReducer", () => {
   });
 
   describe("invalid transitions return unchanged state", () => {
-    it("trialing + SUBSCRIPTION_CANCELED → paused (cancel during trial)", () => {
-      const r = billingReducer("trialing", { type: "SUBSCRIPTION_CANCELED" });
-      expect(r.newState).toBe("paused");
-      expect(r.sideEffects.length).toBeGreaterThan(0);
-    });
-
     it("active + TRIAL_EXPIRED has no transition", () => {
       const r = billingReducer("active", { type: "TRIAL_EXPIRED" });
       expect(r.newState).toBe("active");
@@ -228,30 +232,36 @@ describe("billingReducer", () => {
     });
   });
 
-  it("all 16 valid transitions are covered", () => {
-    const validTransitions: [BillingState, BillingEvent["type"]][] = [
-      ["trialing", "TRIAL_EXPIRED"],
-      ["trialing", "PAYMENT_SUCCEEDED"],
-      ["trialing", "SUBSCRIPTION_CANCELED"],
-      ["expired_trial_pending_payment", "PAYMENT_SUCCEEDED"],
-      ["expired_trial_pending_payment", "GRACE_PERIOD_EXPIRED"],
-      ["active", "PAYMENT_FAILED"],
-      ["active", "SUBSCRIPTION_CANCELED"],
-      ["active", "SUBSCRIPTION_PAUSED"],
-      ["payment_retry", "PAYMENT_SUCCEEDED"],
-      ["payment_retry", "GRACE_PERIOD_EXPIRED"],
-      ["payment_retry", "SUBSCRIPTION_PAUSED"],
-      ["canceled_pending", "PAYMENT_SUCCEEDED"],
-      ["canceled_pending", "GRACE_PERIOD_EXPIRED"],
-      ["canceled_pending", "SUBSCRIPTION_PAUSED"],
-      ["paused", "SUBSCRIPTION_RESUMED"],
-      ["paused", "PAYMENT_SUCCEEDED"],
+  it("all 16 valid transitions match expected state and sideEffects", () => {
+    type TransitionRow = [
+      BillingState,
+      BillingEvent["type"],
+      BillingState,
+      BillingReducerResult["sideEffects"],
+    ];
+    const validTransitions: TransitionRow[] = [
+      ["trialing", "TRIAL_EXPIRED", "expired_trial_pending_payment", [{ type: "SEND_EMAIL", template: "trial_expired" }]],
+      ["trialing", "PAYMENT_SUCCEEDED", "active", [{ type: "ENABLE_INGESTION" }, { type: "RESET_USAGE" }]],
+      ["trialing", "SUBSCRIPTION_CANCELED", "paused", [{ type: "DISABLE_INGESTION" }, { type: "SEND_EMAIL", template: "subscription_paused" }]],
+      ["expired_trial_pending_payment", "PAYMENT_SUCCEEDED", "active", [{ type: "ENABLE_INGESTION" }, { type: "RESET_USAGE" }]],
+      ["expired_trial_pending_payment", "GRACE_PERIOD_EXPIRED", "paused", [{ type: "DISABLE_INGESTION" }, { type: "SEND_EMAIL", template: "subscription_paused" }]],
+      ["active", "PAYMENT_FAILED", "payment_retry", [{ type: "SEND_EMAIL", template: "payment_failed" }]],
+      ["active", "SUBSCRIPTION_CANCELED", "canceled_pending", [{ type: "SEND_EMAIL", template: "subscription_canceled" }]],
+      ["active", "SUBSCRIPTION_PAUSED", "paused", [{ type: "DISABLE_INGESTION" }, { type: "SEND_EMAIL", template: "subscription_paused" }]],
+      ["payment_retry", "PAYMENT_SUCCEEDED", "active", [{ type: "ENABLE_INGESTION" }, { type: "RESET_USAGE" }]],
+      ["payment_retry", "GRACE_PERIOD_EXPIRED", "paused", [{ type: "DISABLE_INGESTION" }, { type: "SEND_EMAIL", template: "subscription_paused" }]],
+      ["payment_retry", "SUBSCRIPTION_PAUSED", "paused", [{ type: "DISABLE_INGESTION" }, { type: "SEND_EMAIL", template: "subscription_paused" }]],
+      ["canceled_pending", "PAYMENT_SUCCEEDED", "active", [{ type: "ENABLE_INGESTION" }, { type: "RESET_USAGE" }]],
+      ["canceled_pending", "GRACE_PERIOD_EXPIRED", "paused", [{ type: "DISABLE_INGESTION" }, { type: "SEND_EMAIL", template: "subscription_paused" }]],
+      ["canceled_pending", "SUBSCRIPTION_PAUSED", "paused", [{ type: "DISABLE_INGESTION" }, { type: "SEND_EMAIL", template: "subscription_paused" }]],
+      ["paused", "SUBSCRIPTION_RESUMED", "active", [{ type: "ENABLE_INGESTION" }, { type: "RESET_USAGE" }]],
+      ["paused", "PAYMENT_SUCCEEDED", "active", [{ type: "ENABLE_INGESTION" }, { type: "RESET_USAGE" }]],
     ];
 
-    for (const [state, event] of validTransitions) {
+    for (const [state, event, expectedNewState, expectedSideEffects] of validTransitions) {
       const result = billingReducer(state, { type: event } as BillingEvent);
-      expect(result.newState).not.toBe(state);
-      expect(result.sideEffects.length).toBeGreaterThan(0);
+      expect(result.newState).toBe(expectedNewState);
+      expect(result.sideEffects).toEqual(expectedSideEffects);
     }
   });
 });

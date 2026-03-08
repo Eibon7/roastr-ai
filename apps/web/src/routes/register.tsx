@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase-client";
+import { apiFetch } from "@/lib/api";
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -14,7 +15,18 @@ export function RegisterPage() {
     setError(null);
     setLoading(true);
 
-    const { data, error: authError } = await supabase.auth.signUp({
+    try {
+      await apiFetch<{ id: string }>("/auth/register", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+    } catch (err) {
+      setLoading(false);
+      setError(err instanceof Error ? err.message : "Registration failed");
+      return;
+    }
+
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
