@@ -56,14 +56,5 @@ import { SupabaseAuthGuard } from "./shared/guards/supabase-auth.guard";
       inject: [ConfigService, Reflector],
     },
   ],
-  providers: [
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
-    {
-      provide: APP_GUARD,
-      useFactory: (config: ConfigService, reflector: Reflector) =>
-        new SupabaseAuthGuard(config, reflector),
-      inject: [ConfigService, Reflector],
-    },
-  ],
 })
 export class AppModule {}

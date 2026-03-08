@@ -33,7 +33,7 @@ export class OffendersService {
     const supabase = this.getSupabase();
     const { data, error } = await supabase
       .from("offenders")
-      .select("*")
+      .select("id, user_id, account_id, platform, offender_id, strike_level, last_strike, created_at, updated_at")
       .eq("user_id", userId)
       .eq("account_id", accountId)
       .eq("offender_id", offenderId)

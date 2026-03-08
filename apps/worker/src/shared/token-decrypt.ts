@@ -4,14 +4,13 @@ const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 const TAG_LENGTH = 16;
 const KEY_LENGTH = 32;
-const DEV_FALLBACK_SECRET = "development-only-32-char-secret-key!!";
+// Fallback only for test environments — never in development or production
+const TEST_FALLBACK_SECRET = "development-only-32-char-secret-key!!";
 
 export function decryptToken(ciphertext: Buffer): string {
   const secret =
     process.env.TOKEN_ENCRYPTION_KEY ??
-    (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test"
-      ? DEV_FALLBACK_SECRET
-      : undefined);
+    (process.env.NODE_ENV === "test" ? TEST_FALLBACK_SECRET : undefined);
 
   if (!secret) {
     throw new Error("TOKEN_ENCRYPTION_KEY is required");
@@ -25,5 +24,5 @@ export function decryptToken(ciphertext: Buffer): string {
 
   const decipher = createDecipheriv(ALGORITHM, key, iv, { authTagLength: TAG_LENGTH });
   decipher.setAuthTag(tag);
-  return decipher.update(encrypted) + decipher.final("utf8");
+  return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString("utf8");
 }

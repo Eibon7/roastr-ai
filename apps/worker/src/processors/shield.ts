@@ -1,7 +1,7 @@
 import type { Job } from "bullmq";
 import { createClient } from "@supabase/supabase-js";
 import { checkBillingLimits } from "../shared/billing-guard.js";
-import { decryptToken } from "../shared/token-decrypt.js";
+import { ensureFreshToken } from "../shared/token-refresh.js";
 import { resolveShieldAction } from "@roastr/shared";
 import { hideComment, blockUser, reportComment } from "../shared/action-executor.js";
 import { createJobLogger } from "../shared/logger.js";
@@ -11,13 +11,6 @@ const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
-
-function toBuffer(raw: unknown): Buffer {
-  if (raw instanceof Buffer) return raw;
-  if (raw instanceof Uint8Array) return Buffer.from(raw);
-  if (raw instanceof ArrayBuffer) return Buffer.from(raw);
-  return Buffer.from(new Uint8Array(0));
-}
 
 export async function shieldProcessor(job: Job): Promise<void> {
   const log = createJobLogger("shield", job.id ?? "unknown");
@@ -55,7 +48,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
 
   const { data: account } = await supabase
     .from("accounts")
-    .select("access_token_encrypted")
+    .select("access_token_encrypted, refresh_token_encrypted, access_token_expires_at")
     .eq("id", accountId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -67,10 +60,16 @@ export async function shieldProcessor(job: Job): Promise<void> {
 
   let accessToken: string;
   try {
-    accessToken = decryptToken(toBuffer(account.access_token_encrypted));
+    accessToken = await ensureFreshToken({
+      id: accountId,
+      platform: platform as string,
+      access_token_encrypted: account.access_token_encrypted as Buffer,
+      refresh_token_encrypted: (account.refresh_token_encrypted as Buffer | null) ?? null,
+      access_token_expires_at: (account.access_token_expires_at as string | null) ?? null,
+    });
   } catch (e) {
-    log.error("Token decryption failed", { error: (e as Error).message });
-    throw new Error("Token decryption failed, will retry");
+    log.error("Token refresh/decryption failed", { error: (e as Error).message });
+    throw new Error("Token unavailable, will retry");
   }
 
   const actionsToTry = [resolved.primary, ...resolved.fallbacks];
@@ -133,28 +132,19 @@ export async function shieldProcessor(job: Job): Promise<void> {
   }
 
   if (success && authorId && actionTaken) {
-    const now = new Date().toISOString();
     try {
-      const { error: upsertError } = await supabase.from("offenders").upsert(
-        {
-          user_id: userId,
-          account_id: accountId,
-          platform,
-          offender_id: authorId,
-          strike_level: 1,
-          last_strike: now,
-          updated_at: now,
-        },
-        {
-          onConflict: "user_id,account_id,offender_id",
-          ignoreDuplicates: false,
-        },
-      );
-      if (upsertError) {
-        log.error("Failed to upsert offender", { error: upsertError.message });
+      // Atomic increment via RPC — avoids TOCTOU race and resets to 1
+      const { error: strikeError } = await supabase.rpc("increment_offender_strike", {
+        p_user_id: userId,
+        p_account_id: accountId,
+        p_platform: platform,
+        p_offender_id: authorId,
+      });
+      if (strikeError) {
+        log.error("Failed to increment offender strike", { error: strikeError.message });
       }
     } catch (e) {
-      log.error("Unexpected error upserting offender", { error: (e as Error).message });
+      log.error("Unexpected error updating offender", { error: (e as Error).message });
     }
   }
 

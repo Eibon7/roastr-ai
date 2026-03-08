@@ -36,6 +36,6 @@ export class TokenEncryptionService {
     const encrypted = ciphertext.subarray(IV_LENGTH + TAG_LENGTH);
     const decipher = createDecipheriv(ALGORITHM, this.key, iv, { authTagLength: TAG_LENGTH });
     decipher.setAuthTag(tag);
-    return decipher.update(encrypted) + decipher.final("utf8");
+    return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString("utf8");
   }
 }

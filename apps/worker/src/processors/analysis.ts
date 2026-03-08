@@ -2,10 +2,7 @@ import type { Job } from "bullmq";
 import { Queue } from "bullmq";
 import { createClient } from "@supabase/supabase-js";
 import { createJobLogger } from "../shared/logger.js";
-import {
-  checkBillingLimits,
-  incrementAnalysisUsed,
-} from "../shared/billing-guard.js";
+import { tryConsumeAnalysisSlot } from "../shared/billing-guard.js";
 import {
   analysisReducer,
   normalizePerspectiveScores,
@@ -145,7 +142,8 @@ export async function analysisProcessor(job: Job): Promise<void> {
     return;
   }
 
-  const guard = await checkBillingLimits(userId);
+  // Single atomic call: checks quota, increments usage, and records job for idempotency
+  const guard = await tryConsumeAnalysisSlot(userId, job.id ?? `${accountId}-${commentId}`);
   if (!guard.allowed) {
     if (guard.reason === "lookup_error") {
       throw new Error("Billing lookup failed, will retry");
@@ -230,7 +228,7 @@ export async function analysisProcessor(job: Job): Promise<void> {
     hasInsultWithArgument: normalized.hasInsultWithArgument,
   });
 
-  await incrementAnalysisUsed(userId);
+  // Quota was already consumed atomically by tryConsumeAnalysisSlot above
 
   if (
     result.decision === "shield_moderado" ||

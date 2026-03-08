@@ -7,15 +7,14 @@ const IV_LENGTH = 12;
 const KEY_LENGTH = 32;
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const X_TOKEN_URL = "https://api.x.com/2/oauth2/token";
-const DEV_FALLBACK_SECRET = "development-only-32-char-secret-key!!";
+// Fallback only in test environments — never in development or production
+const TEST_FALLBACK_SECRET = "development-only-32-char-secret-key!!";
 const TOKEN_REFRESH_TIMEOUT_MS = Number(process.env.TOKEN_REFRESH_TIMEOUT_MS) || 8_000;
 
 function encryptToken(plaintext: string): Buffer {
   const secret =
     process.env.TOKEN_ENCRYPTION_KEY ??
-    (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test"
-      ? DEV_FALLBACK_SECRET
-      : undefined);
+    (process.env.NODE_ENV === "test" ? TEST_FALLBACK_SECRET : undefined);
   if (!secret) {
     throw new Error("TOKEN_ENCRYPTION_KEY is required");
   }
@@ -41,10 +40,12 @@ type RefreshedTokens = {
   expiresAt: string | null;
 };
 
-/** Returns true if token expires within the next 5 minutes (or is already expired). */
+/** Returns true if token expires within the next 5 minutes, is already expired, or has an invalid timestamp. */
 export function isTokenExpiringSoon(expiresAt: string | null): boolean {
   if (!expiresAt) return false;
   const expiry = new Date(expiresAt).getTime();
+  // Treat malformed timestamps (NaN) as expiring so we always attempt refresh
+  if (Number.isNaN(expiry)) return true;
   const buffer = 5 * 60 * 1000;
   return Date.now() + buffer >= expiry;
 }
@@ -69,9 +70,15 @@ async function fetchWithTimeout(
 }
 
 async function refreshYouTubeToken(refreshToken: string): Promise<RefreshedTokens> {
+  const clientId = process.env.YOUTUBE_CLIENT_ID;
+  const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error("Missing YOUTUBE_CLIENT_ID or YOUTUBE_CLIENT_SECRET");
+  }
+
   const body = new URLSearchParams({
-    client_id: process.env.YOUTUBE_CLIENT_ID ?? "",
-    client_secret: process.env.YOUTUBE_CLIENT_SECRET ?? "",
+    client_id: clientId,
+    client_secret: clientSecret,
     refresh_token: refreshToken,
     grant_type: "refresh_token",
   });
@@ -106,13 +113,17 @@ async function refreshYouTubeToken(refreshToken: string): Promise<RefreshedToken
 }
 
 async function refreshXToken(refreshToken: string): Promise<RefreshedTokens> {
+  const clientId = process.env.X_CLIENT_ID;
+  const clientSecret = process.env.X_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error("Missing X_CLIENT_ID or X_CLIENT_SECRET");
+  }
+
   const body = new URLSearchParams({
     grant_type: "refresh_token",
     refresh_token: refreshToken,
   });
 
-  const clientId = process.env.X_CLIENT_ID ?? "";
-  const clientSecret = process.env.X_CLIENT_SECRET ?? "";
   const basicAuth = Buffer.from(`${clientId}:${clientSecret}`, "utf8").toString("base64");
 
   const res = await fetchWithTimeout(
@@ -184,6 +195,8 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
     ? encryptToken(newTokens.refreshToken)
     : null;
 
+  // Conditional write: only update if the stored expiry still matches what we read.
+  // If another worker already refreshed concurrently, skip overwriting.
   const { data, error } = await supabase
     .from("accounts")
     .update({
@@ -195,11 +208,19 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
       updated_at: new Date().toISOString(),
     })
     .eq("id", account.id)
+    // Only commit if the expiry we observed is still the current one (optimistic lock)
+    .eq("access_token_expires_at", account.access_token_expires_at ?? "")
     .select("id")
-    .single();
+    .maybeSingle();
 
-  if (error || !data) {
-    throw new Error(`Failed to persist refreshed tokens for account ${account.id}`);
+  if (error) {
+    throw new Error(`Failed to persist refreshed tokens for account ${account.id}: ${error.message}`);
+  }
+
+  // data === null means another worker already refreshed (conditional write missed).
+  // The current in-memory token is still valid for this job's lifetime.
+  if (!data) {
+    return newTokens.accessToken;
   }
 
   return newTokens.accessToken;

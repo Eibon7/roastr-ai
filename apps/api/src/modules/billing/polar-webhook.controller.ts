@@ -106,7 +106,7 @@ export class PolarWebhookController {
 
     const { data: existing } = await supabase
       .from("subscriptions_usage")
-      .select("id, billing_state")
+      .select("billing_state")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -133,29 +133,17 @@ export class PolarWebhookController {
       row.roasts_used = 0;
     }
 
-    if (existing) {
-      const { error: updateError } = await supabase
-        .from("subscriptions_usage")
-        .update(row)
-        .eq("id", existing.id);
-      if (updateError) {
-        this.logger.error("Failed to update subscription usage", {
-          error: updateError.message,
-          userId,
-        });
-        throw updateError;
-      }
-    } else {
-      const { error: insertError } = await supabase
-        .from("subscriptions_usage")
-        .insert(row);
-      if (insertError) {
-        this.logger.error("Failed to insert subscription usage", {
-          error: insertError.message,
-          userId,
-        });
-        throw insertError;
-      }
+    // Atomic upsert — avoids racy read-then-write branching.
+    const { error: upsertError } = await supabase
+      .from("subscriptions_usage")
+      .upsert(row, { onConflict: "user_id" });
+    if (upsertError) {
+      // Log subscriptionId instead of userId to avoid PII in logs
+      this.logger.error("Failed to upsert subscription usage", {
+        error: upsertError.message,
+        subscriptionId: subscriptionId ?? "unknown",
+      });
+      throw upsertError;
     }
 
     return { received: true };

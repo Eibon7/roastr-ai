@@ -102,7 +102,7 @@ export class AuthController {
       .update({ onboarding_state: body.state, updated_at: new Date().toISOString() })
       .eq("id", req.user.id)
       .select("id")
-      .single();
+      .maybeSingle();
 
     if (error) {
       throw new InternalServerErrorException(error.message);

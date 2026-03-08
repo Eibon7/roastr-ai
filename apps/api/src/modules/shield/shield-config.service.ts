@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
 
-const VALID_AGGRESSIVENESS = [0.9, 0.95, 0.98, 1.0] as const;
+const VALID_AGGRESSIVENESS: readonly number[] = [0.9, 0.95, 0.98, 1.0];
 
 @Injectable()
 export class ShieldConfigService {
@@ -37,7 +37,7 @@ export class ShieldConfigService {
     accountId: string,
     shieldAggressiveness: number,
   ): Promise<boolean> {
-    if (!VALID_AGGRESSIVENESS.includes(shieldAggressiveness as 0.9)) {
+    if (typeof shieldAggressiveness !== "number" || !VALID_AGGRESSIVENESS.includes(shieldAggressiveness)) {
       return false;
     }
     const supabase = this.getSupabase();

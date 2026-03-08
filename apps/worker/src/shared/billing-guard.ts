@@ -49,3 +49,34 @@ export async function incrementAnalysisUsed(userId: string): Promise<void> {
     throw new Error(`Failed to increment analysis_used: ${error.message}`);
   }
 }
+
+/**
+ * Atomically checks billing limits, increments usage, and records the job
+ * reservation for idempotency. Replaces the non-atomic checkBillingLimits +
+ * incrementAnalysisUsed pair — safe to call on BullMQ retries.
+ */
+export async function tryConsumeAnalysisSlot(
+  userId: string,
+  jobId: string,
+): Promise<BillingGuardResult> {
+  const { data, error } = await supabase.rpc("try_consume_analysis_slot", {
+    p_user_id: userId,
+    p_job_id: jobId,
+  });
+
+  if (error) {
+    return { allowed: false, reason: "lookup_error" };
+  }
+
+  const result = data as { allowed: boolean; remaining?: number; reason?: string };
+  if (!result.allowed) {
+    const reason = (result.reason ?? "over_limit") as
+      | "paused"
+      | "over_limit"
+      | "lookup_error"
+      | "not_found";
+    return { allowed: false, reason };
+  }
+
+  return { allowed: true, remaining: result.remaining ?? 0 };
+}

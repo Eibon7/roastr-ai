@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { X } from "lucide-react";
 
@@ -8,6 +8,8 @@ const AGGRESSIVENESS_OPTIONS = [
   { value: 0.98, label: "98% — Estricto" },
   { value: 1, label: "100% — Máximo" },
 ] as const;
+
+const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 type Props = {
   accountId: string;
@@ -26,6 +28,8 @@ export function AccountConfigModal({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<Element | null>(null);
 
   useEffect(() => {
     apiFetch<{ shieldAggressiveness: number }>(
@@ -36,6 +40,50 @@ export function AccountConfigModal({
       .catch((e) => setError(e instanceof Error ? e.message : "Error al cargar configuración"))
       .finally(() => setLoading(false));
   }, [accountId, token]);
+
+  // Trap focus inside dialog and restore on unmount
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement;
+    const dialog = dialogRef.current;
+    if (dialog) {
+      const firstFocusable = dialog.querySelector<HTMLElement>(FOCUSABLE);
+      firstFocusable?.focus();
+    }
+    return () => {
+      (previousFocusRef.current as HTMLElement | null)?.focus();
+    };
+  }, []);
+
+  // Keyboard: Escape closes, Tab cycles focus within dialog
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key === "Tab") {
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE));
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   const handleSave = async () => {
     if (aggressiveness === null) return;
@@ -55,14 +103,22 @@ export function AccountConfigModal({
     }
   };
 
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="config-modal-title"
+      onClick={handleBackdropClick}
     >
-      <div className="w-full max-w-md rounded-lg border border-input bg-card p-6 shadow-lg">
+      <div
+        ref={dialogRef}
+        className="w-full max-w-md rounded-lg border border-input bg-card p-6 shadow-lg"
+      >
         <div className="mb-4 flex items-center justify-between">
           <h2 id="config-modal-title" className="text-lg font-semibold">
             Configuración del Shield
