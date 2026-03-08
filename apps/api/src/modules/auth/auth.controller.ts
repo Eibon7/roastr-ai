@@ -24,7 +24,18 @@ export class AuthController {
       password: body.password,
       email_confirm: true,
     });
-    if (error) throw error;
+    if (error) {
+      const msg = (error as { message?: string }).message?.toLowerCase() ?? "";
+      const code = (error as { code?: string }).code ?? "";
+      const isDuplicate =
+        code === "user_already_exists" ||
+        msg.includes("already registered") ||
+        msg.includes("already exists");
+      if (isDuplicate) {
+        return { id: "00000000-0000-0000-0000-000000000000" };
+      }
+      throw error;
+    }
     return { id: data.user.id };
   }
 
