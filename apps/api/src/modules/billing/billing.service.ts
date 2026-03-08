@@ -26,12 +26,15 @@ export class BillingService {
 
   async getUsage(userId: string): Promise<BillingUsage | null> {
     const supabase = this.getSupabase();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("subscriptions_usage")
       .select("plan, billing_state, analysis_limit, analysis_used, roasts_limit, roasts_used, current_period_end, trial_end")
       .eq("user_id", userId)
       .maybeSingle();
 
+    if (error) {
+      throw new Error(`Failed to load billing usage: ${error.message}`);
+    }
     if (!data) return null;
     return data as BillingUsage;
   }
@@ -55,20 +58,28 @@ export class BillingService {
       : "https://sandbox-api.polar.sh";
     const frontendUrl = this.config.get("FRONTEND_URL") ?? "http://localhost:5173";
 
-    const res = await fetch(`${baseUrl}/v1/checkouts/`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        products: [productId],
-        customer_email: userEmail,
-        external_customer_id: userId,
-        success_url: `${frontendUrl}/onboarding?step=persona_setup`,
-        allow_trial: plan !== "plus",
-      }),
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10_000);
+    let res: Response;
+    try {
+      res = await fetch(`${baseUrl}/v1/checkouts/`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          products: [productId],
+          customer_email: userEmail,
+          external_customer_id: userId,
+          success_url: `${frontendUrl}/onboarding?step=persona_setup`,
+          allow_trial: plan !== "plus",
+        }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
 
     if (!res.ok) {
       const err = await res.text();

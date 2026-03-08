@@ -20,14 +20,22 @@ export function UsageWidget() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let disposed = false;
+    setUsage(null);
+    setError(null);
+    setLoading(true);
+
     if (!session?.access_token) {
       setLoading(false);
       return;
     }
+
     apiFetch<Usage>("/billing/usage", { token: session.access_token })
-      .then(setUsage)
-      .catch((e) => setError(e instanceof Error ? e.message : "Error"))
-      .finally(() => setLoading(false));
+      .then((next) => { if (!disposed) setUsage(next); })
+      .catch((e) => { if (!disposed) setError(e instanceof Error ? e.message : "Error"); })
+      .finally(() => { if (!disposed) setLoading(false); });
+
+    return () => { disposed = true; };
   }, [session?.access_token]);
 
   if (loading) {

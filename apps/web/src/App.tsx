@@ -4,6 +4,7 @@ import { AuthProvider } from "./contexts/auth-context";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { LoginPage } from "./routes/login";
 import { RegisterPage } from "./routes/register";
+import { ConnectPage } from "./routes/connect";
 import { DashboardPage } from "./routes/dashboard";
 import { SettingsPage } from "./routes/settings";
 import { OnboardingWizard } from "./components/onboarding/OnboardingWizard";
@@ -19,6 +20,7 @@ export function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/onboarding" element={<ProtectedRoute><OnboardingWizard /></ProtectedRoute>} />
           <Route path="/billing" element={<ProtectedRoute><BillingRoute /></ProtectedRoute>} />
+          <Route path="/connect" element={<ProtectedRoute><ConnectPage /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/login" replace />} />
