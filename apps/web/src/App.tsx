@@ -9,6 +9,8 @@ import { DashboardPage } from "./routes/dashboard";
 import { SettingsPage } from "./routes/settings";
 import { OnboardingWizard } from "./components/onboarding/OnboardingWizard";
 import { BillingRoute } from "./routes/billing";
+import { PrivacyPage } from "./routes/privacy";
+import { TermsPage } from "./routes/terms";
 
 export function App() {
   return (
@@ -23,6 +25,8 @@ export function App() {
           <Route path="/connect" element={<ProtectedRoute><ConnectPage /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

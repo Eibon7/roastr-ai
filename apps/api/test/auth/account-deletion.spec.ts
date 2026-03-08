@@ -1,0 +1,152 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  UnauthorizedException,
+  BadRequestException,
+  InternalServerErrorException,
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { AuthController } from "../../src/modules/auth/auth.controller";
+
+// ─── Supabase mock factory ───────────────────────────────────────────────────
+
+type MockChain = {
+  select: ReturnType<typeof vi.fn>;
+  eq: ReturnType<typeof vi.fn>;
+  delete: ReturnType<typeof vi.fn>;
+  maybeSingle: ReturnType<typeof vi.fn>;
+  not: ReturnType<typeof vi.fn>;
+  lt: ReturnType<typeof vi.fn>;
+  _resolve: (result: { data: unknown; error: unknown }) => void;
+};
+
+function makeChain(defaultResult = { data: null, error: null }): MockChain {
+  const chain: MockChain = {
+    select: vi.fn(),
+    eq: vi.fn(),
+    delete: vi.fn(),
+    maybeSingle: vi.fn(),
+    not: vi.fn(),
+    lt: vi.fn(),
+    _resolve: () => {},
+  };
+
+  const self = () => Promise.resolve(defaultResult);
+  chain.select.mockReturnValue(chain);
+  chain.eq.mockReturnValue(chain);
+  chain.delete.mockReturnValue(chain);
+  chain.not.mockReturnValue(chain);
+  chain.lt.mockReturnValue(chain);
+  chain.maybeSingle.mockImplementation(self);
+
+  return chain;
+}
+
+const adminDeleteUser = vi.fn();
+const signInWithPassword = vi.fn();
+const mockFrom = vi.fn();
+
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: vi.fn((_url: string, key: string) => {
+    // Service role key → admin client; anon key → anon client
+    if (key === "service-key") {
+      return {
+        from: mockFrom,
+        auth: {
+          admin: { deleteUser: adminDeleteUser },
+        },
+      };
+    }
+    return {
+      from: mockFrom,
+      auth: {
+        signInWithPassword,
+      },
+    };
+  }),
+}));
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function makeConfig(overrides: Record<string, string> = {}): ConfigService {
+  const defaults: Record<string, string> = {
+    SUPABASE_URL: "https://test.supabase.co",
+    SUPABASE_SERVICE_ROLE_KEY: "service-key",
+    SUPABASE_ANON_KEY: "anon-key",
+  };
+  return {
+    getOrThrow: vi.fn((key: string) => overrides[key] ?? defaults[key] ?? ""),
+  } as unknown as ConfigService;
+}
+
+function makeReq(userId = "user-123") {
+  return { user: { id: userId } };
+}
+
+// ─── Tests ───────────────────────────────────────────────────────────────────
+
+describe("AuthController.deleteAccount", () => {
+  let controller: AuthController;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    controller = new AuthController(makeConfig());
+  });
+
+  it("throws 401 when no authenticated user", async () => {
+    await expect(
+      controller.deleteAccount({ user: undefined }, { password: "pw" }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it("throws 400 when password is missing", async () => {
+    await expect(
+      controller.deleteAccount(makeReq(), { password: "" }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("throws 401 when password verification fails", async () => {
+    const profileChain = makeChain({ data: { email: "user@test.com" }, error: null });
+    mockFrom.mockReturnValue(profileChain);
+    signInWithPassword.mockResolvedValue({ error: { message: "Invalid credentials" } });
+
+    await expect(
+      controller.deleteAccount(makeReq(), { password: "wrong" }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it("throws 500 when profile lookup fails", async () => {
+    const profileChain = makeChain({ data: null, error: { message: "db error" } });
+    mockFrom.mockReturnValue(profileChain);
+
+    await expect(
+      controller.deleteAccount(makeReq(), { password: "pw" }),
+    ).rejects.toBeInstanceOf(InternalServerErrorException);
+  });
+
+  it("throws 500 when auth.admin.deleteUser fails after successful deletion cascade", async () => {
+    const profileChain = makeChain({ data: { email: "user@test.com" }, error: null });
+    mockFrom.mockReturnValue(profileChain);
+    signInWithPassword.mockResolvedValue({ error: null });
+    adminDeleteUser.mockResolvedValue({ error: { message: "delete failed" } });
+
+    await expect(
+      controller.deleteAccount(makeReq(), { password: "correct" }),
+    ).rejects.toBeInstanceOf(InternalServerErrorException);
+  });
+
+  it("completes deletion cascade and returns 204", async () => {
+    const profileChain = makeChain({ data: { email: "user@test.com" }, error: null });
+    const accountsChain = makeChain({ data: [], error: null });
+    mockFrom
+      .mockReturnValueOnce(profileChain)   // profiles lookup
+      .mockReturnValue(accountsChain);      // all cascade deletes
+    signInWithPassword.mockResolvedValue({ error: null });
+    adminDeleteUser.mockResolvedValue({ error: null });
+
+    await expect(
+      controller.deleteAccount(makeReq(), { password: "correct" }),
+    ).resolves.toBeUndefined();
+
+    expect(adminDeleteUser).toHaveBeenCalledWith("user-123");
+  });
+});

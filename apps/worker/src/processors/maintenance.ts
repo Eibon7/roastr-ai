@@ -1,8 +1,18 @@
 import type { Job } from "bullmq";
 import { createClient } from "@supabase/supabase-js";
+import { createHash } from "crypto";
 import { createJobLogger } from "../shared/logger.js";
 
 const RETENTION_DAYS = 90;
+const ANON_PREFIX = "anon:";
+
+function hashIdentifier(raw: string): string {
+  return ANON_PREFIX + createHash("sha256").update(raw).digest("hex").slice(0, 16);
+}
+
+function isAnonymized(value: string): boolean {
+  return value.startsWith(ANON_PREFIX);
+}
 
 export async function maintenanceProcessor(job: Job): Promise<void> {
   const log = createJobLogger("maintenance", job.id ?? "unknown");
@@ -29,10 +39,12 @@ export async function maintenanceProcessor(job: Job): Promise<void> {
   const cutoffIso = cutoff.toISOString();
 
   let shieldLogsDeleted = 0;
-  let offendersDeleted = 0;
+  let roastCandidatesDeleted = 0;
+  let offendersAnonymized = 0;
   let accountsPurged = 0;
 
   try {
+    // 1. Delete shield_logs older than 90 days
     const { data: shieldData, error: shieldErr } = await supabase
       .from("shield_logs")
       .delete()
@@ -45,30 +57,47 @@ export async function maintenanceProcessor(job: Job): Promise<void> {
     }
     shieldLogsDeleted = shieldData?.length ?? 0;
 
-    const { data: offendersNull, error: err1 } = await supabase
-      .from("offenders")
+    // 2. Delete roast_candidates older than 90 days
+    const { data: roastData, error: roastErr } = await supabase
+      .from("roast_candidates")
       .delete()
-      .is("last_strike", null)
       .lt("created_at", cutoffIso)
       .select("id");
-    if (err1) {
-      log.error("Failed to purge null-strike offenders", { error: err1.message });
-      throw err1;
-    }
 
-    const { data: offendersStale, error: err2 } = await supabase
+    if (roastErr) {
+      log.error("Failed to purge roast_candidates", { error: roastErr.message });
+      throw roastErr;
+    }
+    roastCandidatesDeleted = roastData?.length ?? 0;
+
+    // 3. Anonymize old offenders — preserve strike_count, hash PII (offender_id)
+    const { data: candidates, error: fetchErr } = await supabase
       .from("offenders")
-      .delete()
-      .not("last_strike", "is", null)
-      .lt("last_strike", cutoffIso)
-      .select("id");
-    if (err2) {
-      log.error("Failed to purge stale offenders", { error: err2.message });
-      throw err2;
+      .select("id, offender_id, last_strike, created_at")
+      .or(`last_strike.is.null,last_strike.lt.${cutoffIso}`)
+      .lt("created_at", cutoffIso);
+
+    if (fetchErr) throw fetchErr;
+
+    if (candidates && candidates.length > 0) {
+      const toAnonymize = (candidates as { id: string; offender_id: string }[]).filter(
+        (r) => !isAnonymized(r.offender_id),
+      );
+      if (toAnonymize.length > 0) {
+        const updates = toAnonymize.map(({ id, offender_id }) => ({
+          id,
+          offender_id: hashIdentifier(offender_id),
+          updated_at: new Date().toISOString(),
+        }));
+        const { error: updateErr } = await supabase
+          .from("offenders")
+          .upsert(updates, { onConflict: "id" });
+        if (updateErr) throw updateErr;
+        offendersAnonymized = toAnonymize.length;
+      }
     }
 
-    offendersDeleted = (offendersNull?.length ?? 0) + (offendersStale?.length ?? 0);
-
+    // 4. Purge accounts flagged for retention expiry
     const nowIso = new Date().toISOString();
     const { data: accountData, error: accountErr } = await supabase
       .from("accounts")
@@ -85,7 +114,8 @@ export async function maintenanceProcessor(job: Job): Promise<void> {
 
     log.info("GDPR cleanup completed", {
       shieldLogsDeleted,
-      offendersDeleted,
+      roastCandidatesDeleted,
+      offendersAnonymized,
       accountsPurged,
     });
   } catch (err) {

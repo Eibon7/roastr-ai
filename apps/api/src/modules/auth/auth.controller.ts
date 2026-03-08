@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
   Body,
   Req,
   HttpCode,
@@ -127,5 +128,91 @@ export class AuthController {
     }
 
     return { state: body.state };
+  }
+
+  @Delete("account")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteAccount(
+    @Req() req: { user?: { id: string } },
+    @Body() body: { password: string },
+  ): Promise<void> {
+    if (!req.user?.id) {
+      throw new UnauthorizedException();
+    }
+    if (!body.password) {
+      throw new BadRequestException("Password is required");
+    }
+
+    const supabase = createClient(
+      this.config.getOrThrow("SUPABASE_URL"),
+      this.config.getOrThrow("SUPABASE_SERVICE_ROLE_KEY"),
+    );
+
+    // Verify password by attempting sign-in with the user's email
+    const { data: profile, error: profileErr } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", req.user.id)
+      .maybeSingle();
+
+    if (profileErr || !profile?.email) {
+      throw new InternalServerErrorException("Could not retrieve account");
+    }
+
+    const anonClient = createClient(
+      this.config.getOrThrow("SUPABASE_URL"),
+      this.config.getOrThrow("SUPABASE_ANON_KEY"),
+    );
+    const { error: signInErr } = await anonClient.auth.signInWithPassword({
+      email: profile.email,
+      password: body.password,
+    });
+    if (signInErr) {
+      throw new UnauthorizedException("Invalid password");
+    }
+
+    // Revoke OAuth tokens for all connected accounts
+    const { data: accounts } = await supabase
+      .from("accounts")
+      .select("id, platform, access_token, refresh_token")
+      .eq("user_id", req.user.id);
+
+    if (accounts) {
+      for (const account of accounts) {
+        if (account.access_token) {
+          try {
+            if (account.platform === "youtube") {
+              await fetch(
+                `https://oauth2.googleapis.com/revoke?token=${account.access_token}`,
+                { method: "POST" },
+              );
+            } else if (account.platform === "x") {
+              await fetch("https://api.twitter.com/2/oauth2/revoke", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                  token: account.access_token,
+                  token_type_hint: "access_token",
+                }),
+              });
+            }
+          } catch {
+            // Best-effort revocation; proceed with deletion regardless
+          }
+        }
+      }
+    }
+
+    // Cascade delete: user data in order of FK dependencies
+    await supabase.from("subscriptions_usage").delete().eq("user_id", req.user.id);
+    await supabase.from("shield_logs").delete().eq("user_id", req.user.id);
+    await supabase.from("offenders").delete().eq("user_id", req.user.id);
+    await supabase.from("accounts").delete().eq("user_id", req.user.id);
+
+    // Delete auth user — triggers cascade on profiles via DB trigger
+    const { error: deleteErr } = await supabase.auth.admin.deleteUser(req.user.id);
+    if (deleteErr) {
+      throw new InternalServerErrorException(deleteErr.message);
+    }
   }
 }
