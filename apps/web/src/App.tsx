@@ -10,6 +10,7 @@ import { DashboardPage } from "./routes/dashboard";
 import { SettingsPage } from "./routes/settings";
 import { OnboardingWizard } from "./components/onboarding/OnboardingWizard";
 import { BillingRoute } from "./routes/billing";
+import { ShieldPage } from "./routes/shield";
 
 function ProtectedWithLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -30,6 +31,10 @@ export function App() {
             <Route
               path="/onboarding"
               element={<ProtectedRoute><OnboardingWizard /></ProtectedRoute>}
+            />
+            <Route
+              path="/shield"
+              element={<ProtectedWithLayout><ShieldPage /></ProtectedWithLayout>}
             />
             <Route
               path="/billing"
