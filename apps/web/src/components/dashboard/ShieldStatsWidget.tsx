@@ -1,35 +1,13 @@
-import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
-import { apiFetch } from "@/lib/api";
+import { useShieldLogs } from "@/hooks/use-shield-logs";
 import { EyeOff, Flag, Ban, Shield, TrendingUp } from "lucide-react";
-
-type ShieldLog = {
-  id: string;
-  action_taken: string;
-  severity_score: number;
-  created_at: string;
-};
+import type { ShieldLog } from "@/hooks/use-shield-logs";
 
 type ActionCount = { label: string; count: number; icon: React.ComponentType<{ className?: string }>; color: string };
 
 export function ShieldStatsWidget() {
   const { session } = useAuth();
-  const [logs, setLogs] = useState<ShieldLog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!session?.access_token) { setLoading(false); return; }
-    let disposed = false;
-    setLoading(true);
-    apiFetch<{ logs: ShieldLog[]; total: number }>("/shield/logs?limit=200", {
-      token: session.access_token,
-    })
-      .then((r) => { if (!disposed) setLogs(r.logs); })
-      .catch((e) => { if (!disposed) setError(e instanceof Error ? e.message : "Error"); })
-      .finally(() => { if (!disposed) setLoading(false); });
-    return () => { disposed = true; };
-  }, [session?.access_token]);
+  const { logs, loading, error } = useShieldLogs({ token: session?.access_token, limit: 200 });
 
   const now = Date.now();
   const todayCutoff = now - 86_400_000;

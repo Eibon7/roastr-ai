@@ -1,15 +1,7 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { useAuth } from "@/contexts/auth-context";
-import { apiFetch } from "@/lib/api";
+import { useShieldLogs } from "@/hooks/use-shield-logs";
 import { AlertTriangle } from "lucide-react";
-
-type ShieldLog = {
-  id: string;
-  platform: string;
-  action_taken: string;
-  severity_score: number;
-  created_at: string;
-};
 
 const PLATFORM_LABELS: Record<string, string> = {
   youtube: "YT",
@@ -28,27 +20,11 @@ function severityColor(score: number) {
 
 export function RecentThreatsWidget() {
   const { session } = useAuth();
-  const [threats, setThreats] = useState<ShieldLog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!session?.access_token) { setLoading(false); return; }
-    let disposed = false;
-    setLoading(true);
-    apiFetch<{ logs: ShieldLog[]; total: number }>("/shield/logs?limit=50", {
-      token: session.access_token,
-    })
-      .then((r) => {
-        if (!disposed) {
-          const sorted = [...r.logs].sort((a, b) => b.severity_score - a.severity_score).slice(0, 5);
-          setThreats(sorted);
-        }
-      })
-      .catch((e) => { if (!disposed) setError(e instanceof Error ? e.message : "Error"); })
-      .finally(() => { if (!disposed) setLoading(false); });
-    return () => { disposed = true; };
-  }, [session?.access_token]);
+  const { logs, loading, error } = useShieldLogs({ token: session?.access_token, limit: 50 });
+  const threats = useMemo(
+    () => [...logs].sort((a, b) => b.severity_score - a.severity_score).slice(0, 5),
+    [logs],
+  );
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">

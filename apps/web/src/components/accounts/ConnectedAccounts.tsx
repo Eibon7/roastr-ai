@@ -1,16 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { apiFetch } from "@/lib/api";
+import { useAccounts } from "@/hooks/use-accounts";
 import { Settings } from "lucide-react";
 import { AccountConfigModal } from "./AccountConfigModal";
-
-type Account = {
-  id: string;
-  platform: string;
-  username: string;
-  status: string;
-  integration_health: string;
-  shield_aggressiveness?: number;
-};
 
 type Props = { token: string | null };
 
@@ -28,21 +20,7 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
 };
 
 export function ConnectedAccounts({ token }: Props) {
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    setIsLoading(true);
-    if (!token) {
-      setAccounts([]);
-      setIsLoading(false);
-      return;
-    }
-    apiFetch<Account[]>("/accounts", { token })
-      .then(setAccounts)
-      .catch(() => setAccounts([]))
-      .finally(() => setIsLoading(false));
-  }, [token]);
+  const { accounts, loading: isLoading, refetch: refetchAccounts } = useAccounts(token);
 
   const handleConnect = async (platform: "youtube" | "x") => {
     if (!token) return;
@@ -124,7 +102,7 @@ export function ConnectedAccounts({ token }: Props) {
           onClose={() => setConfigAccountId(null)}
           onSaved={() => {
             setConfigAccountId(null);
-            apiFetch<Account[]>("/accounts", { token }).then(setAccounts);
+            refetchAccounts();
           }}
         />
       )}
