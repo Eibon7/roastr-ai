@@ -6,6 +6,9 @@ export async function ingestionProcessor(job: Job): Promise<void> {
   if (userId) {
     const guard = await checkBillingLimits(userId);
     if (!guard.allowed) {
+      if (guard.reason === "lookup_error") {
+        throw new Error("Billing lookup failed, will retry");
+      }
       return;
     }
   }

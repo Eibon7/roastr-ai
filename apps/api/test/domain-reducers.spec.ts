@@ -228,10 +228,11 @@ describe("billingReducer", () => {
     });
   });
 
-  it("all 15 valid transitions are covered", () => {
+  it("all 16 valid transitions are covered", () => {
     const validTransitions: [BillingState, BillingEvent["type"]][] = [
       ["trialing", "TRIAL_EXPIRED"],
       ["trialing", "PAYMENT_SUCCEEDED"],
+      ["trialing", "SUBSCRIPTION_CANCELED"],
       ["expired_trial_pending_payment", "PAYMENT_SUCCEEDED"],
       ["expired_trial_pending_payment", "GRACE_PERIOD_EXPIRED"],
       ["active", "PAYMENT_FAILED"],

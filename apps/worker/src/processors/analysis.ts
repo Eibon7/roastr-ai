@@ -8,6 +8,9 @@ export async function analysisProcessor(job: Job): Promise<void> {
   if (userId) {
     const guard = await checkBillingLimits(userId);
     if (!guard.allowed) {
+      if (guard.reason === "lookup_error") {
+        throw new Error("Billing lookup failed, will retry");
+      }
       log.debug("Skipping job: billing limit", { reason: guard.reason });
       return;
     }

@@ -1,13 +1,17 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL ?? "http://localhost:54321",
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? "placeholder",
-);
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error(
+    "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for the worker",
+  );
+}
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 export type BillingGuardResult =
   | { allowed: true }
-  | { allowed: false; reason: "paused" | "over_limit" };
+  | { allowed: false; reason: "paused" | "over_limit" | "lookup_error" };
 
 export async function checkBillingLimits(
   userId: string,
@@ -18,7 +22,10 @@ export async function checkBillingLimits(
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (error || !data) {
+  if (error) {
+    return { allowed: false, reason: "lookup_error" };
+  }
+  if (!data) {
     return { allowed: false, reason: "paused" };
   }
 
@@ -35,17 +42,10 @@ export async function checkBillingLimits(
 }
 
 export async function incrementAnalysisUsed(userId: string): Promise<void> {
-  const { data } = await supabase
-    .from("subscriptions_usage")
-    .select("id, analysis_used")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (!data) return;
-  await supabase
-    .from("subscriptions_usage")
-    .update({
-      analysis_used: (data.analysis_used ?? 0) + 1,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", data.id);
+  const { error } = await supabase.rpc("increment_analysis_used", {
+    p_user_id: userId,
+  });
+  if (error) {
+    throw new Error(`Failed to increment analysis_used: ${error.message}`);
+  }
 }

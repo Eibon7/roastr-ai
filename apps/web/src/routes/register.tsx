@@ -14,7 +14,7 @@ export function RegisterPage() {
     setError(null);
     setLoading(true);
 
-    const { error: authError } = await supabase.auth.signUp({
+    const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -26,7 +26,15 @@ export function RegisterPage() {
       return;
     }
 
-    navigate("/onboarding");
+    if (data.session) {
+      navigate("/onboarding");
+      return;
+    }
+
+    navigate("/login", {
+      replace: true,
+      state: { message: "Check your email to confirm your account." },
+    });
   }
 
   return (
