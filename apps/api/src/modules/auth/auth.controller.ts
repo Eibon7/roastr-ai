@@ -1,4 +1,14 @@
-import { Controller, Post, Get, Body, Req, HttpCode, HttpStatus } from "@nestjs/common";
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Req,
+  HttpCode,
+  HttpStatus,
+  UnauthorizedException,
+  InternalServerErrorException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
 import { Public } from "../../shared/guards/public.decorator";
@@ -41,15 +51,21 @@ export class AuthController {
 
   @Get("onboarding")
   async getOnboarding(@Req() req: { user?: { id: string } }): Promise<{ state: OnboardingState }> {
+    if (!req.user?.id) {
+      throw new UnauthorizedException();
+    }
     const supabase = createClient(
       this.config.getOrThrow("SUPABASE_URL"),
       this.config.getOrThrow("SUPABASE_SERVICE_ROLE_KEY"),
     );
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("onboarding_state")
-      .eq("id", req.user!.id)
+      .eq("id", req.user.id)
       .maybeSingle();
+    if (error) {
+      throw new InternalServerErrorException(error.message);
+    }
     return { state: (data?.onboarding_state as OnboardingState) ?? "welcome" };
   }
 
