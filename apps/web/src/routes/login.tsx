@@ -1,9 +1,13 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase-client";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as { message?: unknown } | null;
+  const confirmMessage =
+    typeof state?.message === "string" ? state.message : undefined;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +46,11 @@ export function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {confirmMessage && (
+            <div className="rounded-md bg-primary/10 px-4 py-3 text-sm text-foreground">
+              {confirmMessage}
+            </div>
+          )}
           {error && (
             <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {error}

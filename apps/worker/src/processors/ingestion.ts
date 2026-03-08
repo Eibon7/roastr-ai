@@ -1,12 +1,20 @@
 import type { Job } from "bullmq";
+import { createJobLogger } from "../shared/logger.js";
+import { checkBillingLimits } from "../shared/billing-guard.js";
 
 export async function ingestionProcessor(job: Job): Promise<void> {
-  console.log(JSON.stringify({
-    timestamp: new Date().toISOString(),
-    level: "info",
-    service: "worker",
-    queue: "ingestion",
-    jobId: job.id,
-    message: "Processing ingestion job",
-  }));
+  const log = createJobLogger("ingestion", job.id ?? "unknown");
+  const userId = job.data?.userId as string | undefined;
+  if (userId) {
+    const guard = await checkBillingLimits(userId);
+    if (!guard.allowed) {
+      if (guard.reason === "lookup_error") {
+        throw new Error("Billing lookup failed, will retry");
+      }
+      log.debug("Skipping job: billing limit", { userId, reason: guard.reason });
+      return;
+    }
+  }
+
+  log.info("Processing ingestion job");
 }

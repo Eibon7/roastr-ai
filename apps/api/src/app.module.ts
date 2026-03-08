@@ -1,5 +1,7 @@
 import { Module } from "@nestjs/common";
+import { APP_GUARD, Reflector } from "@nestjs/core";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { BullModule } from "@nestjs/bullmq";
 import { HealthModule } from "./modules/health/health.module";
 import { AuthModule } from "./modules/auth/auth.module";
@@ -12,9 +14,13 @@ import { PersonaModule } from "./modules/persona/persona.module";
 import { FeatureFlagsModule } from "./modules/feature-flags/feature-flags.module";
 import { validateEnv } from "./shared/config/env.validation";
 import { SsotModule } from "./shared/config/ssot.module";
+import { SupabaseAuthGuard } from "./shared/guards/supabase-auth.guard";
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      { ttl: 60_000, limit: 100 },
+    ]),
     ConfigModule.forRoot({
       isGlobal: true,
       validate: validateEnv,
@@ -38,6 +44,15 @@ import { SsotModule } from "./shared/config/ssot.module";
     IngestionModule,
     PersonaModule,
     FeatureFlagsModule,
+  ],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    {
+      provide: APP_GUARD,
+      useFactory: (config: ConfigService, reflector: Reflector) =>
+        new SupabaseAuthGuard(config, reflector),
+      inject: [ConfigService, Reflector],
+    },
   ],
 })
 export class AppModule {}

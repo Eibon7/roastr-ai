@@ -2,28 +2,47 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
-  SetMetadata,
+  ForbiddenException,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
+import { createClient } from "@supabase/supabase-js";
+import { ConfigService } from "@nestjs/config";
 
 export const ROLES_KEY = "roles";
-export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly reflector: Reflector,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
+    if (!requiredRoles?.length) return true;
 
-    if (!requiredRoles) return true;
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
+    if (!user?.id) throw new ForbiddenException();
 
-    const { user } = context.switchToHttp().getRequest();
-    if (!user?.app_metadata?.role) return false;
+    const supabase = createClient(
+      this.config.getOrThrow("SUPABASE_URL"),
+      this.config.getOrThrow("SUPABASE_SERVICE_ROLE_KEY"),
+    );
 
-    return requiredRoles.includes(user.app_metadata.role);
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const role = (profile?.role as string) ?? "user";
+    if (!requiredRoles.includes(role)) {
+      throw new ForbiddenException("Insufficient permissions");
+    }
+    return true;
   }
 }

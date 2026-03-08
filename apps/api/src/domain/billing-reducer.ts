@@ -49,6 +49,10 @@ const TRANSITIONS: Record<
       target: "active",
       sideEffects: ACTIVATE,
     },
+    SUBSCRIPTION_CANCELED: {
+      target: "paused",
+      sideEffects: PAUSE,
+    },
   },
   expired_trial_pending_payment: {
     PAYMENT_SUCCEEDED: {
