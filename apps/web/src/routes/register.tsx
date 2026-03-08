@@ -26,7 +26,7 @@ export function RegisterPage() {
       return;
     }
 
-    navigate("/dashboard");
+    navigate("/onboarding");
   }
 
   return (

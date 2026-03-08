@@ -209,10 +209,10 @@ describe("billingReducer", () => {
   });
 
   describe("invalid transitions return unchanged state", () => {
-    it("trialing + SUBSCRIPTION_CANCELED has no transition", () => {
+    it("trialing + SUBSCRIPTION_CANCELED → paused (cancel during trial)", () => {
       const r = billingReducer("trialing", { type: "SUBSCRIPTION_CANCELED" });
-      expect(r.newState).toBe("trialing");
-      expect(r.sideEffects).toEqual([]);
+      expect(r.newState).toBe("paused");
+      expect(r.sideEffects.length).toBeGreaterThan(0);
     });
 
     it("active + TRIAL_EXPIRED has no transition", () => {

@@ -31,6 +31,9 @@ const envSchema = z.object({
 
   POLAR_ACCESS_TOKEN: z.string().optional(),
   POLAR_WEBHOOK_SECRET: z.string().optional(),
+  POLAR_PRODUCT_STARTER_ID: z.string().uuid().optional(),
+  POLAR_PRODUCT_PRO_ID: z.string().uuid().optional(),
+  POLAR_PRODUCT_PLUS_ID: z.string().uuid().optional(),
 
   RESEND_API_KEY: z.string().optional(),
 });
