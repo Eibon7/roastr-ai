@@ -22,9 +22,6 @@ const SENSITIVE_KEYS = new Set([
   "roast",
   "accesstoken",
   "refreshtoken",
-  "access_token",
-  "refresh_token",
-  "comment_text",
 ]);
 
 function normalizeKey(key: string): string {

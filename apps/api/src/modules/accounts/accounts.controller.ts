@@ -27,7 +27,7 @@ export class AccountsController {
     @Param("accountId") accountId: string,
     @Req() req: { user?: { id: string } },
   ) {
-    if (!req.user?.id) throw new NotFoundException();
+    if (!req.user?.id) throw new UnauthorizedException();
     const ok = await this.accounts.deleteByUserAndId(req.user.id, accountId);
     if (!ok) throw new NotFoundException();
     return { deleted: true };

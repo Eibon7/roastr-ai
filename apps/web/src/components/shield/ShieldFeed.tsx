@@ -78,12 +78,13 @@ export function ShieldFeed() {
       .then((res) => {
         setLogs(res.logs);
         setTotal(res.total);
+        setLoading(false);
       })
       .catch((e) => {
         if (e instanceof Error && e.name === "AbortError") return;
         setError(e instanceof Error ? e.message : "Error");
-      })
-      .finally(() => setLoading(false));
+        setLoading(false);
+      });
 
     return () => controller.abort();
   }, [session?.access_token, platformFilter, actionFilter]);

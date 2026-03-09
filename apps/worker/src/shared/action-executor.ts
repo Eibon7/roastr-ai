@@ -67,8 +67,10 @@ export async function blockUser(
 ): Promise<ActionResult> {
   try {
     if (platform === "youtube") {
-      const id = commentId ?? userId;
-      const url = `https://www.googleapis.com/youtube/v3/comments/setModerationStatus?id=${encodeURIComponent(id)}&moderationStatus=rejected&banAuthor=true`;
+      if (!commentId) {
+        return { ok: false, error: "YouTube banAuthor requires a commentId" };
+      }
+      const url = `https://www.googleapis.com/youtube/v3/comments/setModerationStatus?id=${encodeURIComponent(commentId)}&moderationStatus=rejected&banAuthor=true`;
       const res = await safeFetch(url, {
         method: "POST",
         headers: { Authorization: `Bearer ${accessToken}` },

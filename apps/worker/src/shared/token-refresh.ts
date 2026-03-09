@@ -60,7 +60,8 @@ export function isTokenExpiringSoon(expiresAt: string | null | undefined): boole
   return Date.now() + buffer >= expiry;
 }
 
-export function toBuffer(raw: Buffer | Uint8Array | ArrayBuffer): Buffer {
+export function toBuffer(raw: string | Buffer | Uint8Array | ArrayBuffer): Buffer {
+  if (typeof raw === "string") return Buffer.from(raw, "base64");
   if (raw instanceof Buffer) return raw;
   if (ArrayBuffer.isView(raw)) return Buffer.from(raw.buffer, raw.byteOffset, raw.byteLength);
   return Buffer.from(new Uint8Array(raw as ArrayBuffer));
@@ -221,7 +222,7 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
       // either the expiry changed, or the token is now fresh.
       // Do NOT return a stale/expired token just because the lease was cleared.
       if ((expiryChanged || tokenFresh) && polled?.access_token_encrypted) {
-        return decryptToken(toBuffer(polled.access_token_encrypted as Buffer | Uint8Array));
+        return decryptToken(toBuffer(polled.access_token_encrypted as string | Buffer | Uint8Array));
       }
     }
     throw new Error(`Refresh lease timeout for account ${account.id}`);
@@ -258,7 +259,8 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
         refresh_lease_at: null,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", account.id);
+      .eq("id", account.id)
+      .eq("refresh_lease_at", leaseExpiry);
 
     const lockedBuilder =
       account.access_token_expires_at === null
@@ -280,10 +282,12 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
     return newTokens.accessToken;
   } catch (err) {
     // Always release the lease on failure so other workers aren't blocked.
+    // Only clear if the lease still matches ours to avoid clobbering a concurrent refresh.
     await supabase
       .from("accounts")
       .update({ refresh_lease_at: null })
-      .eq("id", account.id);
+      .eq("id", account.id)
+      .eq("refresh_lease_at", leaseExpiry);
     throw err;
   }
 }

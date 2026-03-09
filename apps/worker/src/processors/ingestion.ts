@@ -14,12 +14,18 @@ import {
 } from "../shared/queue.config.js";
 import type { NormalizedComment } from "@roastr/shared";
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
+let _supabase: ReturnType<typeof createClient> | null = null;
+
+function getSupabase(): ReturnType<typeof createClient> {
+  if (_supabase) return _supabase;
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
+  }
+  _supabase = createClient(url, key);
+  return _supabase;
 }
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 let analysisQueue: Queue | null = null;
 
@@ -53,7 +59,7 @@ export async function ingestionProcessor(job: Job): Promise<void> {
     return;
   }
 
-  const { data: account, error: accountError } = await supabase
+  const { data: account, error: accountError } = await getSupabase()
     .from("accounts")
     .select(
       "id, user_id, platform, status, integration_health, ingestion_cursor, access_token_encrypted, refresh_token_encrypted, access_token_expires_at, platform_user_id",
@@ -160,7 +166,7 @@ export async function ingestionProcessor(job: Job): Promise<void> {
   const nextCursor = page.nextCursor;
   const now = new Date().toISOString();
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await getSupabase()
     .from("accounts")
     .update({
       ingestion_cursor: nextCursor,

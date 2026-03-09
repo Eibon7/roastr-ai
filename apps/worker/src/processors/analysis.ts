@@ -159,8 +159,16 @@ export async function analysisProcessor(job: Job): Promise<void> {
     return;
   }
 
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
+  }
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   // Single atomic call: checks quota, increments usage, and records job for idempotency
-  const fallbackId = `${accountId}-${commentId ?? "no-comment"}-${job.opts?.timestamp ?? Date.now()}`;
+  const stableTs = job.data?.timestamp as string | undefined;
+  const fallbackId = `${accountId}-${commentId ?? "no-comment"}-${stableTs ?? "no-timestamp"}`;
   const guard = await tryConsumeAnalysisSlot(userId, job.id ?? fallbackId);
   if (!guard.allowed) {
     if (guard.reason === "lookup_error") {
@@ -174,13 +182,6 @@ export async function analysisProcessor(job: Job): Promise<void> {
   if (normalized.scoreSource === "both_failed") {
     normalized = await callLLMFallback(text);
   }
-
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
-  }
-  const supabase = createClient(supabaseUrl, supabaseKey);
 
   const { data: account, error: accountError } = await supabase
     .from("accounts")

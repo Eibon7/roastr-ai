@@ -12,6 +12,8 @@ CREATE INDEX IF NOT EXISTS idx_ajr_created_at ON analysis_job_reservations (crea
 -- Only the service role may read/write this table (workers use service role key)
 ALTER TABLE analysis_job_reservations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Service role full access" ON analysis_job_reservations;
+
 CREATE POLICY "Service role full access" ON analysis_job_reservations
   FOR ALL TO service_role
   USING (true)

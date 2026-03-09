@@ -6,7 +6,6 @@ import {
   Req,
   HttpCode,
   HttpStatus,
-  Logger,
   UnauthorizedException,
   InternalServerErrorException,
   BadRequestException,
@@ -14,6 +13,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
+import { Logger } from "@roastr/shared";
 import { Public } from "../../shared/guards/public.decorator";
 
 const ONBOARDING_STATES = [
@@ -29,7 +29,7 @@ type OnboardingState = (typeof ONBOARDING_STATES)[number];
 
 @Controller("auth")
 export class AuthController {
-  private readonly logger = new Logger(AuthController.name);
+  private readonly logger = new Logger({ service: AuthController.name });
 
   constructor(private readonly config: ConfigService) {}
 
