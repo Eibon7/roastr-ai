@@ -25,7 +25,7 @@ const SENSITIVE_KEYS = new Set([
 ]);
 
 function normalizeKey(key: string): string {
-  return key.toLowerCase().replace(/[-_\s]/g, "");
+  return key.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
 function sanitizePayload(data: unknown): Record<string, unknown> {

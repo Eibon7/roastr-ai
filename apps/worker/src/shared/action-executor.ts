@@ -92,6 +92,20 @@ export async function blockUser(
   }
 }
 
+/**
+ * Placeholder for platform-native comment reporting.
+ *
+ * Neither YouTube nor X currently exposes a public API endpoint for reporting
+ * individual comments, so all branches intentionally return `ok: false`.
+ * When platform support becomes available, implement the fetch call using
+ * `_accessToken` for auth, `_commentId` to identify the target, and `_reason`
+ * to map to the platform's abuse category enum.
+ *
+ * @param platform   - The social platform handling the report.
+ * @param _accessToken - OAuth access token for the authenticated account (unused until implemented).
+ * @param _commentId   - Platform-specific ID of the comment to report (unused until implemented).
+ * @param _reason      - Abuse category for the report (unused until implemented).
+ */
 export async function reportComment(
   platform: Platform,
   _accessToken: string,

@@ -9,8 +9,15 @@ CREATE TABLE IF NOT EXISTS analysis_job_reservations (
 -- Index on created_at for efficient TTL cleanup
 CREATE INDEX IF NOT EXISTS idx_ajr_created_at ON analysis_job_reservations (created_at);
 
--- Only the service role may read/write this table (workers use service role key)
+-- Only the service role may read/write this table (workers use service role key).
+-- Explicitly revoke default PUBLIC privileges so RLS is a true defence-in-depth
+-- rather than the sole barrier; this also prevents TRUNCATE by non-owner roles.
 ALTER TABLE analysis_job_reservations ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON analysis_job_reservations FROM PUBLIC;
+REVOKE ALL ON analysis_job_reservations FROM anon;
+REVOKE ALL ON analysis_job_reservations FROM authenticated;
+GRANT ALL ON analysis_job_reservations TO service_role;
 
 DROP POLICY IF EXISTS "Service role full access" ON analysis_job_reservations;
 
