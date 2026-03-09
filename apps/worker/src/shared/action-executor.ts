@@ -27,7 +27,8 @@ export async function hideComment(
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!res.ok) {
-        return { ok: false, error: `YouTube setModerationStatus: ${res.status}` };
+        const body = await res.text().catch(() => "");
+        return { ok: false, error: `YouTube setModerationStatus: ${res.status}${body ? ` — ${body.slice(0, 500)}` : ""}` };
       }
       return { ok: true };
     }
@@ -42,7 +43,8 @@ export async function hideComment(
         body: JSON.stringify({ hidden: true }),
       });
       if (!res.ok) {
-        return { ok: false, error: `X hide reply: ${res.status}` };
+        const body = await res.text().catch(() => "");
+        return { ok: false, error: `X hide reply: ${res.status}${body ? ` — ${body.slice(0, 500)}` : ""}` };
       }
       return { ok: true };
     }
@@ -52,38 +54,35 @@ export async function hideComment(
   }
 }
 
+/**
+ * Block a user or author for the given platform.
+ * `commentId` is only used for YouTube's banAuthor moderation endpoint.
+ * X blocking requires Enterprise API access and is intentionally not supported.
+ */
 export async function blockUser(
   platform: Platform,
   accessToken: string,
   userId: string,
-  commentId: string,
+  commentId?: string,
 ): Promise<ActionResult> {
   try {
     if (platform === "youtube") {
-      const url = `https://www.googleapis.com/youtube/v3/comments/setModerationStatus?id=${encodeURIComponent(commentId)}&moderationStatus=rejected&banAuthor=true`;
+      const id = commentId ?? userId;
+      const url = `https://www.googleapis.com/youtube/v3/comments/setModerationStatus?id=${encodeURIComponent(id)}&moderationStatus=rejected&banAuthor=true`;
       const res = await safeFetch(url, {
         method: "POST",
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!res.ok) {
-        return { ok: false, error: `YouTube banAuthor: ${res.status}` };
+        const body = await res.text().catch(() => "");
+        return { ok: false, error: `YouTube banAuthor: ${res.status}${body ? ` — ${body.slice(0, 500)}` : ""}` };
       }
       return { ok: true };
     }
     if (platform === "x") {
-      const url = "https://api.x.com/2/users/me/blocking";
-      const res = await safeFetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ target_user_id: userId }),
-      });
-      if (!res.ok) {
-        return { ok: false, error: `X block: ${res.status}` };
-      }
-      return { ok: true };
+      // X block requires Enterprise API access (POST /2/users/:id/blocking with OAuth2).
+      // Regular OAuth2 Bearer tokens are not authorised for this endpoint.
+      return { ok: false, error: "X blocking requires Enterprise API access" };
     }
     return { ok: false, error: `blockUser not supported for ${platform}` };
   } catch (e) {

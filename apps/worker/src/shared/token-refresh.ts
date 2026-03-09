@@ -60,9 +60,10 @@ export function isTokenExpiringSoon(expiresAt: string | null | undefined): boole
   return Date.now() + buffer >= expiry;
 }
 
-function toBuffer(raw: Buffer | Uint8Array | ArrayBuffer): Buffer {
+export function toBuffer(raw: Buffer | Uint8Array | ArrayBuffer): Buffer {
   if (raw instanceof Buffer) return raw;
-  return Buffer.from(raw instanceof Uint8Array ? raw : new Uint8Array(raw as ArrayBuffer));
+  if (ArrayBuffer.isView(raw)) return Buffer.from(raw.buffer, raw.byteOffset, raw.byteLength);
+  return Buffer.from(new Uint8Array(raw as ArrayBuffer));
 }
 
 async function fetchWithTimeout(
@@ -185,10 +186,12 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
     throw new Error(`Token expired for account ${account.id} and no refresh token available`);
   }
 
-  const supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for token refresh");
+  }
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   // Try to claim a refresh lease: only one worker proceeds to the provider.
   // The lease is a future timestamp stored in accounts.refresh_lease_at.
@@ -241,11 +244,8 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
       ? encryptToken(newTokens.refreshToken)
       : null;
 
-    // Conditional write: only apply if the stored expiry still matches what
-    // we observed (optimistic lock guards against a concurrent refresh that
-    // already succeeded while we held the lease).
-    // Conditional write: only apply if the stored expiry still matches what
-    // we observed (optimistic lock).  Use IS NULL when the original expiry was
+    // Conditional write: only apply if the stored expiry still matches what we
+    // observed (optimistic lock).  Use IS NULL when the original expiry was
     // null — .eq() with "" would not match a true NULL column value.
     const updateBuilder = supabase
       .from("accounts")

@@ -6,6 +6,7 @@ import {
   Req,
   HttpCode,
   HttpStatus,
+  Logger,
   UnauthorizedException,
   InternalServerErrorException,
   BadRequestException,
@@ -28,6 +29,8 @@ type OnboardingState = (typeof ONBOARDING_STATES)[number];
 
 @Controller("auth")
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly config: ConfigService) {}
 
   @Post("register")
@@ -75,9 +78,14 @@ export class AuthController {
       .eq("id", req.user.id)
       .maybeSingle();
     if (error) {
-      throw new InternalServerErrorException(error.message);
+      this.logger.error("Supabase error fetching onboarding state", { code: (error as { code?: string }).code });
+      throw new InternalServerErrorException("Authentication service error");
     }
-    return { state: (data?.onboarding_state as OnboardingState) ?? "welcome" };
+    const raw = data?.onboarding_state;
+    const validState: OnboardingState = ONBOARDING_STATES.includes(raw as OnboardingState)
+      ? (raw as OnboardingState)
+      : "welcome";
+    return { state: validState };
   }
 
   @Post("onboarding")
@@ -90,7 +98,7 @@ export class AuthController {
       throw new UnauthorizedException();
     }
 
-    if (!body.state || !ONBOARDING_STATES.includes(body.state as OnboardingState)) {
+    if (!body || typeof body !== "object" || !("state" in body) || !body.state || !ONBOARDING_STATES.includes(body.state as OnboardingState)) {
       throw new BadRequestException("Invalid onboarding state");
     }
 
@@ -106,7 +114,8 @@ export class AuthController {
       .maybeSingle();
 
     if (error) {
-      throw new InternalServerErrorException(error.message);
+      this.logger.error("Supabase error updating onboarding state", { code: (error as { code?: string }).code });
+      throw new InternalServerErrorException("Authentication service error");
     }
     if (!data) {
       throw new NotFoundException("Profile not found");

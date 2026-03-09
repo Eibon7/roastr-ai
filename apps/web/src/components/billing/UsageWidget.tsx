@@ -21,6 +21,7 @@ export function UsageWidget() {
 
   useEffect(() => {
     let disposed = false;
+    const controller = new AbortController();
     setUsage(null);
     setError(null);
     setLoading(true);
@@ -30,12 +31,18 @@ export function UsageWidget() {
       return;
     }
 
-    apiFetch<Usage>("/billing/usage", { token: session.access_token })
+    apiFetch<Usage>("/billing/usage", { token: session.access_token, signal: controller.signal })
       .then((next) => { if (!disposed) setUsage(next); })
-      .catch((e) => { if (!disposed) setError(e instanceof Error ? e.message : "Error"); })
+      .catch((e) => {
+        if (e instanceof Error && e.name === "AbortError") return;
+        if (!disposed) setError(e instanceof Error ? e.message : "Error");
+      })
       .finally(() => { if (!disposed) setLoading(false); });
 
-    return () => { disposed = true; };
+    return () => {
+      disposed = true;
+      controller.abort();
+    };
   }, [session?.access_token]);
 
   if (loading) {

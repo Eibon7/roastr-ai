@@ -16,9 +16,13 @@ export function ConnectPage() {
     const succ = searchParams.get("success");
     if (err) {
       setError(err === "oauth_failed" ? "Error al conectar. Inténtalo de nuevo." : err);
-    }
-    if (succ && (succ === "youtube" || succ === "x")) {
+      setSuccess(null);
+    } else if (succ && (succ === "youtube" || succ === "x")) {
       setSuccess({ platform: succ });
+      setError(null);
+    } else {
+      setError(null);
+      setSuccess(null);
     }
   }, [searchParams]);
 

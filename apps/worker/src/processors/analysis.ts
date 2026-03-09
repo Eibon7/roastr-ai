@@ -160,7 +160,8 @@ export async function analysisProcessor(job: Job): Promise<void> {
   }
 
   // Single atomic call: checks quota, increments usage, and records job for idempotency
-  const guard = await tryConsumeAnalysisSlot(userId, job.id ?? `${accountId}-${commentId}`);
+  const fallbackId = `${accountId}-${commentId ?? "no-comment"}-${job.opts?.timestamp ?? Date.now()}`;
+  const guard = await tryConsumeAnalysisSlot(userId, job.id ?? fallbackId);
   if (!guard.allowed) {
     if (guard.reason === "lookup_error") {
       throw new Error("Billing lookup failed, will retry");
@@ -174,10 +175,12 @@ export async function analysisProcessor(job: Job): Promise<void> {
     normalized = await callLLMFallback(text);
   }
 
-  const supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
+  }
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   const { data: account, error: accountError } = await supabase
     .from("accounts")

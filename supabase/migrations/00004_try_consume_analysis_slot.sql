@@ -9,6 +9,14 @@ CREATE TABLE IF NOT EXISTS analysis_job_reservations (
 -- Index on created_at for efficient TTL cleanup
 CREATE INDEX IF NOT EXISTS idx_ajr_created_at ON analysis_job_reservations (created_at);
 
+-- Only the service role may read/write this table (workers use service role key)
+ALTER TABLE analysis_job_reservations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Service role full access" ON analysis_job_reservations
+  FOR ALL TO service_role
+  USING (true)
+  WITH CHECK (true);
+
 -- Atomically checks billing quota, increments usage, and records the reservation.
 -- Idempotent: if job_id already exists the slot is treated as already consumed.
 -- TOCTOU fix: the idempotency check is performed AFTER acquiring the

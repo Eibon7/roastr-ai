@@ -4,7 +4,13 @@ import { ensureFreshToken } from "../shared/token-refresh.js";
 import { resolveShieldAction } from "@roastr/shared";
 import { hideComment, blockUser, reportComment } from "../shared/action-executor.js";
 import { createJobLogger } from "../shared/logger.js";
-import type { Platform } from "@roastr/shared";
+import type { Platform, ReportReason } from "@roastr/shared";
+
+function getReportReason(flags: Record<string, unknown>): ReportReason {
+  if (flags.has_threat) return "threat";
+  if (flags.has_identity_attack) return "hate_speech";
+  return "harassment";
+}
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -57,11 +63,14 @@ export async function shieldProcessor(job: Job): Promise<void> {
 
   let accessToken: string;
   try {
+    const accessEncrypted = Buffer.from(account.access_token_encrypted as string, "base64");
+    const refreshRaw = account.refresh_token_encrypted as string | null;
+    const refreshEncrypted = refreshRaw ? Buffer.from(refreshRaw, "base64") : null;
     accessToken = await ensureFreshToken({
       id: accountId,
       platform: platform as string,
-      access_token_encrypted: account.access_token_encrypted as Buffer,
-      refresh_token_encrypted: (account.refresh_token_encrypted as Buffer | null) ?? null,
+      access_token_encrypted: accessEncrypted,
+      refresh_token_encrypted: refreshEncrypted,
       access_token_expires_at: (account.access_token_expires_at as string | null) ?? null,
     });
   } catch (e) {
@@ -95,7 +104,8 @@ export async function shieldProcessor(job: Job): Promise<void> {
       }
       log.warn("Block failed", { error: result.error });
     } else if (action === "report") {
-      const result = await reportComment(platform, accessToken, commentId, "harassment");
+      const flags = (analysisResult.flags ?? {}) as Record<string, unknown>;
+      const result = await reportComment(platform, accessToken, commentId, getReportReason(flags));
       if (result.ok) {
         actionTaken = "report";
         success = true;

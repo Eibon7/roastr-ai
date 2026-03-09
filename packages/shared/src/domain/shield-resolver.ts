@@ -71,28 +71,11 @@ export function resolveShieldAction(
       analysisResult.flags.has_threat;
 
     if (isCritical) {
+      const criticalFlags =
+        analysisResult.flags.has_identity_attack || analysisResult.flags.has_threat;
       if (caps.canHide) {
-        const shouldReport =
-          (analysisResult.flags.has_identity_attack ||
-            analysisResult.flags.has_threat) &&
-          caps.canReport;
-        if (shouldReport) {
-          return {
-            primary: "report",
-            fallbacks: ["hide", "block"],
-            platformFallback: !caps.canReport,
-          };
-        }
-        const shouldBlock =
-          (analysisResult.flags.has_identity_attack ||
-            analysisResult.flags.has_threat) &&
-          caps.canBlock;
-        if (shouldBlock) {
-          return {
-            primary: "hide",
-            fallbacks: ["block"],
-            platformFallback: false,
-          };
+        if (criticalFlags && caps.canReport) {
+          return { primary: "report", fallbacks: ["hide", "block"], platformFallback: false };
         }
         return { primary: "hide", fallbacks: ["block"], platformFallback: false };
       }

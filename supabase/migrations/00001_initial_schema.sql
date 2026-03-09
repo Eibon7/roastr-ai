@@ -163,7 +163,7 @@ CREATE TABLE offenders (
   last_strike     TIMESTAMPTZ,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE(user_id, account_id, offender_id)
+  UNIQUE(user_id, account_id, platform, offender_id)
 );
 
 ALTER TABLE offenders ENABLE ROW LEVEL SECURITY;

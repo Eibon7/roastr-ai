@@ -18,7 +18,7 @@ function analysisResult(overrides: Partial<AnalysisResult> = {}): AnalysisResult
       persona_applied: false,
       persona_factor: 1,
       recurrence_factor: 1,
-      aggressiveness_applied: 1,
+      severity_score_final: 1,
     },
     score_source: "perspective",
     ...overrides,

@@ -82,7 +82,7 @@ export function analysisReducer(input: AnalysisReducerInput): AnalysisResult {
     adjusted *= recurrenceFactor;
   }
 
-  const scoreFinal = Math.min(adjusted, 1.0);
+  const scoreFinal = Math.max(0, Math.min(adjusted, 1.0));
 
   const decision = thresholdRouter({
     scoreFinal,
@@ -123,7 +123,7 @@ function buildResult(
       persona_applied: personaApplied,
       persona_factor: personaFactor,
       recurrence_factor: recurrenceFactor,
-      aggressiveness_applied: severityScore,
+      severity_score_final: severityScore,
     },
     score_source: scoreSource,
   };

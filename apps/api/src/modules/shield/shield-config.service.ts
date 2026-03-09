@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, BadRequestException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
 
@@ -38,7 +38,7 @@ export class ShieldConfigService {
     shieldAggressiveness: number,
   ): Promise<boolean> {
     if (typeof shieldAggressiveness !== "number" || !VALID_AGGRESSIVENESS.includes(shieldAggressiveness)) {
-      return false;
+      throw new BadRequestException(`shieldAggressiveness must be one of: ${VALID_AGGRESSIVENESS.join(", ")}`);
     }
     const supabase = this.getSupabase();
     const { data, error } = await supabase

@@ -9,6 +9,7 @@ import {
   UseGuards,
   NotFoundException,
   BadRequestException,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { SubscriptionGuard } from "../../shared/guards/subscription.guard";
 import { ShieldConfigService } from "./shield-config.service";
@@ -27,7 +28,7 @@ export class ShieldController {
     @Param("accountId") accountId: string,
     @Req() req: { user?: { id: string } },
   ) {
-    if (!req.user?.id) throw new NotFoundException();
+    if (!req.user?.id) throw new UnauthorizedException();
     const config = await this.shieldConfig.getConfig(req.user.id, accountId);
     if (!config) throw new NotFoundException();
     return config;
@@ -39,7 +40,7 @@ export class ShieldController {
     @Body() body: { shieldAggressiveness?: number },
     @Req() req: { user?: { id: string } },
   ) {
-    if (!req.user?.id) throw new NotFoundException();
+    if (!req.user?.id) throw new UnauthorizedException();
     const val = body.shieldAggressiveness;
     if (typeof val !== "number" || ![0.9, 0.95, 0.98, 1].includes(val)) {
       throw new BadRequestException(
@@ -63,7 +64,7 @@ export class ShieldController {
     @Query("offset") offsetStr: string | undefined,
     @Req() req: { user?: { id: string } },
   ) {
-    if (!req.user?.id) throw new NotFoundException();
+    if (!req.user?.id) throw new UnauthorizedException();
     const limit = limitStr ? Math.min(100, Math.max(1, parseInt(limitStr, 10) || 50)) : 50;
     const offset = offsetStr ? Math.max(0, parseInt(offsetStr, 10) || 0) : 0;
     const { logs, total } = await this.shieldLogs.getLogs(req.user.id, {

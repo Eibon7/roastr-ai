@@ -57,6 +57,7 @@ export class OffendersService {
       p_offender_id: offenderId,
     });
     if (error) throw error;
+    if (!data) throw new Error("increment_offender_strike returned null");
     return data as OffenderRow;
   }
 }

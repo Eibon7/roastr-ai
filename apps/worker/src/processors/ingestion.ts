@@ -3,7 +3,7 @@ import { Queue } from "bullmq";
 import { createClient } from "@supabase/supabase-js";
 import { createJobLogger } from "../shared/logger.js";
 import { checkBillingLimits } from "../shared/billing-guard.js";
-import { ensureFreshToken } from "../shared/token-refresh.js";
+import { ensureFreshToken, toBuffer } from "../shared/token-refresh.js";
 import { fetchComments } from "../shared/fetch-comments.js";
 import { sanitizeCommentText } from "../shared/sanitize-text.js";
 import {
@@ -14,10 +14,12 @@ import {
 } from "../shared/queue.config.js";
 import type { NormalizedComment } from "@roastr/shared";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
+}
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 let analysisQueue: Queue | null = null;
 
@@ -93,11 +95,15 @@ export async function ingestionProcessor(job: Job): Promise<void> {
 
   let accessToken: string;
   try {
+    const accessRaw = account.access_token_encrypted as string | Buffer;
+    const refreshRaw = account.refresh_token_encrypted as string | Buffer | null;
     accessToken = await ensureFreshToken({
       id: account.id as string,
       platform: accountPlatform,
-      access_token_encrypted: account.access_token_encrypted as Buffer,
-      refresh_token_encrypted: (account.refresh_token_encrypted as Buffer | null) ?? null,
+      access_token_encrypted: typeof accessRaw === "string" ? Buffer.from(accessRaw, "base64") : toBuffer(accessRaw),
+      refresh_token_encrypted: refreshRaw
+        ? (typeof refreshRaw === "string" ? Buffer.from(refreshRaw, "base64") : toBuffer(refreshRaw))
+        : null,
       access_token_expires_at: (account.access_token_expires_at as string | null) ?? null,
     });
   } catch (e) {
@@ -129,23 +135,25 @@ export async function ingestionProcessor(job: Job): Promise<void> {
     text: sanitizeCommentText(c.text),
   }));
 
-  for (const comment of sanitized) {
-    await queue.add(
-      "analyze",
-      {
-        commentId: comment.id,
-        userId: comment.userId,
-        accountId: comment.accountId,
-        platform: comment.platform,
-        text: comment.text,
-        authorId: comment.authorId,
-        timestamp: comment.timestamp,
-      },
-      {
-        ...DEFAULT_JOB_OPTIONS,
-        // Stable jobId prevents duplicate analysis jobs on ingestion retry
-        jobId: `analysis_${comment.platform}_${comment.accountId}_${comment.id}`,
-      },
+  if (sanitized.length > 0) {
+    await queue.addBulk(
+      sanitized.map((comment) => ({
+        name: "analyze",
+        data: {
+          commentId: comment.id,
+          userId: comment.userId,
+          accountId: comment.accountId,
+          platform: comment.platform,
+          text: comment.text,
+          authorId: comment.authorId,
+          timestamp: comment.timestamp,
+        },
+        opts: {
+          ...DEFAULT_JOB_OPTIONS,
+          // Stable jobId prevents duplicate analysis jobs on ingestion retry
+          jobId: `analysis_${comment.platform}_${comment.accountId}_${comment.id}`,
+        },
+      })),
     );
   }
 
