@@ -9,7 +9,8 @@ import type { Platform, ReportReason } from "@roastr/shared";
 function getReportReason(flags: Record<string, unknown>): ReportReason {
   if (flags.has_threat) return "threat";
   if (flags.has_identity_attack) return "hate_speech";
-  return "harassment";
+  if (flags.has_spam) return "spam";
+  return "other";
 }
 
 const supabase = createClient(
@@ -138,6 +139,11 @@ export async function shieldProcessor(job: Job): Promise<void> {
       platform_fallback: resolved.platformFallback,
     });
     if (logError) {
+      // 23505 = unique_violation: comment already processed (re-enqueue after removeOnComplete)
+      if ((logError as { code?: string }).code === "23505") {
+        log.debug("Shield log already exists for comment, skipping duplicate", { commentId });
+        return;
+      }
       log.error("Failed to insert shield_log", { error: logError.message });
     }
   } catch (e) {
