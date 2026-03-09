@@ -108,10 +108,8 @@ export async function ingestionProcessor(job: Job): Promise<void> {
     accessToken = await ensureFreshToken({
       id: account.id as string,
       platform: accountPlatform,
-      access_token_encrypted: typeof accessRaw === "string" ? Buffer.from(accessRaw, "base64") : toBuffer(accessRaw),
-      refresh_token_encrypted: refreshRaw
-        ? (typeof refreshRaw === "string" ? Buffer.from(refreshRaw, "base64") : toBuffer(refreshRaw))
-        : null,
+      access_token_encrypted: toBuffer(accessRaw),
+      refresh_token_encrypted: refreshRaw ? toBuffer(refreshRaw) : null,
       access_token_expires_at: (account.access_token_expires_at as string | null) ?? null,
     });
   } catch (e) {

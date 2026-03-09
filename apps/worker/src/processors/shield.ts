@@ -88,6 +88,39 @@ export async function shieldProcessor(job: Job): Promise<void> {
     throw new Error("Token unavailable, will retry");
   }
 
+  const severityScore = (analysisResult.severity_score as number) ?? 0;
+  const matchedRedLine = (analysisResult.flags as { matched_red_lines?: string[] })?.matched_red_lines?.[0] ?? null;
+
+  // Claim the comment atomically before calling the platform API.
+  // If another worker already claimed this comment (23505), skip entirely so
+  // the platform API is never called twice for the same comment.
+  const { data: claimRow, error: claimError } = await getSupabase()
+    .from("shield_logs")
+    .insert({
+      user_id: userId,
+      account_id: accountId,
+      platform,
+      comment_id: commentId,
+      offender_id: authorId ?? null,
+      action_taken: "pending",
+      severity_score: severityScore,
+      matched_red_line: matchedRedLine,
+      using_aggressiveness: aggressiveness,
+      platform_fallback: resolved.platformFallback,
+    })
+    .select("id")
+    .single();
+
+  if (claimError) {
+    if ((claimError as { code?: string }).code === "23505") {
+      log.debug("Comment already claimed by another worker, skipping", { commentId });
+      return;
+    }
+    throw new Error(`Failed to claim shield_log: ${claimError.message}`);
+  }
+
+  const logId = (claimRow as { id: string }).id;
+
   const actionsToTry = [resolved.primary, ...resolved.fallbacks];
   let actionTaken: string | null = null;
   let success = false;
@@ -115,15 +148,17 @@ export async function shieldProcessor(job: Job): Promise<void> {
       log.warn("Block failed", { error: result.error });
     } else if (action === "report") {
       const flags = (analysisResult.flags ?? {}) as Record<string, unknown>;
+      // Track whether the fallback (hideComment) ran instead of a native report
+      let fallbackRan = false;
       const result = await reportComment(
         platform,
         accessToken,
         commentId,
         getReportReason(flags),
-        (p, tok, cid) => hideComment(p, tok, cid),
+        (p, tok, cid) => { fallbackRan = true; return hideComment(p, tok, cid); },
       );
       if (result.ok) {
-        actionTaken = "report";
+        actionTaken = fallbackRan ? "hide" : "report";
         success = true;
         break;
       }
@@ -131,32 +166,14 @@ export async function shieldProcessor(job: Job): Promise<void> {
     }
   }
 
-  const severityScore = (analysisResult.severity_score as number) ?? 0;
-  const matchedRedLine = (analysisResult.flags as { matched_red_lines?: string[] })?.matched_red_lines?.[0] ?? null;
+  // Update the claimed row with the actual action taken
+  const { error: updateError } = await getSupabase()
+    .from("shield_logs")
+    .update({ action_taken: actionTaken ?? "none" })
+    .eq("id", logId);
 
-  try {
-    const { error: logError } = await getSupabase().from("shield_logs").insert({
-      user_id: userId,
-      account_id: accountId,
-      platform,
-      comment_id: commentId,
-      offender_id: authorId ?? null,
-      action_taken: actionTaken ?? "none",
-      severity_score: severityScore,
-      matched_red_line: matchedRedLine,
-      using_aggressiveness: aggressiveness,
-      platform_fallback: resolved.platformFallback,
-    });
-    if (logError) {
-      // 23505 = unique_violation: comment already processed (re-enqueue after removeOnComplete)
-      if ((logError as { code?: string }).code === "23505") {
-        log.debug("Shield log already exists for comment, skipping duplicate", { commentId });
-        return;
-      }
-      log.error("Failed to insert shield_log", { error: logError.message });
-    }
-  } catch (e) {
-    log.error("Unexpected error inserting shield_log", { error: (e as Error).message });
+  if (updateError) {
+    log.error("Failed to update shield_log action_taken", { error: updateError.message });
   }
 
   if (success && authorId && actionTaken) {

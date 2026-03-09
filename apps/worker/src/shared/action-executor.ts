@@ -14,6 +14,12 @@ async function safeFetch(url: string, init: RequestInit): Promise<Response> {
   }
 }
 
+/** Read up to 500 chars from a Response body for error messages. */
+async function readErrorBody(res: Response): Promise<string> {
+  const text = await res.text().catch(() => "");
+  return text.slice(0, 500);
+}
+
 export async function hideComment(
   platform: Platform,
   accessToken: string,
@@ -27,8 +33,8 @@ export async function hideComment(
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!res.ok) {
-        const body = await res.text().catch(() => "");
-        return { ok: false, error: `YouTube setModerationStatus: ${res.status}${body ? ` — ${body.slice(0, 500)}` : ""}` };
+        const body = await readErrorBody(res);
+        return { ok: false, error: `YouTube setModerationStatus: ${res.status}${body ? ` — ${body}` : ""}` };
       }
       return { ok: true };
     }
@@ -43,8 +49,8 @@ export async function hideComment(
         body: JSON.stringify({ hidden: true }),
       });
       if (!res.ok) {
-        const body = await res.text().catch(() => "");
-        return { ok: false, error: `X hide reply: ${res.status}${body ? ` — ${body.slice(0, 500)}` : ""}` };
+        const body = await readErrorBody(res);
+        return { ok: false, error: `X hide reply: ${res.status}${body ? ` — ${body}` : ""}` };
       }
       return { ok: true };
     }
@@ -76,8 +82,8 @@ export async function blockUser(
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!res.ok) {
-        const body = await res.text().catch(() => "");
-        return { ok: false, error: `YouTube banAuthor: ${res.status}${body ? ` — ${body.slice(0, 500)}` : ""}` };
+        const body = await readErrorBody(res);
+        return { ok: false, error: `YouTube banAuthor: ${res.status}${body ? ` — ${body}` : ""}` };
       }
       return { ok: true };
     }
@@ -123,10 +129,20 @@ export async function reportComment(
     commentId: string,
   ) => Promise<ActionResult>,
 ): Promise<ActionResult> {
+  const tryFallback = async (): Promise<ActionResult> => {
+    if (!onUnsupported) {
+      return { ok: false, error: `${platform}: no native report API; provide onUnsupported fallback` };
+    }
+    try {
+      return await onUnsupported(platform, accessToken, commentId);
+    } catch (err) {
+      return { ok: false, error: String(err) };
+    }
+  };
+
   if (platform === "youtube" || platform === "x") {
-    if (onUnsupported) return onUnsupported(platform, accessToken, commentId);
-    return { ok: false, error: `${platform}: no native report API; provide onUnsupported fallback` };
+    return tryFallback();
   }
   // Future: implement for Reddit, Bluesky, etc.
-  return { ok: false, error: `reportComment not yet implemented for ${platform}` };
+  return tryFallback();
 }

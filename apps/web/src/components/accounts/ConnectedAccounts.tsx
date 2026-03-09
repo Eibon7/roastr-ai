@@ -73,7 +73,7 @@ export function ConnectedAccounts({ token }: Props) {
       .catch((e) => {
         if (e instanceof Error && e.name === "AbortError") return;
         console.error("Failed to load billing usage", e);
-        setPlanTier("starter");
+        // Preserve existing planTier rather than downgrading on transient errors
       });
     return () => controller.abort();
   }, [token]);
