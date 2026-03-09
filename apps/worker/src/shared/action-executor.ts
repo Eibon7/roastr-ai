@@ -93,31 +93,40 @@ export async function blockUser(
 }
 
 /**
- * Placeholder for platform-native comment reporting.
+ * Attempt a platform-native comment report.
  *
  * Neither YouTube nor X currently exposes a public API endpoint for reporting
- * individual comments, so all branches intentionally return `ok: false`.
- * When platform support becomes available, implement the fetch call using
- * `_accessToken` for auth, `_commentId` to identify the target, and `_reason`
- * to map to the platform's abuse category enum.
+ * individual comments. When the platform has no native support, `onUnsupported`
+ * is invoked as a caller-controlled fallback (e.g. `hideComment`) so the
+ * executor can still take a meaningful action instead of silently failing.
  *
- * @param platform   - The social platform handling the report.
- * @param _accessToken - OAuth access token for the authenticated account (unused until implemented).
- * @param _commentId   - Platform-specific ID of the comment to report (unused until implemented).
- * @param _reason      - Abuse category for the report (unused until implemented).
+ * When platform support becomes available, add the fetch implementation in the
+ * platform branch before calling `onUnsupported`.
+ *
+ * @param platform       - The social platform handling the report.
+ * @param accessToken    - OAuth access token for the authenticated account.
+ * @param commentId      - Platform-specific ID of the comment to report.
+ * @param reason         - Abuse category to pass to the platform API.
+ * @param onUnsupported  - Optional fallback invoked when the platform has no
+ *                         native report API. Receives the same platform,
+ *                         accessToken and commentId so the caller can delegate
+ *                         to e.g. hideComment.
  */
 export async function reportComment(
   platform: Platform,
-  _accessToken: string,
-  _commentId: string,
+  accessToken: string,
+  commentId: string,
   _reason: ReportReason,
+  onUnsupported?: (
+    platform: Platform,
+    accessToken: string,
+    commentId: string,
+  ) => Promise<ActionResult>,
 ): Promise<ActionResult> {
-  if (platform === "youtube") {
-    // YouTube has no dedicated report API endpoint; signal fallback to caller
-    return { ok: false, error: "reportComment fallback required for youtube" };
+  if (platform === "youtube" || platform === "x") {
+    if (onUnsupported) return onUnsupported(platform, accessToken, commentId);
+    return { ok: false, error: `${platform}: no native report API; provide onUnsupported fallback` };
   }
-  if (platform === "x") {
-    return { ok: false, error: "X does not support report via API" };
-  }
-  return { ok: false, error: `reportComment not supported for ${platform}` };
+  // Future: implement for Reddit, Bluesky, etc.
+  return { ok: false, error: `reportComment not yet implemented for ${platform}` };
 }

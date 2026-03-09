@@ -105,7 +105,13 @@ export async function shieldProcessor(job: Job): Promise<void> {
       log.warn("Block failed", { error: result.error });
     } else if (action === "report") {
       const flags = (analysisResult.flags ?? {}) as Record<string, unknown>;
-      const result = await reportComment(platform, accessToken, commentId, getReportReason(flags));
+      const result = await reportComment(
+        platform,
+        accessToken,
+        commentId,
+        getReportReason(flags),
+        (p, tok, cid) => hideComment(p, tok, cid),
+      );
       if (result.ok) {
         actionTaken = "report";
         success = true;

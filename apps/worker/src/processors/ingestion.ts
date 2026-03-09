@@ -1,6 +1,6 @@
 import type { Job } from "bullmq";
 import { Queue } from "bullmq";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createJobLogger } from "../shared/logger.js";
 import { checkBillingLimits } from "../shared/billing-guard.js";
 import { ensureFreshToken, toBuffer } from "../shared/token-refresh.js";
@@ -14,9 +14,11 @@ import {
 } from "../shared/queue.config.js";
 import type { NormalizedComment } from "@roastr/shared";
 
-let _supabase: ReturnType<typeof createClient> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _supabase: SupabaseClient<any> | null = null;
 
-function getSupabase(): ReturnType<typeof createClient> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getSupabase(): SupabaseClient<any> {
   if (_supabase) return _supabase;
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
