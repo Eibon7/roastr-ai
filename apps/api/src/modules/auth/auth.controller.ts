@@ -27,6 +27,10 @@ const ONBOARDING_STATES = [
 
 type OnboardingState = (typeof ONBOARDING_STATES)[number];
 
+function isOnboardingState(value: unknown): value is OnboardingState {
+  return ONBOARDING_STATES.includes(value as OnboardingState);
+}
+
 @Controller("auth")
 export class AuthController {
   private readonly logger = new Logger({ service: AuthController.name });
@@ -82,9 +86,7 @@ export class AuthController {
       throw new InternalServerErrorException("Authentication service error");
     }
     const raw = data?.onboarding_state;
-    const validState: OnboardingState = ONBOARDING_STATES.includes(raw as OnboardingState)
-      ? (raw as OnboardingState)
-      : "welcome";
+    const validState: OnboardingState = isOnboardingState(raw) ? raw : "welcome";
     return { state: validState };
   }
 
@@ -98,7 +100,7 @@ export class AuthController {
       throw new UnauthorizedException();
     }
 
-    if (!body || typeof body !== "object" || !("state" in body) || !body.state || !ONBOARDING_STATES.includes(body.state as OnboardingState)) {
+    if (!body || typeof body !== "object" || !("state" in body) || !isOnboardingState(body.state)) {
       throw new BadRequestException("Invalid onboarding state");
     }
 

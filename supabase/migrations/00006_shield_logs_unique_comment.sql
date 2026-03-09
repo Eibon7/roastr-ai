@@ -3,6 +3,24 @@
 -- re-enqueues it, the shield processor could write a second log entry for the
 -- same comment. This unique constraint makes that a graceful no-op at the DB
 -- level rather than silent double-billing or double-moderation.
+
+-- Clean up any historical duplicates first, keeping the most recent row per
+-- (user_id, account_id, platform, comment_id) so the constraint can be added
+-- safely even on non-empty databases.
+DELETE FROM shield_logs
+WHERE id IN (
+  SELECT id
+  FROM (
+    SELECT id,
+           ROW_NUMBER() OVER (
+             PARTITION BY user_id, account_id, platform, comment_id
+             ORDER BY created_at DESC
+           ) AS rn
+    FROM shield_logs
+  ) ranked
+  WHERE rn > 1
+);
+
 ALTER TABLE shield_logs
   ADD CONSTRAINT shield_logs_unique_comment
   UNIQUE (user_id, account_id, platform, comment_id);

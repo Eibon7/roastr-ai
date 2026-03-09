@@ -1,5 +1,6 @@
 import type { Job } from "bullmq";
 import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { ensureFreshToken } from "../shared/token-refresh.js";
 import { resolveShieldAction } from "@roastr/shared";
 import { hideComment, blockUser, reportComment } from "../shared/action-executor.js";
@@ -13,10 +14,18 @@ function getReportReason(flags: Record<string, unknown>): ReportReason {
   return "other";
 }
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+let _supabase: SupabaseClient | null = null;
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) {
+      throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
+    }
+    _supabase = createClient(url, key);
+  }
+  return _supabase;
+}
 
 export async function shieldProcessor(job: Job): Promise<void> {
   const log = createJobLogger("shield", job.id ?? "unknown");
@@ -46,7 +55,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
     return;
   }
 
-  const { data: account, error: accountError } = await supabase
+  const { data: account, error: accountError } = await getSupabase()
     .from("accounts")
     .select("access_token_encrypted, refresh_token_encrypted, access_token_expires_at")
     .eq("id", accountId)
@@ -126,7 +135,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
   const matchedRedLine = (analysisResult.flags as { matched_red_lines?: string[] })?.matched_red_lines?.[0] ?? null;
 
   try {
-    const { error: logError } = await supabase.from("shield_logs").insert({
+    const { error: logError } = await getSupabase().from("shield_logs").insert({
       user_id: userId,
       account_id: accountId,
       platform,
@@ -153,7 +162,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
   if (success && authorId && actionTaken) {
     try {
       // Atomic increment via RPC — avoids TOCTOU race and resets to 1
-      const { error: strikeError } = await supabase.rpc("increment_offender_strike", {
+      const { error: strikeError } = await getSupabase().rpc("increment_offender_strike", {
         p_user_id: userId,
         p_account_id: accountId,
         p_platform: platform,

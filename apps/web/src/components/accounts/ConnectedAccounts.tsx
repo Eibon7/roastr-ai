@@ -35,9 +35,9 @@ export function ConnectedAccounts({ token }: Props) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountsError, setAccountsError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [planTier, setPlanTier] = useState<string>("free");
+  const [planTier, setPlanTier] = useState<string>("");
 
-  const loadAccounts = useCallback(async () => {
+  const loadAccounts = useCallback(async (signal?: AbortSignal) => {
     if (!token) {
       setAccounts([]);
       setIsLoading(false);
@@ -45,25 +45,37 @@ export function ConnectedAccounts({ token }: Props) {
     }
     setIsLoading(true);
     try {
-      const data = await apiFetch<Account[]>("/accounts", { token });
+      const data = await apiFetch<Account[]>("/accounts", { token, signal });
+      if (signal?.aborted) return;
       setAccounts(data);
       setAccountsError(null);
     } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") return;
       setAccountsError(e instanceof Error ? e.message : "Error al cargar cuentas");
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) setIsLoading(false);
     }
   }, [token]);
 
   useEffect(() => {
-    void loadAccounts();
+    const controller = new AbortController();
+    void loadAccounts(controller.signal);
+    return () => controller.abort();
   }, [loadAccounts]);
 
   useEffect(() => {
     if (!token) return;
-    apiFetch<BillingUsage>("/billing/usage", { token })
-      .then((d) => setPlanTier(d.plan ?? "free"))
-      .catch(() => { /* fallback to free tier caps */ });
+    const controller = new AbortController();
+    apiFetch<BillingUsage>("/billing/usage", { token, signal: controller.signal })
+      .then((d) => {
+        if (!controller.signal.aborted) setPlanTier(d.plan ?? "starter");
+      })
+      .catch((e) => {
+        if (e instanceof Error && e.name === "AbortError") return;
+        console.error("Failed to load billing usage", e);
+        setPlanTier("starter");
+      });
+    return () => controller.abort();
   }, [token]);
 
   const handleConnect = async (platform: "youtube" | "x") => {
@@ -78,7 +90,7 @@ export function ConnectedAccounts({ token }: Props) {
 
   const youtubeCount = accounts.filter((a) => a.platform === "youtube").length;
   const xCount = accounts.filter((a) => a.platform === "x").length;
-  const maxPerPlatform = planTier === "free" ? 1 : 2;
+  const maxPerPlatform = (planTier === "pro" || planTier === "plus") ? 2 : 1;
   const [configAccountId, setConfigAccountId] = useState<string | null>(null);
 
   if (isLoading) {

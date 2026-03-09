@@ -66,6 +66,7 @@ export function ShieldFeed() {
     }
 
     const controller = new AbortController();
+    const { signal } = controller;
     const params = new URLSearchParams();
     if (platformFilter) params.set("platform", platformFilter);
     if (actionFilter) params.set("action_taken", actionFilter);
@@ -73,9 +74,10 @@ export function ShieldFeed() {
     const qs = params.toString();
     apiFetch<ShieldLogsResponse>(`/shield/logs${qs ? `?${qs}` : ""}`, {
       token: session.access_token,
-      signal: controller.signal,
+      signal,
     })
       .then((res) => {
+        if (signal.aborted) return;
         setLogs(res.logs);
         setTotal(res.total);
         setLoading(false);

@@ -73,10 +73,13 @@ export function resolveShieldAction(
     if (isCritical) {
       const criticalFlags =
         analysisResult.flags.has_identity_attack || analysisResult.flags.has_threat;
+      if (criticalFlags && caps.canReport) {
+        const fallbacks: PrimaryShieldAction[] = [];
+        if (caps.canHide) fallbacks.push("hide");
+        if (caps.canBlock) fallbacks.push("block");
+        return { primary: "report", fallbacks, platformFallback: false };
+      }
       if (caps.canHide) {
-        if (criticalFlags && caps.canReport) {
-          return { primary: "report", fallbacks: ["hide", "block"], platformFallback: false };
-        }
         return { primary: "hide", fallbacks: ["block"], platformFallback: false };
       }
       if (caps.canBlock) {
