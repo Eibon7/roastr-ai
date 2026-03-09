@@ -140,9 +140,7 @@ export async function reportComment(
     }
   };
 
-  if (platform === "youtube" || platform === "x") {
-    return tryFallback();
-  }
-  // Future: implement for Reddit, Bluesky, etc.
+  // TODO: add platform-specific report endpoints (YouTube, X, Reddit, etc.) here
+  // when native APIs become available. Until then all platforms use the fallback.
   return tryFallback();
 }

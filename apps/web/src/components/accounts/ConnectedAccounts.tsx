@@ -8,8 +8,6 @@ type Account = {
   platform: string;
   username: string;
   status: string;
-  integration_health: string;
-  shield_aggressiveness?: number;
 };
 
 type BillingUsage = {
