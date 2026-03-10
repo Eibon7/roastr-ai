@@ -1,30 +1,19 @@
 -- Now that the 4-column unique constraint exists (added in 00007), update
 -- increment_offender_strike to use the 4-column ON CONFLICT target and drop
--- the legacy 3-column constraint so the schema is fully consistent.
+-- the legacy constraints so the schema is fully consistent.
 
--- Drop old 3-column unique constraint if it still exists
-DO $$
-DECLARE
-  old_constraint text;
-BEGIN
-  SELECT c.conname INTO old_constraint
-  FROM pg_constraint c
-  WHERE c.conrelid = 'offenders'::regclass
-    AND c.contype = 'u'
-    AND NOT EXISTS (
-      SELECT 1
-      FROM pg_attribute a
-      WHERE a.attrelid = 'offenders'::regclass
-        AND a.attname = 'platform'
-        AND a.attnum = ANY(c.conkey)
-    );
+-- 1. Drop the legacy 3-column unique constraint by its exact auto-generated name.
+--    A broader search would risk matching unrelated constraints.
+ALTER TABLE offenders
+  DROP CONSTRAINT IF EXISTS offenders_user_id_account_id_offender_id_key;
 
-  IF old_constraint IS NOT NULL THEN
-    EXECUTE format('ALTER TABLE offenders DROP CONSTRAINT %I', old_constraint);
-  END IF;
-END $$;
+-- 2. Drop the old 3-arg function overload increment_offender_strike(UUID, UUID, TEXT)
+--    if it exists from databases deployed before the platform column was added.
+--    CREATE OR REPLACE only replaces matching signatures; the old overload must
+--    be explicitly dropped.
+DROP FUNCTION IF EXISTS increment_offender_strike(UUID, UUID, TEXT);
 
--- Re-create the function using the 4-column conflict target
+-- 3. Re-create (or replace) the canonical 4-arg function.
 CREATE OR REPLACE FUNCTION increment_offender_strike(
   p_user_id    UUID,
   p_account_id UUID,

@@ -46,19 +46,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
     return;
   }
 
-  // Billing slot was already consumed by analysisProcessor; no re-check here.
-
-  const resolved = resolveShieldAction(
-    analysisResult as Parameters<typeof resolveShieldAction>[0],
-    platform,
-    aggressiveness,
-  );
-
-  if (resolved.primary === "none") {
-    log.debug("No action to take", { primary: resolved.primary });
-    return;
-  }
-
+  // Fetch account first so we can use the authoritative platform for all decisions.
   const { data: account, error: accountError } = await getSupabase()
     .from("accounts")
     .select("platform, access_token_encrypted, refresh_token_encrypted, access_token_expires_at")
@@ -75,8 +63,21 @@ export async function shieldProcessor(job: Job): Promise<void> {
     return;
   }
 
-  // Use the platform from the account row (authoritative) for all API calls.
+  // Use the platform from the account row (authoritative) for all decisions and
+  // API calls so job.data cannot dictate which platform endpoint is used.
   const accountPlatform = (account.platform as Platform) ?? platform;
+
+  // Billing slot was already consumed by analysisProcessor; no re-check here.
+  const resolved = resolveShieldAction(
+    analysisResult as Parameters<typeof resolveShieldAction>[0],
+    accountPlatform,
+    aggressiveness,
+  );
+
+  if (resolved.primary === "none") {
+    log.debug("No action to take", { primary: resolved.primary });
+    return;
+  }
 
   let accessToken: string;
   try {
@@ -127,7 +128,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
     }
 
     // Another row exists. Inspect it to decide whether to skip or reclaim.
-    const { data: existing } = await getSupabase()
+    const { data: existing, error: existingError } = await getSupabase()
       .from("shield_logs")
       .select("id, action_taken, created_at")
       .eq("user_id", userId)
@@ -135,6 +136,10 @@ export async function shieldProcessor(job: Job): Promise<void> {
       .eq("platform", accountPlatform)
       .eq("comment_id", commentId)
       .maybeSingle();
+
+    if (existingError) {
+      throw new Error(`Failed to inspect existing shield_log: ${existingError.message}`);
+    }
 
     if (!existing) {
       // Very unlikely race: the conflicting row disappeared — just skip.
@@ -158,14 +163,18 @@ export async function shieldProcessor(job: Job): Promise<void> {
     }
 
     // Stale "pending" — the original worker likely died. Reclaim with an
-    // optimistic-lock on created_at to avoid a double-reclaim race.
-    const { data: reclaimRow } = await getSupabase()
+    // optimistic-lock on action_taken to avoid a double-reclaim race.
+    const { data: reclaimRow, error: reclaimError } = await getSupabase()
       .from("shield_logs")
       .update({ ...claimPayload, action_taken: "pending" })
       .eq("id", (existing as { id: string }).id)
       .eq("action_taken", "pending")
       .select("id")
       .maybeSingle();
+
+    if (reclaimError) {
+      throw new Error(`Failed to reclaim stale shield_log: ${reclaimError.message}`);
+    }
 
     if (!reclaimRow) {
       // Another worker reclaimed it in the meantime.
@@ -182,6 +191,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
   const actionsToTry = [resolved.primary, ...resolved.fallbacks];
   let actionTaken: string | null = null;
   let success = false;
+  const adapterErrors: string[] = [];
 
   for (const action of actionsToTry) {
     if (action === "hide" || action === "strike1" || action === "strike1_silent") {
@@ -192,6 +202,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
         break;
       }
       log.warn("Hide failed, trying fallback", { error: result.error });
+      if (result.error) adapterErrors.push(result.error);
     } else if (action === "block") {
       if (!authorId) {
         log.warn("Skipping block action without authorId", { accountPlatform, commentId });
@@ -204,6 +215,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
         break;
       }
       log.warn("Block failed", { error: result.error });
+      if (result.error) adapterErrors.push(result.error);
     } else if (action === "report") {
       const flags = (analysisResult.flags ?? {}) as Record<string, unknown>;
       // Track whether the fallback (hideComment) ran instead of a native report
@@ -221,20 +233,29 @@ export async function shieldProcessor(job: Job): Promise<void> {
         break;
       }
       log.warn("Report failed", { error: result.error });
+      if (result.error) adapterErrors.push(result.error);
     }
   }
 
-  // Update the claimed row with the actual action taken
+  if (!success) {
+    // Leave the claim as "pending" so BullMQ retries can reclaim it after the
+    // stale threshold rather than finalizing a transient failure as "none".
+    throw new Error(
+      `All shield actions failed for comment ${commentId}: ${adapterErrors.join("; ") || "no adapter errors"}`,
+    );
+  }
+
+  // Update the claimed row with the actual action taken (only on success)
   const { error: updateError } = await getSupabase()
     .from("shield_logs")
-    .update({ action_taken: actionTaken ?? "none" })
+    .update({ action_taken: actionTaken })
     .eq("id", logId);
 
   if (updateError) {
     log.error("Failed to update shield_log action_taken", { error: updateError.message });
   }
 
-  if (success && authorId && actionTaken) {
+  if (authorId && actionTaken) {
     try {
       // Atomic increment via RPC — avoids TOCTOU race and resets to 1
       const { error: strikeError } = await getSupabase().rpc("increment_offender_strike", {
@@ -252,7 +273,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
   }
 
   log.info("Shield action completed", {
-    actionTaken: actionTaken ?? "none",
+    actionTaken,
     success,
     platform: accountPlatform,
     commentId,
