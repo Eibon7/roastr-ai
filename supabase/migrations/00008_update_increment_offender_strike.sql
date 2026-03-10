@@ -1,10 +1,30 @@
--- Forward migration: re-create increment_offender_strike with the 4-column
--- conflict target (user_id, account_id, platform, offender_id).
---
--- Databases that ran the original 00003 (before platform was added to the
--- unique constraint) will have an older function definition that uses a
--- 3-column ON CONFLICT target. This migration brings it up to date so the
--- function matches the constraint updated by 00007_offenders_platform_unique.
+-- Now that the 4-column unique constraint exists (added in 00007), update
+-- increment_offender_strike to use the 4-column ON CONFLICT target and drop
+-- the legacy 3-column constraint so the schema is fully consistent.
+
+-- Drop old 3-column unique constraint if it still exists
+DO $$
+DECLARE
+  old_constraint text;
+BEGIN
+  SELECT c.conname INTO old_constraint
+  FROM pg_constraint c
+  WHERE c.conrelid = 'offenders'::regclass
+    AND c.contype = 'u'
+    AND NOT EXISTS (
+      SELECT 1
+      FROM pg_attribute a
+      WHERE a.attrelid = 'offenders'::regclass
+        AND a.attname = 'platform'
+        AND a.attnum = ANY(c.conkey)
+    );
+
+  IF old_constraint IS NOT NULL THEN
+    EXECUTE format('ALTER TABLE offenders DROP CONSTRAINT %I', old_constraint);
+  END IF;
+END $$;
+
+-- Re-create the function using the 4-column conflict target
 CREATE OR REPLACE FUNCTION increment_offender_strike(
   p_user_id    UUID,
   p_account_id UUID,

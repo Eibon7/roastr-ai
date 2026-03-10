@@ -85,6 +85,9 @@ export class AuthController {
       this.logger.error("Supabase error fetching onboarding state", { code: (error as { code?: string }).code });
       throw new InternalServerErrorException("Authentication service error");
     }
+    if (data === null) {
+      throw new NotFoundException("Profile not found");
+    }
     const raw = data?.onboarding_state;
     const validState: OnboardingState = isOnboardingState(raw) ? raw : "welcome";
     return { state: validState };

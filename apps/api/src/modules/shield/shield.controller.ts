@@ -42,10 +42,8 @@ export class ShieldController {
   ) {
     if (!req.user?.id) throw new UnauthorizedException();
     const val = body.shieldAggressiveness;
-    if (typeof val !== "number" || ![0.9, 0.95, 0.98, 1].includes(val)) {
-      throw new BadRequestException(
-        "shieldAggressiveness must be 0.9, 0.95, 0.98, or 1",
-      );
+    if (typeof val !== "number") {
+      throw new BadRequestException("shieldAggressiveness must be a number");
     }
     const ok = await this.shieldConfig.updateConfig(
       req.user.id,

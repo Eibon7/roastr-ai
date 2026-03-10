@@ -28,8 +28,8 @@ export class OffendersService {
   async getOffender(
     userId: string,
     accountId: string,
-    offenderId: string,
     platform: string,
+    offenderId: string,
   ): Promise<OffenderRow | null> {
     const supabase = this.getSupabase();
     const { data, error } = await supabase

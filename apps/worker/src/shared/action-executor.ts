@@ -136,7 +136,7 @@ export async function reportComment(
     try {
       return await onUnsupported(platform, accessToken, commentId);
     } catch (err) {
-      return { ok: false, error: String(err) };
+      return { ok: false, error: (err as Error).message ?? String(err) };
     }
   };
 

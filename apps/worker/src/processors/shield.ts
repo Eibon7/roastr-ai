@@ -7,6 +7,10 @@ import { hideComment, blockUser, reportComment } from "../shared/action-executor
 import { createJobLogger } from "../shared/logger.js";
 import type { Platform, ReportReason } from "@roastr/shared";
 
+/** Stale-pending reclaim threshold: if a "pending" claim is older than this,
+ *  another worker may reclaim it (the original worker likely died mid-job). */
+const RECLAIM_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
+
 function getReportReason(flags: Record<string, unknown>): ReportReason {
   if (flags.has_threat) return "threat";
   if (flags.has_identity_attack) return "hate_speech";
@@ -57,7 +61,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
 
   const { data: account, error: accountError } = await getSupabase()
     .from("accounts")
-    .select("access_token_encrypted, refresh_token_encrypted, access_token_expires_at")
+    .select("platform, access_token_encrypted, refresh_token_encrypted, access_token_expires_at")
     .eq("id", accountId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -71,6 +75,9 @@ export async function shieldProcessor(job: Job): Promise<void> {
     return;
   }
 
+  // Use the platform from the account row (authoritative) for all API calls.
+  const accountPlatform = (account.platform as Platform) ?? platform;
+
   let accessToken: string;
   try {
     const accessEncrypted = Buffer.from(account.access_token_encrypted as string, "base64");
@@ -78,7 +85,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
     const refreshEncrypted = refreshRaw ? Buffer.from(refreshRaw, "base64") : null;
     accessToken = await ensureFreshToken({
       id: accountId,
-      platform: platform as string,
+      platform: accountPlatform as string,
       access_token_encrypted: accessEncrypted,
       refresh_token_encrypted: refreshEncrypted,
       access_token_expires_at: (account.access_token_expires_at as string | null) ?? null,
@@ -91,35 +98,86 @@ export async function shieldProcessor(job: Job): Promise<void> {
   const severityScore = (analysisResult.severity_score as number) ?? 0;
   const matchedRedLine = (analysisResult.flags as { matched_red_lines?: string[] })?.matched_red_lines?.[0] ?? null;
 
-  // Claim the comment atomically before calling the platform API.
-  // If another worker already claimed this comment (23505), skip entirely so
-  // the platform API is never called twice for the same comment.
+  // Claim the comment atomically before calling the platform API so concurrent
+  // workers cannot both execute the moderation action for the same comment.
+  const claimPayload = {
+    user_id: userId,
+    account_id: accountId,
+    platform: accountPlatform,
+    comment_id: commentId,
+    offender_id: authorId ?? null,
+    action_taken: "pending",
+    severity_score: severityScore,
+    matched_red_line: matchedRedLine,
+    using_aggressiveness: aggressiveness,
+    platform_fallback: resolved.platformFallback,
+  };
+
+  let logId: string;
+
   const { data: claimRow, error: claimError } = await getSupabase()
     .from("shield_logs")
-    .insert({
-      user_id: userId,
-      account_id: accountId,
-      platform,
-      comment_id: commentId,
-      offender_id: authorId ?? null,
-      action_taken: "pending",
-      severity_score: severityScore,
-      matched_red_line: matchedRedLine,
-      using_aggressiveness: aggressiveness,
-      platform_fallback: resolved.platformFallback,
-    })
+    .insert(claimPayload)
     .select("id")
     .single();
 
   if (claimError) {
-    if ((claimError as { code?: string }).code === "23505") {
-      log.debug("Comment already claimed by another worker, skipping", { commentId });
+    if ((claimError as { code?: string }).code !== "23505") {
+      throw new Error(`Failed to claim shield_log: ${claimError.message}`);
+    }
+
+    // Another row exists. Inspect it to decide whether to skip or reclaim.
+    const { data: existing } = await getSupabase()
+      .from("shield_logs")
+      .select("id, action_taken, created_at")
+      .eq("user_id", userId)
+      .eq("account_id", accountId)
+      .eq("platform", accountPlatform)
+      .eq("comment_id", commentId)
+      .maybeSingle();
+
+    if (!existing) {
+      // Very unlikely race: the conflicting row disappeared — just skip.
+      log.warn("Conflict on claim but existing row not found, skipping", { commentId });
       return;
     }
-    throw new Error(`Failed to claim shield_log: ${claimError.message}`);
-  }
 
-  const logId = (claimRow as { id: string }).id;
+    const existingAction = (existing as { action_taken: string }).action_taken;
+    if (existingAction !== "pending") {
+      // Already finalized by another worker; nothing to do.
+      log.debug("Comment already processed, skipping", { commentId, existingAction });
+      return;
+    }
+
+    // Row is still "pending". Check staleness.
+    const claimedAt = new Date((existing as { created_at: string }).created_at).getTime();
+    const isStale = Date.now() - claimedAt > RECLAIM_THRESHOLD_MS;
+    if (!isStale) {
+      log.debug("Comment claim is recent, another worker is processing it", { commentId });
+      return;
+    }
+
+    // Stale "pending" — the original worker likely died. Reclaim with an
+    // optimistic-lock on created_at to avoid a double-reclaim race.
+    const { data: reclaimRow } = await getSupabase()
+      .from("shield_logs")
+      .update({ ...claimPayload, action_taken: "pending" })
+      .eq("id", (existing as { id: string }).id)
+      .eq("action_taken", "pending")
+      .select("id")
+      .maybeSingle();
+
+    if (!reclaimRow) {
+      // Another worker reclaimed it in the meantime.
+      log.debug("Lost reclaim race, skipping", { commentId });
+      return;
+    }
+
+    log.info("Reclaimed stale pending shield_log", { commentId });
+    logId = (reclaimRow as { id: string }).id;
+  } else {
+    logId = (claimRow as { id: string }).id;
+  }
 
   const actionsToTry = [resolved.primary, ...resolved.fallbacks];
   let actionTaken: string | null = null;
@@ -127,7 +185,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
 
   for (const action of actionsToTry) {
     if (action === "hide" || action === "strike1" || action === "strike1_silent") {
-      const result = await hideComment(platform, accessToken, commentId);
+      const result = await hideComment(accountPlatform, accessToken, commentId);
       if (result.ok) {
         actionTaken = action;
         success = true;
@@ -136,10 +194,10 @@ export async function shieldProcessor(job: Job): Promise<void> {
       log.warn("Hide failed, trying fallback", { error: result.error });
     } else if (action === "block") {
       if (!authorId) {
-        log.warn("Skipping block action without authorId", { platform, commentId });
+        log.warn("Skipping block action without authorId", { accountPlatform, commentId });
         continue;
       }
-      const result = await blockUser(platform, accessToken, authorId, commentId);
+      const result = await blockUser(accountPlatform, accessToken, authorId, commentId);
       if (result.ok) {
         actionTaken = "block";
         success = true;
@@ -151,7 +209,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
       // Track whether the fallback (hideComment) ran instead of a native report
       let fallbackRan = false;
       const result = await reportComment(
-        platform,
+        accountPlatform,
         accessToken,
         commentId,
         getReportReason(flags),
@@ -182,7 +240,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
       const { error: strikeError } = await getSupabase().rpc("increment_offender_strike", {
         p_user_id: userId,
         p_account_id: accountId,
-        p_platform: platform,
+        p_platform: accountPlatform,
         p_offender_id: authorId,
       });
       if (strikeError) {
@@ -196,7 +254,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
   log.info("Shield action completed", {
     actionTaken: actionTaken ?? "none",
     success,
-    platform,
+    platform: accountPlatform,
     commentId,
   });
 }
