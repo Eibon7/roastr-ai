@@ -7,9 +7,22 @@ import { hideComment, blockUser, reportComment } from "../shared/action-executor
 import { createJobLogger } from "../shared/logger.js";
 import type { Platform, ReportReason } from "@roastr/shared";
 
-/** Stale-pending reclaim threshold: if a "pending" claim is older than this,
- *  another worker may reclaim it (the original worker likely died mid-job). */
+/**
+ * Stale-pending reclaim threshold. If a claim's updated_at is older than this,
+ * another worker may reclaim it (the original worker likely died mid-job).
+ * updated_at advances on every reclaim so the window is per-attempt, not per
+ * comment.
+ */
 const RECLAIM_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
+
+/** Sentinel updated_at written on adapter failure so the next BullMQ retry
+ *  can immediately reclaim the row (epoch → always stale). */
+const STALE_EPOCH = new Date(0).toISOString();
+
+/** Retryable claim states. Finalized states are any action name (hide, block, …). */
+function isRetryableState(actionTaken: string): boolean {
+  return actionTaken === "pending" || actionTaken === "failed";
+}
 
 function getReportReason(flags: Record<string, unknown>): ReportReason {
   if (flags.has_threat) return "threat";
@@ -101,6 +114,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
 
   // Claim the comment atomically before calling the platform API so concurrent
   // workers cannot both execute the moderation action for the same comment.
+  const now = new Date().toISOString();
   const claimPayload = {
     user_id: userId,
     account_id: accountId,
@@ -112,6 +126,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
     matched_red_line: matchedRedLine,
     using_aggressiveness: aggressiveness,
     platform_fallback: resolved.platformFallback,
+    updated_at: now,
   };
 
   let logId: string;
@@ -130,7 +145,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
     // Another row exists. Inspect it to decide whether to skip or reclaim.
     const { data: existing, error: existingError } = await getSupabase()
       .from("shield_logs")
-      .select("id, action_taken, created_at")
+      .select("id, action_taken, updated_at")
       .eq("user_id", userId)
       .eq("account_id", accountId)
       .eq("platform", accountPlatform)
@@ -148,27 +163,29 @@ export async function shieldProcessor(job: Job): Promise<void> {
     }
 
     const existingAction = (existing as { action_taken: string }).action_taken;
-    if (existingAction !== "pending") {
+    if (!isRetryableState(existingAction)) {
       // Already finalized by another worker; nothing to do.
       log.debug("Comment already processed, skipping", { commentId, existingAction });
       return;
     }
 
-    // Row is still "pending". Check staleness.
-    const claimedAt = new Date((existing as { created_at: string }).created_at).getTime();
-    const isStale = Date.now() - claimedAt > RECLAIM_THRESHOLD_MS;
+    // Row is in a retryable state. Check staleness via updated_at so the lease
+    // window is per-attempt rather than per-comment (created_at never advances).
+    const leaseUpdatedAt = new Date((existing as { updated_at: string }).updated_at).getTime();
+    const isStale = Date.now() - leaseUpdatedAt > RECLAIM_THRESHOLD_MS;
     if (!isStale) {
       log.debug("Comment claim is recent, another worker is processing it", { commentId });
       return;
     }
 
-    // Stale "pending" — the original worker likely died. Reclaim with an
+    // Stale claim — the original worker likely died. Reclaim with an
     // optimistic-lock on action_taken to avoid a double-reclaim race.
+    // Advance updated_at to extend the lease for this worker's window.
     const { data: reclaimRow, error: reclaimError } = await getSupabase()
       .from("shield_logs")
-      .update({ ...claimPayload, action_taken: "pending" })
+      .update({ ...claimPayload, action_taken: "pending", updated_at: new Date().toISOString() })
       .eq("id", (existing as { id: string }).id)
-      .eq("action_taken", "pending")
+      .eq("action_taken", existingAction) // optimistic lock on the current state
       .select("id")
       .maybeSingle();
 
@@ -182,7 +199,7 @@ export async function shieldProcessor(job: Job): Promise<void> {
       return;
     }
 
-    log.info("Reclaimed stale pending shield_log", { commentId });
+    log.info("Reclaimed stale pending shield_log", { commentId, previousState: existingAction });
     logId = (reclaimRow as { id: string }).id;
   } else {
     logId = (claimRow as { id: string }).id;
@@ -238,21 +255,33 @@ export async function shieldProcessor(job: Job): Promise<void> {
   }
 
   if (!success) {
-    // Leave the claim as "pending" so BullMQ retries can reclaim it after the
-    // stale threshold rather than finalizing a transient failure as "none".
-    throw new Error(
-      `All shield actions failed for comment ${commentId}: ${adapterErrors.join("; ") || "no adapter errors"}`,
-    );
+    // Release the claim so the next BullMQ retry can immediately reclaim it:
+    // set action_taken="failed" and updated_at=epoch (always stale) so the
+    // staleness check passes on the very next attempt without waiting 10 min.
+    const errorSummary = adapterErrors.join("; ") || "no adapter errors";
+    await getSupabase()
+      .from("shield_logs")
+      .update({ action_taken: "failed", updated_at: STALE_EPOCH })
+      .eq("id", logId);
+    throw new Error(`All shield actions failed for comment ${commentId}: ${errorSummary}`);
   }
 
-  // Update the claimed row with the actual action taken (only on success)
+  // Finalize the claim with the actual action taken. Retry once on DB failure
+  // so a transient error doesn't leave the row as "pending" indefinitely.
   const { error: updateError } = await getSupabase()
     .from("shield_logs")
-    .update({ action_taken: actionTaken })
+    .update({ action_taken: actionTaken, updated_at: new Date().toISOString() })
     .eq("id", logId);
 
   if (updateError) {
-    log.error("Failed to update shield_log action_taken", { error: updateError.message });
+    log.warn("First attempt to finalize shield_log failed, retrying", { error: updateError.message });
+    const { error: retryError } = await getSupabase()
+      .from("shield_logs")
+      .update({ action_taken: actionTaken, updated_at: new Date().toISOString() })
+      .eq("id", logId);
+    if (retryError) {
+      throw new Error(`Failed to finalize shield_log after retry: ${retryError.message}`);
+    }
   }
 
   if (authorId && actionTaken) {
