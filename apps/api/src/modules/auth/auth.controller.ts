@@ -181,13 +181,21 @@ export class AuthController {
       for (const account of accounts) {
         if (account.access_token) {
           try {
+            let revoked = false;
             if (account.platform === "youtube") {
-              await fetch(
+              const res = await fetch(
                 `https://oauth2.googleapis.com/revoke?token=${account.access_token}`,
                 { method: "POST" },
               );
+              revoked = res.ok;
+              if (!revoked) {
+                this.logger.warn("YouTube token revocation returned non-ok status", {
+                  accountId: account.id,
+                  status: res.status,
+                });
+              }
             } else if (account.platform === "x") {
-              await fetch("https://api.twitter.com/2/oauth2/revoke", {
+              const res = await fetch("https://api.twitter.com/2/oauth2/revoke", {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: new URLSearchParams({
@@ -195,19 +203,38 @@ export class AuthController {
                   token_type_hint: "access_token",
                 }),
               });
+              revoked = res.ok;
+              if (!revoked) {
+                this.logger.warn("X token revocation returned non-ok status", {
+                  accountId: account.id,
+                  status: res.status,
+                });
+              }
             }
-          } catch {
-            // Best-effort revocation; proceed with deletion regardless
+            // Account row is deleted below in the cascade; log-only on failure
+            // since the account is being permanently removed.
+            void revoked;
+          } catch (err) {
+            this.logger.warn("OAuth token revocation request failed", {
+              accountId: account.id,
+              platform: account.platform,
+              error: err instanceof Error ? err.message : String(err),
+            });
           }
         }
       }
     }
 
     // Cascade delete: user data in order of FK dependencies
-    await supabase.from("subscriptions_usage").delete().eq("user_id", req.user.id);
-    await supabase.from("shield_logs").delete().eq("user_id", req.user.id);
-    await supabase.from("offenders").delete().eq("user_id", req.user.id);
-    await supabase.from("accounts").delete().eq("user_id", req.user.id);
+    const tables = ["subscriptions_usage", "shield_logs", "offenders", "accounts"] as const;
+    for (const table of tables) {
+      const { error: delErr } = await supabase.from(table).delete().eq("user_id", req.user.id);
+      if (delErr) {
+        throw new InternalServerErrorException(
+          `Failed to delete ${table}: ${delErr.message}`,
+        );
+      }
+    }
 
     // Delete auth user — triggers cascade on profiles via DB trigger
     const { error: deleteErr } = await supabase.auth.admin.deleteUser(req.user.id);

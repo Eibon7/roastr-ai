@@ -64,6 +64,10 @@ export function TermsPage() {
               <a href="mailto:legal@roastr.ai" className="text-primary underline">
                 legal@roastr.ai
               </a>
+              . Consulta también nuestra{" "}
+              <a href="/privacy" target="_blank" rel="noreferrer" className="text-primary underline">
+                Política de Privacidad
+              </a>
               .
             </p>
           </section>

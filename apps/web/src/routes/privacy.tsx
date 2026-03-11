@@ -57,6 +57,10 @@ export function PrivacyPage() {
               <a href="mailto:privacy@roastr.ai" className="text-primary underline">
                 privacy@roastr.ai
               </a>
+              . Consulta también nuestros{" "}
+              <a href="/terms" target="_blank" rel="noreferrer" className="text-primary underline">
+                Términos de Servicio
+              </a>
               .
             </p>
           </section>

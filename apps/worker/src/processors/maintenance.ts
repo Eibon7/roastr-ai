@@ -1,18 +1,9 @@
 import type { Job } from "bullmq";
 import { createClient } from "@supabase/supabase-js";
-import { createHash } from "crypto";
+import { hashIdentifier, isAnonymized } from "@roastr/shared";
 import { createJobLogger } from "../shared/logger.js";
 
 const RETENTION_DAYS = 90;
-const ANON_PREFIX = "anon:";
-
-function hashIdentifier(raw: string): string {
-  return ANON_PREFIX + createHash("sha256").update(raw).digest("hex").slice(0, 16);
-}
-
-function isAnonymized(value: string): boolean {
-  return value.startsWith(ANON_PREFIX);
-}
 
 export async function maintenanceProcessor(job: Job): Promise<void> {
   const log = createJobLogger("maintenance", job.id ?? "unknown");
@@ -25,12 +16,17 @@ export async function maintenanceProcessor(job: Job): Promise<void> {
 
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !supabaseKey) {
-    const missing = [!supabaseUrl && "SUPABASE_URL", !supabaseKey && "SUPABASE_SERVICE_ROLE_KEY"]
+  const anonymizeSecret = process.env.ANONYMIZE_HMAC_KEY;
+  if (!supabaseUrl || !supabaseKey || !anonymizeSecret) {
+    const missing = [
+      !supabaseUrl && "SUPABASE_URL",
+      !supabaseKey && "SUPABASE_SERVICE_ROLE_KEY",
+      !anonymizeSecret && "ANONYMIZE_HMAC_KEY",
+    ]
       .filter(Boolean)
       .join(", ");
     log.error("Missing required environment variables", { missing });
-    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
+    throw new Error(`Required environment variables missing: ${missing}`);
   }
   const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -86,7 +82,7 @@ export async function maintenanceProcessor(job: Job): Promise<void> {
       if (toAnonymize.length > 0) {
         const updates = toAnonymize.map(({ id, offender_id }) => ({
           id,
-          offender_id: hashIdentifier(offender_id),
+          offender_id: hashIdentifier(offender_id, anonymizeSecret),
           updated_at: new Date().toISOString(),
         }));
         const { error: updateErr } = await supabase

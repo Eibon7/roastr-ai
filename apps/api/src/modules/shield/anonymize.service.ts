@@ -1,17 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
-import { createHash } from "crypto";
-
-const ANON_PREFIX = "anon:";
-
-export function hashIdentifier(raw: string): string {
-  return ANON_PREFIX + createHash("sha256").update(raw).digest("hex").slice(0, 16);
-}
-
-export function isAnonymized(value: string): boolean {
-  return value.startsWith(ANON_PREFIX);
-}
+import { hashIdentifier, isAnonymized } from "@roastr/shared";
 
 @Injectable()
 export class AnonymizeService {
@@ -24,9 +14,13 @@ export class AnonymizeService {
     );
   }
 
+  private get hmacKey(): string {
+    return this.config.getOrThrow("ANONYMIZE_HMAC_KEY");
+  }
+
   /**
    * Anonymizes PII in offender records older than cutoff.
-   * Replaces offender_id with a deterministic SHA-256 hash while preserving strike stats.
+   * Replaces offender_id with a keyed HMAC-SHA256 digest while preserving strike stats.
    * Skips records already anonymized.
    */
   async anonymizeOldOffenders(cutoffIso: string): Promise<{ anonymized: number }> {
@@ -46,9 +40,10 @@ export class AnonymizeService {
     );
     if (toAnonymize.length === 0) return { anonymized: 0 };
 
+    const secret = this.hmacKey;
     const updates = toAnonymize.map(({ id, offender_id }) => ({
       id,
-      offender_id: hashIdentifier(offender_id),
+      offender_id: hashIdentifier(offender_id, secret),
       updated_at: new Date().toISOString(),
     }));
 

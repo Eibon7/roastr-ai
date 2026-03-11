@@ -16,27 +16,27 @@ type MockChain = {
   maybeSingle: ReturnType<typeof vi.fn>;
   not: ReturnType<typeof vi.fn>;
   lt: ReturnType<typeof vi.fn>;
+  then: (
+    onFulfilled: (v: { data: unknown; error: unknown }) => unknown,
+    onRejected?: (e: unknown) => unknown,
+  ) => Promise<unknown>;
   _resolve: (result: { data: unknown; error: unknown }) => void;
 };
 
 function makeChain(defaultResult = { data: null, error: null }): MockChain {
-  const chain: MockChain = {
-    select: vi.fn(),
-    eq: vi.fn(),
-    delete: vi.fn(),
-    maybeSingle: vi.fn(),
-    not: vi.fn(),
-    lt: vi.fn(),
-    _resolve: () => {},
-  };
+  const chain = {} as MockChain;
 
-  const self = () => Promise.resolve(defaultResult);
-  chain.select.mockReturnValue(chain);
-  chain.eq.mockReturnValue(chain);
-  chain.delete.mockReturnValue(chain);
-  chain.not.mockReturnValue(chain);
-  chain.lt.mockReturnValue(chain);
-  chain.maybeSingle.mockImplementation(self);
+  // Make the chain itself thenable so `await chain` resolves to defaultResult
+  chain.then = (onFulfilled, onRejected) =>
+    Promise.resolve(defaultResult).then(onFulfilled, onRejected);
+
+  chain.select = vi.fn().mockReturnValue(chain);
+  chain.eq = vi.fn().mockReturnValue(chain);
+  chain.delete = vi.fn().mockReturnValue(chain);
+  chain.not = vi.fn().mockReturnValue(chain);
+  chain.lt = vi.fn().mockReturnValue(chain);
+  chain.maybeSingle = vi.fn().mockImplementation(() => Promise.resolve(defaultResult));
+  chain._resolve = () => {};
 
   return chain;
 }
@@ -123,6 +123,21 @@ describe("AuthController.deleteAccount", () => {
     ).rejects.toBeInstanceOf(InternalServerErrorException);
   });
 
+  it("throws 500 when a cascade delete fails", async () => {
+    const profileChain = makeChain({ data: { email: "user@test.com" }, error: null });
+    const accountsChain = makeChain({ data: [], error: null });
+    const failChain = makeChain({ data: null, error: { message: "constraint violation" } });
+    mockFrom
+      .mockReturnValueOnce(profileChain)  // profiles lookup
+      .mockReturnValueOnce(accountsChain) // accounts select (OAuth revocation fetch)
+      .mockReturnValueOnce(failChain);    // first cascade delete fails
+    signInWithPassword.mockResolvedValue({ error: null });
+
+    await expect(
+      controller.deleteAccount(makeReq(), { password: "correct" }),
+    ).rejects.toBeInstanceOf(InternalServerErrorException);
+  });
+
   it("throws 500 when auth.admin.deleteUser fails after successful deletion cascade", async () => {
     const profileChain = makeChain({ data: { email: "user@test.com" }, error: null });
     mockFrom.mockReturnValue(profileChain);
@@ -139,7 +154,7 @@ describe("AuthController.deleteAccount", () => {
     const accountsChain = makeChain({ data: [], error: null });
     mockFrom
       .mockReturnValueOnce(profileChain)   // profiles lookup
-      .mockReturnValue(accountsChain);      // all cascade deletes
+      .mockReturnValue(accountsChain);      // accounts select + all cascade deletes
     signInWithPassword.mockResolvedValue({ error: null });
     adminDeleteUser.mockResolvedValue({ error: null });
 

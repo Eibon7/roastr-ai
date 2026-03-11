@@ -19,6 +19,9 @@ const DISCLAIMER_DEFAULT =
 @Injectable()
 export class DisclaimerService {
   apply(content: string, platform: Platform): string {
+    if (this.hasDisclaimer(content, platform)) {
+      return content;
+    }
     switch (platform.toLowerCase()) {
       case "youtube":
         return content + DISCLAIMER_YOUTUBE;
