@@ -64,10 +64,16 @@ describe("queue.config", () => {
       expect(getQueuePrefix()).toBe("prod");
     });
 
-    it("staging en staging", () => {
+    it("stg en staging", () => {
       process.env.NODE_ENV = "staging";
       delete process.env.QUEUE_PREFIX;
-      expect(getQueuePrefix()).toBe("staging");
+      expect(getQueuePrefix()).toBe("stg");
+    });
+
+    it("stg cuando NODE_ENV es 'stg'", () => {
+      process.env.NODE_ENV = "stg";
+      delete process.env.QUEUE_PREFIX;
+      expect(getQueuePrefix()).toBe("stg");
     });
 
     it("QUEUE_PREFIX explícito tiene prioridad", () => {

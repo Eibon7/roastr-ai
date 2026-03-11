@@ -77,6 +77,9 @@ export class BillingService {
         }),
         signal: controller.signal,
       });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      throw new Error(`Polar checkout failed: ${msg}`, { cause: e });
     } finally {
       clearTimeout(timer);
     }

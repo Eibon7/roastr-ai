@@ -44,7 +44,7 @@ export type AnalysisResult = {
     persona_applied: boolean;
     persona_factor: number;
     recurrence_factor: number;
-    aggressiveness_applied: number;
+    severity_score_final: number;
   };
   score_source: ScoreSource;
 };

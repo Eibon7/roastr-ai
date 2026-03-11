@@ -13,10 +13,16 @@ export async function maintenanceProcessor(job: Job): Promise<void> {
     return;
   }
 
-  const supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    const missing = [!supabaseUrl && "SUPABASE_URL", !supabaseKey && "SUPABASE_SERVICE_ROLE_KEY"]
+      .filter(Boolean)
+      .join(", ");
+    log.error("Missing required environment variables", { missing });
+    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
+  }
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - RETENTION_DAYS);
@@ -45,7 +51,10 @@ export async function maintenanceProcessor(job: Job): Promise<void> {
       .is("last_strike", null)
       .lt("created_at", cutoffIso)
       .select("id");
-    if (err1) throw err1;
+    if (err1) {
+      log.error("Failed to purge null-strike offenders", { error: err1.message });
+      throw err1;
+    }
 
     const { data: offendersStale, error: err2 } = await supabase
       .from("offenders")
@@ -53,7 +62,10 @@ export async function maintenanceProcessor(job: Job): Promise<void> {
       .not("last_strike", "is", null)
       .lt("last_strike", cutoffIso)
       .select("id");
-    if (err2) throw err2;
+    if (err2) {
+      log.error("Failed to purge stale offenders", { error: err2.message });
+      throw err2;
+    }
 
     offendersDeleted = (offendersNull?.length ?? 0) + (offendersStale?.length ?? 0);
 

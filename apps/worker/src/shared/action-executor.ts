@@ -14,6 +14,12 @@ async function safeFetch(url: string, init: RequestInit): Promise<Response> {
   }
 }
 
+/** Read up to 500 chars from a Response body for error messages. */
+async function readErrorBody(res: Response): Promise<string> {
+  const text = await res.text().catch(() => "");
+  return text.slice(0, 500);
+}
+
 export async function hideComment(
   platform: Platform,
   accessToken: string,
@@ -27,7 +33,8 @@ export async function hideComment(
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!res.ok) {
-        return { ok: false, error: `YouTube setModerationStatus: ${res.status}` };
+        const body = await readErrorBody(res);
+        return { ok: false, error: `YouTube setModerationStatus: ${res.status}${body ? ` — ${body}` : ""}` };
       }
       return { ok: true };
     }
@@ -42,7 +49,8 @@ export async function hideComment(
         body: JSON.stringify({ hidden: true }),
       });
       if (!res.ok) {
-        return { ok: false, error: `X hide reply: ${res.status}` };
+        const body = await readErrorBody(res);
+        return { ok: false, error: `X hide reply: ${res.status}${body ? ` — ${body}` : ""}` };
       }
       return { ok: true };
     }
@@ -52,38 +60,37 @@ export async function hideComment(
   }
 }
 
+/**
+ * Block a user or author for the given platform.
+ * `commentId` is only used for YouTube's banAuthor moderation endpoint.
+ * X blocking requires Enterprise API access and is intentionally not supported.
+ */
 export async function blockUser(
   platform: Platform,
   accessToken: string,
   userId: string,
-  commentId: string,
+  commentId?: string,
 ): Promise<ActionResult> {
   try {
     if (platform === "youtube") {
+      if (!commentId) {
+        return { ok: false, error: "YouTube banAuthor requires a commentId" };
+      }
       const url = `https://www.googleapis.com/youtube/v3/comments/setModerationStatus?id=${encodeURIComponent(commentId)}&moderationStatus=rejected&banAuthor=true`;
       const res = await safeFetch(url, {
         method: "POST",
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!res.ok) {
-        return { ok: false, error: `YouTube banAuthor: ${res.status}` };
+        const body = await readErrorBody(res);
+        return { ok: false, error: `YouTube banAuthor: ${res.status}${body ? ` — ${body}` : ""}` };
       }
       return { ok: true };
     }
     if (platform === "x") {
-      const url = "https://api.x.com/2/users/me/blocking";
-      const res = await safeFetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ target_user_id: userId }),
-      });
-      if (!res.ok) {
-        return { ok: false, error: `X block: ${res.status}` };
-      }
-      return { ok: true };
+      // X block requires Enterprise API access (POST /2/users/:id/blocking with OAuth2).
+      // Regular OAuth2 Bearer tokens are not authorised for this endpoint.
+      return { ok: false, error: "X blocking requires Enterprise API access" };
     }
     return { ok: false, error: `blockUser not supported for ${platform}` };
   } catch (e) {
@@ -91,18 +98,49 @@ export async function blockUser(
   }
 }
 
+/**
+ * Attempt a platform-native comment report.
+ *
+ * Neither YouTube nor X currently exposes a public API endpoint for reporting
+ * individual comments. When the platform has no native support, `onUnsupported`
+ * is invoked as a caller-controlled fallback (e.g. `hideComment`) so the
+ * executor can still take a meaningful action instead of silently failing.
+ *
+ * When platform support becomes available, add the fetch implementation in the
+ * platform branch before calling `onUnsupported`.
+ *
+ * @param platform       - The social platform handling the report.
+ * @param accessToken    - OAuth access token for the authenticated account.
+ * @param commentId      - Platform-specific ID of the comment to report.
+ * @param reason         - Abuse category to pass to the platform API.
+ * @param onUnsupported  - Optional fallback invoked when the platform has no
+ *                         native report API. Receives the same platform,
+ *                         accessToken and commentId so the caller can delegate
+ *                         to e.g. hideComment.
+ */
 export async function reportComment(
   platform: Platform,
-  _accessToken: string,
-  _commentId: string,
+  accessToken: string,
+  commentId: string,
   _reason: ReportReason,
+  onUnsupported?: (
+    platform: Platform,
+    accessToken: string,
+    commentId: string,
+  ) => Promise<ActionResult>,
 ): Promise<ActionResult> {
-  if (platform === "youtube") {
-    // YouTube has no dedicated report API endpoint; signal fallback to caller
-    return { ok: false, error: "reportComment fallback required for youtube" };
-  }
-  if (platform === "x") {
-    return { ok: false, error: "X does not support report via API" };
-  }
-  return { ok: false, error: `reportComment not supported for ${platform}` };
+  const tryFallback = async (): Promise<ActionResult> => {
+    if (!onUnsupported) {
+      return { ok: false, error: `${platform}: no native report API; provide onUnsupported fallback` };
+    }
+    try {
+      return await onUnsupported(platform, accessToken, commentId);
+    } catch (err) {
+      return { ok: false, error: (err as Error).message ?? String(err) };
+    }
+  };
+
+  // TODO: add platform-specific report endpoints (YouTube, X, Reddit, etc.) here
+  // when native APIs become available. Until then all platforms use the fallback.
+  return tryFallback();
 }

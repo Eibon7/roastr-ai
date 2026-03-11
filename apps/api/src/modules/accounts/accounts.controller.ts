@@ -6,6 +6,7 @@ import {
   Req,
   UseGuards,
   NotFoundException,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { SubscriptionGuard } from "../../shared/guards/subscription.guard";
 import { AccountsService } from "./accounts.service";
@@ -17,7 +18,7 @@ export class AccountsController {
 
   @Get()
   async list(@Req() req: { user?: { id: string } }) {
-    if (!req.user?.id) return [];
+    if (!req.user?.id) throw new UnauthorizedException();
     return this.accounts.listByUserId(req.user.id);
   }
 
@@ -26,7 +27,7 @@ export class AccountsController {
     @Param("accountId") accountId: string,
     @Req() req: { user?: { id: string } },
   ) {
-    if (!req.user?.id) throw new NotFoundException();
+    if (!req.user?.id) throw new UnauthorizedException();
     const ok = await this.accounts.deleteByUserAndId(req.user.id, accountId);
     if (!ok) throw new NotFoundException();
     return { deleted: true };

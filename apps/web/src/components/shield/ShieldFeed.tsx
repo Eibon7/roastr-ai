@@ -65,6 +65,8 @@ export function ShieldFeed() {
       return;
     }
 
+    const controller = new AbortController();
+    const { signal } = controller;
     const params = new URLSearchParams();
     if (platformFilter) params.set("platform", platformFilter);
     if (actionFilter) params.set("action_taken", actionFilter);
@@ -72,13 +74,21 @@ export function ShieldFeed() {
     const qs = params.toString();
     apiFetch<ShieldLogsResponse>(`/shield/logs${qs ? `?${qs}` : ""}`, {
       token: session.access_token,
+      signal,
     })
       .then((res) => {
+        if (signal.aborted) return;
         setLogs(res.logs);
         setTotal(res.total);
+        setLoading(false);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Error"))
-      .finally(() => setLoading(false));
+      .catch((e) => {
+        if (e instanceof Error && e.name === "AbortError") return;
+        setError(e instanceof Error ? e.message : "Error");
+        setLoading(false);
+      });
+
+    return () => controller.abort();
   }, [session?.access_token, platformFilter, actionFilter]);
 
   if (loading) {
@@ -107,6 +117,7 @@ export function ShieldFeed() {
         <div className="flex flex-wrap items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
           <select
+            aria-label="Filtro de plataforma"
             value={platformFilter}
             onChange={(e) => setPlatformFilter(e.target.value)}
             className="rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground"
@@ -119,6 +130,7 @@ export function ShieldFeed() {
             ))}
           </select>
           <select
+            aria-label="Filtro de acción"
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value)}
             className="rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground"

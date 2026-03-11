@@ -4,6 +4,15 @@ import { useAuth } from "@/contexts/auth-context";
 import { apiFetch } from "@/lib/api";
 import { ConnectedAccounts } from "@/components/accounts/ConnectedAccounts";
 
+const CALLBACK_ERROR_MESSAGES: Record<string, string> = {
+  oauth_failed: "Error al conectar. Inténtalo de nuevo.",
+  access_denied: "Acceso denegado. Por favor, acepta los permisos para continuar.",
+};
+
+function mapCallbackError(slug: string): string {
+  return CALLBACK_ERROR_MESSAGES[slug] ?? "Error al conectar. Inténtalo de nuevo.";
+}
+
 export function ConnectPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -15,10 +24,14 @@ export function ConnectPage() {
     const err = searchParams.get("error");
     const succ = searchParams.get("success");
     if (err) {
-      setError(err === "oauth_failed" ? "Error al conectar. Inténtalo de nuevo." : err);
-    }
-    if (succ && (succ === "youtube" || succ === "x")) {
+      setError(mapCallbackError(err));
+      setSuccess(null);
+    } else if (succ && (succ === "youtube" || succ === "x")) {
       setSuccess({ platform: succ });
+      setError(null);
+    } else {
+      setError(null);
+      setSuccess(null);
     }
   }, [searchParams]);
 

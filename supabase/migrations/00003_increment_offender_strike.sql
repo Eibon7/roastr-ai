@@ -11,7 +11,7 @@ DECLARE
 BEGIN
   INSERT INTO offenders (user_id, account_id, platform, offender_id, strike_level, last_strike, updated_at)
   VALUES (p_user_id, p_account_id, p_platform, p_offender_id, 1, NOW(), NOW())
-  ON CONFLICT (user_id, account_id, offender_id)
+  ON CONFLICT (user_id, account_id, platform, offender_id)
   DO UPDATE SET
     strike_level = LEAST(offenders.strike_level + 1, 3),
     last_strike  = NOW(),

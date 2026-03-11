@@ -1,9 +1,9 @@
 import type { Job } from "bullmq";
 import { Queue } from "bullmq";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createJobLogger } from "../shared/logger.js";
 import { checkBillingLimits } from "../shared/billing-guard.js";
-import { ensureFreshToken } from "../shared/token-refresh.js";
+import { ensureFreshToken, toBuffer } from "../shared/token-refresh.js";
 import { fetchComments } from "../shared/fetch-comments.js";
 import { sanitizeCommentText } from "../shared/sanitize-text.js";
 import {
@@ -14,10 +14,20 @@ import {
 } from "../shared/queue.config.js";
 import type { NormalizedComment } from "@roastr/shared";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _supabase: SupabaseClient<any> | null = null;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getSupabase(): SupabaseClient<any> {
+  if (_supabase) return _supabase;
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
+  }
+  _supabase = createClient(url, key);
+  return _supabase;
+}
 
 let analysisQueue: Queue | null = null;
 
@@ -51,7 +61,7 @@ export async function ingestionProcessor(job: Job): Promise<void> {
     return;
   }
 
-  const { data: account, error: accountError } = await supabase
+  const { data: account, error: accountError } = await getSupabase()
     .from("accounts")
     .select(
       "id, user_id, platform, status, integration_health, ingestion_cursor, access_token_encrypted, refresh_token_encrypted, access_token_expires_at, platform_user_id",
@@ -93,11 +103,13 @@ export async function ingestionProcessor(job: Job): Promise<void> {
 
   let accessToken: string;
   try {
+    const accessRaw = account.access_token_encrypted as string | Buffer;
+    const refreshRaw = account.refresh_token_encrypted as string | Buffer | null;
     accessToken = await ensureFreshToken({
       id: account.id as string,
       platform: accountPlatform,
-      access_token_encrypted: account.access_token_encrypted as Buffer,
-      refresh_token_encrypted: (account.refresh_token_encrypted as Buffer | null) ?? null,
+      access_token_encrypted: toBuffer(accessRaw),
+      refresh_token_encrypted: refreshRaw ? toBuffer(refreshRaw) : null,
       access_token_expires_at: (account.access_token_expires_at as string | null) ?? null,
     });
   } catch (e) {
@@ -129,30 +141,32 @@ export async function ingestionProcessor(job: Job): Promise<void> {
     text: sanitizeCommentText(c.text),
   }));
 
-  for (const comment of sanitized) {
-    await queue.add(
-      "analyze",
-      {
-        commentId: comment.id,
-        userId: comment.userId,
-        accountId: comment.accountId,
-        platform: comment.platform,
-        text: comment.text,
-        authorId: comment.authorId,
-        timestamp: comment.timestamp,
-      },
-      {
-        ...DEFAULT_JOB_OPTIONS,
-        // Stable jobId prevents duplicate analysis jobs on ingestion retry
-        jobId: `analysis_${comment.platform}_${comment.accountId}_${comment.id}`,
-      },
+  if (sanitized.length > 0) {
+    await queue.addBulk(
+      sanitized.map((comment) => ({
+        name: "analyze",
+        data: {
+          commentId: comment.id,
+          userId: comment.userId,
+          accountId: comment.accountId,
+          platform: comment.platform,
+          text: comment.text,
+          authorId: comment.authorId,
+          timestamp: comment.timestamp,
+        },
+        opts: {
+          ...DEFAULT_JOB_OPTIONS,
+          // Stable jobId prevents duplicate analysis jobs on ingestion retry
+          jobId: `analysis_${comment.platform}_${comment.accountId}_${comment.id}`,
+        },
+      })),
     );
   }
 
   const nextCursor = page.nextCursor;
   const now = new Date().toISOString();
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await getSupabase()
     .from("accounts")
     .update({
       ingestion_cursor: nextCursor,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { Settings } from "lucide-react";
 import { AccountConfigModal } from "./AccountConfigModal";
@@ -8,8 +8,10 @@ type Account = {
   platform: string;
   username: string;
   status: string;
-  integration_health: string;
-  shield_aggressiveness?: number;
+};
+
+type BillingUsage = {
+  plan: string;
 };
 
 type Props = { token: string | null };
@@ -29,41 +31,85 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
 
 export function ConnectedAccounts({ token }: Props) {
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accountsError, setAccountsError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [planTier, setPlanTier] = useState<string>("");
 
-  useEffect(() => {
-    setIsLoading(true);
+  const loadAccounts = useCallback(async (signal?: AbortSignal) => {
     if (!token) {
       setAccounts([]);
       setIsLoading(false);
       return;
     }
-    apiFetch<Account[]>("/accounts", { token })
-      .then(setAccounts)
-      .catch(() => setAccounts([]))
-      .finally(() => setIsLoading(false));
+    setIsLoading(true);
+    try {
+      const data = await apiFetch<Account[]>("/accounts", { token, signal });
+      if (signal?.aborted) return;
+      setAccounts(data);
+      setAccountsError(null);
+    } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") return;
+      setAccountsError(e instanceof Error ? e.message : "Error al cargar cuentas");
+    } finally {
+      if (!signal?.aborted) setIsLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadAccounts(controller.signal);
+    return () => controller.abort();
+  }, [loadAccounts]);
+
+  useEffect(() => {
+    if (!token) return;
+    const controller = new AbortController();
+    apiFetch<BillingUsage>("/billing/usage", { token, signal: controller.signal })
+      .then((d) => {
+        if (!controller.signal.aborted) setPlanTier(d.plan ?? "starter");
+      })
+      .catch((e) => {
+        if (e instanceof Error && e.name === "AbortError") return;
+        console.error("Failed to load billing usage", e);
+        // Preserve existing planTier rather than downgrading on transient errors
+      });
+    return () => controller.abort();
   }, [token]);
 
   const handleConnect = async (platform: "youtube" | "x") => {
     if (!token) return;
-    const { url } = await apiFetch<{ url: string }>(`/oauth/${platform}/authorize`, {
-      token,
-    });
-    window.location.href = url;
+    try {
+      const { url } = await apiFetch<{ url: string }>(`/oauth/${platform}/authorize`, { token });
+      window.location.href = url;
+    } catch (e) {
+      setAccountsError(e instanceof Error ? e.message : "Error al iniciar OAuth");
+    }
   };
 
   const youtubeCount = accounts.filter((a) => a.platform === "youtube").length;
   const xCount = accounts.filter((a) => a.platform === "x").length;
-  // Max accounts per platform is determined by the plan; for now we derive it
-  // from the data: if any platform already has 2+ accounts the cap is at least 2.
-  // This will be replaced by a plan-aware hook when billing context is available.
-  const maxPerPlatform = 2;
+  const maxPerPlatform = (planTier === "pro" || planTier === "plus") ? 2 : 1;
   const [configAccountId, setConfigAccountId] = useState<string | null>(null);
 
   if (isLoading) {
     return (
       <div className="rounded-lg border border-input bg-card p-6">
         <p className="text-sm text-muted-foreground">Cargando cuentas...</p>
+      </div>
+    );
+  }
+
+  if (accountsError) {
+    return (
+      <div className="rounded-lg border border-input bg-card p-6">
+        <p className="text-sm text-destructive">{accountsError}</p>
+        <button
+          type="button"
+          onClick={() => void loadAccounts()}
+          className="mt-2 text-sm text-primary underline"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
@@ -124,7 +170,7 @@ export function ConnectedAccounts({ token }: Props) {
           onClose={() => setConfigAccountId(null)}
           onSaved={() => {
             setConfigAccountId(null);
-            apiFetch<Account[]>("/accounts", { token }).then(setAccounts);
+            void loadAccounts();
           }}
         />
       )}
@@ -137,7 +183,7 @@ export function ConnectedAccounts({ token }: Props) {
           </p>
           <button
             type="button"
-            onClick={() => handleConnect("youtube")}
+            onClick={() => void handleConnect("youtube")}
             disabled={!token || youtubeCount >= maxPerPlatform}
             className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
@@ -151,7 +197,7 @@ export function ConnectedAccounts({ token }: Props) {
           </p>
           <button
             type="button"
-            onClick={() => handleConnect("x")}
+            onClick={() => void handleConnect("x")}
             disabled={!token || xCount >= maxPerPlatform}
             className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >

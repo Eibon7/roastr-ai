@@ -16,19 +16,23 @@ export type DlqEntry = {
 
 const SENSITIVE_KEYS = new Set([
   "text",
-  "commentText",
+  "commenttext",
   "prompt",
   "content",
   "roast",
-  "accessToken",
-  "refreshToken",
+  "accesstoken",
+  "refreshtoken",
 ]);
+
+function normalizeKey(key: string): string {
+  return key.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
 
 function sanitizePayload(data: unknown): Record<string, unknown> {
   if (data == null || typeof data !== "object") return {};
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
-    if (SENSITIVE_KEYS.has(k)) continue;
+    if (SENSITIVE_KEYS.has(normalizeKey(k))) continue;
     if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
       out[k] = v;
     } else if (v && typeof v === "object" && !Array.isArray(v)) {

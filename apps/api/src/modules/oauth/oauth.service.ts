@@ -77,9 +77,14 @@ export class OAuthService {
     if (sig !== expectedSig) {
       throw new BadRequestException("Invalid state signature");
     }
-    const payload = JSON.parse(
-      Buffer.from(payloadB64, "base64url").toString("utf8"),
-    ) as { userId: string; exp: number };
+    let payload: { userId: string; exp: number };
+    try {
+      payload = JSON.parse(
+        Buffer.from(payloadB64, "base64url").toString("utf8"),
+      ) as { userId: string; exp: number };
+    } catch {
+      throw new BadRequestException("Invalid or expired state");
+    }
     const userId = payload.userId;
     if (!userId || payload.exp < Date.now()) {
       throw new BadRequestException("Invalid or expired state");
@@ -130,10 +135,8 @@ export class OAuthService {
           username: channelTitle,
           status: "active",
           integration_health: "ok",
-          access_token_encrypted: Buffer.from(accessEncrypted),
-          refresh_token_encrypted: refreshEncrypted
-            ? Buffer.from(refreshEncrypted)
-            : null,
+          access_token_encrypted: accessEncrypted,
+          refresh_token_encrypted: refreshEncrypted ?? null,
           access_token_expires_at: tokens.expiresAt,
           updated_at: new Date().toISOString(),
         },
@@ -200,9 +203,14 @@ export class OAuthService {
     if (sig !== expectedSig) {
       throw new BadRequestException("Invalid state signature");
     }
-    const payload = JSON.parse(
-      Buffer.from(payloadB64, "base64url").toString("utf8"),
-    ) as StatePayload;
+    let payload: StatePayload;
+    try {
+      payload = JSON.parse(
+        Buffer.from(payloadB64, "base64url").toString("utf8"),
+      ) as StatePayload;
+    } catch {
+      throw new BadRequestException("Invalid or expired state");
+    }
     const userId = payload.userId;
     const codeVerifier = payload.codeVerifier;
     if (!userId || payload.exp < Date.now() || !codeVerifier) {
@@ -255,10 +263,8 @@ export class OAuthService {
           username,
           status: "active",
           integration_health: "ok",
-          access_token_encrypted: Buffer.from(accessEncrypted),
-          refresh_token_encrypted: refreshEncrypted
-            ? Buffer.from(refreshEncrypted)
-            : null,
+          access_token_encrypted: accessEncrypted,
+          refresh_token_encrypted: refreshEncrypted ?? null,
           access_token_expires_at: tokens.expiresAt,
           updated_at: new Date().toISOString(),
         },

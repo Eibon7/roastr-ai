@@ -13,6 +13,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
+import { Logger } from "@roastr/shared";
 import { Public } from "../../shared/guards/public.decorator";
 
 const ONBOARDING_STATES = [
@@ -26,8 +27,14 @@ const ONBOARDING_STATES = [
 
 type OnboardingState = (typeof ONBOARDING_STATES)[number];
 
+function isOnboardingState(value: unknown): value is OnboardingState {
+  return ONBOARDING_STATES.includes(value as OnboardingState);
+}
+
 @Controller("auth")
 export class AuthController {
+  private readonly logger = new Logger({ service: AuthController.name });
+
   constructor(private readonly config: ConfigService) {}
 
   @Post("register")
@@ -75,9 +82,15 @@ export class AuthController {
       .eq("id", req.user.id)
       .maybeSingle();
     if (error) {
-      throw new InternalServerErrorException(error.message);
+      this.logger.error("Supabase error fetching onboarding state", { code: (error as { code?: string }).code });
+      throw new InternalServerErrorException("Authentication service error");
     }
-    return { state: (data?.onboarding_state as OnboardingState) ?? "welcome" };
+    if (data === null) {
+      throw new NotFoundException("Profile not found");
+    }
+    const raw = data?.onboarding_state;
+    const validState: OnboardingState = isOnboardingState(raw) ? raw : "welcome";
+    return { state: validState };
   }
 
   @Post("onboarding")
@@ -90,7 +103,7 @@ export class AuthController {
       throw new UnauthorizedException();
     }
 
-    if (!body.state || !ONBOARDING_STATES.includes(body.state as OnboardingState)) {
+    if (!body || typeof body !== "object" || !("state" in body) || !isOnboardingState(body.state)) {
       throw new BadRequestException("Invalid onboarding state");
     }
 
@@ -106,7 +119,8 @@ export class AuthController {
       .maybeSingle();
 
     if (error) {
-      throw new InternalServerErrorException(error.message);
+      this.logger.error("Supabase error updating onboarding state", { code: (error as { code?: string }).code });
+      throw new InternalServerErrorException("Authentication service error");
     }
     if (!data) {
       throw new NotFoundException("Profile not found");

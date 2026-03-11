@@ -32,6 +32,6 @@ export function getQueuePrefix(): string {
   const explicit = process.env.QUEUE_PREFIX;
   if (explicit) return explicit;
   if (env === "production") return "prod";
-  if (env === "staging") return "staging";
+  if (env === "staging" || env === "stg") return "stg";
   return "dev";
 }

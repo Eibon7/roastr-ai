@@ -28,6 +28,7 @@ export class OffendersService {
   async getOffender(
     userId: string,
     accountId: string,
+    platform: string,
     offenderId: string,
   ): Promise<OffenderRow | null> {
     const supabase = this.getSupabase();
@@ -37,6 +38,7 @@ export class OffendersService {
       .eq("user_id", userId)
       .eq("account_id", accountId)
       .eq("offender_id", offenderId)
+      .eq("platform", platform)
       .maybeSingle();
 
     if (error) throw error;
@@ -57,6 +59,7 @@ export class OffendersService {
       p_offender_id: offenderId,
     });
     if (error) throw error;
+    if (!data) throw new Error("increment_offender_strike returned null");
     return data as OffenderRow;
   }
 }
