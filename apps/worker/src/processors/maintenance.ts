@@ -66,31 +66,46 @@ export async function maintenanceProcessor(job: Job): Promise<void> {
     }
     roastCandidatesDeleted = roastData?.length ?? 0;
 
-    // 3. Anonymize old offenders — preserve strike_count, hash PII (offender_id)
-    const { data: candidates, error: fetchErr } = await supabase
-      .from("offenders")
-      .select("id, offender_id, last_strike, created_at")
-      .or(`last_strike.is.null,last_strike.lt.${cutoffIso}`)
-      .lt("created_at", cutoffIso);
+    // 3. Anonymize old offenders in pages to avoid memory/payload limits.
+    //    Cursor-paginate by created_at ascending; stop when a page is empty.
+    const PAGE_SIZE = 500;
+    let cursor = "1970-01-01T00:00:00.000Z";
 
-    if (fetchErr) throw fetchErr;
+    for (;;) {
+      const { data: page, error: pageErr } = await supabase
+        .from("offenders")
+        .select("id, offender_id, created_at")
+        .or(`last_strike.is.null,last_strike.lt.${cutoffIso}`)
+        .lt("created_at", cutoffIso)
+        .gt("created_at", cursor)
+        .order("created_at", { ascending: true })
+        .limit(PAGE_SIZE);
 
-    if (candidates && candidates.length > 0) {
-      const toAnonymize = (candidates as { id: string; offender_id: string }[]).filter(
-        (r) => !isAnonymized(r.offender_id),
-      );
+      if (pageErr) throw pageErr;
+      if (!page || page.length === 0) break;
+
+      const toAnonymize = (page as { id: string; offender_id: string; created_at: string }[])
+        .filter((r) => !isAnonymized(r.offender_id));
+
       if (toAnonymize.length > 0) {
+        const now = new Date().toISOString();
         const updates = toAnonymize.map(({ id, offender_id }) => ({
           id,
           offender_id: hashIdentifier(offender_id, anonymizeSecret),
-          updated_at: new Date().toISOString(),
+          updated_at: now,
         }));
         const { error: updateErr } = await supabase
           .from("offenders")
           .upsert(updates, { onConflict: "id" });
         if (updateErr) throw updateErr;
-        offendersAnonymized = toAnonymize.length;
+        offendersAnonymized += toAnonymize.length;
       }
+
+      // Advance cursor to the last row's created_at so next page starts after it
+      cursor = (page[page.length - 1] as { created_at: string }).created_at;
+
+      // If we got fewer rows than the page size we've exhausted all results
+      if (page.length < PAGE_SIZE) break;
     }
 
     // 4. Purge accounts flagged for retention expiry

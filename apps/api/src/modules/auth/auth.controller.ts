@@ -134,12 +134,13 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteAccount(
     @Req() req: { user?: { id: string } },
-    @Body() body: { password: string },
+    @Body() body?: { password?: string },
   ): Promise<void> {
     if (!req.user?.id) {
       throw new UnauthorizedException();
     }
-    if (!body.password) {
+    const password = body?.password;
+    if (!password) {
       throw new BadRequestException("Password is required");
     }
 
@@ -165,17 +166,23 @@ export class AuthController {
     );
     const { error: signInErr } = await anonClient.auth.signInWithPassword({
       email: profile.email,
-      password: body.password,
+      password,
     });
     if (signInErr) {
       throw new UnauthorizedException("Invalid password");
     }
 
     // Revoke OAuth tokens for all connected accounts
-    const { data: accounts } = await supabase
+    const { data: accounts, error: accountsErr } = await supabase
       .from("accounts")
       .select("id, platform, access_token, refresh_token")
       .eq("user_id", req.user.id);
+
+    if (accountsErr) {
+      throw new InternalServerErrorException(
+        `Failed to load accounts for revocation: ${accountsErr.message}`,
+      );
+    }
 
     if (accounts) {
       for (const account of accounts) {

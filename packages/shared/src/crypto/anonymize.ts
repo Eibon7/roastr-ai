@@ -12,6 +12,10 @@ export function hashIdentifier(raw: string, secret: string): string {
   return ANON_PREFIX + createHmac("sha256", secret).update(raw).digest("hex");
 }
 
+// HMAC-SHA256 produces 64 hex chars (256 bits); validate the full shape so
+// raw values that happen to start with "anon:" are not treated as anonymized.
+const ANONYMIZED_RE = new RegExp(`^${ANON_PREFIX}[0-9a-f]{64}$`);
+
 export function isAnonymized(value: string): boolean {
-  return value.startsWith(ANON_PREFIX);
+  return ANONYMIZED_RE.test(value);
 }
