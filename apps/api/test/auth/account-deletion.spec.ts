@@ -7,6 +7,10 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { AuthController } from "../../src/modules/auth/auth.controller";
 
+// Global fetch mock — replaced per-test as needed
+const mockFetch = vi.fn();
+vi.stubGlobal("fetch", mockFetch);
+
 // ─── Supabase mock factory ───────────────────────────────────────────────────
 
 type MockMethods = {
@@ -93,6 +97,8 @@ describe("AuthController.deleteAccount", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: fetch succeeds (revocation ok)
+    mockFetch.mockResolvedValue({ ok: true, status: 200 });
     controller = new AuthController(makeConfig());
   });
 
@@ -137,7 +143,7 @@ describe("AuthController.deleteAccount", () => {
     const profileChain = makeChain({ data: { email: "user@test.com" }, error: null });
     const accountsErrorChain = makeChain({ data: null, error: { message: "network error" } });
     mockFrom
-      .mockReturnValueOnce(profileChain)     // profiles lookup
+      .mockReturnValueOnce(profileChain)       // profiles lookup
       .mockReturnValueOnce(accountsErrorChain); // accounts select fails
     signInWithPassword.mockResolvedValue({ error: null });
 
@@ -146,13 +152,33 @@ describe("AuthController.deleteAccount", () => {
     ).rejects.toBeInstanceOf(InternalServerErrorException);
   });
 
+  it("throws 500 when OAuth token revocation fails (non-ok response)", async () => {
+    const profileChain = makeChain({ data: { email: "user@test.com" }, error: null });
+    const accountsChain = makeChain({
+      data: [{ id: "acc-1", platform: "youtube", access_token: "tok", refresh_token: null }],
+      error: null,
+    });
+    mockFrom
+      .mockReturnValueOnce(profileChain)  // profiles lookup
+      .mockReturnValueOnce(accountsChain); // accounts select
+    signInWithPassword.mockResolvedValue({ error: null });
+    mockFetch.mockResolvedValue({ ok: false, status: 400 });
+
+    await expect(
+      controller.deleteAccount(makeReq(), { password: "correct" }),
+    ).rejects.toBeInstanceOf(InternalServerErrorException);
+
+    // Cascade delete must NOT have been called — account data is preserved for retry
+    expect(adminDeleteUser).not.toHaveBeenCalled();
+  });
+
   it("throws 500 when a cascade delete fails", async () => {
     const profileChain = makeChain({ data: { email: "user@test.com" }, error: null });
     const accountsChain = makeChain({ data: [], error: null });
     const failChain = makeChain({ data: null, error: { message: "constraint violation" } });
     mockFrom
       .mockReturnValueOnce(profileChain)   // profiles lookup
-      .mockReturnValueOnce(accountsChain)  // accounts select (OAuth revocation)
+      .mockReturnValueOnce(accountsChain)  // accounts select (no tokens to revoke)
       .mockReturnValueOnce(failChain);     // first cascade delete fails
     signInWithPassword.mockResolvedValue({ error: null });
 
@@ -166,7 +192,7 @@ describe("AuthController.deleteAccount", () => {
     const accountsChain = makeChain({ data: [], error: null });
     mockFrom
       .mockReturnValueOnce(profileChain)   // profiles lookup
-      .mockReturnValueOnce(accountsChain)  // accounts select (OAuth revocation)
+      .mockReturnValueOnce(accountsChain)  // accounts select (no tokens to revoke)
       .mockReturnValue(accountsChain);     // all cascade deletes succeed
     signInWithPassword.mockResolvedValue({ error: null });
     adminDeleteUser.mockResolvedValue({ error: { message: "delete failed" } });
@@ -181,7 +207,7 @@ describe("AuthController.deleteAccount", () => {
     const accountsChain = makeChain({ data: [], error: null });
     mockFrom
       .mockReturnValueOnce(profileChain)   // profiles lookup
-      .mockReturnValueOnce(accountsChain)  // accounts select (OAuth revocation)
+      .mockReturnValueOnce(accountsChain)  // accounts select (no tokens to revoke)
       .mockReturnValue(accountsChain);     // all cascade deletes
     signInWithPassword.mockResolvedValue({ error: null });
     adminDeleteUser.mockResolvedValue({ error: null });
@@ -190,6 +216,33 @@ describe("AuthController.deleteAccount", () => {
       controller.deleteAccount(makeReq(), { password: "correct" }),
     ).resolves.toBeUndefined();
 
+    expect(adminDeleteUser).toHaveBeenCalledWith("user-123");
+  });
+
+  it("completes deletion cascade with successful YouTube token revocation", async () => {
+    const profileChain = makeChain({ data: { email: "user@test.com" }, error: null });
+    const accountsChain = makeChain({
+      data: [{ id: "acc-1", platform: "youtube", access_token: "yt-tok", refresh_token: null }],
+      error: null,
+    });
+    const okChain = makeChain({ data: [], error: null });
+    mockFrom
+      .mockReturnValueOnce(profileChain)   // profiles lookup
+      .mockReturnValueOnce(accountsChain)  // accounts select
+      .mockReturnValue(okChain);           // all cascade deletes
+    signInWithPassword.mockResolvedValue({ error: null });
+    adminDeleteUser.mockResolvedValue({ error: null });
+    mockFetch.mockResolvedValue({ ok: true, status: 200 });
+
+    await expect(
+      controller.deleteAccount(makeReq(), { password: "correct" }),
+    ).resolves.toBeUndefined();
+
+    // Google revocation must use form-encoded body, not query param interpolation
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://oauth2.googleapis.com/revoke",
+      expect.objectContaining({ method: "POST" }),
+    );
     expect(adminDeleteUser).toHaveBeenCalledWith("user-123");
   });
 });

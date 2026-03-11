@@ -67,18 +67,28 @@ export async function maintenanceProcessor(job: Job): Promise<void> {
     roastCandidatesDeleted = roastData?.length ?? 0;
 
     // 3. Anonymize old offenders in pages to avoid memory/payload limits.
-    //    Cursor-paginate by created_at ascending; stop when a page is empty.
+    //    Composite cursor (created_at, id) avoids skipping rows that share the
+    //    same timestamp at a page boundary.
     const PAGE_SIZE = 500;
-    let cursor = "1970-01-01T00:00:00.000Z";
+    let cursor = {
+      created_at: "1970-01-01T00:00:00.000Z",
+      id: "00000000-0000-0000-0000-000000000000",
+    };
 
     for (;;) {
+      // Fetch the next page: rows after the composite cursor, ordered by
+      // (created_at, id) so the cursor advances deterministically even when
+      // multiple rows have an identical created_at value.
       const { data: page, error: pageErr } = await supabase
         .from("offenders")
         .select("id, offender_id, created_at")
         .or(`last_strike.is.null,last_strike.lt.${cutoffIso}`)
         .lt("created_at", cutoffIso)
-        .gt("created_at", cursor)
+        .or(
+          `created_at.gt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.gt.${cursor.id})`,
+        )
         .order("created_at", { ascending: true })
+        .order("id", { ascending: true })
         .limit(PAGE_SIZE);
 
       if (pageErr) throw pageErr;
@@ -101,10 +111,11 @@ export async function maintenanceProcessor(job: Job): Promise<void> {
         offendersAnonymized += toAnonymize.length;
       }
 
-      // Advance cursor to the last row's created_at so next page starts after it
-      cursor = (page[page.length - 1] as { created_at: string }).created_at;
+      // Advance composite cursor to the last row of this page
+      const last = page[page.length - 1] as { created_at: string; id: string };
+      cursor = { created_at: last.created_at, id: last.id };
 
-      // If we got fewer rows than the page size we've exhausted all results
+      // Fewer rows than PAGE_SIZE means no more pages remain
       if (page.length < PAGE_SIZE) break;
     }
 

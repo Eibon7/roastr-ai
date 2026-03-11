@@ -187,20 +187,17 @@ export class AuthController {
     if (accounts) {
       for (const account of accounts) {
         if (account.access_token) {
+          let revoked = false;
           try {
-            let revoked = false;
             if (account.platform === "youtube") {
-              const res = await fetch(
-                `https://oauth2.googleapis.com/revoke?token=${account.access_token}`,
-                { method: "POST" },
-              );
+              // Send token as form-encoded body (not interpolated into the URL)
+              // so special characters are properly encoded and don't break the request.
+              const res = await fetch("https://oauth2.googleapis.com/revoke", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ token: account.access_token }),
+              });
               revoked = res.ok;
-              if (!revoked) {
-                this.logger.warn("YouTube token revocation returned non-ok status", {
-                  accountId: account.id,
-                  status: res.status,
-                });
-              }
             } else if (account.platform === "x") {
               const res = await fetch("https://api.twitter.com/2/oauth2/revoke", {
                 method: "POST",
@@ -211,22 +208,26 @@ export class AuthController {
                 }),
               });
               revoked = res.ok;
-              if (!revoked) {
-                this.logger.warn("X token revocation returned non-ok status", {
-                  accountId: account.id,
-                  status: res.status,
-                });
-              }
+            } else {
+              // Unknown platform — no revocation endpoint; treat as revoked
+              revoked = true;
             }
-            // Account row is deleted below in the cascade; log-only on failure
-            // since the account is being permanently removed.
-            void revoked;
           } catch (err) {
-            this.logger.warn("OAuth token revocation request failed", {
+            this.logger.error("OAuth token revocation request threw", {
               accountId: account.id,
               platform: account.platform,
               error: err instanceof Error ? err.message : String(err),
             });
+          }
+
+          if (!revoked) {
+            // Abort deletion so the token stays in the DB and the user can retry.
+            // Deleting the account row before confirming revocation would
+            // leave the token non-revokable forever.
+            throw new InternalServerErrorException(
+              `OAuth token revocation failed for account ${account.id} (${account.platform}). ` +
+                "Please try again; if the issue persists contact support.",
+            );
           }
         }
       }
