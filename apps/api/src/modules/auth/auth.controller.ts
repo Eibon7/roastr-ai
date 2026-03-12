@@ -159,6 +159,9 @@ export class AuthController {
     if (!password) {
       throw new BadRequestException("Password is required");
     }
+    if (typeof password !== "string") {
+      throw new BadRequestException("Password must be a string");
+    }
 
     const supabase = createClient(
       this.config.getOrThrow("SUPABASE_URL"),
@@ -231,8 +234,12 @@ export class AuthController {
               );
               revoked = res.ok;
             } else {
-              // Unknown platform — no revocation endpoint; treat as revoked
-              revoked = true;
+              // Unknown platform — fail closed: leave revoked = false so the
+              // deletion is aborted below. Log for manual review.
+              this.logger.error("Cannot revoke token for unknown platform", {
+                accountId: account.id,
+                platform: account.platform,
+              });
             }
           } catch (err) {
             this.logger.error("OAuth token revocation request threw", {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   UnauthorizedException,
   BadRequestException,
@@ -7,9 +7,9 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { AuthController } from "../../src/modules/auth/auth.controller";
 
-// Global fetch mock — replaced per-test as needed
+// Declared at module scope for stable reference across tests;
+// installed/torn-down per test via beforeEach/afterEach for proper isolation.
 const mockFetch = vi.fn();
-vi.stubGlobal("fetch", mockFetch);
 
 // ─── Supabase mock factory ───────────────────────────────────────────────────
 
@@ -97,9 +97,14 @@ describe("AuthController.deleteAccount", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal("fetch", mockFetch);
     // Default: fetch succeeds (revocation ok)
     mockFetch.mockResolvedValue({ ok: true, status: 200 });
     controller = new AuthController(makeConfig());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("throws 401 when no authenticated user", async () => {
