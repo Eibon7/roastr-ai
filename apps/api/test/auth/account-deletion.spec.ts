@@ -155,7 +155,7 @@ describe("AuthController.deleteAccount", () => {
   it("throws 500 when OAuth token revocation fails (non-ok response)", async () => {
     const profileChain = makeChain({ data: { email: "user@test.com" }, error: null });
     const accountsChain = makeChain({
-      data: [{ id: "acc-1", platform: "youtube", access_token: "tok", refresh_token: null }],
+      data: [{ id: "acc-1", platform: "youtube", access_token: "tok" }],
       error: null,
     });
     mockFrom
@@ -222,7 +222,7 @@ describe("AuthController.deleteAccount", () => {
   it("completes deletion cascade with successful YouTube token revocation", async () => {
     const profileChain = makeChain({ data: { email: "user@test.com" }, error: null });
     const accountsChain = makeChain({
-      data: [{ id: "acc-1", platform: "youtube", access_token: "yt-tok", refresh_token: null }],
+      data: [{ id: "acc-1", platform: "youtube", access_token: "yt-tok" }],
       error: null,
     });
     const okChain = makeChain({ data: [], error: null });
@@ -238,10 +238,14 @@ describe("AuthController.deleteAccount", () => {
       controller.deleteAccount(makeReq(), { password: "correct" }),
     ).resolves.toBeUndefined();
 
-    // Google revocation must use form-encoded body, not query param interpolation
+    // Google revocation must be a form-encoded POST (not raw URL interpolation)
     expect(mockFetch).toHaveBeenCalledWith(
       "https://oauth2.googleapis.com/revoke",
-      expect.objectContaining({ method: "POST" }),
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ token: "yt-tok" }).toString(),
+      }),
     );
     expect(adminDeleteUser).toHaveBeenCalledWith("user-123");
   });

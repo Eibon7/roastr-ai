@@ -17,6 +17,22 @@ import { createClient } from "@supabase/supabase-js";
 import { Logger } from "@roastr/shared";
 import { Public } from "../../shared/guards/public.decorator";
 
+const REVOCATION_TIMEOUT_MS = 8_000;
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 const ONBOARDING_STATES = [
   "welcome",
   "select_plan",
@@ -175,7 +191,7 @@ export class AuthController {
     // Revoke OAuth tokens for all connected accounts
     const { data: accounts, error: accountsErr } = await supabase
       .from("accounts")
-      .select("id, platform, access_token, refresh_token")
+      .select("id, platform, access_token")
       .eq("user_id", req.user.id);
 
     if (accountsErr) {
@@ -190,23 +206,29 @@ export class AuthController {
           let revoked = false;
           try {
             if (account.platform === "youtube") {
-              // Send token as form-encoded body (not interpolated into the URL)
-              // so special characters are properly encoded and don't break the request.
-              const res = await fetch("https://oauth2.googleapis.com/revoke", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams({ token: account.access_token }),
-              });
+              const res = await fetchWithTimeout(
+                "https://oauth2.googleapis.com/revoke",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                  body: new URLSearchParams({ token: account.access_token }).toString(),
+                },
+                REVOCATION_TIMEOUT_MS,
+              );
               revoked = res.ok;
             } else if (account.platform === "x") {
-              const res = await fetch("https://api.twitter.com/2/oauth2/revoke", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams({
-                  token: account.access_token,
-                  token_type_hint: "access_token",
-                }),
-              });
+              const res = await fetchWithTimeout(
+                "https://api.twitter.com/2/oauth2/revoke",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                  body: new URLSearchParams({
+                    token: account.access_token,
+                    token_type_hint: "access_token",
+                  }).toString(),
+                },
+                REVOCATION_TIMEOUT_MS,
+              );
               revoked = res.ok;
             } else {
               // Unknown platform — no revocation endpoint; treat as revoked
