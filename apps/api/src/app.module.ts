@@ -13,6 +13,7 @@ import { IngestionModule } from "./modules/ingestion/ingestion.module";
 import { PersonaModule } from "./modules/persona/persona.module";
 import { FeatureFlagsModule } from "./modules/feature-flags/feature-flags.module";
 import { OAuthModule } from "./modules/oauth/oauth.module";
+import { RoastModule } from "./modules/roast/roast.module";
 import { validateEnv } from "./shared/config/env.validation";
 import { SsotModule } from "./shared/config/ssot.module";
 import { SupabaseAuthGuard } from "./shared/guards/supabase-auth.guard";
@@ -46,6 +47,7 @@ import { SupabaseAuthGuard } from "./shared/guards/supabase-auth.guard";
     PersonaModule,
     FeatureFlagsModule,
     OAuthModule,
+    RoastModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

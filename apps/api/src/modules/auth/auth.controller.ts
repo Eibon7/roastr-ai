@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
   Body,
   Req,
   HttpCode,
@@ -15,6 +16,22 @@ import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
 import { Logger } from "@roastr/shared";
 import { Public } from "../../shared/guards/public.decorator";
+
+const REVOCATION_TIMEOUT_MS = 8_000;
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 const ONBOARDING_STATES = [
   "welcome",
@@ -127,5 +144,139 @@ export class AuthController {
     }
 
     return { state: body.state };
+  }
+
+  @Delete("account")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteAccount(
+    @Req() req: { user?: { id: string } },
+    @Body() body?: { password?: string },
+  ): Promise<void> {
+    if (!req.user?.id) {
+      throw new UnauthorizedException();
+    }
+    const password = body?.password;
+    if (!password) {
+      throw new BadRequestException("Password is required");
+    }
+    if (typeof password !== "string") {
+      throw new BadRequestException("Password must be a string");
+    }
+
+    const supabase = createClient(
+      this.config.getOrThrow("SUPABASE_URL"),
+      this.config.getOrThrow("SUPABASE_SERVICE_ROLE_KEY"),
+    );
+
+    // Verify password by attempting sign-in with the user's email
+    const { data: profile, error: profileErr } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", req.user.id)
+      .maybeSingle();
+
+    if (profileErr || !profile?.email) {
+      throw new InternalServerErrorException("Could not retrieve account");
+    }
+
+    const anonClient = createClient(
+      this.config.getOrThrow("SUPABASE_URL"),
+      this.config.getOrThrow("SUPABASE_ANON_KEY"),
+    );
+    const { error: signInErr } = await anonClient.auth.signInWithPassword({
+      email: profile.email,
+      password,
+    });
+    if (signInErr) {
+      throw new UnauthorizedException("Invalid password");
+    }
+
+    // Revoke OAuth tokens for all connected accounts
+    const { data: accounts, error: accountsErr } = await supabase
+      .from("accounts")
+      .select("id, platform, access_token")
+      .eq("user_id", req.user.id);
+
+    if (accountsErr) {
+      throw new InternalServerErrorException(
+        `Failed to load accounts for revocation: ${accountsErr.message}`,
+      );
+    }
+
+    if (accounts) {
+      for (const account of accounts) {
+        if (account.access_token) {
+          let revoked = false;
+          try {
+            if (account.platform === "youtube") {
+              const res = await fetchWithTimeout(
+                "https://oauth2.googleapis.com/revoke",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                  body: new URLSearchParams({ token: account.access_token }).toString(),
+                },
+                REVOCATION_TIMEOUT_MS,
+              );
+              revoked = res.ok;
+            } else if (account.platform === "x") {
+              const res = await fetchWithTimeout(
+                "https://api.twitter.com/2/oauth2/revoke",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                  body: new URLSearchParams({
+                    token: account.access_token,
+                    token_type_hint: "access_token",
+                  }).toString(),
+                },
+                REVOCATION_TIMEOUT_MS,
+              );
+              revoked = res.ok;
+            } else {
+              // Unknown platform — fail closed: leave revoked = false so the
+              // deletion is aborted below. Log for manual review.
+              this.logger.error("Cannot revoke token for unknown platform", {
+                accountId: account.id,
+                platform: account.platform,
+              });
+            }
+          } catch (err) {
+            this.logger.error("OAuth token revocation request threw", {
+              accountId: account.id,
+              platform: account.platform,
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+
+          if (!revoked) {
+            // Abort deletion so the token stays in the DB and the user can retry.
+            // Deleting the account row before confirming revocation would
+            // leave the token non-revokable forever.
+            throw new InternalServerErrorException(
+              `OAuth token revocation failed for account ${account.id} (${account.platform}). ` +
+                "Please try again; if the issue persists contact support.",
+            );
+          }
+        }
+      }
+    }
+
+    // Cascade delete: user data in order of FK dependencies
+    const tables = ["subscriptions_usage", "shield_logs", "offenders", "accounts"] as const;
+    for (const table of tables) {
+      const { error: delErr } = await supabase.from(table).delete().eq("user_id", req.user.id);
+      if (delErr) {
+        throw new InternalServerErrorException(
+          `Failed to delete ${table}: ${delErr.message}`,
+        );
+      }
+    }
+
+    // Delete auth user — triggers cascade on profiles via DB trigger
+    const { error: deleteErr } = await supabase.auth.admin.deleteUser(req.user.id);
+    if (deleteErr) {
+      throw new InternalServerErrorException(deleteErr.message);
+    }
   }
 }
