@@ -3,6 +3,7 @@ import { UsageWidget } from "@/components/billing/UsageWidget";
 import { ConnectedAccounts } from "@/components/accounts/ConnectedAccounts";
 import { ShieldStatsWidget } from "@/components/dashboard/ShieldStatsWidget";
 import { RecentThreatsWidget } from "@/components/dashboard/RecentThreatsWidget";
+import { RoastReviewList } from "@/components/roast/RoastReviewList";
 
 export function DashboardPage() {
   const { session } = useAuth();
@@ -15,6 +16,9 @@ export function DashboardPage() {
         <ShieldStatsWidget />
         <RecentThreatsWidget />
       </div>
+
+      {/* Roasts awaiting review */}
+      <RoastReviewList />
 
       {/* Usage + Accounts */}
       <div className="grid gap-4 sm:grid-cols-2">

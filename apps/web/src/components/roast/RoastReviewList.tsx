@@ -1,7 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { apiFetch } from "@/lib/api";
-import { Wand2, Clock, RefreshCcw } from "lucide-react";
+import { Wand2, Clock, RefreshCcw, AlertCircle, Trash2, Loader2 } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 type RoastCandidate = {
   id: string;
@@ -28,22 +39,33 @@ const TONE_LABELS: Record<string, string> = {
   personal: "Personal",
 };
 
-const STATUS_BADGE = {
+const STATUS_BADGE: Record<RoastCandidate["status"], { label: string; className: string }> = {
   pending_review: { label: "Pendiente", className: "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400" },
   approved: { label: "Aprobado", className: "bg-green-500/20 text-green-700 dark:text-green-400" },
   discarded: { label: "Descartado", className: "bg-red-500/20 text-red-600" },
   published: { label: "Publicado", className: "bg-blue-500/20 text-blue-700 dark:text-blue-400" },
-} as const;
+};
 
 type Props = {
   onGenerateNew?: () => void;
 };
+
+function relativeTime(isoDate: string) {
+  const diff = Date.now() - new Date(isoDate).getTime();
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 60) return `hace ${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `hace ${hours}h`;
+  return `hace ${Math.floor(hours / 24)}d`;
+}
 
 export function RoastReviewList({ onGenerateNew }: Props) {
   const { session } = useAuth();
   const [candidates, setCandidates] = useState<RoastCandidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [discardingId, setDiscardingId] = useState<string | null>(null);
+  const [discardError, setDiscardError] = useState<string | null>(null);
 
   const fetchCandidates = useCallback(async () => {
     if (!session?.access_token) { setLoading(false); return; }
@@ -63,105 +85,187 @@ export function RoastReviewList({ onGenerateNew }: Props) {
 
   useEffect(() => { fetchCandidates(); }, [fetchCandidates]);
 
-  function relativeTime(isoDate: string) {
-    const diff = Date.now() - new Date(isoDate).getTime();
-    const minutes = Math.floor(diff / 60_000);
-    if (minutes < 60) return `hace ${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `hace ${hours}h`;
-    return `hace ${Math.floor(hours / 24)}d`;
+  async function handleDiscard(id: string) {
+    if (!session?.access_token) return;
+    setDiscardingId(id);
+    setDiscardError(null);
+    try {
+      await apiFetch(`/roast/candidates/${id}/discard`, {
+        token: session.access_token,
+        method: "PATCH",
+      });
+      await fetchCandidates();
+    } catch (e) {
+      setDiscardError(e instanceof Error ? e.message : "Error descartando el roast");
+    } finally {
+      setDiscardingId(null);
+    }
+  }
+
+  function DiscardButton({ candidate }: { candidate: RoastCandidate }) {
+    if (candidate.status !== "pending_review") return null;
+    const isDiscarding = discardingId === candidate.id;
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => handleDiscard(candidate.id)}
+        disabled={isDiscarding}
+        aria-label="Descartar roast"
+      >
+        {isDiscarding ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Trash2 className="h-3.5 w-3.5" />
+        )}
+        Descartar
+      </Button>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Wand2 className="h-5 w-5 text-primary" />
-          <h2 className="text-base font-semibold text-foreground">Roasts pendientes de revisión</h2>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={fetchCandidates}
-            disabled={loading}
-            className="rounded p-1.5 text-muted-foreground hover:bg-muted"
-            title="Refrescar"
-          >
-            <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
-          {onGenerateNew && (
-            <button
-              onClick={onGenerateNew}
-              className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+    <Card>
+      <CardHeader className="pb-0">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Wand2 className="h-5 w-5 text-primary" />
+            Roasts pendientes de revisión
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={fetchCandidates}
+              disabled={loading}
+              title="Refrescar"
+              aria-label="Refrescar"
             >
-              <Wand2 className="h-3 w-3" />
-              Generar nuevo
-            </button>
-          )}
+              <RefreshCcw className={loading ? "animate-spin" : ""} />
+            </Button>
+            {onGenerateNew && (
+              <Button size="sm" onClick={onGenerateNew}>
+                <Wand2 className="h-3 w-3" />
+                Generar nuevo
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      </CardHeader>
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      <CardContent className="space-y-4">
+        {loading && (
+          <div className="space-y-2" data-testid="roast-review-loading">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        )}
 
-      {!loading && candidates.length === 0 && (
-        <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center">
-          <Wand2 className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground">No hay roasts pendientes de revisión.</p>
-          {onGenerateNew && (
-            <button
-              onClick={onGenerateNew}
-              className="mt-3 text-sm font-medium text-primary hover:underline"
-            >
-              Generar uno nuevo →
-            </button>
-          )}
-        </div>
-      )}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      {candidates.length > 0 && (
-        <div className="rounded-lg border border-border bg-card overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Plataforma</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Tono</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Estado</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Creado</th>
-              </tr>
-            </thead>
-            <tbody>
+        {discardError && (
+          <Alert variant="destructive">
+            <AlertCircle />
+            <AlertDescription>{discardError}</AlertDescription>
+          </Alert>
+        )}
+
+        {!loading && !error && candidates.length === 0 && (
+          <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center">
+            <Wand2 className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">No hay roasts pendientes de revisión.</p>
+            {onGenerateNew && (
+              <button
+                onClick={onGenerateNew}
+                className="mt-3 text-sm font-medium text-primary hover:underline"
+              >
+                Generar uno nuevo →
+              </button>
+            )}
+          </div>
+        )}
+
+        {!loading && !error && candidates.length > 0 && (
+          <>
+            {/* Desktop: table */}
+            <div className="hidden overflow-hidden rounded-lg border border-border sm:block">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Plataforma</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Tono</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Estado</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Creado</th>
+                    <th className="px-4 py-3 text-right font-medium text-muted-foreground"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {candidates.map((c) => {
+                    const badge = STATUS_BADGE[c.status] ?? STATUS_BADGE.pending_review;
+                    return (
+                      <tr key={c.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30">
+                        <td className="px-4 py-3 text-foreground">
+                          {PLATFORM_LABELS[c.platform] ?? c.platform}
+                        </td>
+                        <td className="px-4 py-3 text-foreground">
+                          {TONE_LABELS[c.tone] ?? c.tone}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge className={badge.className}>
+                            {badge.label}
+                            {c.has_validation_errors && <span className="ml-1 text-yellow-600">⚠</span>}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {relativeTime(c.created_at)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <DiscardButton candidate={c} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile: accordion */}
+            <Accordion type="single" collapsible className="sm:hidden">
               {candidates.map((c) => {
                 const badge = STATUS_BADGE[c.status] ?? STATUS_BADGE.pending_review;
                 return (
-                  <tr key={c.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30">
-                    <td className="px-4 py-3 text-foreground">
-                      {PLATFORM_LABELS[c.platform] ?? c.platform}
-                    </td>
-                    <td className="px-4 py-3 text-foreground">
-                      {TONE_LABELS[c.tone] ?? c.tone}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>
-                        {badge.label}
-                        {c.has_validation_errors && (
-                          <span className="ml-1 text-yellow-600">⚠</span>
-                        )}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      <span className="flex items-center gap-1">
+                  <AccordionItem key={c.id} value={c.id}>
+                    <AccordionTrigger>
+                      <div className="flex flex-1 items-center justify-between gap-2 pr-2">
+                        <span className="text-foreground">
+                          {PLATFORM_LABELS[c.platform] ?? c.platform} · {TONE_LABELS[c.tone] ?? c.tone}
+                        </span>
+                        <Badge className={badge.className}>{badge.label}</Badge>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-3">
+                      <p className="flex items-center gap-1 text-muted-foreground">
                         <Clock className="h-3 w-3" />
                         {relativeTime(c.created_at)}
-                      </span>
-                    </td>
-                  </tr>
+                        {c.has_validation_errors && <span className="ml-1 text-yellow-600">⚠ Avisos de validación</span>}
+                      </p>
+                      <DiscardButton candidate={c} />
+                    </AccordionContent>
+                  </AccordionItem>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+            </Accordion>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
