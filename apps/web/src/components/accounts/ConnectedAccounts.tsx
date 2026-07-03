@@ -3,6 +3,16 @@ import { apiFetch } from "@/lib/api";
 import { useAccounts } from "@/hooks/use-accounts";
 import { Settings } from "lucide-react";
 import { AccountConfigModal } from "./AccountConfigModal";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 
 type Props = { token: string | null };
 
@@ -40,17 +50,22 @@ export function ConnectedAccounts({ token }: Props) {
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-input bg-card p-6">
-        <p className="text-sm text-muted-foreground">Cargando cuentas...</p>
-      </div>
+      <Card>
+        <CardContent className="space-y-2">
+          <Skeleton className="h-5 w-full" />
+          <Skeleton className="h-5 w-full" />
+          <Skeleton className="h-5 w-2/3" />
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
       {accounts.length > 0 && (
-        <div className="rounded-lg border border-input bg-card overflow-hidden">
-          <table className="w-full text-sm">
+        <Card className="overflow-hidden py-0">
+          {/* Desktop: table layout */}
+          <table className="hidden w-full text-sm sm:table">
             <thead>
               <tr className="border-b border-input bg-muted/50">
                 <th className="px-4 py-3 text-left font-medium">Plataforma</th>
@@ -71,28 +86,58 @@ export function ConnectedAccounts({ token }: Props) {
                       {acc.platform === "x" ? `@${acc.username}` : acc.username}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}
-                      >
-                        {badge.label}
-                      </span>
+                      <Badge className={badge.className}>{badge.label}</Badge>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={() => setConfigAccountId(acc.id)}
-                        className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
                         aria-label="Configurar cuenta"
                       >
                         <Settings className="h-4 w-4" />
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-        </div>
+
+          {/* Mobile: accordion layout */}
+          <Accordion type="single" collapsible className="sm:hidden px-4">
+            {accounts.map((acc) => {
+              const badge = STATUS_BADGE[acc.status] ?? STATUS_BADGE.active;
+              return (
+                <AccordionItem key={acc.id} value={acc.id}>
+                  <AccordionTrigger>
+                    <div className="flex flex-1 items-center justify-between pr-2">
+                      <span>{PLATFORM_LABELS[acc.platform] ?? acc.platform}</span>
+                      <Badge className={badge.className}>{badge.label}</Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">
+                        {acc.platform === "x" ? `@${acc.username}` : acc.username}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setConfigAccountId(acc.id)}
+                        aria-label="Configurar cuenta"
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+        </Card>
       )}
 
       {configAccountId && token && (
@@ -108,34 +153,38 @@ export function ConnectedAccounts({ token }: Props) {
       )}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-lg border border-input bg-card p-4">
-          <h3 className="font-medium">YouTube</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Conecta tu canal de YouTube para proteger los comentarios.
-          </p>
-          <button
-            type="button"
-            onClick={() => handleConnect("youtube")}
-            disabled={!token || youtubeCount >= maxPerPlatform}
-            className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            Conectar YouTube ({youtubeCount}/{maxPerPlatform})
-          </button>
-        </div>
-        <div className="rounded-lg border border-input bg-card p-4">
-          <h3 className="font-medium">X (Twitter)</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Conecta tu cuenta de X para proteger tus menciones.
-          </p>
-          <button
-            type="button"
-            onClick={() => handleConnect("x")}
-            disabled={!token || xCount >= maxPerPlatform}
-            className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            Conectar X ({xCount}/{maxPerPlatform})
-          </button>
-        </div>
+        <Card>
+          <CardContent>
+            <h3 className="font-medium">YouTube</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Conecta tu canal de YouTube para proteger los comentarios.
+            </p>
+            <Button
+              type="button"
+              onClick={() => handleConnect("youtube")}
+              disabled={!token || youtubeCount >= maxPerPlatform}
+              className="mt-3"
+            >
+              Conectar YouTube ({youtubeCount}/{maxPerPlatform})
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent>
+            <h3 className="font-medium">X (Twitter)</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Conecta tu cuenta de X para proteger tus menciones.
+            </p>
+            <Button
+              type="button"
+              onClick={() => handleConnect("x")}
+              disabled={!token || xCount >= maxPerPlatform}
+              className="mt-3"
+            >
+              Conectar X ({xCount}/{maxPerPlatform})
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

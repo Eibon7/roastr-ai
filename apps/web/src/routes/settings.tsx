@@ -2,6 +2,12 @@ import { useState } from "react";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/contexts/auth-context";
 import { apiFetch } from "@/lib/api";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Settings,
   User,
@@ -38,16 +44,18 @@ function PerfilTab() {
   return (
     <div className="space-y-4">
       <h2 className="text-base font-semibold text-foreground">Información de perfil</h2>
-      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-        <div>
-          <label className="text-xs text-muted-foreground">Email</label>
-          <p className="mt-1 text-sm text-foreground">{user?.email ?? "—"}</p>
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground">ID de usuario</label>
-          <p className="mt-1 font-mono text-xs text-muted-foreground truncate">{user?.id ?? "—"}</p>
-        </div>
-      </div>
+      <Card>
+        <CardContent className="space-y-3">
+          <div>
+            <label className="text-xs text-muted-foreground">Email</label>
+            <p className="mt-1 text-sm text-foreground">{user?.email ?? "—"}</p>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">ID de usuario</label>
+            <p className="mt-1 font-mono text-xs text-muted-foreground truncate">{user?.id ?? "—"}</p>
+          </div>
+        </CardContent>
+      </Card>
       <p className="text-xs text-muted-foreground">
         Para cambiar tu email contacta con{" "}
         <a href="mailto:support@roastr.ai" className="text-primary underline">
@@ -151,96 +159,105 @@ function SeguridadTab() {
       {/* Cambiar contraseña */}
       <div>
         <h2 className="text-base font-semibold text-foreground mb-3">Cambiar contraseña</h2>
-        <form onSubmit={handleChangePassword} className="rounded-lg border border-border bg-card p-4 space-y-3">
-          <div>
-            <label className="text-xs text-muted-foreground">Contraseña nueva</label>
-            <input
-              type="password"
-              value={newPw}
-              onChange={(e) => setNewPw(e.target.value)}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
-              placeholder="Mínimo 8 caracteres"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground">Confirmar contraseña</label>
-            <input
-              type="password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
-              placeholder="Repite la contraseña"
-              required
-            />
-          </div>
-          {status === "error" && (
-            <div className="flex items-center gap-1.5 text-xs text-destructive">
-              <AlertCircle className="h-3.5 w-3.5" />{message}
-            </div>
-          )}
-          {status === "ok" && (
-            <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
-              <Check className="h-3.5 w-3.5" />{message}
-            </div>
-          )}
-          <button
-            type="submit"
-            disabled={status === "loading"}
-            className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-          >
-            {status === "loading" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            Actualizar contraseña
-          </button>
-        </form>
+        <Card>
+          <CardContent>
+            <form onSubmit={handleChangePassword} className="space-y-3">
+              <div>
+                <Label htmlFor="new-password" className="text-xs text-muted-foreground">Contraseña nueva</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={newPw}
+                  onChange={(e) => setNewPw(e.target.value)}
+                  className="mt-1"
+                  placeholder="Mínimo 8 caracteres"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="confirm-password" className="text-xs text-muted-foreground">Confirmar contraseña</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  className="mt-1"
+                  placeholder="Repite la contraseña"
+                  required
+                />
+              </div>
+              {status === "error" && (
+                <Alert variant="destructive">
+                  <AlertDescription className="flex items-center gap-1.5">
+                    <AlertCircle className="h-3.5 w-3.5" />{message}
+                  </AlertDescription>
+                </Alert>
+              )}
+              {status === "ok" && (
+                <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+                  <Check className="h-3.5 w-3.5" />{message}
+                </div>
+              )}
+              <Button type="submit" disabled={status === "loading"}>
+                {status === "loading" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Actualizar contraseña
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Eliminar cuenta */}
       <div>
         <h2 className="text-base font-semibold text-destructive mb-3">Zona de peligro</h2>
         {!deleteMode ? (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-            <p className="text-sm text-muted-foreground mb-3">
-              Eliminar tu cuenta borrará todos tus datos permanentemente. Esta acción no se puede deshacer.
-            </p>
-            <button
-              onClick={() => setDeleteMode(true)}
-              className="flex items-center gap-2 rounded-md border border-destructive px-3 py-1.5 text-sm text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Eliminar cuenta
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleDeleteAccount} className="rounded-lg border border-destructive bg-destructive/5 p-4 space-y-3">
-            <p className="text-sm font-medium text-destructive">¿Confirmas que quieres eliminar tu cuenta?</p>
-            <div>
-              <label className="text-xs text-muted-foreground">Introduce tu contraseña para confirmar</label>
-              <input
-                type="password"
-                value={deletePw}
-                onChange={(e) => setDeletePw(e.target.value)}
-                className="mt-1 w-full rounded-md border border-destructive/50 bg-background px-3 py-2 text-sm text-foreground"
-                required
-              />
-            </div>
-            {deleteStatus === "error" && (
-              <p className="text-xs text-destructive">{deleteMsg}</p>
-            )}
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={deleteStatus === "loading"}
-                className="flex items-center gap-2 rounded-md bg-destructive px-3 py-1.5 text-sm text-white disabled:opacity-50"
+          <Card className="border-destructive/30 bg-destructive/5">
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-3">
+                Eliminar tu cuenta borrará todos tus datos permanentemente. Esta acción no se puede deshacer.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDeleteMode(true)}
+                className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
               >
-                {deleteStatus === "loading" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                Confirmar eliminación
-              </button>
-              <button type="button" onClick={() => setDeleteMode(false)} className="rounded-md border border-border px-3 py-1.5 text-sm text-foreground">
-                Cancelar
-              </button>
-            </div>
-          </form>
+                <Trash2 className="h-3.5 w-3.5" />
+                Eliminar cuenta
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="border-destructive bg-destructive/5">
+            <CardContent>
+              <form onSubmit={handleDeleteAccount} className="space-y-3">
+                <p className="text-sm font-medium text-destructive">¿Confirmas que quieres eliminar tu cuenta?</p>
+                <div>
+                  <Label htmlFor="delete-password" className="text-xs text-muted-foreground">Introduce tu contraseña para confirmar</Label>
+                  <Input
+                    id="delete-password"
+                    type="password"
+                    value={deletePw}
+                    onChange={(e) => setDeletePw(e.target.value)}
+                    className="mt-1 border-destructive/50"
+                    required
+                  />
+                </div>
+                {deleteStatus === "error" && (
+                  <p className="text-xs text-destructive">{deleteMsg}</p>
+                )}
+                <div className="flex gap-2">
+                  <Button type="submit" variant="destructive" disabled={deleteStatus === "loading"}>
+                    {deleteStatus === "loading" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    Confirmar eliminación
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setDeleteMode(false)}>
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         )}
       </div>
 
@@ -265,31 +282,26 @@ export function SettingsPage() {
         <h1 className="text-2xl font-bold text-foreground">Ajustes</h1>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex gap-1 border-b border-border">
-        {TABS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className={[
-              "flex items-center gap-1.5 px-3 py-2 text-sm transition-colors -mb-px border-b-2",
-              activeTab === id
-                ? "border-primary text-primary font-medium"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            ].join(" ")}
-          >
-            <Icon className="h-3.5 w-3.5" />
-            {label}
-          </button>
-        ))}
-      </div>
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as Tab)}>
+        <TabsList variant="line">
+          {TABS.map(({ id, label, icon: Icon }) => (
+            <TabsTrigger key={id} value={id}>
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      {/* Tab content */}
-      <div>
-        {activeTab === "perfil" && <PerfilTab />}
-        {activeTab === "preferencias" && <PreferenciasTab />}
-        {activeTab === "seguridad" && <SeguridadTab />}
-      </div>
+        <TabsContent value="perfil">
+          <PerfilTab />
+        </TabsContent>
+        <TabsContent value="preferencias">
+          <PreferenciasTab />
+        </TabsContent>
+        <TabsContent value="seguridad">
+          <SeguridadTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
