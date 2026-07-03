@@ -1,7 +1,15 @@
-import { useEffect, useRef, useState } from "react";
-import type { MouseEvent } from "react";
+import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
-import { X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const AGGRESSIVENESS_OPTIONS = [
   { value: 0.9, label: "90% — Más permisivo" },
@@ -9,8 +17,6 @@ const AGGRESSIVENESS_OPTIONS = [
   { value: 0.98, label: "98% — Estricto" },
   { value: 1, label: "100% — Máximo" },
 ] as const;
-
-const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 type Props = {
   accountId: string;
@@ -32,8 +38,6 @@ export function AccountConfigModal({
   // saveError: shown below the form but does NOT disable the Save button
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const previousFocusRef = useRef<Element | null>(null);
 
   useEffect(() => {
     apiFetch<{ shieldAggressiveness: number }>(
@@ -44,50 +48,6 @@ export function AccountConfigModal({
       .catch((e) => setLoadError(e instanceof Error ? e.message : "Error al cargar configuración"))
       .finally(() => setLoading(false));
   }, [accountId, token]);
-
-  // Trap focus inside dialog and restore on unmount
-  useEffect(() => {
-    previousFocusRef.current = document.activeElement;
-    const dialog = dialogRef.current;
-    if (dialog) {
-      const firstFocusable = dialog.querySelector<HTMLElement>(FOCUSABLE);
-      firstFocusable?.focus();
-    }
-    return () => {
-      (previousFocusRef.current as HTMLElement | null)?.focus();
-    };
-  }, []);
-
-  // Keyboard: Escape closes, Tab cycles focus within dialog
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-        return;
-      }
-      if (e.key === "Tab") {
-        const dialog = dialogRef.current;
-        if (!dialog) return;
-        const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE));
-        if (focusable.length === 0) return;
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        if (e.shiftKey) {
-          if (document.activeElement === first) {
-            e.preventDefault();
-            last.focus();
-          }
-        } else {
-          if (document.activeElement === last) {
-            e.preventDefault();
-            first.focus();
-          }
-        }
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
 
   const handleSave = async () => {
     if (aggressiveness === null) return;
@@ -107,47 +67,21 @@ export function AccountConfigModal({
     }
   };
 
-  const handleBackdropClick = (e: MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) onClose();
-  };
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="config-modal-title"
-      onClick={handleBackdropClick}
-    >
-      <div
-        ref={dialogRef}
-        className="w-full max-w-md rounded-lg border border-input bg-card p-6 shadow-lg"
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 id="config-modal-title" className="text-lg font-semibold">
-            Configuración del Shield
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-            aria-label="Cerrar"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Configuración del Shield</DialogTitle>
+        </DialogHeader>
 
         {loading ? (
           <p className="text-sm text-muted-foreground">Cargando...</p>
         ) : (
           <div className="space-y-4">
             <div>
-              <label
-                htmlFor="aggressiveness"
-                className="mb-2 block text-sm font-medium"
-              >
+              <Label htmlFor="aggressiveness" className="mb-2">
                 Agresividad del Shield
-              </label>
+              </Label>
               <select
                 id="aggressiveness"
                 value={aggressiveness ?? ""}
@@ -155,7 +89,7 @@ export function AccountConfigModal({
                   setAggressiveness(Number(e.target.value) as 0.9 | 0.95 | 0.98 | 1)
                 }
                 disabled={aggressiveness === null}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
+                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
               >
                 {AGGRESSIVENESS_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -169,45 +103,32 @@ export function AccountConfigModal({
             </div>
 
             {loadError && (
-              <div
-                role="status"
-                aria-live="assertive"
-                className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-              >
-                {loadError}
-              </div>
+              <Alert variant="destructive">
+                <AlertDescription>{loadError}</AlertDescription>
+              </Alert>
             )}
 
             {saveError && (
-              <div
-                role="status"
-                aria-live="assertive"
-                className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-              >
-                {saveError}
-              </div>
+              <Alert variant="destructive">
+                <AlertDescription>{saveError}</AlertDescription>
+              </Alert>
             )}
 
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-md border border-input px-4 py-2 text-sm hover:bg-muted"
-              >
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={handleSave}
                 disabled={saving || aggressiveness === null || loadError !== null}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {saving ? "Guardando..." : "Guardar"}
-              </button>
-            </div>
+              </Button>
+            </DialogFooter>
           </div>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

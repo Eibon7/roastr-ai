@@ -1,6 +1,7 @@
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth-context";
 import { ConnectedAccounts } from "@/components/accounts/ConnectedAccounts";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Users, Plus, Youtube, Twitter } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -18,13 +19,10 @@ function ConnectButton({ platform, label, icon: Icon }: {
   }
 
   return (
-    <button
-      onClick={handleConnect}
-      className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-    >
+    <Button type="button" variant="outline" onClick={handleConnect}>
       <Icon className="h-4 w-4" />
       Conectar {label}
-    </button>
+    </Button>
   );
 }
 
@@ -41,19 +39,21 @@ export function AccountsPage() {
       </div>
 
       {/* Conectar nueva cuenta */}
-      <div className="rounded-lg border border-border bg-card p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Plus className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-foreground">Conectar nueva cuenta</h2>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <ConnectButton platform="youtube" label="YouTube" icon={Youtube} />
-          <ConnectButton platform="x" label="X (Twitter)" icon={Twitter} />
-        </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          Conecta tus cuentas para que Shield monitorice y gestione comentarios automáticamente.
-        </p>
-      </div>
+      <Card>
+        <CardContent>
+          <div className="flex items-center gap-2 mb-3">
+            <Plus className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-foreground">Conectar nueva cuenta</h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <ConnectButton platform="youtube" label="YouTube" icon={Youtube} />
+            <ConnectButton platform="x" label="X (Twitter)" icon={Twitter} />
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Conecta tus cuentas para que Shield monitorice y gestione comentarios automáticamente.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Lista de cuentas conectadas con config de shield */}
       <div>
