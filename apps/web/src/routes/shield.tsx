@@ -1,6 +1,16 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { apiFetch } from "@/lib/api";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   ShieldCheck,
   EyeOff,
@@ -43,7 +53,7 @@ const SEVERITIES = [
   { label: "Baja (<70%)", value: "low" },
 ];
 
-function severityBadge(score: number) {
+function severityBadgeClass(score: number) {
   if (score >= 0.9) return "bg-red-500/20 text-red-700 dark:text-red-400";
   if (score >= 0.7) return "bg-orange-500/20 text-orange-700 dark:text-orange-400";
   return "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400";
@@ -142,20 +152,23 @@ export function ShieldPage() {
           { label: "Ocultados", value: stats.hides, icon: EyeOff, color: "text-yellow-600 dark:text-yellow-400" },
           { label: "Reportados", value: stats.reports, icon: Flag, color: "text-orange-600 dark:text-orange-400" },
         ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="rounded-lg border border-border bg-card p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Icon className={`h-3.5 w-3.5 ${color}`} />
-              <span className="text-xs text-muted-foreground">{label}</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{value}</p>
-          </div>
+          <Card key={label}>
+            <CardContent className="p-3">
+              <div className="mb-1 flex items-center gap-1.5">
+                <Icon className={`h-3.5 w-3.5 ${color}`} />
+                <span className="text-xs text-muted-foreground">{label}</span>
+              </div>
+              <p className="text-2xl font-bold text-foreground">{value}</p>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+      <div className="flex flex-wrap items-center gap-2">
+        <Filter className="h-4 w-4 shrink-0 text-muted-foreground" />
         <select
+          aria-label="Filtro de plataforma"
           value={platform}
           onChange={(e) => setPlatform(e.target.value)}
           className="rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground"
@@ -166,6 +179,7 @@ export function ShieldPage() {
           ))}
         </select>
         <select
+          aria-label="Filtro de acción"
           value={action}
           onChange={(e) => setAction(e.target.value)}
           className="rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground"
@@ -176,6 +190,7 @@ export function ShieldPage() {
           ))}
         </select>
         <select
+          aria-label="Filtro de severidad"
           value={severity}
           onChange={(e) => setSeverity(e.target.value)}
           className="rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground"
@@ -184,7 +199,7 @@ export function ShieldPage() {
             <option key={value} value={value}>{label}</option>
           ))}
         </select>
-        <span className="text-xs text-muted-foreground ml-auto">
+        <span className="ml-auto text-xs text-muted-foreground">
           {total > 0 ? `${total} registros` : ""}
         </span>
       </div>
@@ -193,56 +208,103 @@ export function ShieldPage() {
       {loading && (
         <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />
+            <Skeleton key={i} className="h-16 w-full rounded-lg" />
           ))}
         </div>
       )}
 
       {error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       {!loading && !error && filtered.length === 0 && (
-        <div className="flex flex-col items-center py-16 text-center">
-          <ShieldCheck className="h-12 w-12 text-muted-foreground/30 mb-3" />
-          <p className="text-muted-foreground">Sin actividad registrada</p>
-        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center py-16 text-center">
+            <ShieldCheck className="mb-3 h-12 w-12 text-muted-foreground/30" />
+            <p className="text-muted-foreground">Sin actividad registrada</p>
+          </CardContent>
+        </Card>
       )}
 
       {!loading && filtered.length > 0 && (
-        <ul className="space-y-2">
-          {filtered.map((log) => {
-            const cfg = ACTION_CONFIG[log.action_taken] ?? ACTION_CONFIG.none;
-            const Icon = cfg.icon;
-            return (
-              <li
-                key={log.id}
-                className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3"
-              >
-                <Icon className={`h-4 w-4 shrink-0 ${cfg.color}`} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium uppercase text-muted-foreground">
-                      {log.platform}
-                    </span>
-                    <span className="text-sm text-foreground">{cfg.label}</span>
-                    {log.platform_fallback && (
-                      <span className="text-xs bg-muted text-muted-foreground rounded px-1">fallback</span>
-                    )}
+        <>
+          {/* Mobile: accordion (table -> accordion pattern, docs/09-frontend.md §9.1) */}
+          <Accordion type="single" collapsible className="lg:hidden">
+            {filtered.map((log) => {
+              const cfg = ACTION_CONFIG[log.action_taken] ?? ACTION_CONFIG.none;
+              const Icon = cfg.icon;
+              return (
+                <AccordionItem key={log.id} value={log.id} className="rounded-lg border border-border bg-card px-4 mb-2 last:mb-0">
+                  <AccordionTrigger className="py-3 hover:no-underline">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <Icon className={`h-4 w-4 shrink-0 ${cfg.color}`} />
+                      <div className="min-w-0 flex-1 text-left">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium uppercase text-muted-foreground">
+                            {log.platform}
+                          </span>
+                          <span className="text-sm text-foreground">{cfg.label}</span>
+                        </div>
+                      </div>
+                      <Badge className={severityBadgeClass(log.severity_score)} variant="outline">
+                        {Math.round(log.severity_score * 100)}%
+                      </Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+                      <dt className="text-muted-foreground">Plataforma</dt>
+                      <dd className="text-foreground">{log.platform}</dd>
+                      <dt className="text-muted-foreground">Acción</dt>
+                      <dd className="text-foreground">{cfg.label}</dd>
+                      <dt className="text-muted-foreground">Severidad</dt>
+                      <dd className="text-foreground">{Math.round(log.severity_score * 100)}%</dd>
+                      <dt className="text-muted-foreground">Fallback</dt>
+                      <dd className="text-foreground">{log.platform_fallback ? "Sí" : "No"}</dd>
+                      <dt className="text-muted-foreground">Fecha</dt>
+                      <dd className="text-foreground">{new Date(log.created_at).toLocaleString()}</dd>
+                    </dl>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+
+          {/* Desktop: full list/table */}
+          <ul className="hidden space-y-2 lg:block">
+            {filtered.map((log) => {
+              const cfg = ACTION_CONFIG[log.action_taken] ?? ACTION_CONFIG.none;
+              const Icon = cfg.icon;
+              return (
+                <li
+                  key={log.id}
+                  className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3"
+                >
+                  <Icon className={`h-4 w-4 shrink-0 ${cfg.color}`} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium uppercase text-muted-foreground">
+                        {log.platform}
+                      </span>
+                      <span className="text-sm text-foreground">{cfg.label}</span>
+                      {log.platform_fallback && (
+                        <Badge variant="secondary" className="px-1 text-xs">fallback</Badge>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {new Date(log.created_at).toLocaleString()}
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {new Date(log.created_at).toLocaleString()}
-                  </p>
-                </div>
-                <span className={`shrink-0 rounded px-2 py-0.5 text-xs font-medium ${severityBadge(log.severity_score)}`}>
-                  {Math.round(log.severity_score * 100)}%
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+                  <Badge className={severityBadgeClass(log.severity_score)} variant="outline">
+                    {Math.round(log.severity_score * 100)}%
+                  </Badge>
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
 
       {/* Infinite scroll loader */}

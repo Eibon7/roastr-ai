@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { apiFetch } from "@/lib/api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Shield,
   EyeOff,
@@ -93,99 +96,112 @@ export function ShieldFeed() {
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-input bg-card p-6">
-        <p className="text-sm text-muted-foreground">Cargando actividad del Shield...</p>
-      </div>
+      <Card>
+        <CardContent className="space-y-3">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </CardContent>
+      </Card>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-lg border border-input bg-card p-6">
-        <p className="text-sm text-destructive">{error}</p>
-      </div>
+      <Card>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="rounded-lg border border-input bg-card p-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <Shield className="h-5 w-5" />
-          Actividad del Shield
-        </h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <select
-            aria-label="Filtro de plataforma"
-            value={platformFilter}
-            onChange={(e) => setPlatformFilter(e.target.value)}
-            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground"
-          >
-            <option value="">Todas las plataformas</option>
-            {PLATFORMS.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
-          <select
-            aria-label="Filtro de acción"
-            value={actionFilter}
-            onChange={(e) => setActionFilter(e.target.value)}
-            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground"
-          >
-            <option value="">Todas las acciones</option>
-            {Object.entries(ACTION_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-          </select>
+    <Card>
+      <CardHeader>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Shield className="h-5 w-5" />
+            Actividad del Shield
+          </CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <select
+              aria-label="Filtro de plataforma"
+              value={platformFilter}
+              onChange={(e) => setPlatformFilter(e.target.value)}
+              className="rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground"
+            >
+              <option value="">Todas las plataformas</option>
+              {PLATFORMS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label="Filtro de acción"
+              value={actionFilter}
+              onChange={(e) => setActionFilter(e.target.value)}
+              className="rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground"
+            >
+              <option value="">Todas las acciones</option>
+              {Object.entries(ACTION_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-      </div>
+      </CardHeader>
 
-      {logs.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No hay actividad reciente. El Shield registrará acciones cuando proteja tus comentarios.
-        </p>
-      ) : (
-        <div className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            {total} registro{total !== 1 ? "s" : ""} (últimos 30)
+      <CardContent>
+        {logs.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No hay actividad reciente. El Shield registrará acciones cuando proteja tus comentarios.
           </p>
-          <ul className="space-y-2">
-            {logs.map((log) => {
-              const ActionIcon = ACTION_ICONS[log.action_taken] ?? Shield;
-              return (
-                <li
-                  key={log.id}
-                  className="flex items-center gap-4 rounded-md border border-input bg-muted/30 px-4 py-3"
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                    <ActionIcon className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-foreground">
-                      {ACTION_LABELS[log.action_taken] ?? log.action_taken}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {log.platform} · Severidad {(log.severity_score * 100).toFixed(0)}%
-                      {log.platform_fallback && " · Fallback de plataforma"}
-                    </p>
-                  </div>
-                  <time
-                    className="shrink-0 text-xs text-muted-foreground"
-                    dateTime={log.created_at}
+        ) : (
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              {total} registro{total !== 1 ? "s" : ""} (últimos 30)
+            </p>
+            <ul className="space-y-2">
+              {logs.map((log) => {
+                const ActionIcon = ACTION_ICONS[log.action_taken] ?? Shield;
+                return (
+                  <li
+                    key={log.id}
+                    className="flex items-center gap-4 rounded-md border border-input bg-muted/30 px-4 py-3"
                   >
-                    {new Date(log.created_at).toLocaleString()}
-                  </time>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
-    </div>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <ActionIcon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-foreground">
+                        {ACTION_LABELS[log.action_taken] ?? log.action_taken}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {log.platform} · Severidad {(log.severity_score * 100).toFixed(0)}%
+                        {log.platform_fallback && " · Fallback de plataforma"}
+                      </p>
+                    </div>
+                    <time
+                      className="shrink-0 text-xs text-muted-foreground"
+                      dateTime={log.created_at}
+                    >
+                      {new Date(log.created_at).toLocaleString()}
+                    </time>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
