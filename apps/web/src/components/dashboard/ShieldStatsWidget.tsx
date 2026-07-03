@@ -1,7 +1,10 @@
 import { useAuth } from "@/contexts/auth-context";
 import { useShieldLogs } from "@/hooks/use-shield-logs";
-import { EyeOff, Flag, Ban, Shield, TrendingUp } from "lucide-react";
+import { EyeOff, Flag, Ban, Shield, TrendingUp, AlertCircle } from "lucide-react";
 import type { ShieldLog } from "@/hooks/use-shield-logs";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type ActionCount = { label: string; count: number; icon: React.ComponentType<{ className?: string }>; color: string };
 
@@ -27,37 +30,56 @@ export function ShieldStatsWidget() {
   ];
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Shield className="h-4 w-4 text-primary" />
-          <h3 className="font-semibold text-sm text-foreground">Shield Activity</h3>
+    <Card>
+      <CardHeader className="pb-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Shield className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold text-sm text-foreground">Shield Activity</h3>
+          </div>
+          <span className="text-xs text-muted-foreground">{week.length} esta semana</span>
         </div>
-        <span className="text-xs text-muted-foreground">{week.length} esta semana</span>
-      </div>
+      </CardHeader>
 
-      {loading && <p className="text-sm text-muted-foreground">Cargando...</p>}
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      <CardContent>
+        {loading && (
+          <div className="space-y-3" data-testid="shield-stats-loading">
+            <div className="grid grid-cols-3 gap-2">
+              <Skeleton className="h-14" />
+              <Skeleton className="h-14" />
+              <Skeleton className="h-14" />
+            </div>
+            <Skeleton className="h-4 w-24" />
+          </div>
+        )}
 
-      {!loading && !error && (
-        <>
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            {actions.map(({ label, count, icon: Icon, color }) => (
-              <div key={label} className="text-center">
-                <div className="flex justify-center mb-1">
-                  <Icon className={`h-4 w-4 ${color}`} />
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {!loading && !error && (
+          <>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              {actions.map(({ label, count, icon: Icon, color }) => (
+                <div key={label} className="text-center">
+                  <div className="flex justify-center mb-1">
+                    <Icon className={`h-4 w-4 ${color}`} />
+                  </div>
+                  <p className="text-xl font-bold text-foreground">{count}</p>
+                  <p className="text-xs text-muted-foreground">{label}</p>
                 </div>
-                <p className="text-xl font-bold text-foreground">{count}</p>
-                <p className="text-xs text-muted-foreground">{label}</p>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground border-t border-border pt-2 mt-1">
-            <TrendingUp className="h-3 w-3" />
-            <span>{today.length} acciones hoy</span>
-          </div>
-        </>
-      )}
-    </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground border-t border-border pt-2 mt-1">
+              <TrendingUp className="h-3 w-3" />
+              <span>{today.length} acciones hoy</span>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
