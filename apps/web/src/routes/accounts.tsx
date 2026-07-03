@@ -1,65 +1,23 @@
 import { useAuth } from "@/contexts/auth-context";
 import { ConnectedAccounts } from "@/components/accounts/ConnectedAccounts";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Users, Plus, Youtube, Twitter } from "lucide-react";
-
-const API_BASE = import.meta.env.VITE_API_URL || "/api";
-
-function ConnectButton({ platform, label, icon: Icon }: {
-  platform: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-}) {
-  const { session } = useAuth();
-
-  function handleConnect() {
-    if (!session?.access_token) return;
-    window.location.href = `${API_BASE}/oauth/${platform}/authorize?token=${session.access_token}`;
-  }
-
-  return (
-    <Button type="button" variant="outline" onClick={handleConnect}>
-      <Icon className="h-4 w-4" />
-      Conectar {label}
-    </Button>
-  );
-}
+import { Users } from "lucide-react";
 
 export function AccountsPage() {
   const { session } = useAuth();
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Users className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Cuentas</h1>
+    <div className="mx-auto max-w-3xl space-y-8">
+      <div className="flex items-center gap-3">
+        <Users className="h-6 w-6 text-primary" />
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Cuentas</h1>
+          <p className="text-sm text-muted-foreground">
+            Conecta y gestiona las cuentas que Shield protege automáticamente.
+          </p>
         </div>
       </div>
 
-      {/* Conectar nueva cuenta */}
-      <Card>
-        <CardContent>
-          <div className="flex items-center gap-2 mb-3">
-            <Plus className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-foreground">Conectar nueva cuenta</h2>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <ConnectButton platform="youtube" label="YouTube" icon={Youtube} />
-            <ConnectButton platform="x" label="X (Twitter)" icon={Twitter} />
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Conecta tus cuentas para que Shield monitorice y gestione comentarios automáticamente.
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Lista de cuentas conectadas con config de shield */}
-      <div>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Cuentas conectadas</h2>
-        <ConnectedAccounts token={session?.access_token ?? null} />
-      </div>
+      <ConnectedAccounts token={session?.access_token ?? null} />
     </div>
   );
 }

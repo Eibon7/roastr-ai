@@ -279,7 +279,7 @@ export function SettingsPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center gap-3">
         <Settings className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold text-foreground">Ajustes</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Ajustes</h1>
       </div>
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as Tab)}>

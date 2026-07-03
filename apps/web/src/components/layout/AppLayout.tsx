@@ -76,15 +76,17 @@ export function AppLayout({ children }: Props) {
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? "?";
 
   const sidebar = (
-    <aside className="flex h-full w-56 flex-col border-r border-border bg-card">
+    <aside className="flex h-full w-60 flex-col border-r border-border bg-card">
       {/* Logo */}
-      <div className="flex h-14 items-center gap-2 px-4 font-bold text-foreground">
-        <Zap className="h-5 w-5 text-primary" />
-        <span className="text-lg">Roastr</span>
+      <div className="flex h-14 items-center gap-2 px-5 font-bold text-foreground">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <Zap className="h-4 w-4" />
+        </span>
+        <span className="text-base tracking-tight">Roastr</span>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-2 py-2">
+      <nav className="flex-1 overflow-y-auto px-3 py-3">
         <ul className="space-y-0.5">
           {NAV_ITEMS.map(({ to, label, icon }) => (
             <li key={to}>
@@ -93,9 +95,9 @@ export function AppLayout({ children }: Props) {
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
                   [
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all",
                     isActive
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                   ].join(" ")
                 }

@@ -81,9 +81,10 @@ describe("ConnectedAccounts", () => {
     expect(within(table).getByText("@roastr")).toBeInTheDocument();
     expect(within(table).getByText("Pausada")).toBeInTheDocument();
 
-    // Connect buttons reflect current per-platform account count
-    expect(screen.getByRole("button", { name: /Conectar YouTube \(1\/2\)/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Conectar X \(1\/2\)/ })).toBeInTheDocument();
+    // Connect CTAs remain available, with a badge reflecting the current per-platform count
+    expect(screen.getByRole("button", { name: "Conectar YouTube" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Conectar X" })).toBeInTheDocument();
+    expect(screen.getAllByText("1/2")).toHaveLength(2);
   });
 
   it("opens the config modal when clicking the settings action for an account", async () => {
@@ -125,6 +126,6 @@ describe("ConnectedAccounts", () => {
 
     render(<ConnectedAccounts token="tok" />);
 
-    expect(screen.getByRole("button", { name: /Conectar YouTube \(2\/2\)/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Conectar YouTube" })).toBeDisabled();
   });
 });

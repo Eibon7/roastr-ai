@@ -141,7 +141,7 @@ export function ShieldPage() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <ShieldCheck className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold text-foreground">Shield Activity</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Shield Activity</h1>
       </div>
 
       {/* Stats summary */}

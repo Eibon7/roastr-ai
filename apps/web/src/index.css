@@ -20,7 +20,11 @@
   --color-border: hsl(240 5.9% 90%);
   --color-input: hsl(240 5.9% 90%);
   --color-ring: hsl(240 5.9% 10%);
-  --radius: 0.5rem;
+  --radius: 0.75rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 .dark {
@@ -43,8 +47,15 @@
   --color-ring: hsl(240 4.9% 83.9%);
 }
 
-body {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  font-family: system-ui, -apple-system, sans-serif;
+@layer base {
+  * {
+    border-color: var(--color-border);
+    outline-color: color-mix(in srgb, var(--color-ring) 50%, transparent);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: system-ui, -apple-system, sans-serif;
+  }
 }

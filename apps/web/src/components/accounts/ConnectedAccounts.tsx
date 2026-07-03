@@ -3,7 +3,7 @@ import { apiFetch } from "@/lib/api";
 import { useAccounts } from "@/hooks/use-accounts";
 import { Settings } from "lucide-react";
 import { AccountConfigModal } from "./AccountConfigModal";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,6 +63,8 @@ export function ConnectedAccounts({ token }: Props) {
   return (
     <div className="space-y-6">
       {accounts.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-foreground">Cuentas conectadas</h2>
         <Card className="overflow-hidden py-0">
           {/* Desktop: table layout */}
           <table className="hidden w-full text-sm sm:table">
@@ -137,7 +139,8 @@ export function ConnectedAccounts({ token }: Props) {
               );
             })}
           </Accordion>
-        </Card>
+          </Card>
+        </div>
       )}
 
       {configAccountId && token && (
@@ -152,39 +155,50 @@ export function ConnectedAccounts({ token }: Props) {
         />
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card>
-          <CardContent>
-            <h3 className="font-medium">YouTube</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Conecta tu canal de YouTube para proteger los comentarios.
-            </p>
-            <Button
-              type="button"
-              onClick={() => handleConnect("youtube")}
-              disabled={!token || youtubeCount >= maxPerPlatform}
-              className="mt-3"
-            >
-              Conectar YouTube ({youtubeCount}/{maxPerPlatform})
-            </Button>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <h3 className="font-medium">X (Twitter)</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Conecta tu cuenta de X para proteger tus menciones.
-            </p>
-            <Button
-              type="button"
-              onClick={() => handleConnect("x")}
-              disabled={!token || xCount >= maxPerPlatform}
-              className="mt-3"
-            >
-              Conectar X ({xCount}/{maxPerPlatform})
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold text-foreground">Conectar nueva cuenta</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card>
+            <CardContent className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="font-medium text-foreground">YouTube</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Conecta tu canal para proteger los comentarios.
+                </p>
+              </div>
+              <Badge variant="outline" className="shrink-0">{youtubeCount}/{maxPerPlatform}</Badge>
+            </CardContent>
+            <CardFooter>
+              <Button
+                type="button"
+                onClick={() => handleConnect("youtube")}
+                disabled={!token || youtubeCount >= maxPerPlatform}
+              >
+                Conectar YouTube
+              </Button>
+            </CardFooter>
+          </Card>
+          <Card>
+            <CardContent className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="font-medium text-foreground">X (Twitter)</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Conecta tu cuenta para proteger tus menciones.
+                </p>
+              </div>
+              <Badge variant="outline" className="shrink-0">{xCount}/{maxPerPlatform}</Badge>
+            </CardContent>
+            <CardFooter>
+              <Button
+                type="button"
+                onClick={() => handleConnect("x")}
+                disabled={!token || xCount >= maxPerPlatform}
+              >
+                Conectar X
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ export function BillingPage() {
   return (
     <div className="space-y-8 p-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Billing</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Billing</h1>
         <p className="text-muted-foreground">
           Gestiona tu suscripción y límites de uso.
         </p>
