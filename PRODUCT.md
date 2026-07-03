@@ -259,29 +259,37 @@ Solo cuando autoApprove === true y la region lo exige (UE). Cuando el usuario ap
 
 ## 9. Workers y Procesos Asincronos
 
-### 9.1 Workers core
+> Actualizado 2026-07-03: la arquitectura real consolido los workers
+> conceptuales originales en 5 procesadores BullMQ (uno por cola), no en
+> workers separados por funcion. Ver `apps/worker/src/processors/`.
+
+### 9.1 Procesadores BullMQ (implementacion real)
 
 ```ts
-type CoreWorker =
-  | 'FetchComments'
-  | 'AnalyzeToxicity'
-  | 'GenerateRoast'
-  | 'GenerateCorrectiveReply'
-  | 'ShieldAction'
-  | 'SocialPosting'
-  | 'BillingUpdate';
+type QueueProcessor =
+  | 'ingestion'    // FetchComments — trae comentarios nuevos de la plataforma, encola 'analysis'
+  | 'analysis'     // AnalyzeToxicity — Perspective API + fallback LLM, encola 'shield' si aplica
+  | 'shield'       // ShieldAction — hide/block/report con reclamo optimista + reintento
+  | 'billing'      // BillingUpdate — incrementAnalysisUsed / reset_limits
+  | 'maintenance'; // GDPRRetention + ExportCleanup — purga shield_logs/roast_candidates/accounts, anonimiza offenders
 ```
 
-### 9.2 Workers auxiliares
+`GenerateRoast` y `GenerateCorrectiveReply` no son workers asincronos: la
+generacion de roasts vive como servicio sincrono dentro de la API
+(`apps/api/src/modules/roast/roast-pipeline.service.ts`), invocado
+directamente desde `POST /roast/generate`. `SocialPosting` (publicar el
+roast aprobado en la plataforma) esta pendiente de implementar — hoy
+`roast.controller.ts` tiene un TODO en el endpoint de aprobacion.
 
-```ts
-type AuxWorker =
-  | 'AccountDeletion'
-  | 'AlertNotification'
-  | 'ExportCleanup'
-  | 'GDPRRetention'
-  | 'ModelAvailability';
-```
+### 9.2 Workers auxiliares — estado real
+
+| Worker conceptual | Estado |
+| --- | --- |
+| AccountDeletion | pendiente (no implementado) |
+| AlertNotification | pendiente (no implementado) |
+| ExportCleanup | cubierto por el procesador `maintenance` (purga de datos expirados) |
+| GDPRRetention | cubierto por el procesador `maintenance` (job type `gdpr_cleanup`) |
+| ModelAvailability | pendiente (no implementado) |
 
 ### 9.3 Reglas
 
