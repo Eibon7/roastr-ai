@@ -1,7 +1,10 @@
 import { useMemo } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { useShieldLogs } from "@/hooks/use-shield-logs";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, AlertCircle } from "lucide-react";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const PLATFORM_LABELS: Record<string, string> = {
   youtube: "YT",
@@ -27,38 +30,54 @@ export function RecentThreatsWidget() {
   );
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <AlertTriangle className="h-4 w-4 text-orange-500" />
-        <h3 className="font-semibold text-sm text-foreground">Amenazas recientes</h3>
-      </div>
+    <Card>
+      <CardHeader className="pb-0">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-orange-500" />
+          <h3 className="font-semibold text-sm text-foreground">Amenazas recientes</h3>
+        </div>
+      </CardHeader>
 
-      {loading && <p className="text-sm text-muted-foreground">Cargando...</p>}
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      <CardContent>
+        {loading && (
+          <div className="space-y-2" data-testid="recent-threats-loading">
+            <Skeleton className="h-6 w-full" />
+            <Skeleton className="h-6 w-full" />
+            <Skeleton className="h-6 w-full" />
+          </div>
+        )}
 
-      {!loading && !error && threats.length === 0 && (
-        <p className="text-sm text-muted-foreground">Sin amenazas recientes</p>
-      )}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      {!loading && !error && threats.length > 0 && (
-        <ul className="space-y-2">
-          {threats.map((t) => (
-            <li key={t.id} className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="shrink-0 rounded px-1.5 py-0.5 text-xs font-medium bg-muted text-muted-foreground">
-                  {PLATFORM_LABELS[t.platform] ?? t.platform.slice(0, 2).toUpperCase()}
+        {!loading && !error && threats.length === 0 && (
+          <p className="text-sm text-muted-foreground">Sin amenazas recientes</p>
+        )}
+
+        {!loading && !error && threats.length > 0 && (
+          <ul className="space-y-2">
+            {threats.map((t) => (
+              <li key={t.id} className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="shrink-0 rounded px-1.5 py-0.5 text-xs font-medium bg-muted text-muted-foreground">
+                    {PLATFORM_LABELS[t.platform] ?? t.platform.slice(0, 2).toUpperCase()}
+                  </span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {t.action_taken}
+                  </span>
+                </div>
+                <span className={`shrink-0 rounded px-1.5 py-0.5 text-xs font-medium ${severityColor(t.severity_score)}`}>
+                  {Math.round(t.severity_score * 100)}%
                 </span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {t.action_taken}
-                </span>
-              </div>
-              <span className={`shrink-0 rounded px-1.5 py-0.5 text-xs font-medium ${severityColor(t.severity_score)}`}>
-                {Math.round(t.severity_score * 100)}%
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
   );
 }
