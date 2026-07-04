@@ -31,26 +31,38 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/settings", label: "Settings", icon: <Settings className="h-4 w-4" /> },
 ];
 
-const THEME_CYCLE = ["light", "dark", "system"] as const;
-type ThemeValue = (typeof THEME_CYCLE)[number];
+type ThemeValue = "light" | "dark" | "system";
+
+const THEME_OPTIONS: { value: ThemeValue; icon: ReactNode; label: string }[] = [
+  { value: "light", icon: <Sun className="h-3.5 w-3.5" />, label: "Claro" },
+  { value: "dark", icon: <Moon className="h-3.5 w-3.5" />, label: "Oscuro" },
+  { value: "system", icon: <Monitor className="h-3.5 w-3.5" />, label: "Sistema" },
+];
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const current = (theme ?? "system") as ThemeValue;
-  const next = THEME_CYCLE[(THEME_CYCLE.indexOf(current) + 1) % THEME_CYCLE.length];
-  const icons: Record<ThemeValue, ReactNode> = {
-    light: <Sun className="h-4 w-4" />,
-    dark: <Moon className="h-4 w-4" />,
-    system: <Monitor className="h-4 w-4" />,
-  };
   return (
-    <button
-      onClick={() => setTheme(next)}
-      className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-      title={`Tema: ${current}`}
-    >
-      {icons[current]}
-    </button>
+    <div className="flex items-center gap-1 rounded-lg bg-muted p-1" role="group" aria-label="Tema de la interfaz">
+      {THEME_OPTIONS.map(({ value, icon, label }) => (
+        <button
+          key={value}
+          type="button"
+          onClick={() => setTheme(value)}
+          title={label}
+          aria-label={`Tema ${label}`}
+          aria-pressed={current === value}
+          className={[
+            "flex h-7 flex-1 items-center justify-center rounded-md transition-colors",
+            current === value
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          ].join(" ")}
+        >
+          {icon}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -111,16 +123,19 @@ export function AppLayout({ children }: Props) {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-border p-3 space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-              {initials}
-            </div>
-            <span className="truncate text-xs text-muted-foreground">
-              {user?.email ?? ""}
-            </span>
+      <div className="border-t border-border p-3 space-y-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+            {initials}
           </div>
+          <span className="truncate text-xs text-muted-foreground">
+            {user?.email ?? ""}
+          </span>
+        </div>
+        <div className="space-y-1.5">
+          <span className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Tema
+          </span>
           <ThemeToggle />
         </div>
         <button
