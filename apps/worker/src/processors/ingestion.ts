@@ -3,7 +3,7 @@ import { Queue } from "bullmq";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createJobLogger } from "../shared/logger.js";
 import { checkBillingLimits } from "../shared/billing-guard.js";
-import { ensureFreshToken, toBuffer } from "../shared/token-refresh.js";
+import { ensureFreshToken, toBuffer, NoRefreshTokenError } from "../shared/token-refresh.js";
 import { fetchComments } from "../shared/fetch-comments.js";
 import { sanitizeCommentText } from "../shared/sanitize-text.js";
 import {
@@ -27,6 +27,29 @@ function getSupabase(): SupabaseClient<any> {
   }
   _supabase = createClient(url, key);
   return _supabase;
+}
+
+/**
+ * Marks an account as broken (status='error', status_reason='token_expired',
+ * integration_health='failing') so future ingestion runs skip it immediately
+ * (see the `account.status !== "active"` check below) instead of retrying
+ * a refresh that has already proven it can't succeed.
+ */
+async function markAccountBroken(accountId: string, userId: string): Promise<void> {
+  const { error } = await getSupabase()
+    .from("accounts")
+    .update({
+      status: "error",
+      status_reason: "token_expired",
+      integration_health: "failing",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", accountId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw new Error(`Failed to mark account ${accountId} as broken: ${error.message}`);
+  }
 }
 
 let analysisQueue: Queue | null = null;
@@ -114,6 +137,22 @@ export async function ingestionProcessor(job: Job): Promise<void> {
     });
   } catch (e) {
     log.error("Token refresh/decryption failed", { error: (e as Error).message });
+
+    if (e instanceof NoRefreshTokenError) {
+      // Already marked broken by ensureFreshToken — no refresh token means
+      // no amount of retrying will ever succeed, so stop here.
+      return;
+    }
+
+    const attempts = job.opts?.attempts ?? DEFAULT_JOB_OPTIONS.attempts ?? 5;
+    const isLastAttempt = (job.attemptsMade ?? 0) + 1 >= attempts;
+    if (isLastAttempt) {
+      log.warn("Marking account broken: token refresh failed on the final retry attempt", {
+        accountId,
+      });
+      await markAccountBroken(accountId, userId);
+    }
+
     throw new Error("Token unavailable, will retry");
   }
 

@@ -50,4 +50,4 @@ jobs:
           key: turbo-${{ github.sha }}
           restore-keys: turbo-
 
-      - run: npx turbo test
+      - run: npx turbo run test:coverage

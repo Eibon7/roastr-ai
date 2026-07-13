@@ -74,40 +74,6 @@ export async function exchangeYouTubeCode(
   };
 }
 
-export async function refreshYouTubeToken(
-  config: YouTubeOAuthConfig,
-  refreshToken: string,
-): Promise<OAuthTokens> {
-  const body = new URLSearchParams({
-    client_id: config.clientId,
-    client_secret: config.clientSecret,
-    refresh_token: refreshToken,
-    grant_type: "refresh_token",
-  });
-
-  const res = await fetch(GOOGLE_TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: body.toString(),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`YouTube token refresh failed: ${res.status} ${err}`);
-  }
-
-  const data = (await res.json()) as GoogleTokenResponse;
-  const expiresAt = data.expires_in
-    ? new Date(Date.now() + data.expires_in * 1000).toISOString()
-    : null;
-
-  return {
-    accessToken: data.access_token,
-    refreshToken: data.refresh_token ?? refreshToken,
-    expiresAt,
-  };
-}
-
 async function fetchYouTubeChannel(
   accessToken: string,
 ): Promise<YouTubeChannelItem> {

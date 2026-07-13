@@ -1,7 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/auth-context";
 import { apiFetch } from "@/lib/api";
+import {
+  useOnboardingState,
+  persistOnboardingState,
+  isOnboardingState,
+  type OnboardingState,
+} from "@/hooks/use-onboarding";
+import { PersonaForm } from "@/components/persona/PersonaForm";
+import { PLAN_LIMITS, type Plan } from "@roastr/shared";
 
 const STEPS = [
   { id: "welcome", label: "Bienvenida" },
@@ -9,30 +17,116 @@ const STEPS = [
   { id: "payment", label: "Pago" },
   { id: "persona_setup", label: "Persona" },
   { id: "connect_accounts", label: "Conectar cuentas" },
-] as const;
+] as const satisfies ReadonlyArray<{ id: OnboardingState; label: string }>;
 
-type Plan = "starter" | "pro" | "plus";
+const PLANS = (Object.keys(PLAN_LIMITS) as Plan[]).map((id) => ({
+  id,
+  price: PLAN_LIMITS[id].priceEur,
+  analysis: PLAN_LIMITS[id].analysisLimit,
+  accounts: PLAN_LIMITS[id].accountsPerPlatform,
+  trial: PLAN_LIMITS[id].trialDays,
+}));
 
-const PLANS: { id: Plan; price: number; analysis: number; accounts: number; trial: number | null }[] = [
-  { id: "starter", price: 5, analysis: 1000, accounts: 1, trial: 30 },
-  { id: "pro", price: 15, analysis: 10000, accounts: 2, trial: 7 },
-  { id: "plus", price: 50, analysis: 100000, accounts: 2, trial: null },
-];
+function stepIndexForState(state: OnboardingState): number {
+  const idx = STEPS.findIndex((s) => s.id === state);
+  // "done" isn't a step in this wizard — callers should redirect away before
+  // rendering it; falling back to the last step is a safe no-op otherwise.
+  return idx >= 0 ? idx : STEPS.length - 1;
+}
+
+const CONNECT_ERROR_MESSAGES: Record<string, string> = {
+  oauth_failed: "Error al conectar. Inténtalo de nuevo.",
+  access_denied: "Acceso denegado. Por favor, acepta los permisos para continuar.",
+};
+
+function mapConnectError(slug: string): string {
+  return CONNECT_ERROR_MESSAGES[slug] ?? "Error al conectar. Inténtalo de nuevo.";
+}
 
 export function OnboardingWizard() {
   const [searchParams] = useSearchParams();
   const { session } = useAuth();
+  const token = session?.access_token;
+  const { state: fetchedState, loading: stateLoading } = useOnboardingState(token);
   const [step, setStep] = useState(0);
   const [selectedPlan, setSelectedPlan] = useState<Plan>("starter");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [connectError, setConnectError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // Tracks whether `step` has been initialized from the backend/query param
+  // yet, so the persist effect below doesn't fire a redundant POST for the
+  // state we just read via GET.
+  const initialized = useRef(false);
+
+  async function finishOnboarding() {
+    if (token) {
+      await persistOnboardingState(token, "done").catch(() => {
+        // Best-effort — if this fails, RequireOnboarding will send the user
+        // back here on their next navigation and they can finish again.
+      });
+    }
+    navigate("/dashboard", { replace: true });
+  }
+
   useEffect(() => {
+    if (initialized.current || stateLoading) return;
+
+    if (fetchedState === "done") {
+      navigate("/dashboard", { replace: true });
+      return;
+    }
+
+    // Returning from the OAuth callback (see connect.tsx / oauth.controller.ts
+    // — the authorize call is made with ?returnTo=onboarding so the provider
+    // redirect lands back here instead of on /connect).
+    const oauthSuccess = searchParams.get("success");
+    const oauthError = searchParams.get("error");
+    if (oauthSuccess === "youtube" || oauthSuccess === "x") {
+      // Skip rendering connect_accounts — onboarding is complete the moment
+      // at least one account is connected, so go straight to /dashboard.
+      // Not calling setStep() here avoids a race between this "done" write
+      // and the step-change effect's own persist for "connect_accounts".
+      initialized.current = true;
+      finishOnboarding();
+      return;
+    }
+    if (oauthError) {
+      setConnectError(mapConnectError(oauthError));
+      setStep(stepIndexForState("connect_accounts"));
+      initialized.current = true;
+      return;
+    }
+
     const stepParam = searchParams.get("step");
-    const idx = STEPS.findIndex((s) => s.id === stepParam);
-    if (idx >= 0) setStep(idx);
-  }, [searchParams]);
+    const initialState: OnboardingState =
+      stepParam && isOnboardingState(stepParam) ? stepParam : (fetchedState ?? "welcome");
+
+    setStep(stepIndexForState(initialState));
+    initialized.current = true;
+  }, [fetchedState, stateLoading, searchParams, navigate]);
+
+  // Persists the current step as the user's onboarding state whenever it
+  // changes (after the initial load above), so a refresh or a later visit
+  // resumes exactly where they left off instead of restarting from welcome.
+  useEffect(() => {
+    if (!initialized.current || !token) return;
+    const current = STEPS[step]?.id;
+    if (!current) return;
+    persistOnboardingState(token, current).catch(() => {
+      // Best-effort: a transient failure here shouldn't block the wizard UI;
+      // the next step transition (or a page reload) will retry the write.
+    });
+  }, [step, token]);
+
+  if (stateLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-muted-foreground">Cargando...</p>
+      </div>
+    );
+  }
 
   const currentStepId = STEPS[step]?.id ?? "welcome";
 
@@ -188,19 +282,13 @@ export function OnboardingWizard() {
             </div>
           )}
 
-          {currentStepId === "persona_setup" && (
+          {currentStepId === "persona_setup" && token && (
             <div className="space-y-4">
-              <h2 className="text-2xl font-bold">Configura tu persona</h2>
+              <h2 className="text-2xl font-bold">Configura tu Roastr Persona</h2>
               <p className="text-muted-foreground">
-                Define identidades, líneas rojas y tolerancias (próximamente).
+                Define identidades, líneas rojas y tolerancias para que Shield y los roasts se ajusten a ti.
               </p>
-              <button
-                type="button"
-                onClick={() => setStep(4)}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-              >
-                Continuar
-              </button>
+              <PersonaForm token={token} onSaved={() => setStep(4)} submitLabel="Continuar" />
             </div>
           )}
 
@@ -210,16 +298,21 @@ export function OnboardingWizard() {
               <p className="text-muted-foreground">
                 Conecta YouTube y X para proteger tus comentarios y menciones.
               </p>
+              {connectError && (
+                <div className="rounded-md bg-destructive/10 px-4 py-2 text-sm text-destructive">
+                  {connectError}
+                </div>
+              )}
               <button
                 type="button"
-                onClick={() => navigate("/connect")}
+                onClick={() => navigate("/connect?from=onboarding")}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 Conectar cuentas
               </button>
               <button
                 type="button"
-                onClick={() => navigate("/dashboard")}
+                onClick={() => finishOnboarding()}
                 className="ml-4 text-sm text-muted-foreground underline"
               >
                 Saltar por ahora

@@ -87,46 +87,6 @@ export async function exchangeXCode(
   };
 }
 
-export async function refreshXToken(
-  config: XOAuthConfig,
-  refreshToken: string,
-): Promise<OAuthTokens> {
-  const body = new URLSearchParams({
-    grant_type: "refresh_token",
-    refresh_token: refreshToken,
-  });
-
-  const basicAuth = Buffer.from(
-    `${config.clientId}:${config.clientSecret}`,
-    "utf8",
-  ).toString("base64");
-
-  const res = await fetch(X_TOKEN_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${basicAuth}`,
-    },
-    body: body.toString(),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`X token refresh failed: ${res.status} ${err}`);
-  }
-
-  const data = (await res.json()) as XTokenResponse;
-  const expiresAt = data.expires_in
-    ? new Date(Date.now() + data.expires_in * 1000).toISOString()
-    : null;
-
-  return {
-    accessToken: data.access_token,
-    refreshToken: data.refresh_token ?? refreshToken,
-    expiresAt,
-  };
-}
-
 async function fetchXUser(accessToken: string): Promise<XUserResponse> {
   const res = await fetch(X_ME_URL, {
     headers: {

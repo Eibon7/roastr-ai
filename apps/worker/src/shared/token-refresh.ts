@@ -31,6 +31,13 @@ function encryptToken(plaintext: string): Buffer {
   return Buffer.concat([iv, tag, encrypted]);
 }
 
+/**
+ * Thrown when an account has no refresh token stored at all — refreshing is
+ * impossible (not just failed), so retrying will never succeed. Callers
+ * should stop retrying and treat the account as needing user reconnection.
+ */
+export class NoRefreshTokenError extends Error {}
+
 export type AccountTokenRow = {
   id: string;
   platform: string;
@@ -183,16 +190,30 @@ export async function ensureFreshToken(account: AccountTokenRow): Promise<string
     return accessToken;
   }
 
-  if (!account.refresh_token_encrypted) {
-    throw new Error(`Token expired for account ${account.id} and no refresh token available`);
-  }
-
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !supabaseKey) {
     throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for token refresh");
   }
   const supabase = createClient(supabaseUrl, supabaseKey);
+
+  if (!account.refresh_token_encrypted) {
+    // No refresh token stored at all — this will never succeed on retry, so
+    // mark the account broken immediately instead of leaving it silently
+    // failing on every scheduled ingestion run forever.
+    await supabase
+      .from("accounts")
+      .update({
+        status: "error",
+        status_reason: "token_expired",
+        integration_health: "failing",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", account.id);
+    throw new NoRefreshTokenError(
+      `Token expired for account ${account.id} and no refresh token available`,
+    );
+  }
 
   // Try to claim a refresh lease: only one worker proceeds to the provider.
   // The lease is a future timestamp stored in accounts.refresh_lease_at.

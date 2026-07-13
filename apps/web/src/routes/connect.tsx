@@ -19,6 +19,7 @@ export function ConnectPage() {
   const { session } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ platform: string } | null>(null);
+  const fromOnboarding = searchParams.get("from") === "onboarding";
 
   useEffect(() => {
     const err = searchParams.get("error");
@@ -52,7 +53,10 @@ export function ConnectPage() {
           </div>
         )}
 
-        <ConnectedAccounts token={session?.access_token ?? null} />
+        <ConnectedAccounts
+          token={session?.access_token ?? null}
+          returnTo={fromOnboarding ? "onboarding" : undefined}
+        />
 
         <button
           type="button"

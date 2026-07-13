@@ -17,5 +17,11 @@ export async function apiFetch<T>(path: string, init?: ApiInit): Promise<T> {
     throw new Error(`API ${res.status}: ${res.statusText}`);
   }
 
-  return res.json();
+  // 204 (or any other empty body) has nothing to parse — res.json() throws
+  // "Unexpected end of JSON input" on an empty string.
+  if (res.status === 204) {
+    return undefined as T;
+  }
+  const text = await res.text();
+  return text ? (JSON.parse(text) as T) : (undefined as T);
 }

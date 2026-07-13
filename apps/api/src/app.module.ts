@@ -8,7 +8,6 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { AccountsModule } from "./modules/accounts/accounts.module";
 import { BillingModule } from "./modules/billing/billing.module";
 import { ShieldModule } from "./modules/shield/shield.module";
-import { AnalysisModule } from "./modules/analysis/analysis.module";
 import { IngestionModule } from "./modules/ingestion/ingestion.module";
 import { PersonaModule } from "./modules/persona/persona.module";
 import { FeatureFlagsModule } from "./modules/feature-flags/feature-flags.module";
@@ -42,7 +41,6 @@ import { SupabaseAuthGuard } from "./shared/guards/supabase-auth.guard";
     AccountsModule,
     BillingModule,
     ShieldModule,
-    AnalysisModule,
     IngestionModule,
     PersonaModule,
     FeatureFlagsModule,

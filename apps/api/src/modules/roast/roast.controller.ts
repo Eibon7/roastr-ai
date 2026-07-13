@@ -70,6 +70,7 @@ export class RoastController {
       isValid: result.isValid,
       violations: result.violations,
       truncatedText: result.truncatedText,
+      published: result.published,
     };
   }
 

@@ -1,5 +1,3 @@
-import type { PersonaProfile } from "@roastr/shared";
-
 export const TONE_IDS = ["flanders", "balanceado", "canalla", "personal"] as const;
 export type ToneId = (typeof TONE_IDS)[number];
 
@@ -37,34 +35,11 @@ export const TONE_DEFINITIONS: Record<ToneId, ToneDefinition> = {
   personal: {
     id: "personal",
     name: "Personal",
-    systemInstruction: "",
+    // NOTE: must never embed Roastr Persona data (identities/redLines/tolerances)
+    // here — PRODUCT.md §7.1 requires persona to stay out of AI prompts entirely;
+    // it's an internal analysis-score input only.
+    systemInstruction:
+      "Eres un creador de contenido con una voz y personalidad propias. Responde de forma auténtica y coherente, sin adoptar un tono genérico.",
     requiredFlag: "personal_tone_enabled",
   },
 };
-
-export function buildPersonalToneInstruction(persona: PersonaProfile): string {
-  const parts: string[] = [
-    "Eres un creador de contenido con una voz y valores únicos.",
-  ];
-
-  if (persona.identities.length > 0) {
-    parts.push(
-      `Te identificas como: ${persona.identities.join(", ")}.`,
-    );
-  }
-  if (persona.redLines.length > 0) {
-    parts.push(
-      `Tus líneas rojas (nunca tolerarás): ${persona.redLines.join(", ")}.`,
-    );
-  }
-  if (persona.tolerances.length > 0) {
-    parts.push(
-      `Puedes tolerar: ${persona.tolerances.join(", ")}.`,
-    );
-  }
-  parts.push(
-    "Responde de forma auténtica, coherente con tus valores y sin comprometer tu identidad.",
-  );
-
-  return parts.join(" ");
-}

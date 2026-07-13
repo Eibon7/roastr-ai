@@ -13,6 +13,7 @@ import {
   FALLBACK_WEIGHTS,
 } from "@roastr/shared";
 import { decryptPersona } from "../shared/persona-decrypt.js";
+import { triggerAutoRoast } from "../shared/roast-trigger.js";
 import {
   getConnection,
   getQueuePrefix,
@@ -185,7 +186,7 @@ export async function analysisProcessor(job: Job): Promise<void> {
 
   const { data: account, error: accountError } = await supabase
     .from("accounts")
-    .select("shield_aggressiveness")
+    .select("shield_aggressiveness, tone")
     .eq("id", accountId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -195,6 +196,7 @@ export async function analysisProcessor(job: Job): Promise<void> {
   }
 
   const aggressiveness = (account?.shield_aggressiveness as number) ?? 0.95;
+  const tone = (account?.tone as string) ?? "balanceado";
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -281,6 +283,39 @@ export async function analysisProcessor(job: Job): Promise<void> {
         decision: result.decision,
         severity: result.severity_score,
       });
+    }
+  }
+
+  if (
+    result.decision === "eligible_for_response" ||
+    result.decision === "correctiva"
+  ) {
+    // Roast automático: solo YouTube. X restringió (feb 2026) las respuestas
+    // programáticas vía API salvo mención/cita del autor original (o tier
+    // Enterprise, ~$42k/mes) — decisión de producto: no encolar en X por ahora.
+    // El bloqueo/ocultado de comentarios en X (shield_moderado/shield_critico
+    // arriba) no se ve afectado por esta restricción.
+    if (platform === "youtube") {
+      if (!commentId) {
+        log.warn("Skipping auto-roast: missing commentId", {
+          accountId,
+          platform,
+        });
+      } else {
+        await triggerAutoRoast({
+          userId,
+          commentId,
+          commentText: text,
+          severityScore: result.severity_score,
+          platform,
+          accountId,
+          tone,
+        });
+        log.debug("Triggered automatic roast generation", {
+          decision: result.decision,
+          severity: result.severity_score,
+        });
+      }
     }
   }
 

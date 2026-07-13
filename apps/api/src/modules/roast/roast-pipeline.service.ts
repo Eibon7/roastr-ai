@@ -1,10 +1,12 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, ForbiddenException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
-import type { PersonaProfile } from "@roastr/shared";
+import { randomUUID } from "node:crypto";
 import { PromptBuilderService } from "./prompt-builder.service";
 import { StyleValidatorService } from "./style-validator.service";
 import { LlmService } from "./llm.service";
+import { DisclaimerService } from "./disclaimer.service";
+import { AutoApproveService } from "./auto-approve.service";
 import type { ToneId } from "./tones";
 
 export type GenerateRoastInput = {
@@ -15,11 +17,17 @@ export type GenerateRoastInput = {
   platform: string;
   accountId: string;
   tone: ToneId;
-  persona?: PersonaProfile;
+  /**
+   * Idempotency key for the roasts_used quota RPC. Pass a stable value (e.g.
+   * `roast:${commentId}`) for automatic generation so a BullMQ retry of the
+   * triggering analysis job doesn't double-charge the quota; omit for manual
+   * generation so every explicit user action consumes its own credit.
+   */
+  jobId?: string;
 };
 
 export type GenerateRoastResult = {
-  /** Generated text — NOT persisted (GDPR). Shown once to user for review. */
+  /** Generated text (includes platform disclaimer) — NOT persisted (GDPR). Shown once to user for review. */
   generatedText: string;
   /** Candidate metadata record ID */
   candidateId: string;
@@ -28,6 +36,8 @@ export type GenerateRoastResult = {
   violations: Array<{ ruleId: string; message: string }>;
   /** Truncated text (if too long) */
   truncatedText: string;
+  /** True if auto-approve published this candidate immediately instead of queuing it for review */
+  published: boolean;
 };
 
 @Injectable()
@@ -36,6 +46,8 @@ export class RoastPipelineService {
     private readonly promptBuilder: PromptBuilderService,
     private readonly styleValidator: StyleValidatorService,
     private readonly llm: LlmService,
+    private readonly disclaimer: DisclaimerService,
+    private readonly autoApprove: AutoApproveService,
     private readonly config: ConfigService,
   ) {}
 
@@ -47,26 +59,60 @@ export class RoastPipelineService {
   }
 
   async generate(input: GenerateRoastInput): Promise<GenerateRoastResult> {
+    const supabase = this.getSupabase();
+
+    // 0. Atomically check and consume a roast slot (roasts_used/roasts_limit)
+    // before doing any expensive work — mirrors tryConsumeAnalysisSlot for
+    // analysis quota. Idempotent per jobId: retries with the same jobId
+    // don't double-charge.
+    const jobId = input.jobId ?? randomUUID();
+    const { data: quota, error: quotaError } = await supabase.rpc("try_consume_roast_slot", {
+      p_user_id: input.userId,
+      p_job_id: jobId,
+    });
+    if (quotaError) {
+      throw new Error(`Failed to check roast quota: ${quotaError.message}`);
+    }
+    const quotaResult = quota as { allowed: boolean; reason?: string };
+    if (!quotaResult.allowed) {
+      throw new ForbiddenException(
+        `Roast quota unavailable (${quotaResult.reason ?? "over_limit"}).`,
+      );
+    }
+
     // 1. Build prompts (also validates flag gate)
     const prompt = this.promptBuilder.build({
       commentText: input.commentText,
       severityScore: input.severityScore,
       platform: input.platform,
       tone: input.tone,
-      persona: input.persona,
     });
 
     // 2. Call LLM
-    const { text: generatedText } = await this.llm.generate(prompt);
+    const { text: llmText } = await this.llm.generate(prompt);
 
-    // 3. Validate generated text
+    // 3. Apply the platform disclaimer before validating/truncating, so the
+    // reviewed and (if auto-approved) published text always matches what
+    // was actually checked.
+    const generatedText = this.disclaimer.apply(llmText, input.platform);
+
+    // 4. Validate generated text
     const validation = this.styleValidator.validate(generatedText, input.platform);
 
-    // 4. Truncate if needed (even if invalid due to length)
+    // 5. Truncate if needed (even if invalid due to length)
     const truncatedText = this.styleValidator.truncate(generatedText, input.platform);
 
-    // 5. Save METADATA ONLY to roast_candidates (GDPR: no generated text stored)
-    const supabase = this.getSupabase();
+    // 6. Auto-approve only publishes immediately when the content is valid;
+    // anything with violations still goes through manual review regardless
+    // of the account's auto-approve setting.
+    const autoApproveEnabled = await this.autoApprove.isAutoApproveEnabled(
+      input.userId,
+      input.accountId,
+    );
+    const published = autoApproveEnabled && validation.valid;
+    const status = published ? "published" : "pending_review";
+
+    // 7. Save METADATA ONLY to roast_candidates (GDPR: no generated text stored)
     const { data, error } = await supabase
       .from("roast_candidates")
       .insert({
@@ -74,9 +120,10 @@ export class RoastPipelineService {
         account_id: input.accountId,
         platform: input.platform,
         tone: input.tone,
-        status: "pending_review",
+        status,
         has_validation_errors: !validation.valid,
         violation_count: validation.violations.length,
+        ...(published ? { published_at: new Date().toISOString() } : {}),
       })
       .select("id")
       .single();
@@ -91,6 +138,7 @@ export class RoastPipelineService {
       isValid: validation.valid,
       violations: validation.violations,
       truncatedText,
+      published,
     };
   }
 

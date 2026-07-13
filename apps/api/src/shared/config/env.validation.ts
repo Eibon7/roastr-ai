@@ -39,6 +39,9 @@ const envSchema = z.object({
   POLAR_PRODUCT_PLUS_ID: z.string().uuid().optional(),
 
   RESEND_API_KEY: z.string().optional(),
+
+  /** Shared secret for machine-to-machine calls from apps/worker (e.g. auto roast generation). */
+  INTERNAL_API_SECRET: z.string().optional(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

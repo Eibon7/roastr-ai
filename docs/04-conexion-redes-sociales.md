@@ -293,12 +293,12 @@ Todas las plataformas siguen este flujo base:
 
 ## 4.5 Desconectar cuentas
 
-Al desconectar una cuenta:
+Al desconectar una cuenta (`AccountsService.disconnectByUserAndId`, ROA-T24):
 
-1. Tokens OAuth eliminados (borrado del cifrado)
-2. `status → inactive`
-3. Workers detenidos
-4. Ingestión OFF, Shield OFF
+1. `refresh_token_encrypted → NULL` (impide cualquier refresco futuro). `access_token_encrypted` es `NOT NULL` en el schema y no puede vaciarse; queda inerte porque `status` deja de ser `'active'`, y se purga junto al resto de la fila tras la retención.
+2. `status → 'revoked'`, `status_reason → 'user_action'` (el enum `account_status` real es `active|paused|revoked|error` — no existe el valor `inactive` mencionado en versiones previas de este doc)
+3. Repeatable job de ingestión en BullMQ eliminado (ROA-T23) — Workers detenidos
+4. Ingestión OFF (bloqueado también por `status !== 'active'` en `ingestionProcessor`), Shield OFF (deja de recibir comentarios nuevos)
 5. `retention_until = now + 90 días`
 
 ### Retención 90 días (GDPR)
@@ -344,6 +344,8 @@ Cada plataforma usa su mecanismo de cursor:
 | YouTube | `nextPageToken` | Paginación por token |
 | X | `since_id` / `pagination_token` | Cronológico |
 
+> **Hallazgo (auditoría de coste, §4.6.3):** esta tabla describe el mecanismo *documentado/intencionado*, no el implementado. `apps/worker/src/shared/fetch-comments.ts` (`fetchXComments`) solo usa `pagination_token` para paginar hacia adelante dentro de un mismo ciclo de fetch; no envía `since_id` (ni ningún parámetro equivalente) para pedir a X solo las menciones nuevas desde el ciclo anterior. En la práctica, cada llamada a `/2/users/{id}/mentions` devuelve hasta `max_results=100` de las menciones más recientes de la cuenta, sin excluir las ya leídas en ciclos previos. Ver §4.6.3 para el impacto de esto en el coste estimado de "Owned Reads". No se corrige aquí (fuera de alcance de esta tarea, que es de modelado/documentación, no de implementación).
+
 - Retry on fail con backoff
 - Guarda `last_successful_ingestion` en cada fetch exitoso
 - Actualiza `ingestion_cursor` para siguiente iteración
@@ -377,6 +379,42 @@ Si `analysis_remaining = 0`:
 - Log: `analysis_limit_exceeded`
 - Cuenta pasa a `paused` con `status_reason: 'analysis_exhausted'`
 - UI muestra aviso + opciones de upgrade
+
+### 4.6.3 Modelo de coste variable: "Owned Reads" en X (estimación)
+
+> **Estado: ESTIMACIÓN, no cifra verificada.** Los números de esta sección se derivan de los supuestos documentados abajo, no de facturación real de X ni de una confirmación 1:1 contra la documentación oficial de precios de X API vigente en el momento de escribir esto (2026-07). Sirven para dimensionar el orden de magnitud del problema y decidir próximos pasos (pricing / términos de uso / cambios de implementación), no como cifra contractual.
+
+**Contexto:** la auditoría de 2026-07-11 (PRD del proyecto "16 — Auditoría de flujos core") señaló que la lectura de menciones de X vía `/2/users/{id}/mentions` probablemente cae bajo el modelo "Owned Reads" de X — facturación de **$0.001 por recurso leído**, vigente desde abril 2026 — en vez de (o además de) el tier fijo mensual de la app (ver §6.14 de `docs/06-motor-roasting.md`: Free/Basic $200/Pro $5,000). Esta sección modela ese coste variable por plan.
+
+**Supuestos usados (documentados explícitamente para que otras tareas los reutilicen, p.ej. la actualización de Términos de Uso para cuentas de X):**
+
+1. Cada ciclo de ingestión programado (§4.6.1) ejecuta **1 llamada** a `GET /2/users/{id}/mentions` (`apps/worker/src/shared/fetch-comments.ts`, función `fetchXComments`). El código no pagina múltiples páginas dentro de un mismo ciclo de job.
+2. `max_results=100` está hardcodeado en esa llamada (`fetch-comments.ts`, `url.searchParams.set("max_results", "100")`) — es el máximo de recursos que la API puede devolver por llamada.
+3. **Hallazgo clave:** el código actual no implementa `since_id` ni ningún filtro incremental equivalente (ver nota en §4.6.2). Sin ese filtro, cada llamada devuelve hasta 100 de las menciones más recientes disponibles de la cuenta, sin excluir las ya devueltas en ciclos anteriores. Para cualquier cuenta con un historial de más de 100 menciones, esto implica que la mayoría de llamadas devolverán un número de recursos cercano al máximo (100), **independientemente del volumen real de menciones nuevas** desde el ciclo anterior. Por eso se modela un escenario "techo" (100 recursos/llamada) como estimación principal, en vez de una cifra "optimista" basada en actividad real — no hay telemetría de producción disponible para estimar el volumen real de menciones nuevas por cuenta con algún grado de confianza.
+4. Precio: $0.001/recurso leído (Owned Reads), tomado tal cual de la nota de auditoría, sin verificación adicional.
+5. Mes de 30 días para las cifras de "llamadas/mes" (consistente con la cadencia de §4.6.1: 96/144/288 ingestiones/día para Starter/Pro/Plus).
+6. Las cifras son **por cuenta de X conectada**, no por usuario ni agregadas por plan. Un usuario con más de una cuenta de X conectada (Pro/Plus permiten `accountsPerPlatform: 2`, ver `packages/shared/src/constants/plans.ts`) multiplica el coste proporcionalmente al número de cuentas.
+7. No está verificado si X factura por recurso devuelto en cada respuesta HTTP (contando recursos ya devueltos en llamadas anteriores como nuevos cobros) o si deduplica por ID de recurso dentro de un periodo de facturación. Este modelo asume el caso **sin deduplicación** (cada recurso devuelto en cada respuesta cuenta como una lectura facturable), que es el escenario de coste más alto y el que se corresponde con el comportamiento real del código (punto 3). Si X deduplicara por ID, el coste real sería menor y proporcional al volumen de menciones verdaderamente nuevas — desconocido sin datos de producción.
+
+**Tabla: coste estimado de Owned Reads por plan (por cuenta de X conectada)**
+
+| Plan | Cadencia | Llamadas/mes (30d) | Recursos/llamada (supuesto, techo) | Recursos/mes | Coste estimado/mes |
+|---|---|---|---|---|---|
+| Starter | 15 min | 2,880 | 100 | 288,000 | **$288.00** |
+| Pro | 10 min | 4,320 | 100 | 432,000 | **$432.00** |
+| Plus | 5 min | 8,640 | 100 | 864,000 | **$864.00** |
+
+*(Cálculo: llamadas/mes × 100 recursos × $0.001/recurso. P. ej. Starter: 2,880 × 100 × 0.001 = 288.00.)*
+
+**Lectura del resultado:** el coste estimado de Owned Reads por cuenta de X conectada (entre $288 y $864/mes según plan, en el escenario "techo") supera ampliamente el precio del propio plan (Starter €5, Pro €15, Plus €50/mes — `packages/shared/src/constants/plans.ts`). Incluso tomado solo como orden de magnitud, esto sugiere que el modelo de ingestión actual de X (cadencia fija + sin filtrado incremental) no es sostenible tal cual si se factura Owned Reads sin ningún límite adicional.
+
+**Palancas de mitigación identificadas (fuera de alcance de esta tarea — solo se documentan, no se implementan):**
+- Añadir `since_id` (u otro filtro incremental) al fetch de X para leer solo menciones nuevas desde el cursor anterior, acercando el coste real al volumen de actividad real en vez de al buffer máximo de 100 por llamada.
+- Revisar si una cadencia más lenta (menos llamadas/día) reduce el coste sin degradar demasiado la frescura de los datos, especialmente en Starter/Pro.
+- Evaluar un cap de "recursos leídos por cuenta/mes" como límite de producto (análogo a `analysisLimit`), en vez de limitar solo por cadencia.
+- Decidir si el coste se traslada a pricing (subir precio, cobrar add-on por cuenta de X conectada) o se gestiona vía Términos de Uso (cap de cuentas de X más restrictivo, cadencia más lenta en planes bajos, o cláusula de reserva de coste variable).
+
+**Relación con la tarea paralela de Términos de Uso:** la tarea "Actualizar términos de uso para usuarios que conectan cuentas de X" (mismo proyecto, ROA-P2, ver también §4.13(c) más abajo) debía citar las cifras de este modelo una vez cerrado. La cifra a citar es: **rango estimado $288–$864/mes por cuenta de X conectada, según plan, en el escenario "techo" sin deduplicación** — no verificado contra facturación real ni contra la política exacta de deduplicación de X.
 
 ---
 
@@ -494,3 +532,24 @@ Cuando una cuenta pasa a `active` desde `paused` o `inactive`:
 - **Shield (§7):** Ejecuta acciones de moderación usando los métodos del adapter. Consulta `capabilities` para determinar qué acciones son posibles.
 - **Workers (§8):** BullMQ jobs que ejecutan la ingestión periódica por cuenta.
 - **SSOT:** Define cadencias por plan, límites de cuentas, y rate limit configs.
+
+---
+
+## 4.13 Comunicación previa a la conexión de una cuenta de X (nota de producto/UX)
+
+> **Aviso:** Esta sección es una **nota de producto/UX**, no el texto legal definitivo. Su propósito es dejar constancia de qué debe comunicarse al usuario antes de conectar una cuenta de X, para que Legal redacte la cláusula final de los Términos de Uso (`apps/web/src/routes/terms.tsx`, que hoy es un texto genérico sin menciones específicas por plataforma) y/o el copy de la pantalla de conexión (`ConnectAccounts`, §4.4.1). No se debe usar el texto de este apartado como cláusula legal vinculante tal cual.
+
+Contexto (decisión de producto ya tomada, ver PRD del proyecto "16 — Auditoría de flujos core"): X restringió en feb 2026 las respuestas programáticas vía API salvo que el autor original mencione/cite la cuenta, con el tier Enterprise (~$42K+/año) como única vía de acceso sin esa restricción. Por eso Roastr ofrece **roast automático solo en YouTube**; en X, por ahora, no.
+
+Antes de que un usuario conecte una cuenta de X, el flujo de conexión (o los Términos de Uso) debería dejar explícitas al menos estas tres cosas:
+
+**a) No hay roast automático en X.**
+Solo Shield (ocultar/bloquear comentarios, §7) actúa de forma automática sobre las menciones ingeridas de X. Capabilities reales del adapter de X (§4.1, §4.4.3): `hide` ✅, `block` ✅, `reply` ✅ solo si la publicación destino menciona/cita la cuenta del usuario (restricción de la API de X vigente desde feb 2026) o si la cuenta opera bajo el tier Enterprise. Esto debe comunicarse como una diferencia explícita frente a YouTube, donde sí hay roast automático (§ROA-T sobre disparo automático desde `analysis.ts`).
+
+**b) La generación de un roast en X requiere acción manual del usuario.**
+El endpoint `POST /roast/generate` (apps/api, `apps/api/src/modules/roast/roast.controller.ts`) sigue existiendo y es funcional para ese caso, pero a día de hoy **no tiene UI que lo invoque para X**: `RoastGenerateModal.tsx` se eliminó del frontend (ver learnings de la tarea "Reparar o retirar el camino manual roto") al no existir todavía un selector de comentario individual para X. Es decir: el texto de cara al usuario debe reflejar la intención de producto ("en X, generar un roast es una acción manual tuya, no automática"), pero **no debe prometer una función de generación manual ya disponible en la UI actual** — eso queda pendiente de construir. Legal/Producto deben alinear el wording con el estado real de la feature en el momento de publicar el texto.
+
+**c) La lectura de menciones en X tiene un coste variable que puede repercutir en el plan.**
+Según el PRD de este proyecto, la lectura de menciones vía `/2/users/{id}/mentions` probablemente cae bajo el modelo "Owned Reads" de X (facturación por recurso leído, no solo por tier fijo), vigente desde abril 2026. El modelo de coste ya está cerrado — ver **§4.6.3 de este mismo documento** — con la estimación (no verificada contra facturación real): **$288–$864/mes por cuenta de X conectada**, según plan (Starter/Pro/Plus), en el escenario "techo" sin deduplicación de X (supuesto explícito, ver §4.6.3 punto 7). El texto de cara al usuario debería, como mínimo: (i) advertir que leer menciones de X tiene un coste variable para Roastr ligado al volumen/cadencia de ingestión de la cuenta conectada (§4.6.1), (ii) evitar citar la cifra exacta como definitiva dado que no está verificada contra facturación real ni contra la política de deduplicación de X, y (iii) dejar constancia de que ese coste puede reflejarse en el pricing de los planes en el futuro (ajuste de cadencia, límites o precio), sujeto a revisión.
+
+**Resumen para Legal:** el texto final de Términos de Uso para cuentas de X debe (1) diferenciar explícitamente las capacidades de X frente a YouTube en materia de roast automático, (2) evitar prometer una función de generación manual de roast en X que hoy no existe en la UI, y (3) incluir una cláusula de reserva sobre el coste variable de lectura de menciones y su posible traslado a pricing, citando como referencia el rango estimado de §4.6.3 ($288–$864/mes por cuenta conectada) marcado explícitamente como estimación no verificada, no como cifra contractual.

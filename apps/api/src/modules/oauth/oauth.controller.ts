@@ -11,6 +11,19 @@ import { Response } from "express";
 import { OAuthService } from "./oauth.service";
 import { Public } from "../../shared/guards/public.decorator";
 
+function buildRedirectUrl(
+  frontendUrl: string,
+  returnTo: "onboarding" | undefined,
+  params: Record<string, string>,
+): string {
+  const query = Object.entries(params)
+    .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+    .join("&");
+  return returnTo === "onboarding"
+    ? `${frontendUrl}/onboarding?step=connect_accounts&${query}`
+    : `${frontendUrl}/connect?${query}`;
+}
+
 @Controller("oauth")
 export class OAuthController {
   constructor(private readonly oauth: OAuthService) {}
@@ -18,22 +31,30 @@ export class OAuthController {
   @Get("youtube/authorize")
   async youtubeAuthorize(
     @Req() req: { user?: { id: string } },
+    @Query("returnTo") returnTo?: string,
   ): Promise<{ url: string }> {
     if (!req.user?.id) {
       throw new UnauthorizedException();
     }
-    const { url } = this.oauth.getYouTubeAuthorizeUrl(req.user.id);
+    const { url } = this.oauth.getYouTubeAuthorizeUrl(
+      req.user.id,
+      returnTo === "onboarding" ? "onboarding" : undefined,
+    );
     return { url };
   }
 
   @Get("x/authorize")
   async xAuthorize(
     @Req() req: { user?: { id: string } },
+    @Query("returnTo") returnTo?: string,
   ): Promise<{ url: string }> {
     if (!req.user?.id) {
       throw new UnauthorizedException();
     }
-    const { url } = this.oauth.getXAuthorizeUrl(req.user.id);
+    const { url } = this.oauth.getXAuthorizeUrl(
+      req.user.id,
+      returnTo === "onboarding" ? "onboarding" : undefined,
+    );
     return { url };
   }
 
@@ -47,21 +68,27 @@ export class OAuthController {
   ): Promise<void> {
     const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:5173";
     if (error) {
-      res.redirect(`${frontendUrl}/connect?error=${encodeURIComponent(error)}`);
+      res.redirect(
+        buildRedirectUrl(frontendUrl, OAuthService.peekReturnTo(state), { error }),
+      );
       return;
     }
     if (!code || !state) {
-      res.redirect(`${frontendUrl}/connect?error=missing_params`);
+      res.redirect(
+        buildRedirectUrl(frontendUrl, OAuthService.peekReturnTo(state), {
+          error: "missing_params",
+        }),
+      );
       return;
     }
     try {
-      const { accountId } = await this.oauth.handleXCallback(code, state);
-      res.redirect(
-        `${frontendUrl}/connect?success=x&accountId=${accountId}`,
-      );
+      const { accountId, returnTo } = await this.oauth.handleXCallback(code, state);
+      res.redirect(buildRedirectUrl(frontendUrl, returnTo, { success: "x", accountId }));
     } catch (e) {
       const msg = e instanceof Error ? e.message : "oauth_failed";
-      res.redirect(`${frontendUrl}/connect?error=${encodeURIComponent(msg)}`);
+      res.redirect(
+        buildRedirectUrl(frontendUrl, OAuthService.peekReturnTo(state), { error: msg }),
+      );
     }
   }
 
@@ -75,22 +102,29 @@ export class OAuthController {
   ): Promise<void> {
     const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:5173";
     if (error) {
-      res.redirect(`${frontendUrl}/connect?error=${encodeURIComponent(error)}`);
+      res.redirect(
+        buildRedirectUrl(frontendUrl, OAuthService.peekReturnTo(state), { error }),
+      );
       return;
     }
     if (!code || !state) {
-      res.redirect(`${frontendUrl}/connect?error=missing_params`);
+      res.redirect(
+        buildRedirectUrl(frontendUrl, OAuthService.peekReturnTo(state), {
+          error: "missing_params",
+        }),
+      );
       return;
     }
     try {
-      const { accountId } =
-        await this.oauth.handleYouTubeCallback(code, state);
+      const { accountId, returnTo } = await this.oauth.handleYouTubeCallback(code, state);
       res.redirect(
-        `${frontendUrl}/connect?success=youtube&accountId=${accountId}`,
+        buildRedirectUrl(frontendUrl, returnTo, { success: "youtube", accountId }),
       );
     } catch (e) {
       const msg = e instanceof Error ? e.message : "oauth_failed";
-      res.redirect(`${frontendUrl}/connect?error=${encodeURIComponent(msg)}`);
+      res.redirect(
+        buildRedirectUrl(frontendUrl, OAuthService.peekReturnTo(state), { error: msg }),
+      );
     }
   }
 }

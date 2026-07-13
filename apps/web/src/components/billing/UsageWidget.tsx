@@ -4,6 +4,7 @@ import { apiFetch } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
 type Usage = {
@@ -16,6 +17,60 @@ type Usage = {
   current_period_end: string | null;
   trial_end: string | null;
 };
+
+/**
+ * Visual tone for a billing-state alert. Kept separate from the Alert
+ * component's own "destructive" variant so non-blocking states (info,
+ * warning) can reuse the same amber/sky treatment used elsewhere in the app.
+ */
+type BillingAlertTone = "info" | "warning" | "destructive";
+
+type BillingAlertConfig = {
+  tone: BillingAlertTone;
+  message: string;
+  /** Optional call-to-action, reusing the existing "Cambiar plan"/checkout
+   * entry point (the onboarding wizard) rather than duplicating checkout
+   * logic here. */
+  cta?: { label: string; href: string };
+};
+
+const ALERT_TONE_CLASSNAMES: Record<Exclude<BillingAlertTone, "destructive">, string> = {
+  info: "border-sky-500/50 bg-sky-500/10 text-sky-700 dark:text-sky-400",
+  warning: "border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+};
+
+function getBillingAlert(usage: Usage): BillingAlertConfig | null {
+  switch (usage.billing_state) {
+    case "payment_retry":
+      return {
+        tone: "warning",
+        message: "Actualiza tu método de pago para evitar la interrupción del servicio.",
+      };
+    case "expired_trial_pending_payment":
+      return {
+        tone: "destructive",
+        message:
+          "Tu periodo de prueba ha terminado. Añade un método de pago para seguir usando Roastr.",
+        cta: { label: "Suscribirme", href: "/onboarding" },
+      };
+    case "paused":
+      return {
+        tone: "destructive",
+        message:
+          "Tu servicio está suspendido: la ingestión de contenido y la generación de roasts están detenidas. Actualiza tu método de pago o contacta con soporte para reactivarlo.",
+        cta: { label: "Reactivar suscripción", href: "/onboarding" },
+      };
+    case "canceled_pending":
+      return {
+        tone: "info",
+        message: usage.current_period_end
+          ? `Tu suscripción está programada para cancelarse el ${new Date(usage.current_period_end).toLocaleDateString()}. Mantendrás acceso hasta esa fecha.`
+          : "Tu suscripción está programada para cancelarse al final del periodo de facturación actual. Mantendrás acceso hasta entonces.",
+      };
+    default:
+      return null;
+  }
+}
 
 export function UsageWidget() {
   const { session } = useAuth();
@@ -76,15 +131,27 @@ export function UsageWidget() {
   const analysisPct = usage.analysis_limit > 0
     ? Math.round((usage.analysis_used / usage.analysis_limit) * 100)
     : 0;
-  const isPaymentRetry = usage.billing_state === "payment_retry";
+  const billingAlert = getBillingAlert(usage);
 
   return (
     <Card>
       <CardContent>
-        {isPaymentRetry && (
-          <Alert className="mb-4 border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400">
+        {billingAlert && (
+          <Alert
+            variant={billingAlert.tone === "destructive" ? "destructive" : "default"}
+            className={
+              billingAlert.tone === "destructive"
+                ? "mb-4"
+                : `mb-4 ${ALERT_TONE_CLASSNAMES[billingAlert.tone]}`
+            }
+          >
             <AlertDescription>
-              Actualiza tu método de pago para evitar la interrupción del servicio.
+              <span>{billingAlert.message}</span>
+              {billingAlert.cta && (
+                <Button asChild size="sm" variant="outline" className="mt-1">
+                  <a href={billingAlert.cta.href}>{billingAlert.cta.label}</a>
+                </Button>
+              )}
             </AlertDescription>
           </Alert>
         )}

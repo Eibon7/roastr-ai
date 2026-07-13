@@ -176,6 +176,7 @@ Configurables vía SSOT:
 - **Reply solo disponible con tier Enterprise** ($42K+/año)
   - Sin Enterprise: el comentario queda como `eligible_for_response` pero no se publica roast
   - Con Enterprise: flujo normal
+  - Ver §6.13 para la verificación oficial (2026-07-12) de esta restricción y su alcance exacto
 
 ---
 
@@ -365,7 +366,65 @@ Discarded --> [*]
 
 ---
 
-## 6.13 Nota sobre cuota de X API y límites de roasts
+## 6.13 Disparo automático desde el Motor de Análisis (implementación actual — YouTube)
+
+> Actualizado 2026-07-11 (auditoría ROA-P2). Esta sección documenta la arquitectura real ya implementada/decidida, que difiere del diseño aspiracional de §6.1–§6.13 (p. ej. no existe un processor `GenerateRoast` en el worker; la generación vive en `apps/api/src/modules/roast/*` vía `RoastPipelineService`, con feature flags, auto-approve y estilo ya implementados y testeados).
+
+### Decisión de producto
+
+Roast automático: **solo YouTube**. Para X no se dispara generación automática (restricción de la API de X a respuestas programáticas salvo mención/cita del autor, o tier Enterprise ~$42k/mes — evaluándose aparte). El bloqueo/ocultado de comentarios en X vía Shield no se ve afectado, sigue funcionando igual.
+
+### Verificación oficial de la restricción de reply en X (2026-07-12, ROA-P2/ROA-T38)
+
+La auditoría del 2026-07-11 documentó esta restricción como hallazgo pero sin verificarla contra fuente oficial. Esta tarea intentó esa verificación con el siguiente resultado:
+
+**Confirmado (con reserva metodológica, ver abajo):** vía `WebSearch` se localizó un anuncio atribuido a la cuenta oficial `@XDevelopers` (`x.com/XDevelopers/status/2026084506822730185`, según snippets de búsqueda) cuyo texto citado es: *"To help address automated reply spam, programmatic replies via POST /2/tweets are now restricted for X API. You can only reply if the original author @ mentions you or quotes your post. [...] Applies to Free, Basic, Pro, Pay-Per-Use."* Esto:
+- Confirma la mecánica general (reply automático bloqueado salvo que el autor original mencione/cite la cuenta).
+- **Corrige un matiz del hallazgo original:** la exención NO es solo "tier Enterprise" — según este anuncio la restricción aplica a Free, Basic, Pro y Pay-Per-Use por igual, y quedan fuera (exentos) Enterprise **y "Public Utility"** (categoría de acceso no mencionada hasta ahora en nuestra documentación). No se pudo confirmar el coste exacto de ~$42K/año para Enterprise contra una fuente de precios oficial en esta sesión (la cifra proviene de docs/04, no de una tarifa publicada verificada aquí).
+
+**NO confirmado — limitación de esta verificación:** `WebFetch` fue bloqueado (HTTP 402/403) en todas las páginas oficiales candidatas (`docs.x.com/developer-guidelines`, `developer.x.com/en/support/x-api/policy`, `help.x.com/en/rules-and-policies/x-automation`, el hilo `devcommunity.x.com/t/policy-clarification-automated-replies-and-mentions/94444`, y el propio tweet de `@XDevelopers`). Solo se pudo leer **resúmenes/snippets generados por WebSearch**, no el texto primario completo de docs.x.com/developer.x.com. Por tanto:
+- La cita anterior está verificada solo de forma indirecta (snippet de buscador que referencia el tweet), no leyendo la fuente primaria directamente.
+- **La pregunta específica de esta tarea — si un comentario tóxico que ya es estructuralmente una respuesta al post del usuario conectado cuenta como que "el autor te menciona/cita" a efectos de la excepción — NO pudo resolverse.** Un blog de terceros (fireply.ai, no fuente oficial) afirma que la excepción de mención/cita aplica quien es el autor del tweet que se quiere responder, y que responder a **tus propios** posts no requiere la excepción — pero ese es un caso distinto (auto-respuesta a tu propio post), no el de Roastr (responder a un comentario ajeno que a su vez ya es reply a tu post). No se encontró clarificación oficial de X sobre si el reply-threading en sí (el hecho de que el comentario tóxico sea reply a tu post) genera o no una mención/entity `@usuario` computable para la excepción.
+
+**Conclusión:** la decisión de producto (no auto-roast en X salvo Enterprise) se mantiene como correcta a nivel general, pero **queda pendiente de confirmación manual por el equipo** (con acceso autenticado a devcommunity.x.com/developer.x.com, o contacto directo con soporte de X) el matiz concreto que condicionaría si Roastr podría cualificar para la excepción sin ser Enterprise. Recomendación: no cambiar la decisión de producto hasta obtener esa confirmación directa.
+
+### Disparo
+
+`apps/worker/src/processors/analysis.ts` ya enqueua a la cola `shield` cuando `analysisReducer` decide `shield_moderado`/`shield_critico` (ver `getShieldQueue()`). Se añade una rama simétrica: cuando `result.decision` es `eligible_for_response` o `correctiva` **y** `platform === "youtube"`, se dispara la generación automática de un roast.
+
+### Arquitectura: llamada HTTP interna a `apps/api`, NO una cola/processor nuevo en el worker
+
+Se evaluaron dos opciones:
+
+1. **Nueva cola BullMQ `roast` + processor en el worker**, reimplementando la lógica de `RoastPipelineService` allí (siguiendo el mismo patrón que `shield`).
+2. **Llamada HTTP interna del worker a un endpoint nuevo en `apps/api`** que reutiliza `RoastPipelineService.generate()` tal cual.
+
+**Se elige la opción 2.** Razón: `RoastPipelineService.generate()` depende de servicios con estado y lógica de negocio no triviales que ya viven y están testeados en `apps/api` — `FeatureFlagService` (cache SSOT), `AutoApproveService`, `DisclaimerService`, `StyleValidatorService`, `LlmService` (vía `ConfigService`) — y persiste `roast_candidates` respetando la invariante GDPR (nunca guardar el texto generado). Reimplementar todo esto en `apps/worker` duplicaría lógica de negocio crítica entre dos runtimes, exactamente el tipo de duplicación que esta misma auditoría marca como problema a eliminar (ver limpieza de `analysis.controller.ts`/`perspective-api.service.ts`). La cola `shield` es distinta: el `shield` processor ejecuta acciones de moderación (ocultar/bloquear vía adapter de plataforma) que no dependen de esos servicios de `apps/api`, por eso ahí sí tiene sentido resolverlo enteramente en el worker.
+
+### Contrato del endpoint interno (a implementar en ROA-T20)
+
+- `POST /internal/roast/auto-generate` en `apps/api` (nuevo controller o método en `RoastController`), autenticado por secreto compartido (`X-Internal-Secret` vs. `INTERNAL_API_SECRET`), **no** por JWT de usuario ni `SubscriptionGuard` (el worker no tiene sesión de usuario).
+- Body: `{ userId, commentId, commentText, severityScore, platform: "youtube", accountId, tone }`.
+- Internamente reutiliza `RoastPipelineService.generate()` sin cambios.
+- Debe replicar la comprobación de `SubscriptionGuard` (billing_state en `ACTIVE_STATES`) antes de generar, ya que este endpoint no pasa por el guard HTTP normal.
+- **Dependencia con ROA-T32** (cuota de roasts aún no implementada — `roasts_limit`/`roasts_used`): hasta que esa tarea aterrice, el endpoint no debe bloquear por cuota de roast (no existe aún), solo por `billing_state`. Cuando ROA-T32 implemente la cuota, este endpoint debe consumirla de la misma forma atómica que `tryConsumeAnalysisSlot` hace para análisis.
+
+### Tono de la cuenta
+
+`accounts.tone` ya existe en el schema (`supabase/migrations/00001_initial_schema.sql`, default `'balanceado'`). El worker ya hace un `SELECT` a `accounts` en `analysis.ts` para leer `shield_aggressiveness` — se añade `tone` a esa misma query, sin queries adicionales.
+
+### Camino manual (`RoastGenerateModal`) — retirado
+
+`RoastGenerateModal.tsx` era huérfano: ningún componente lo renderizaba, y `RoastReviewList`'s prop `onGenerateNew` nunca se pasaba desde `dashboard.tsx`. Se decidió **eliminarlo** (ROA-T21) en vez de conectarlo, porque:
+
+- Para YouTube el flujo ya es 100% automático (§6.13 arriba).
+- Para X no hay ni habrá generación automática por ahora, pero tampoco existe en la UI un selector de "qué comentario concreto roastear manualmente" — el modal esperaba `commentId`/`commentText`/`severityScore` ya resueltos, y no hay ninguna pantalla que liste comentarios individuales para elegir uno. Conectarlo habría requerido construir esa pantalla desde cero, fuera del alcance de un "repair".
+
+El endpoint `POST /roast/generate` (manual, autenticado por JWT de usuario) se mantiene en `apps/api` sin cambios — sigue testeado y disponible si en el futuro se construye un flujo de selección de comentario que lo necesite.
+
+---
+
+## 6.14 Nota sobre cuota de X API y límites de roasts
 
 Los posts de X consumen una cuota **a nivel de app** (toda la app Roastr, no por usuario):
 
@@ -386,3 +445,5 @@ Esto significa que los límites de roasts por plan deben calcularse en función 
 | Plus | 200 | Sí |
 
 Estos números asumen X API Basic ($200/mo) y ~50 usuarios activos. Se revisarán según datos reales de uso y crecimiento.
+
+**Nota: esto es un coste de X distinto del coste de ingestión (lectura de menciones).** El tier de X API de esta tabla (Free/Basic/Pro) cubre la cuota de **publicación** de posts (los roasts que Roastr publica en X). La **lectura** de menciones vía `/2/users/{id}/mentions` que alimenta la ingestión (§4.6 de `docs/04-conexion-redes-sociales.md`) es un coste variable aparte, bajo el modelo "Owned Reads" ($0.001/recurso leído desde abril 2026) — modelado en **§4.6.3 de docs/04-conexion-redes-sociales.md**, con una estimación de $288–$864/mes por cuenta de X conectada según plan (Starter/Pro/Plus), no verificada contra facturación real.

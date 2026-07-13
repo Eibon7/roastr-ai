@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Req } from "@nestjs/common";
+import { Controller, Get, Post, Body, Req, HttpCode, HttpStatus } from "@nestjs/common";
 import { BillingService } from "./billing.service";
 import type { Plan } from "@roastr/shared";
 
@@ -37,5 +37,11 @@ export class BillingController {
       throw new Error("Checkout not configured. Set POLAR_ACCESS_TOKEN and POLAR_PRODUCT_*_ID.");
     }
     return result;
+  }
+
+  @Post("cancel")
+  @HttpCode(HttpStatus.OK)
+  async cancelSubscription(@Req() req: RequestWithUser) {
+    return this.billing.cancelSubscription(req.user.id);
   }
 }

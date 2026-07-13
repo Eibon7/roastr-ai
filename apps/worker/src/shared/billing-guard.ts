@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { ACTIVE_BILLING_STATES, type BillingState } from "@roastr/shared";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -11,7 +12,10 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 export type BillingGuardResult =
   | { allowed: true; remaining: number }
-  | { allowed: false; reason: "paused" | "over_limit" | "lookup_error" | "not_found" };
+  | {
+      allowed: false;
+      reason: "paused" | "inactive_subscription" | "over_limit" | "lookup_error" | "not_found";
+    };
 
 export async function checkBillingLimits(
   userId: string,
@@ -29,8 +33,15 @@ export async function checkBillingLimits(
     return { allowed: false, reason: "not_found" };
   }
 
-  if (data.billing_state === "paused") {
-    return { allowed: false, reason: "paused" };
+  // Block on the same set of billing_states that SubscriptionGuard blocks
+  // for HTTP requests, so background ingestion doesn't keep running for a
+  // user whose subscription is no longer active (e.g. expired_trial_pending_payment).
+  const billingState = data.billing_state as BillingState;
+  if (!ACTIVE_BILLING_STATES.includes(billingState)) {
+    return {
+      allowed: false,
+      reason: billingState === "paused" ? "paused" : "inactive_subscription",
+    };
   }
 
   const remaining = (data.analysis_limit ?? 0) - (data.analysis_used ?? 0);

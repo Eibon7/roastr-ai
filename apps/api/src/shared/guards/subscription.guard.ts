@@ -6,8 +6,12 @@ import {
 } from "@nestjs/common";
 import { createClient } from "@supabase/supabase-js";
 import { ConfigService } from "@nestjs/config";
+import { ACTIVE_BILLING_STATES, type BillingState } from "@roastr/shared";
 
-const ACTIVE_STATES = ["trialing", "active", "payment_retry", "canceled_pending"];
+// Re-exported for existing consumers (e.g. RoastInternalController) — the
+// single source of truth now lives in @roastr/shared so apps/worker's
+// billing-guard can share it too.
+export { ACTIVE_BILLING_STATES };
 
 @Injectable()
 export class SubscriptionGuard implements CanActivate {
@@ -29,8 +33,8 @@ export class SubscriptionGuard implements CanActivate {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    const state = (data?.billing_state as string) ?? "trialing";
-    if (!ACTIVE_STATES.includes(state)) {
+    const state = (data?.billing_state as BillingState) ?? "trialing";
+    if (!ACTIVE_BILLING_STATES.includes(state)) {
       throw new ForbiddenException("Active subscription required");
     }
     return true;

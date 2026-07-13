@@ -51,6 +51,11 @@ vi.mock("../src/shared/persona-decrypt.js", () => ({
   decryptPersona: (...args: unknown[]) => mockDecryptPersona(...args),
 }));
 
+const mockTriggerAutoRoast = vi.fn();
+vi.mock("../src/shared/roast-trigger.js", () => ({
+  triggerAutoRoast: (...args: unknown[]) => mockTriggerAutoRoast(...args),
+}));
+
 const { analysisProcessor } = await import("../src/processors/analysis.js");
 
 function makeJob(data: Record<string, unknown> | undefined): Job {
@@ -102,6 +107,7 @@ describe("analysisProcessor", () => {
     mockTryConsumeAnalysisSlot.mockResolvedValue({ allowed: true, remaining: 5 });
     mockDecryptPersona.mockReturnValue(null);
     mockQueueInstance.add.mockResolvedValue(undefined);
+    mockTriggerAutoRoast.mockResolvedValue(undefined);
 
     mockFetch = vi.fn();
     globalThis.fetch = mockFetch as unknown as typeof fetch;
@@ -301,5 +307,70 @@ describe("analysisProcessor", () => {
       "Analysis complete",
       expect.objectContaining({ scoreSource: "both_failed" }),
     );
+  });
+
+  describe("roast automático (solo YouTube)", () => {
+    beforeEach(() => {
+      process.env.PERSPECTIVE_API_KEY = "persp-key";
+      // TOXICITY 0.4 sin identity attack/threat/persona → scoreFinal 0.4,
+      // entre tau_low (0.25) y tau_shield (0.55) → decision "eligible_for_response"
+      mockFetch.mockResolvedValue(
+        perspectiveResponse({ TOXICITY: 0.4, SEVERE_TOXICITY: 0.3, IDENTITY_ATTACK: 0, INSULT: 0, THREAT: 0 }),
+      );
+    });
+
+    it("YouTube + eligible_for_response dispara la generación automática con el tono de la cuenta", async () => {
+      tableState.accounts = { data: { shield_aggressiveness: 0.9, tone: "canalla" }, error: null };
+
+      await analysisProcessor(makeJob(VALID_DATA));
+
+      expect(mockTriggerAutoRoast).toHaveBeenCalledTimes(1);
+      expect(mockTriggerAutoRoast).toHaveBeenCalledWith({
+        userId: VALID_DATA.userId,
+        commentId: VALID_DATA.commentId,
+        commentText: VALID_DATA.text,
+        severityScore: 0.4,
+        platform: "youtube",
+        accountId: VALID_DATA.accountId,
+        tone: "canalla",
+      });
+      expect(mockQueueInstance.add).not.toHaveBeenCalled();
+      expect(logSpies.info).toHaveBeenCalledWith(
+        "Analysis complete",
+        expect.objectContaining({ decision: "eligible_for_response" }),
+      );
+    });
+
+    it("usa 'balanceado' como tono por defecto si accounts.tone no está definido", async () => {
+      await analysisProcessor(makeJob(VALID_DATA));
+
+      expect(mockTriggerAutoRoast).toHaveBeenCalledWith(
+        expect.objectContaining({ tone: "balanceado" }),
+      );
+    });
+
+    it("X no dispara generación automática de roast aunque sea eligible_for_response", async () => {
+      await analysisProcessor(makeJob({ ...VALID_DATA, platform: "x" }));
+
+      expect(mockTriggerAutoRoast).not.toHaveBeenCalled();
+    });
+
+    it("sin commentId no dispara auto-roast en YouTube, solo loggea warning", async () => {
+      await analysisProcessor(makeJob({ ...VALID_DATA, commentId: undefined }));
+
+      expect(mockTriggerAutoRoast).not.toHaveBeenCalled();
+      expect(logSpies.warn).toHaveBeenCalledWith(
+        "Skipping auto-roast: missing commentId",
+        expect.anything(),
+      );
+    });
+
+    it("propaga el error si el disparo automático de roast falla (para que BullMQ reintente)", async () => {
+      mockTriggerAutoRoast.mockRejectedValue(new Error("Auto-generate roast failed: 500"));
+
+      await expect(analysisProcessor(makeJob(VALID_DATA))).rejects.toThrow(
+        "Auto-generate roast failed: 500",
+      );
+    });
   });
 });

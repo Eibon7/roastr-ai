@@ -1,12 +1,6 @@
 import { Injectable, ForbiddenException, BadRequestException } from "@nestjs/common";
-import type { PersonaProfile } from "@roastr/shared";
 import { FeatureFlagService } from "../feature-flags/feature-flag.service";
-import {
-  TONE_DEFINITIONS,
-  buildPersonalToneInstruction,
-  isValidTone,
-  type ToneId,
-} from "./tones";
+import { TONE_DEFINITIONS, isValidTone, type ToneId } from "./tones";
 
 /** Platform-level character limits for generated roasts */
 const PLATFORM_MAX_CHARS: Record<string, number> = {
@@ -29,8 +23,6 @@ export type RoastContext = {
   platform: string;
   /** Tone to use */
   tone: ToneId;
-  /** Required when tone === 'personal' */
-  persona?: PersonaProfile;
 };
 
 export type BuiltPrompt = {
@@ -63,7 +55,7 @@ export class PromptBuilderService {
       );
     }
 
-    // Block A — System prompt: tone + persona
+    // Block A — System prompt (tone-based, never includes Roastr Persona data)
     const system = this.buildBlockA(ctx);
 
     // Blocks B+C — User message: comment context + generation instructions
@@ -77,13 +69,8 @@ export class PromptBuilderService {
   private buildBlockA(ctx: RoastContext): string {
     const toneDef = TONE_DEFINITIONS[ctx.tone];
 
-    const toneInstruction =
-      ctx.tone === "personal" && ctx.persona
-        ? buildPersonalToneInstruction(ctx.persona)
-        : toneDef.systemInstruction;
-
     return [
-      toneInstruction,
+      toneDef.systemInstruction,
       "Genera EXCLUSIVAMENTE el texto de la respuesta, sin explicaciones adicionales.",
       "IMPORTANTE: Este contenido ha sido generado con IA. Incluye siempre la transparencia requerida según la plataforma.",
     ]

@@ -12,10 +12,10 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { Request } from "express";
 import { Webhook } from "standardwebhooks";
-import { billingReducer, type BillingEvent } from "../../domain/billing-reducer";
+import { billingReducer, type BillingEvent, type BillingSideEffect } from "../../domain/billing-reducer";
 import type { BillingState, Plan } from "@roastr/shared";
 import { PLAN_LIMITS } from "@roastr/shared";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { Public } from "../../shared/guards/public.decorator";
 
 type RawBodyRequest = Request & { rawBody?: Buffer };
@@ -72,7 +72,15 @@ export class PolarWebhookController {
         throw new ForbiddenException();
       }
     } else {
-      this.logger.warn("POLAR_WEBHOOK_SECRET not set, skipping verification");
+      const nodeEnv = this.config?.get?.("NODE_ENV") ?? process.env["NODE_ENV"] ?? "development";
+      if (nodeEnv === "production") {
+        // Fail closed: without a secret we cannot verify the sender, and
+        // accepting unsigned payloads in production would let anyone forge
+        // billing events (e.g. grant themselves a paid plan for free).
+        this.logger.error("POLAR_WEBHOOK_SECRET is required in production but is not set — rejecting webhook");
+        throw new ForbiddenException();
+      }
+      this.logger.warn("POLAR_WEBHOOK_SECRET not set, skipping verification (dev/test only)");
     }
 
     const eventType = body.type as string | undefined;
@@ -109,6 +117,7 @@ export class PolarWebhookController {
     // so concurrent webhook deliveries serialize correctly.
     const MAX_RETRIES = 4;
     let applied = false;
+    let appliedSideEffects: BillingSideEffect[] = [];
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       const { data: existing, error: selectError } = await supabase
@@ -127,12 +136,7 @@ export class PolarWebhookController {
 
       const currentState = (existing?.billing_state ?? "trialing") as BillingState;
       const result = billingReducer(currentState, billingEvent);
-
       const shouldResetUsage = result.sideEffects.some((e) => e.type === "RESET_USAGE");
-      for (const effect of result.sideEffects) {
-        this.logger.debug(`Side effect: ${effect.type}`, effect);
-      }
-
       const limits = PLAN_LIMITS[planKey];
 
       const { data: rpcResult, error: rpcError } = await supabase.rpc(
@@ -160,6 +164,7 @@ export class PolarWebhookController {
 
       if (rpcResult === "ok") {
         applied = true;
+        appliedSideEffects = result.sideEffects;
         break;
       }
 
@@ -171,6 +176,85 @@ export class PolarWebhookController {
       throw new Error("Billing state conflict after max retries — concurrent webhook deliveries");
     }
 
+    // Run side effects only once, after the state transition is confirmed
+    // committed — not speculatively on every CAS retry attempt.
+    await this.runSideEffects(supabase, userId, appliedSideEffects);
+
     return { received: true };
+  }
+
+  private async runSideEffects(
+    supabase: SupabaseClient,
+    userId: string,
+    effects: BillingSideEffect[],
+  ): Promise<void> {
+    for (const effect of effects) {
+      switch (effect.type) {
+        case "DISABLE_INGESTION":
+          await this.pauseAllAccountsForBilling(supabase, userId);
+          break;
+        case "ENABLE_INGESTION":
+          await this.resumeAllAccountsForBilling(supabase, userId);
+          break;
+        case "SEND_EMAIL":
+          // No email provider is configured in this repo (see
+          // env.validation.ts) — log with full context instead of silently
+          // claiming an email was sent, so this doesn't promise behavior
+          // that doesn't exist yet.
+          this.logger.warn(`Email not sent (no provider configured): ${effect.template}`, {
+            userId,
+            template: effect.template,
+          });
+          break;
+        case "RESET_USAGE":
+          // Already applied atomically by apply_billing_event's
+          // p_analysis_used/p_roasts_used reset — nothing further to do here.
+          break;
+      }
+    }
+  }
+
+  /**
+   * DISABLE_INGESTION: suspends every actively-ingesting account for this
+   * user when their subscription stops being billable. Tagged
+   * status_reason='billing_paused' (distinct from the 'user_action' the
+   * per-account pause button uses) so resumeAllAccountsForBilling only
+   * reactivates accounts *it* paused — an account the user paused manually
+   * stays paused after payment recovers.
+   */
+  private async pauseAllAccountsForBilling(supabase: SupabaseClient, userId: string): Promise<void> {
+    const { error } = await supabase
+      .from("accounts")
+      .update({
+        status: "paused",
+        status_reason: "billing_paused",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", userId)
+      .eq("status", "active");
+
+    if (error) {
+      this.logger.error("Failed to pause accounts for billing", { error: error.message, userId });
+      throw error;
+    }
+  }
+
+  /** ENABLE_INGESTION: the inverse of pauseAllAccountsForBilling. */
+  private async resumeAllAccountsForBilling(supabase: SupabaseClient, userId: string): Promise<void> {
+    const { error } = await supabase
+      .from("accounts")
+      .update({
+        status: "active",
+        status_reason: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", userId)
+      .eq("status", "paused")
+      .eq("status_reason", "billing_paused");
+
+    if (error) {
+      this.logger.error("Failed to resume accounts for billing", { error: error.message, userId });
+      throw error;
+    }
   }
 }

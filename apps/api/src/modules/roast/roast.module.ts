@@ -8,10 +8,11 @@ import { StyleValidatorService } from "./style-validator.service";
 import { RoastPipelineService } from "./roast-pipeline.service";
 import { AutoApproveService } from "./auto-approve.service";
 import { RoastController } from "./roast.controller";
+import { RoastInternalController } from "./roast-internal.controller";
 
 @Module({
   imports: [ConfigModule, FeatureFlagsModule],
-  controllers: [RoastController],
+  controllers: [RoastController, RoastInternalController],
   providers: [
     DisclaimerService,
     LlmService,

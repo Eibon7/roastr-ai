@@ -254,4 +254,71 @@ describe("AuthController.deleteAccount", () => {
     );
     expect(adminDeleteUser).toHaveBeenCalledWith("user-123");
   });
+
+  it("completes deletion cascade with successful X token revocation", async () => {
+    const profileChain = makeChain({ data: { email: "user@test.com" }, error: null });
+    const accountsChain = makeChain({
+      data: [{ id: "acc-2", platform: "x", access_token: "x-tok" }],
+      error: null,
+    });
+    const okChain = makeChain({ data: [], error: null });
+    mockFrom
+      .mockReturnValueOnce(profileChain)   // profiles lookup
+      .mockReturnValueOnce(accountsChain)  // accounts select
+      .mockReturnValue(okChain);           // all cascade deletes
+    signInWithPassword.mockResolvedValue({ error: null });
+    adminDeleteUser.mockResolvedValue({ error: null });
+    mockFetch.mockResolvedValue({ ok: true, status: 200 });
+
+    await expect(
+      controller.deleteAccount(makeReq(), { password: "correct" }),
+    ).resolves.toBeUndefined();
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://api.twitter.com/2/oauth2/revoke",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ token: "x-tok", token_type_hint: "access_token" }).toString(),
+      }),
+    );
+    expect(adminDeleteUser).toHaveBeenCalledWith("user-123");
+  });
+
+  it("throws 500 and aborts deletion when the revocation request itself throws (network error)", async () => {
+    const profileChain = makeChain({ data: { email: "user@test.com" }, error: null });
+    const accountsChain = makeChain({
+      data: [{ id: "acc-1", platform: "youtube", access_token: "tok" }],
+      error: null,
+    });
+    mockFrom
+      .mockReturnValueOnce(profileChain)
+      .mockReturnValueOnce(accountsChain);
+    signInWithPassword.mockResolvedValue({ error: null });
+    mockFetch.mockRejectedValue(new Error("network unreachable"));
+
+    await expect(
+      controller.deleteAccount(makeReq(), { password: "correct" }),
+    ).rejects.toBeInstanceOf(InternalServerErrorException);
+
+    expect(adminDeleteUser).not.toHaveBeenCalled();
+  });
+
+  it("throws 500 and aborts deletion when the connected account's platform is unknown", async () => {
+    const profileChain = makeChain({ data: { email: "user@test.com" }, error: null });
+    const accountsChain = makeChain({
+      data: [{ id: "acc-3", platform: "linkedin", access_token: "tok" }],
+      error: null,
+    });
+    mockFrom
+      .mockReturnValueOnce(profileChain)
+      .mockReturnValueOnce(accountsChain);
+    signInWithPassword.mockResolvedValue({ error: null });
+
+    await expect(
+      controller.deleteAccount(makeReq(), { password: "correct" }),
+    ).rejects.toBeInstanceOf(InternalServerErrorException);
+
+    expect(adminDeleteUser).not.toHaveBeenCalled();
+  });
 });

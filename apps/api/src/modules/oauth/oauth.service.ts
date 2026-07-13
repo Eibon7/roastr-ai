@@ -1,7 +1,8 @@
-import { Injectable, BadRequestException } from "@nestjs/common";
+import { Injectable, BadRequestException, Inject } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
 import { createHmac, randomBytes } from "node:crypto";
+import type { Queue } from "bullmq";
 import {
   buildXAuthorizeUrl,
   exchangeXCode,
@@ -12,7 +13,8 @@ import {
   exchangeYouTubeCode,
 } from "../../platforms/youtube/youtube.oauth.js";
 import { TokenEncryptionService } from "../../shared/crypto/token-encryption.service";
-import { PLAN_LIMITS } from "@roastr/shared";
+import { PLAN_LIMITS, type Plan } from "@roastr/shared";
+import { INGESTION_QUEUE, DEFAULT_JOB_OPTIONS, ingestionIntervalMs } from "../../shared/queue/queue.config";
 
 const STATE_TTL_MS = 600_000; // 10 min
 
@@ -21,16 +23,73 @@ type StatePayload = {
   nonce: string;
   exp: number;
   codeVerifier?: string;
+  /** Set when the OAuth flow was started from the onboarding wizard, so the
+   * callback can send the user back to /onboarding instead of /connect. */
+  returnTo?: "onboarding";
 };
 
 @Injectable()
 export class OAuthService {
+  // Property injection (not a constructor param): adding INGESTION_QUEUE as a
+  // 3rd constructor parameter made Test.createTestingModule(...).compile()
+  // hang indefinitely, even with the provider fully overridden/mocked. Cause
+  // not fully root-caused (likely a Nest/TS decorator-metadata interaction);
+  // property injection sidesteps it and is an equally valid Nest pattern.
+  @Inject(INGESTION_QUEUE) private readonly ingestionQueue!: Queue;
+
+  /**
+   * Best-effort, unverified peek at `returnTo` from a raw state param — used
+   * only to pick the redirect target (/onboarding vs /connect) on the
+   * provider-error branch (e.g. the user denied consent), where we redirect
+   * before ever validating the state signature. Never used for anything
+   * privileged: on any parse failure this simply returns undefined and the
+   * caller falls back to /connect.
+   */
+  static peekReturnTo(state: string | undefined): "onboarding" | undefined {
+    if (!state) return undefined;
+    try {
+      const [payloadB64] = state.split(".");
+      if (!payloadB64) return undefined;
+      const payload = JSON.parse(
+        Buffer.from(payloadB64, "base64url").toString("utf8"),
+      ) as StatePayload;
+      return payload.returnTo === "onboarding" ? "onboarding" : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
   constructor(
     private readonly config: ConfigService,
     private readonly encryption: TokenEncryptionService,
   ) {}
 
-  getYouTubeAuthorizeUrl(userId: string): { url: string; state: string } {
+  /**
+   * Schedules (or re-schedules, idempotently) the recurring ingestion job for
+   * a newly connected account. Without this, ingestionProcessor in the worker
+   * never receives any jobs — see docs/04-conexion-redes-sociales.md §4.6.1.
+   */
+  private async scheduleIngestion(
+    accountId: string,
+    userId: string,
+    platform: "youtube" | "x",
+    plan: Plan,
+  ): Promise<void> {
+    await this.ingestionQueue.add(
+      "ingest",
+      { userId, accountId, platform },
+      {
+        ...DEFAULT_JOB_OPTIONS,
+        jobId: `ingestion:${accountId}`,
+        repeat: { every: ingestionIntervalMs(plan) },
+      },
+    );
+  }
+
+  getYouTubeAuthorizeUrl(
+    userId: string,
+    returnTo?: "onboarding",
+  ): { url: string; state: string } {
     const clientId = this.config.get("YOUTUBE_CLIENT_ID");
     const redirectUri = this.config.get("YOUTUBE_REDIRECT_URI");
     if (!clientId || !redirectUri) {
@@ -42,6 +101,7 @@ export class OAuthService {
       userId,
       nonce,
       exp: Date.now() + STATE_TTL_MS,
+      ...(returnTo ? { returnTo } : {}),
     };
     const state = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
     const sig = createHmac("sha256", secret).update(state).digest("hex").slice(0, 16);
@@ -57,7 +117,7 @@ export class OAuthService {
   async handleYouTubeCallback(
     code: string,
     state: string,
-  ): Promise<{ accountId: string }> {
+  ): Promise<{ accountId: string; returnTo?: "onboarding" }> {
     const clientId = this.config.get("YOUTUBE_CLIENT_ID");
     const clientSecret = this.config.get("YOUTUBE_CLIENT_SECRET");
     const redirectUri = this.config.get("YOUTUBE_REDIRECT_URI");
@@ -77,11 +137,11 @@ export class OAuthService {
     if (sig !== expectedSig) {
       throw new BadRequestException("Invalid state signature");
     }
-    let payload: { userId: string; exp: number };
+    let payload: StatePayload;
     try {
       payload = JSON.parse(
         Buffer.from(payloadB64, "base64url").toString("utf8"),
-      ) as { userId: string; exp: number };
+      ) as StatePayload;
     } catch {
       throw new BadRequestException("Invalid or expired state");
     }
@@ -112,7 +172,10 @@ export class OAuthService {
       .from("accounts")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("platform", "youtube");
+      .eq("platform", "youtube")
+      // Broken (error) or disconnected (revoked) accounts must not block a
+      // reconnect/new connection — only active/paused accounts hold a slot.
+      .in("status", ["active", "paused"]);
 
     if ((count ?? 0) >= limits.accountsPerPlatform) {
       throw new BadRequestException(
@@ -149,10 +212,14 @@ export class OAuthService {
       .single();
 
     if (error) throw error;
-    return { accountId: account.id };
+    await this.scheduleIngestion(account.id, userId, "youtube", plan);
+    return { accountId: account.id, returnTo: payload.returnTo };
   }
 
-  getXAuthorizeUrl(userId: string): { url: string; state: string } {
+  getXAuthorizeUrl(
+    userId: string,
+    returnTo?: "onboarding",
+  ): { url: string; state: string } {
     const clientId = this.config.get("X_CLIENT_ID");
     const clientSecret = this.config.get("X_CLIENT_SECRET");
     const redirectUri = this.config.get("X_REDIRECT_URI");
@@ -167,6 +234,7 @@ export class OAuthService {
       nonce,
       exp: Date.now() + STATE_TTL_MS,
       codeVerifier,
+      ...(returnTo ? { returnTo } : {}),
     };
     const stateB64 = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
     const sig = createHmac("sha256", secret).update(stateB64).digest("hex").slice(0, 16);
@@ -183,7 +251,7 @@ export class OAuthService {
   async handleXCallback(
     code: string,
     state: string,
-  ): Promise<{ accountId: string }> {
+  ): Promise<{ accountId: string; returnTo?: "onboarding" }> {
     const clientId = this.config.get("X_CLIENT_ID");
     const clientSecret = this.config.get("X_CLIENT_SECRET");
     const redirectUri = this.config.get("X_REDIRECT_URI");
@@ -240,7 +308,10 @@ export class OAuthService {
       .from("accounts")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("platform", "x");
+      .eq("platform", "x")
+      // Broken (error) or disconnected (revoked) accounts must not block a
+      // reconnect/new connection — only active/paused accounts hold a slot.
+      .in("status", ["active", "paused"]);
 
     if ((count ?? 0) >= limits.accountsPerPlatform) {
       throw new BadRequestException(
@@ -277,6 +348,7 @@ export class OAuthService {
       .single();
 
     if (error) throw error;
-    return { accountId: account.id };
+    await this.scheduleIngestion(account.id, userId, "x", plan);
+    return { accountId: account.id, returnTo: payload.returnTo };
   }
 }

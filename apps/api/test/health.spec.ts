@@ -1,7 +1,8 @@
 import { Test } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { AppModule } from "../src/app.module";
+import { INGESTION_QUEUE } from "../src/shared/queue/queue.config";
 
 describe("HealthController", () => {
   let app: INestApplication;
@@ -10,7 +11,11 @@ describe("HealthController", () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      // Avoid a real Redis connection in tests — nothing here exercises queues.
+      .overrideProvider(INGESTION_QUEUE)
+      .useValue({ add: vi.fn().mockResolvedValue(undefined) })
+      .compile();
 
     app = moduleRef.createNestApplication();
     await app.init();

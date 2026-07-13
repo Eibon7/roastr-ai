@@ -46,10 +46,6 @@ const STATUS_BADGE: Record<RoastCandidate["status"], { label: string; className:
   published: { label: "Publicado", className: "bg-blue-500/20 text-blue-700 dark:text-blue-400" },
 };
 
-type Props = {
-  onGenerateNew?: () => void;
-};
-
 function relativeTime(isoDate: string) {
   const diff = Date.now() - new Date(isoDate).getTime();
   const minutes = Math.floor(diff / 60_000);
@@ -59,7 +55,7 @@ function relativeTime(isoDate: string) {
   return `hace ${Math.floor(hours / 24)}d`;
 }
 
-export function RoastReviewList({ onGenerateNew }: Props) {
+export function RoastReviewList() {
   const { session } = useAuth();
   const [candidates, setCandidates] = useState<RoastCandidate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -142,12 +138,6 @@ export function RoastReviewList({ onGenerateNew }: Props) {
             >
               <RefreshCcw className={loading ? "animate-spin" : ""} />
             </Button>
-            {onGenerateNew && (
-              <Button size="sm" onClick={onGenerateNew}>
-                <Wand2 className="h-3 w-3" />
-                Generar nuevo
-              </Button>
-            )}
           </div>
         </div>
       </CardHeader>
@@ -179,14 +169,6 @@ export function RoastReviewList({ onGenerateNew }: Props) {
           <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center">
             <Wand2 className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">No hay roasts pendientes de revisión.</p>
-            {onGenerateNew && (
-              <button
-                onClick={onGenerateNew}
-                className="mt-3 text-sm font-medium text-primary hover:underline"
-              >
-                Generar uno nuevo →
-              </button>
-            )}
           </div>
         )}
 

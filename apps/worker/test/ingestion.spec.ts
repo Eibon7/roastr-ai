@@ -56,6 +56,7 @@ const mockEnsureFreshToken = vi.fn();
 vi.mock("../src/shared/token-refresh.js", () => ({
   ensureFreshToken: (...args: unknown[]) => mockEnsureFreshToken(...args),
   toBuffer: (v: unknown) => v,
+  NoRefreshTokenError: class NoRefreshTokenError extends Error {},
 }));
 
 const mockFetchComments = vi.fn();
@@ -69,6 +70,7 @@ vi.mock("../src/shared/sanitize-text.js", () => ({
 }));
 
 const { ingestionProcessor } = await import("../src/processors/ingestion.js");
+const { NoRefreshTokenError } = await import("../src/shared/token-refresh.js");
 
 const VALID_ACCOUNT = {
   id: "acc-1",
@@ -83,8 +85,11 @@ const VALID_ACCOUNT = {
   platform_user_id: "channel-123",
 };
 
-function makeJob(data: Record<string, unknown> | undefined): Job {
-  return { id: "job-1", data } as unknown as Job;
+function makeJob(
+  data: Record<string, unknown> | undefined,
+  overrides: Partial<{ attemptsMade: number; opts: { attempts: number } }> = {},
+): Job {
+  return { id: "job-1", data, ...overrides } as unknown as Job;
 }
 
 describe("ingestionProcessor", () => {
@@ -197,6 +202,64 @@ describe("ingestionProcessor", () => {
     ).rejects.toThrow("Token unavailable, will retry");
 
     expect(mockFetchComments).not.toHaveBeenCalled();
+  });
+
+  it("no marca la cuenta como rota si el fallo del refresco no fue en el último intento", async () => {
+    mockEnsureFreshToken.mockRejectedValue(new Error("decrypt failed"));
+
+    await expect(
+      ingestionProcessor(
+        makeJob({ userId: "user-1", accountId: "acc-1", platform: "youtube" }, { attemptsMade: 0, opts: { attempts: 5 } }),
+      ),
+    ).rejects.toThrow("Token unavailable, will retry");
+
+    expect(accountBuilder.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({ status: "error" }),
+    );
+  });
+
+  it("marca la cuenta como rota cuando el refresco del token falla en el último intento permitido", async () => {
+    mockEnsureFreshToken.mockRejectedValue(new Error("YouTube token refresh failed: 400"));
+
+    await expect(
+      ingestionProcessor(
+        makeJob({ userId: "user-1", accountId: "acc-1", platform: "youtube" }, { attemptsMade: 4, opts: { attempts: 5 } }),
+      ),
+    ).rejects.toThrow("Token unavailable, will retry");
+
+    expect(accountBuilder.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "error",
+        status_reason: "token_expired",
+        integration_health: "failing",
+      }),
+    );
+    expect(mockFetchComments).not.toHaveBeenCalled();
+  });
+
+  it("lanza si falla la escritura al marcar la cuenta como rota en el último intento", async () => {
+    mockEnsureFreshToken.mockRejectedValue(new Error("decrypt failed"));
+    queryState.update = { error: { message: "db down" } };
+
+    await expect(
+      ingestionProcessor(
+        makeJob({ userId: "user-1", accountId: "acc-1", platform: "youtube" }, { attemptsMade: 4, opts: { attempts: 5 } }),
+      ),
+    ).rejects.toThrow("Failed to mark account acc-1 as broken: db down");
+  });
+
+  it("no relanza cuando no hay refresh token en absoluto (NoRefreshTokenError, ya marcada por ensureFreshToken)", async () => {
+    mockEnsureFreshToken.mockRejectedValue(
+      new NoRefreshTokenError("Token expired for account acc-1 and no refresh token available"),
+    );
+
+    await expect(
+      ingestionProcessor(makeJob({ userId: "user-1", accountId: "acc-1", platform: "youtube" })),
+    ).resolves.toBeUndefined();
+
+    expect(mockFetchComments).not.toHaveBeenCalled();
+    // ensureFreshToken already wrote the broken status itself — ingestion.ts must not touch it again.
+    expect(accountBuilder.update).not.toHaveBeenCalled();
   });
 
   it("repropaga el error original si falla fetchComments", async () => {

@@ -20,6 +20,8 @@ import {
   Loader2,
   AlertCircle,
   Trash2,
+  Fingerprint,
+  ChevronRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -63,6 +65,23 @@ function PerfilTab() {
         </a>
         .
       </p>
+
+      <Link to="/settings/persona">
+        <Card className="transition-colors hover:bg-accent/50">
+          <CardContent className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Fingerprint className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm font-medium text-foreground">Roastr Persona</p>
+                <p className="text-xs text-muted-foreground">
+                  Identidades, líneas rojas y tolerancias
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </CardContent>
+        </Card>
+      </Link>
     </div>
   );
 }

@@ -53,23 +53,18 @@ describe("PromptBuilderService", () => {
       expect(system).toContain("sarcasmo");
     });
 
-    it("uses persona profile for personal tone", () => {
+    it("uses a generic instruction for personal tone — never includes Roastr Persona data", () => {
+      // PRODUCT.md §7.1: persona (identities/redLines/tolerances) must never be
+      // sent to the LLM; it's an internal analysis-score input only.
       const svc2 = makeService({ roasting_enabled: true, personal_tone_enabled: true });
-      const persona = {
-        identities: ["músico independiente", "streamer"],
-        redLines: ["racismo", "homofobia"],
-        tolerances: ["críticas artísticas constructivas"],
-      };
-      const { system } = svc2.build({ ...BASE_CTX, tone: "personal", persona });
-      expect(system).toContain("músico independiente");
-      expect(system).toContain("racismo");
-      expect(system).toContain("críticas artísticas constructivas");
+      const { system } = svc2.build({ ...BASE_CTX, tone: "personal" });
+      expect(system).toContain("voz y personalidad propias");
     });
 
     it("requires personal_tone_enabled for personal tone", () => {
       const svc2 = makeService({ roasting_enabled: true, personal_tone_enabled: false });
       expect(() =>
-        svc2.build({ ...BASE_CTX, tone: "personal", persona: { identities: [], redLines: [], tolerances: [] } }),
+        svc2.build({ ...BASE_CTX, tone: "personal" }),
       ).toThrow(ForbiddenException);
     });
 

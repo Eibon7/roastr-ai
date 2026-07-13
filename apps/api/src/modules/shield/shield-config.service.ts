@@ -51,6 +51,7 @@ export class ShieldConfigService {
       .eq("user_id", userId)
       .select("id");
 
-    return !error && Array.isArray(data) && data.length > 0;
+    if (error) throw error;
+    return Array.isArray(data) && data.length > 0;
   }
 }

@@ -6,8 +6,10 @@ export type Account = {
   platform: string;
   username: string;
   status: string;
+  status_reason: string | null;
   integration_health: string;
   shield_aggressiveness?: number;
+  retention_until: string | null;
 };
 
 export type UseAccountsReturn = {
