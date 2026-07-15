@@ -10,6 +10,7 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { SkipThrottle } from "@nestjs/throttler";
 import { Request } from "express";
 import { Webhook } from "standardwebhooks";
 import { billingReducer, type BillingEvent, type BillingSideEffect } from "../../domain/billing-reducer";
@@ -29,10 +30,23 @@ function mapPolarToBillingEvent(type: string): BillingEvent | null {
       return { type: "SUBSCRIPTION_CANCELED" };
     case "subscription.updated":
       return { type: "PAYMENT_SUCCEEDED" };
+    case "subscription.revoked":
+      // Access has been pulled (grace period ended, refund, chargeback) —
+      // stop ingestion immediately rather than waiting for the next
+      // reconciliation, same transition as an explicit pause.
+      return { type: "SUBSCRIPTION_PAUSED" };
     case "invoice.payment_failed":
       return { type: "PAYMENT_FAILED" };
     case "invoice.payment_succeeded":
       return { type: "PAYMENT_SUCCEEDED" };
+    case "member.created":
+    case "checkout.updated":
+    case "checkout.expired":
+      // Organization-membership and checkout-session lifecycle events —
+      // no billing_state transition applies to them. Listed explicitly
+      // (rather than falling through to `default`) so this is a
+      // documented decision, not an unhandled gap.
+      return null;
     default:
       return null;
   }
@@ -49,6 +63,12 @@ function extractPlan(data: Record<string, unknown>): Plan {
 
 @Controller("webhooks")
 @Public()
+// Polar delivers from a small, fixed set of sender IPs and can burst many
+// events at once (e.g. a checkout followed immediately by subscription
+// activation). The global ThrottlerGuard is tuned for per-user API abuse,
+// not webhook senders, so exempt this route to avoid spurious 429s that
+// Polar would then count as delivery failures.
+@SkipThrottle()
 export class PolarWebhookController {
   private readonly logger = new Logger(PolarWebhookController.name);
 
@@ -115,11 +135,21 @@ export class PolarWebhookController {
     // Atomic CAS: read current state → compute next state in memory → apply
     // under a FOR UPDATE lock via apply_billing_event().  Retry on conflict
     // so concurrent webhook deliveries serialize correctly.
-    const MAX_RETRIES = 4;
+    const MAX_RETRIES = 6;
     let applied = false;
     let appliedSideEffects: BillingSideEffect[] = [];
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      if (attempt > 0) {
+        // Jittered backoff so a burst of near-simultaneous deliveries for
+        // the same user (e.g. subscription.created + subscription.active)
+        // spreads its retries out instead of hammering the same row again
+        // immediately, which is what turns one conflict into an exhausted
+        // retry budget.
+        const backoffMs = 25 * 2 ** (attempt - 1) + Math.random() * 25;
+        await new Promise((resolve) => setTimeout(resolve, backoffMs));
+      }
+
       const { data: existing, error: selectError } = await supabase
         .from("subscriptions_usage")
         .select("billing_state")

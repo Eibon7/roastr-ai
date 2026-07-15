@@ -129,7 +129,49 @@ describe("PolarWebhookController", () => {
     });
 
     expect(res.status).toBe(500);
+  }, 10_000);
+
+  it("POST /webhooks/polar pauses ingestion when subscription.revoked fires on an active subscription", async () => {
+    const supabaseUrl = process.env.SUPABASE_URL ?? "http://localhost:54321";
+    let capturedUrl: URL | undefined;
+    server.use(
+      http.get(`${supabaseUrl}/rest/v1/subscriptions_usage`, () =>
+        HttpResponse.json({ billing_state: "active" }, { status: 200 }),
+      ),
+      http.patch(`${supabaseUrl}/rest/v1/accounts`, ({ request }) => {
+        capturedUrl = new URL(request.url);
+        return HttpResponse.json([], { status: 200 });
+      }),
+    );
+
+    const res = await fetch(`${baseUrl}/webhooks/polar`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        type: "subscription.revoked",
+        data: { user_id: "test-user-revoked", id: "sub_revoked" },
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(capturedUrl).toBeDefined();
+    expect(capturedUrl!.searchParams.get("user_id")).toBe("eq.test-user-revoked");
+    expect(capturedUrl!.searchParams.get("status")).toBe("eq.active");
   });
+
+  it.each(["member.created", "checkout.updated", "checkout.expired"])(
+    "POST /webhooks/polar ignores %s without touching billing state",
+    async (type) => {
+      const res = await fetch(`${baseUrl}/webhooks/polar`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ type, data: { user_id: "test-user-ignored" } }),
+      });
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.received).toBe(true);
+    },
+  );
 });
 
 describe("PolarWebhookController with signature verification enabled", () => {

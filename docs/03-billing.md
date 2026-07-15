@@ -242,9 +242,14 @@ function billingReducer(
 | `subscription_created` | → `trialing` o → `active` (según plan) |
 | `subscription_active` | → `active` |
 | `subscription_canceled` | → `canceled_pending` |
+| `subscription_revoked` | → `paused` (revocación inmediata: fin de grace period, refund, chargeback) |
 | `invoice_payment_failed` | → `payment_retry` |
 | `invoice_payment_succeeded` | → `active` + reset de límites |
 | `subscription_updated` | Upgrade/downgrade aplicado |
+
+`member_created`, `checkout_updated` y `checkout_expired` no tienen transición de `billing_state` asociada (eventos de membership/checkout-session) y se ignoran explícitamente en `mapPolarToBillingEvent`.
+
+El endpoint `/webhooks/polar` está exento del `ThrottlerGuard` global (`@SkipThrottle()`) porque Polar entrega desde un set fijo de IPs y puede enviar ráfagas de eventos correlacionados (checkout + activación de subscription casi simultáneos).
 
 ### Webhook handler (NestJS)
 
