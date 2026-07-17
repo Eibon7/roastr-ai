@@ -3,6 +3,7 @@ import { INestApplication } from "@nestjs/common";
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { AppModule } from "../src/app.module";
 import { INGESTION_QUEUE } from "../src/shared/queue/queue.config";
+import { RedisHealthService } from "../src/modules/health/redis-health.service";
 
 describe("HealthController", () => {
   let app: INestApplication;
@@ -15,6 +16,8 @@ describe("HealthController", () => {
       // Avoid a real Redis connection in tests — nothing here exercises queues.
       .overrideProvider(INGESTION_QUEUE)
       .useValue({ add: vi.fn().mockResolvedValue(undefined) })
+      .overrideProvider(RedisHealthService)
+      .useValue({ ping: vi.fn().mockResolvedValue({ status: "ok", latency: 1 }) })
       .compile();
 
     app = moduleRef.createNestApplication();
@@ -34,5 +37,19 @@ describe("HealthController", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.status).toBe("ok");
+  });
+
+  it("GET /health/redis returns the ping result", async () => {
+    const res = await fetch(`${baseUrl}/health/redis`);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe("ok");
+  });
+
+  it("GET /health/ready reports redis status from the ping", async () => {
+    const res = await fetch(`${baseUrl}/health/ready`);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.checks.redis.status).toBe("ok");
   });
 });

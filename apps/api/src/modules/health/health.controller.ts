@@ -1,9 +1,14 @@
-import { Controller, Get } from "@nestjs/common";
+import { Controller, Get, Inject } from "@nestjs/common";
 import { Public } from "../../shared/guards/public.decorator";
+import { RedisHealthService } from "./redis-health.service";
 
 @Controller("health")
 @Public()
 export class HealthController {
+  constructor(
+    @Inject(RedisHealthService) private readonly redisHealth: RedisHealthService,
+  ) {}
+
   @Get()
   check() {
     return {
@@ -16,11 +21,11 @@ export class HealthController {
   }
 
   @Get("ready")
-  readiness() {
+  async readiness() {
     const checks: Record<string, { status: string; latency?: number }> = {};
 
     checks.supabase = { status: "unknown" };
-    checks.redis = { status: "unknown" };
+    checks.redis = await this.redisHealth.ping();
 
     const allOk = Object.values(checks).every((c) => c.status === "ok");
 
@@ -29,6 +34,11 @@ export class HealthController {
       checks,
       timestamp: new Date().toISOString(),
     };
+  }
+
+  @Get("redis")
+  redis() {
+    return this.redisHealth.ping();
   }
 
   @Get("metrics")
