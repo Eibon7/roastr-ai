@@ -25,13 +25,13 @@ jobs:
             local code
 
             code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
-              "$url/rest/v1/" -H "apikey: $key" -H "Authorization: Bearer $key" || echo "000")
+              "$url/rest/v1/keepalive_ping" -H "apikey: $key" -H "Authorization: Bearer $key" || echo "000")
 
             if [ "$code" != "200" ] && [ "$code" != "404" ]; then
               echo "$name responded with $code, retrying in 90s..."
               sleep 90
               code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
-                "$url/rest/v1/" -H "apikey: $key" -H "Authorization: Bearer $key" || echo "000")
+                "$url/rest/v1/keepalive_ping" -H "apikey: $key" -H "Authorization: Bearer $key" || echo "000")
             fi
 
             echo "$name: HTTP $code"
