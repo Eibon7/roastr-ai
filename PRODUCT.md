@@ -212,6 +212,49 @@ Primera linea de defensa contra comentarios maliciosos e intentos de prompt inje
 - Modo multiplicativo (default) o aditivo
 - Configuracion via admin_settings, hot reload (cache 1 min)
 
+### 6.4 Implementacion real
+
+> Actualizado 2026-09-03.
+
+`evaluateGatekeeper()` (`packages/shared/src/domain/gatekeeper-resolver.ts`) es
+una funcion pura: recibe el texto del comentario y un `GatekeeperConfig`
+(modo, threshold, pesos por categoria/heuristica), y devuelve `{ blocked,
+score, matchedCategories, matchedHeuristics }`. Cada categoria del §6.2 tiene
+patrones regex bilingues (ES/EN); las 4 heuristicas del §6.3 son señales
+estructurales independientes de las categorias. Formula de scoring sobre
+todas las señales que hicieron match:
+
+- **multiplicativo** (default): noisy-OR — `score = 1 - Π(1 - peso)`. Una
+  sola señal fuerte ya puede bloquear.
+- **aditivo**: `score = min(1, Σ peso)`.
+
+`SsotService.getGatekeeperConfig()` (`apps/api/src/shared/config/ssot.service.ts`)
+expone el config con los mismos defaults hardcodeados que el resto de SSOT
+(thresholds, weights, feature flags) — pendiente de leer `admin_settings` de
+verdad, ver nota en 6.5.
+
+Se ejecuta en `RoastPipelineService.generate()` (paso 0, antes de consumir
+cupo de roast y antes de construir el prompt): si `blocked`, lanza
+`ForbiddenException` y no se genera ningun roast ni se llama al LLM. Solo
+protege la generacion de roasts (`prompt-builder.service.ts`, el punto de
+interpolacion sin sanitizar identificado en la auditoria); el fallback LLM
+de analisis de toxicidad (`apps/worker/src/processors/analysis.ts`) ya usa
+`response_format: json_schema` con salida estructurada, que mitiga el mismo
+riesgo por una via distinta.
+
+### 6.5 Limitacion conocida
+
+Los pesos de cada categoria/heuristica son valores por defecto razonables,
+no calibrados contra datos reales de ataques — igual que los defaults
+hardcodeados del resto de `SsotService`. `admin_settings` ya tiene la fila
+para thresholds/weights de Shield pero `SsotService` nunca lee la tabla real
+de Supabase (comentario propio: "Fallback defaults until Supabase SSOT
+table is connected") — hasta que eso se conecte, ni Gatekeeper ni Shield se
+pueden re-calibrar en caliente pese a que el codigo esta preparado para
+ello (`get()` ya soporta refresco por TTL). Fuera de alcance de este cierre:
+requiere decision de producto sobre Admin Panel Phase 2 (§ ver GAP5 del
+handoff de auditoria).
+
 ---
 
 ## 7. Roastr Persona
@@ -259,8 +302,8 @@ Solo cuando autoApprove === true y la region lo exige (UE). Cuando el usuario ap
 
 ## 9. Workers y Procesos Asincronos
 
-> Actualizado 2026-07-03: la arquitectura real consolido los workers
-> conceptuales originales en 5 procesadores BullMQ (uno por cola), no en
+> Actualizado 2026-09-03: la arquitectura real consolido los workers
+> conceptuales originales en 6 procesadores BullMQ (uno por cola), no en
 > workers separados por funcion. Ver `apps/worker/src/processors/`.
 
 ### 9.1 Procesadores BullMQ (implementacion real)
@@ -270,6 +313,7 @@ type QueueProcessor =
   | 'ingestion'    // FetchComments — trae comentarios nuevos de la plataforma, encola 'analysis'
   | 'analysis'     // AnalyzeToxicity — Perspective API + fallback LLM, encola 'shield' si aplica
   | 'shield'       // ShieldAction — hide/block/report con reclamo optimista + reintento
+  | 'posting'      // SocialPosting — publica el roast aprobado como reply (YouTube), reclamo atomico + reintento
   | 'billing'      // BillingUpdate — incrementAnalysisUsed / reset_limits
   | 'maintenance'; // GDPRRetention + ExportCleanup — purga shield_logs/roast_candidates/accounts, anonimiza offenders
 ```
@@ -278,15 +322,23 @@ type QueueProcessor =
 generacion de roasts vive como servicio sincrono dentro de la API
 (`apps/api/src/modules/roast/roast-pipeline.service.ts`), invocado
 directamente desde `POST /roast/generate`. `SocialPosting` (publicar el
-roast aprobado en la plataforma) esta pendiente de implementar — hoy
-`roast.controller.ts` tiene un TODO en el endpoint de aprobacion.
+roast aprobado en la plataforma) es el 6º procesador BullMQ, en la cola
+`posting` (`apps/worker/src/processors/posting.ts`): publica en YouTube via
+`postReply()` (`apps/worker/src/shared/action-executor.ts`). Tanto el
+auto-approve de `generate()` como `PATCH /roast/candidates/:id/approve`
+encolan el job en vez de marcar `published` directamente; el estado pasa por
+`publishing` mientras el worker publica, y a `publish_failed` si se agotan
+los reintentos.
 
 ### 9.2 Workers auxiliares — estado real
 
+> Actualizado 2026-09-03: verificado linea a linea, no asumido del estado
+> anterior de esta tabla (ver auditoria GAP4).
+
 | Worker conceptual | Estado |
 | --- | --- |
-| AccountDeletion | pendiente (no implementado) |
-| AlertNotification | pendiente (no implementado) |
+| AccountDeletion | implementado — no es un worker asincrono, vive sincrono en `DELETE /auth/account` (`apps/api/src/modules/auth/auth.controller.ts`): reautentica con password, revoca tokens OAuth por plataforma (aborta si falla la revocacion), cascade delete de `subscriptions_usage`/`shield_logs`/`offenders`/`accounts`, y `supabase.auth.admin.deleteUser` (dispara cascada a `profiles` via trigger de DB) |
+| AlertNotification | pendiente (no implementado) — `SEND_EMAIL` en el billing reducer solo loguea (`polar-webhook.controller.ts`): "No email provider is configured in this repo". `RESEND_API_KEY` esta documentado en §14.7 pero no wireado a ningun cliente de envio |
 | ExportCleanup | cubierto por el procesador `maintenance` (purga de datos expirados) |
 | GDPRRetention | cubierto por el procesador `maintenance` (job type `gdpr_cleanup`) |
 | ModelAvailability | pendiente (no implementado) |
@@ -301,12 +353,38 @@ roast aprobado en la plataforma) esta pendiente de implementar — hoy
 
 ## 10. GDPR y Retencion
 
-- Usuarios eliminados: retencion max 90 dias, luego purga total.
-- Ofensores/reincidencia: solo ultimos 90 dias.
-- Logs de motor: 90 dias.
+> Actualizado 2026-09-03: la regla de retencion es "mientras seas cliente,
+> indefinido; al dejar de serlo, 90 dias mas" — no un tope de 90 dias fijo
+> para todo el mundo. Retencion indefinida mientras el usuario es cliente
+> activo se ampara en el consentimiento otorgado via Terminos y Condiciones
+> (tarea de producto/legal, fuera de este repo: los T&C deben reflejarlo
+> explicitamente).
+
+- Cliente activo (`billing_state` distinto de `paused` — ver §4.2/domain
+  `billing-reducer.ts`): retencion indefinida de shield_logs y
+  roast_candidates, con consentimiento via T&C.
+- Al dejar de ser cliente (`billing_state` pasa a `paused`, el unico estado
+  terminal sin acceso — `subscriptions_usage.churned_at` se marca en ese
+  instante via `apply_billing_event`, migracion 00015): 90 dias mas desde
+  `churned_at`, luego purga total de shield_logs y roast_candidates para ese
+  usuario (`purge_churned_user_data()`, invocado desde
+  `apps/worker/src/processors/maintenance.ts`). Volver a ser cliente
+  (`SUBSCRIPTION_RESUMED`/`PAYMENT_SUCCEEDED`) limpia `churned_at` y
+  detiene la cuenta atras.
+- Usuario elimina su cuenta (`DELETE /auth/account`): borrado inmediato en
+  cascada, sin esperar los 90 dias — ver §9.2 AccountDeletion.
+- Cuenta social desconectada (no toda la cuenta Roastr): retencion propia de
+  90 dias vía `accounts.retention_until`, independiente de si el usuario
+  sigue siendo cliente en otras cuentas — ver auditoria ROA-P2.
+- Ofensores/reincidencia: 90 dias desde el ultimo strike, siempre (no ligado
+  a si el usuario roasteado por ellos sigue siendo cliente — son terceros,
+  no clientes de Roastr).
 - Persona: borrado inmediato al eliminar cuenta.
 - NO guardamos: texto crudo de comentarios interceptados por Shield, imagenes, videos, DMs, historial de ediciones.
-- SI guardamos: datos de cuenta, persona cifrada, logs minimos (toxicidad numerica, accion, timestamp), roasts publicados.
+- SI guardamos: datos de cuenta, persona cifrada, logs minimos (toxicidad numerica, accion, timestamp), roasts publicados, y (desde esta sesion)
+  `roast_candidates.generated_text` para candidatos `pending_review` — necesario para que un humano pueda revisar/aprobar lo que genero el
+  flujo automatico `eligible_for_response`, que no tiene a nadie presente en el momento de generar para mostrarlo una sola vez. No se guarda
+  para candidatos auto-aprobados (se publican en el acto, ver §9.1).
 
 ---
 
@@ -393,13 +471,13 @@ Slugs MVP: AUTH_INVALID_CREDENTIALS, AUTH_EMAIL_NOT_CONFIRMED, AUTH_ACCOUNT_LOCK
 - **Framework**: NestJS + TypeScript
 - **Arquitectura**: Hexagonal (Ports & Adapters)
 - **Deploy**: Railway
-- **Workers**: BullMQ + Redis (servicio separado en Railway, siempre activo)
+- **Workers**: BullMQ + Redis (Upstash, siempre activo)
 
 ### 14.2 Frontend
 
 - **Framework**: React + Vite + TypeScript
 - **UI**: shadcn/ui
-- **Deploy**: Vercel
+- **Deploy**: Railway (Docker + nginx)
 
 ### 14.3 Base de datos y Auth
 
@@ -412,12 +490,12 @@ Slugs MVP: AUTH_INVALID_CREDENTIALS, AUTH_EMAIL_NOT_CONFIRMED, AUTH_ACCOUNT_LOCK
 - **AI**: OpenAI (toxicidad + generacion de roasts)
 - **Billing**: Polar
 - **Email**: Resend
-- **Queue**: Redis en Railway (BullMQ)
+- **Queue**: Redis en Upstash (BullMQ)
 
 ### 14.5 Entornos
 
-- `staging` branch -> Railway staging + Vercel Preview (roastr-ai.vercel.app)
-- `main` branch -> Railway production + Vercel Production
+- `staging` branch -> Railway staging (web-staging, api-staging, worker-staging)
+- `main` branch -> Railway production (web-prod, roastr-ai)
 - Supabase separado por entorno
 - OAuth apps separadas por entorno (X, YouTube, Polar, Resend)
 
