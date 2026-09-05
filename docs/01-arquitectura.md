@@ -255,7 +255,7 @@ Todas las tablas tienen **RLS activado**. Los usuarios solo acceden a sus propio
 
 | Componente | Plataforma | Notas |
 |---|---|---|
-| Frontend (`apps/web`) | **Vercel** | Auto-deploy desde main. Preview en PRs. |
+| Frontend (`apps/web`) | **Railway** | Docker + nginx. Auto-deploy desde main. |
 | Backend (`apps/api`) | **Railway** | Dockerfile. Auto-deploy. |
 | Workers (`apps/worker`) | **Railway** | Mismo proyecto, servicio separado. |
 | Redis | **Upstash** | Serverless Redis para BullMQ. |
@@ -339,7 +339,7 @@ CREATE POLICY settings_admin_write ON admin_settings
 
 ```mermaid
 flowchart TD
-    subgraph Frontend [apps/web — Vercel]
+    subgraph Frontend [apps/web — Railway]
         UI[React + shadcn/ui]
     end
 

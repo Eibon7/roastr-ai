@@ -1,6 +1,6 @@
 # 14. Infraestructura (v3)
 
-*(Versión actualizada para Railway + Vercel + Supabase + Upstash)*
+*(Versión actualizada para Railway + Supabase + Upstash)*
 
 ---
 
@@ -17,7 +17,7 @@
 
 | Componente | Staging | Producción |
 |---|---|---|
-| Frontend | Vercel Preview (branch `staging`) | Vercel Production (branch `main`) |
+| Frontend | Railway (servicio `web-staging`) | Railway (servicio `web-prod`) |
 | Backend API | Railway (servicio `api-staging`) | Railway (servicio `api-prod`) |
 | Workers | Railway (servicio `worker-staging`) | Railway (servicio `worker-prod`) |
 | Redis | Upstash (instancia staging) | Upstash (instancia prod) |
@@ -48,7 +48,7 @@ Alerting + monitoreo
 - Nada entra en `staging` sin: lint, typecheck, Vitest, integration tests, Playwright E2E.
 - Staging se despliega automáticamente al merge.
 - **Producción se despliega automáticamente al merge a `main`**, pero el merge a `main` requiere aprobación humana.
-- Cada deploy queda registrado (Railway deploy logs + Vercel deploy logs).
+- Cada deploy queda registrado (Railway deploy logs).
 
 ### Smoke tests (post-deploy staging)
 
@@ -64,8 +64,8 @@ GET /health/workers  → 200 (BullMQ queues responsive)
 ## 14.4 Branching strategy
 
 ```
-main          → producción (auto-deploy Vercel + Railway)
-staging       → staging (auto-deploy Vercel preview + Railway staging)
+main          → producción (auto-deploy Railway)
+staging       → staging (auto-deploy Railway staging)
 feature/*     → PRs → merge a staging
 fix/*         → PRs → merge a staging
 ```
@@ -317,7 +317,7 @@ Simulacro de restauración cada 90 días.
 
 - Supabase RLS activo en todas las tablas
 - Service Role Key solo en backend/workers (nunca en frontend)
-- Env vars cifradas en Railway y Vercel
+- Env vars cifradas en Railway
 - HTTPS obligatorio en todos los endpoints
 - CORS configurado para solo permitir `FRONTEND_URL`
 - Webhook signatures verificadas (Polar)
@@ -337,7 +337,7 @@ flowchart TD
     D -->|Cambios pedidos| B
     D -->|Aprobado| E[Merge a staging]
 
-    E --> F[Deploy Staging — Railway + Vercel]
+    E --> F[Deploy Staging — Railway]
     F --> G[Smoke Tests]
 
     G -->|Falla| B
@@ -345,7 +345,7 @@ flowchart TD
 
     H -->|OK| I[PR staging → main]
     I --> J[Merge a main]
-    J --> K[Deploy Producción — Railway + Vercel]
+    J --> K[Deploy Producción — Railway]
     K --> L[Alerting + Monitoreo]
 ```
 
@@ -353,8 +353,7 @@ flowchart TD
 
 ## 14.14 Dependencias
 
-- **Railway:** Backend API + Workers. Dockerized deploys.
-- **Vercel:** Frontend. Auto-deploy desde GitHub.
+- **Railway:** Backend API + Workers + Frontend. Dockerized deploys.
 - **Supabase:** 2 proyectos (staging + prod). DB + Auth + RLS.
 - **Upstash Redis:** 2 instancias (staging + prod). BullMQ queues.
 - **Sentry:** Error tracking frontend.
